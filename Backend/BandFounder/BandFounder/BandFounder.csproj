@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="spotifyAppConfig.json">
+      <None Include="spotifyAppCredentials.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
