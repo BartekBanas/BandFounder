@@ -10,7 +10,7 @@ export class SpotifyAppCredentialService {
     private _clientSecret: string | null = null;
 
     constructor() {
-        this.fetchCredentials().then(_ => console.log("Config loaded\n" + "client_id: " + this.clientId + "\nclient_secret: " + this.clientSecret));
+        this.fetchCredentials().then(_ => console.log("Credentials loaded\n" + "client_id: " + this.clientId + "\nclient_secret: " + this.clientSecret));
     }
 
     get clientId(): string {
