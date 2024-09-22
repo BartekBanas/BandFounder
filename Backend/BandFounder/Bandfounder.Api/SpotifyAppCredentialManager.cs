@@ -5,22 +5,22 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-public class SpotifyAppConfigManager
+public class SpotifyAppCredentialManager
 {
-    public  Config Config { get; private set; }
+    public  SpotifyAppCredentials SpotifyAppCredentials { get; private set; }
     private readonly string _filePath;
 
-    public SpotifyAppConfigManager(string filePath = "./spotifyAppConfig.json")
+    public SpotifyAppCredentialManager(string filePath = "./spotifyAppCredentials.json")
     {
         _filePath = filePath;
     }
 
-    public async Task LoadConfigAsync()
+    public async Task LoadCredentials()
     {
         try
         {
             var data = await File.ReadAllTextAsync(_filePath);
-            Config = JsonSerializer.Deserialize<Config>(data);
+            SpotifyAppCredentials = JsonSerializer.Deserialize<SpotifyAppCredentials>(data);
         }
         catch (Exception ex)
         {

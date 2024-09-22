@@ -6,11 +6,11 @@ namespace Bandfounder.Api;
 public class SpotifyBrokerController : ControllerBase
 {
     [HttpGet("credentials")]
-    public async Task<IActionResult> GetSpotifyAppConfig()
+    public async Task<IActionResult> GetSpotifyAppCredentials()
     {
-        var configManager = new SpotifyAppConfigManager();
-        await configManager.LoadConfigAsync();
+        var credentialManager = new SpotifyAppCredentialManager();
+        await credentialManager.LoadCredentials();
 
-        return Ok(configManager.Config);
+        return Ok(credentialManager.SpotifyAppCredentials);
     }
 }

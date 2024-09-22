@@ -1,6 +1,6 @@
 namespace Bandfounder.Api;
 
-public struct Config
+public struct SpotifyAppCredentials
 {
     public string ClientId { get; init; }
     public string ClientSecret { get; init; }
