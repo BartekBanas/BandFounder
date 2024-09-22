@@ -5,7 +5,7 @@ namespace Bandfounder.Api;
 [Route("api/spotifyBroker")]
 public class SpotifyBrokerController : ControllerBase
 {
-    [HttpGet]
+    [HttpGet("credentials")]
     public async Task<IActionResult> GetSpotifyAppConfig()
     {
         var configManager = new SpotifyAppConfigManager();
