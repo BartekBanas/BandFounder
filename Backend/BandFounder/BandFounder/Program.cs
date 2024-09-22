@@ -1,6 +1,9 @@
+using Bandfounder.Api;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -18,5 +21,7 @@ app.UseHttpsRedirection();
 // app.UseAuthentication();
 
 // app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
