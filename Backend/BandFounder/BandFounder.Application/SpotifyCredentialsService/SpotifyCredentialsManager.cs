@@ -1,13 +1,13 @@
 using System.Text.Json;
 
-namespace BandFounder.Api.Controllers;
+namespace BandFounder.Application.SpotifyCredentialsService;
 
-public class SpotifyAppCredentialManager
+public class SpotifyCredentialsManager
 {
-    public  SpotifyAppCredentials SpotifyAppCredentials { get; private set; }
+    public  SpotifyCredentials SpotifyCredentials { get; private set; }
     private readonly string _filePath;
 
-    public SpotifyAppCredentialManager(string filePath = "./spotifyAppCredentials.json")
+    public SpotifyCredentialsManager(string filePath = "./spotifyAppCredentials.json")
     {
         _filePath = filePath;
     }
@@ -17,7 +17,7 @@ public class SpotifyAppCredentialManager
         try
         {
             var data = await File.ReadAllTextAsync(_filePath);
-            SpotifyAppCredentials = JsonSerializer.Deserialize<SpotifyAppCredentials>(data);
+            SpotifyCredentials = JsonSerializer.Deserialize<SpotifyCredentials>(data);
         }
         catch (Exception ex)
         {

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BandFounder.Application.SpotifyCredentialsService;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;
 
@@ -8,9 +9,9 @@ public class SpotifyBrokerController : ControllerBase
     [HttpGet("credentials")]
     public async Task<IActionResult> GetSpotifyAppCredentials()
     {
-        var credentialManager = new SpotifyAppCredentialManager();
+        var credentialManager = new SpotifyCredentialsManager();
         await credentialManager.LoadCredentials();
 
-        return Ok(credentialManager.SpotifyAppCredentials);
+        return Ok(credentialManager.SpotifyCredentials);
     }
 }

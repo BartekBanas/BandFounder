@@ -18,4 +18,8 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\BandFounder.Application\BandFounder.Application.csproj" />
+    </ItemGroup>
+
 </Project>
