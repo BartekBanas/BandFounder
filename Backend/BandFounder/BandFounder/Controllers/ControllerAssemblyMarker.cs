@@ -1,4 +1,4 @@
-namespace Bandfounder.Api;
+namespace BandFounder.Controllers;
 
 public class ControllerAssemblyMarker
 {
