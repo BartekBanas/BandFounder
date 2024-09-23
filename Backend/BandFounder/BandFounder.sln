@@ -17,6 +17,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{E9A640
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{9B8F3239-7142-4234-A2D1-EFD4075AB586}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BandFounder.Domain", "BandFounder.Domain\BandFounder.Domain.csproj", "{7A6E4564-7D1D-4B94-9FE1-AFEA1D52C148}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BandFounder.Infrastructure", "BandFounder.Infrastructure\BandFounder.Infrastructure.csproj", "{E35F69A9-24F3-484D-B357-7329109113CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,9 +35,19 @@ Global
 		{2D2DC387-52C1-4859-AE05-C9C018C590B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D2DC387-52C1-4859-AE05-C9C018C590B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D2DC387-52C1-4859-AE05-C9C018C590B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A6E4564-7D1D-4B94-9FE1-AFEA1D52C148}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A6E4564-7D1D-4B94-9FE1-AFEA1D52C148}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A6E4564-7D1D-4B94-9FE1-AFEA1D52C148}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A6E4564-7D1D-4B94-9FE1-AFEA1D52C148}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E35F69A9-24F3-484D-B357-7329109113CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E35F69A9-24F3-484D-B357-7329109113CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E35F69A9-24F3-484D-B357-7329109113CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E35F69A9-24F3-484D-B357-7329109113CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{916135CF-E432-4181-8D29-3D72BAF1126A} = {B22BF846-55F8-4057-8274-36E05CBABC12}
 		{2D2DC387-52C1-4859-AE05-C9C018C590B4} = {5E0ADE59-36A8-4232-B706-9199AE57BAA8}
+		{7A6E4564-7D1D-4B94-9FE1-AFEA1D52C148} = {E9A640A5-4239-4AD3-AFE0-5F541051C7B7}
+		{E35F69A9-24F3-484D-B357-7329109113CA} = {9B8F3239-7142-4234-A2D1-EFD4075AB586}
 	EndGlobalSection
 EndGlobal
