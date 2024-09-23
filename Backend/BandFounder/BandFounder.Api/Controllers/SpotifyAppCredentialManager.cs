@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace BandFounder.Controllers;
+namespace BandFounder.Api.Controllers;
 
 public class SpotifyAppCredentialManager
 {

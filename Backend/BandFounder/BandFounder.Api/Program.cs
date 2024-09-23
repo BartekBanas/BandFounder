@@ -1,4 +1,4 @@
-using BandFounder.Controllers;
+using BandFounder.Api.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
