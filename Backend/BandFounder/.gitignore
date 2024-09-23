@@ -456,4 +456,5 @@ $RECYCLE.BIN/
 
 Desktop.ini
 
-./BandFounder/spotifyAppCredentials.json
+# File for storing spotif app credentials
+/BandFounder.Api/spotifyAppCredentials.json

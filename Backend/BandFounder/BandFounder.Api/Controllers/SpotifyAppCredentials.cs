@@ -1,4 +1,4 @@
-namespace Bandfounder.Api;
+namespace BandFounder.Api.Controllers;
 
 public struct SpotifyAppCredentials
 {

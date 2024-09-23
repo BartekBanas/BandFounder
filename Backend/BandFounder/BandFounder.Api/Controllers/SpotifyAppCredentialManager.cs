@@ -1,9 +1,6 @@
-namespace Bandfounder.Api;
-
-using System;
-using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
+
+namespace BandFounder.Api.Controllers;
 
 public class SpotifyAppCredentialManager
 {

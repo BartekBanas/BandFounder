@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Bandfounder.Api;
+namespace BandFounder.Api.Controllers;
 
 [Route("api/spotifyBroker")]
 public class SpotifyBrokerController : ControllerBase
