@@ -3,9 +3,11 @@ using BandFounder.Api.Controllers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+var services = builder.Services;
+
+services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
+services.AddEndpointsApiExplorer();
+services.AddSwaggerGen();
 
 var app = builder.Build();
 
