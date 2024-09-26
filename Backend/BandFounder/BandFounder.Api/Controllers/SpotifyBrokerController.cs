@@ -9,9 +9,9 @@ public class SpotifyBrokerController : ControllerBase
     [HttpGet("credentials")]
     public async Task<IActionResult> GetSpotifyAppCredentials()
     {
-        var credentialManager = new SpotifyCredentialsManager();
-        await credentialManager.LoadCredentials();
+        var credentialManager = new SpotifyAppCredentialsManager();
+        var credentials = await credentialManager.LoadCredentials();
 
-        return Ok(credentialManager.SpotifyCredentials);
+        return Ok(credentials);
     }
 }

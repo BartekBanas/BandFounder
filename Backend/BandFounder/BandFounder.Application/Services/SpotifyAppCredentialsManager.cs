@@ -3,22 +3,21 @@ using BandFounder.Application.Dtos;
 
 namespace BandFounder.Application.Services;
 
-public class SpotifyCredentialsManager
+public class SpotifyAppCredentialsManager
 {
-    public  SpotifyCredentials SpotifyCredentials { get; private set; }
     private readonly string _filePath;
 
-    public SpotifyCredentialsManager(string filePath = "./spotifyAppCredentials.json")
+    public SpotifyAppCredentialsManager(string filePath = "./spotifyAppCredentials.json")
     {
         _filePath = filePath;
     }
 
-    public async Task LoadCredentials()
+    public async Task<SpotifyAppCredentials> LoadCredentials()
     {
         try
         {
             var data = await File.ReadAllTextAsync(_filePath);
-            SpotifyCredentials = JsonSerializer.Deserialize<SpotifyCredentials>(data);
+            return JsonSerializer.Deserialize<SpotifyAppCredentials>(data);
         }
         catch (Exception ex)
         {
