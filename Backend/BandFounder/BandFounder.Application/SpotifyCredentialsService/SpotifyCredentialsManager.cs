@@ -1,3 +1,4 @@
+using BandFounder.Application.Dtos;
 using System.Text.Json;
 
 namespace BandFounder.Application.SpotifyCredentialsService;

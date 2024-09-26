@@ -1,4 +1,4 @@
-namespace BandFounder.Application.SpotifyCredentialsService;
+namespace BandFounder.Application.Dtos;
 
 public struct SpotifyCredentials
 {
