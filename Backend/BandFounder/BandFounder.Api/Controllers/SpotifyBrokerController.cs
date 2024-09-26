@@ -1,4 +1,4 @@
-﻿using BandFounder.Application.SpotifyCredentialsService;
+﻿using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;
