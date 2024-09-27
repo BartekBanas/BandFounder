@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace BandFounder.Application.Dtos.Spotify;
 
-public class SpotifyFollowedArtistsResponse
+public class FollowedArtistsResponse
 {
     [JsonPropertyName("artists")]
     public required ArtistsResponse Artists { get; init; }

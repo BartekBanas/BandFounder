@@ -39,7 +39,7 @@ public class SpotifyContentService
             response.EnsureSuccessStatusCode();
             var responseBody = await response.Content.ReadAsStringAsync();
 
-            var responseDto = JsonSerializer.Deserialize<SpotifyFollowedArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
+            var responseDto = JsonSerializer.Deserialize<FollowedArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
 
             allArtists.AddRange(responseDto.Artists.Items);
 

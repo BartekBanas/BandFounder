@@ -43,7 +43,7 @@ public class SpotifyResponseDeserializationTests
 
         // Act
         var json = File.ReadAllText(jsonFilePath);
-        var spotifyResponse = JsonSerializer.Deserialize<SpotifyFollowedArtistsResponse>(json);
+        var spotifyResponse = JsonSerializer.Deserialize<FollowedArtistsResponse>(json);
 
         // Assert
         Assert.NotNull(spotifyResponse);
