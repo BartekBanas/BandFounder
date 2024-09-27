@@ -33,6 +33,9 @@
         <None Include="spotifyTopArtistsResponse.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="spotifyFollowedArtistsResponse.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
