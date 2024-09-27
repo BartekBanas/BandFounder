@@ -1,0 +1,86 @@
+{
+    "artists": {
+        "items": [
+            {
+                "external_urls": {
+                    "spotify": "https://open.spotify.com/artist/00YTqRClk82aMchQQpYMd5"
+                },
+                "followers": {
+                    "href": null,
+                    "total": 1136790
+                },
+                "genres": [
+                    "american metalcore"
+                ],
+                "href": "https://api.spotify.com/v1/artists/00YTqRClk82aMchQQpYMd5",
+                "id": "00YTqRClk82aMchQQpYMd5",
+                "images": [
+                    {
+                        "height": 640,
+                        "url": "https://i.scdn.co/image/ab6761610000e5eb7e59d31a0955945fa8c44cbb",
+                        "width": 640
+                    },
+                    {
+                        "height": 320,
+                        "url": "https://i.scdn.co/image/ab676161000051747e59d31a0955945fa8c44cbb",
+                        "width": 320
+                    },
+                    {
+                        "height": 160,
+                        "url": "https://i.scdn.co/image/ab6761610000f1787e59d31a0955945fa8c44cbb",
+                        "width": 160
+                    }
+                ],
+                "name": "Our Last Night",
+                "popularity": 63,
+                "type": "artist",
+                "uri": "spotify:artist:00YTqRClk82aMchQQpYMd5"
+            },
+            {
+                "external_urls": {
+                    "spotify": "https://open.spotify.com/artist/05fG473iIaoy82BF1aGhL8"
+                },
+                "followers": {
+                    "href": null,
+                    "total": 11801188
+                },
+                "genres": [
+                    "alternative metal",
+                    "nu metal",
+                    "rap metal",
+                    "rock"
+                ],
+                "href": "https://api.spotify.com/v1/artists/05fG473iIaoy82BF1aGhL8",
+                "id": "05fG473iIaoy82BF1aGhL8",
+                "images": [
+                    {
+                        "height": 640,
+                        "url": "https://i.scdn.co/image/ab6761610000e5ebd0cdb283a7384a0edb665182",
+                        "width": 640
+                    },
+                    {
+                        "height": 320,
+                        "url": "https://i.scdn.co/image/ab67616100005174d0cdb283a7384a0edb665182",
+                        "width": 320
+                    },
+                    {
+                        "height": 160,
+                        "url": "https://i.scdn.co/image/ab6761610000f178d0cdb283a7384a0edb665182",
+                        "width": 160
+                    }
+                ],
+                "name": "Slipknot",
+                "popularity": 80,
+                "type": "artist",
+                "uri": "spotify:artist:05fG473iIaoy82BF1aGhL8"
+            }
+        ],
+        "next": "https://api.spotify.com/v1/me/following?type\u003dartist\u0026limit\u003d20\u0026after\u003d1WNoKxsp715jez1Td4vthc",
+        "total": 76,
+        "cursors": {
+            "after": "1WNoKxsp715jez1Td4vthc"
+        },
+        "limit": 20,
+        "href": "https://api.spotify.com/v1/me/following?type\u003dartist\u0026limit\u003d20"
+    }
+}
