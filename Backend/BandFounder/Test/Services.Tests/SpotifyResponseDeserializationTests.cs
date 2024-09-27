@@ -3,7 +3,7 @@ using BandFounder.Application.Dtos;
 
 namespace Services.Tests;
 
-public class SpotifyResponseSerializationTests
+public class SpotifyResponseDeserializationTests
 {
     private const string SpotifyTopArtistsResponsePath = "./spotifyTopArtistsResponse.json";
     
@@ -13,7 +13,7 @@ public class SpotifyResponseSerializationTests
     }
 
     [Test]
-    public void ShouldSerializeSpotifyTopArtists()
+    public void ShouldDeserializeSpotifyTopArtists()
     {
         var jsonString = File.ReadAllText(SpotifyTopArtistsResponsePath);
         var spotifyResponse = JsonSerializer.Deserialize<SpotifyTopArtistsResponse>(jsonString) ?? throw new InvalidOperationException();
