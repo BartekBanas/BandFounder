@@ -1,0 +1,191 @@
+{
+    "items": [
+        {
+            "external_urls": {
+                "spotify": "https://open.spotify.com/artist/0AlnGjlLLXglk9hnwErYDU"
+            },
+            "followers": {
+                "href": null,
+                "total": 61833
+            },
+            "genres": [
+                "australian metalcore",
+                "australian post-hardcore",
+                "nu-metalcore"
+            ],
+            "href": "https://api.spotify.com/v1/artists/0AlnGjlLLXglk9hnwErYDU",
+            "id": "0AlnGjlLLXglk9hnwErYDU",
+            "images": [
+                {
+                    "height": 640,
+                    "url": "https://i.scdn.co/image/ab6761610000e5eb2b1c5aa1bae888d05f11bc0f",
+                    "width": 640
+                },
+                {
+                    "height": 320,
+                    "url": "https://i.scdn.co/image/ab676161000051742b1c5aa1bae888d05f11bc0f",
+                    "width": 320
+                },
+                {
+                    "height": 160,
+                    "url": "https://i.scdn.co/image/ab6761610000f1782b1c5aa1bae888d05f11bc0f",
+                    "width": 160
+                }
+            ],
+            "name": "Ocean Grove",
+            "popularity": 43,
+            "type": "artist",
+            "uri": "spotify:artist:0AlnGjlLLXglk9hnwErYDU"
+        },
+        {
+            "external_urls": {
+                "spotify": "https://open.spotify.com/artist/00YTqRClk82aMchQQpYMd5"
+            },
+            "followers": {
+                "href": null,
+                "total": 1136600
+            },
+            "genres": [
+                "american metalcore"
+            ],
+            "href": "https://api.spotify.com/v1/artists/00YTqRClk82aMchQQpYMd5",
+            "id": "00YTqRClk82aMchQQpYMd5",
+            "images": [
+                {
+                    "height": 640,
+                    "url": "https://i.scdn.co/image/ab6761610000e5eb7e59d31a0955945fa8c44cbb",
+                    "width": 640
+                },
+                {
+                    "height": 320,
+                    "url": "https://i.scdn.co/image/ab676161000051747e59d31a0955945fa8c44cbb",
+                    "width": 320
+                },
+                {
+                    "height": 160,
+                    "url": "https://i.scdn.co/image/ab6761610000f1787e59d31a0955945fa8c44cbb",
+                    "width": 160
+                }
+            ],
+            "name": "Our Last Night",
+            "popularity": 63,
+            "type": "artist",
+            "uri": "spotify:artist:00YTqRClk82aMchQQpYMd5"
+        },
+        {
+            "external_urls": {
+                "spotify": "https://open.spotify.com/artist/3ALVPmg5sZexSVD2m9atEt"
+            },
+            "followers": {
+                "href": null,
+                "total": 152288
+            },
+            "genres": [
+                "american metalcore",
+                "djent",
+                "melodic metalcore",
+                "metalcore",
+                "progressive metalcore"
+            ],
+            "href": "https://api.spotify.com/v1/artists/3ALVPmg5sZexSVD2m9atEt",
+            "id": "3ALVPmg5sZexSVD2m9atEt",
+            "images": [
+                {
+                    "height": 640,
+                    "url": "https://i.scdn.co/image/ab6761610000e5ebaa2eb4e40b025830f5e7ab3b",
+                    "width": 640
+                },
+                {
+                    "height": 320,
+                    "url": "https://i.scdn.co/image/ab67616100005174aa2eb4e40b025830f5e7ab3b",
+                    "width": 320
+                },
+                {
+                    "height": 160,
+                    "url": "https://i.scdn.co/image/ab6761610000f178aa2eb4e40b025830f5e7ab3b",
+                    "width": 160
+                }
+            ],
+            "name": "Invent Animate",
+            "popularity": 52,
+            "type": "artist",
+            "uri": "spotify:artist:3ALVPmg5sZexSVD2m9atEt"
+        },
+        {
+            "external_urls": {
+                "spotify": "https://open.spotify.com/artist/4MzJMcHQBl9SIYSjwWn8QW"
+            },
+            "followers": {
+                "href": null,
+                "total": 703977
+            },
+            "genres": [
+                "canadian metalcore"
+            ],
+            "href": "https://api.spotify.com/v1/artists/4MzJMcHQBl9SIYSjwWn8QW",
+            "id": "4MzJMcHQBl9SIYSjwWn8QW",
+            "images": [
+                {
+                    "height": 640,
+                    "url": "https://i.scdn.co/image/ab6761610000e5ebcd8b52d7840e971b958a2919",
+                    "width": 640
+                },
+                {
+                    "height": 320,
+                    "url": "https://i.scdn.co/image/ab67616100005174cd8b52d7840e971b958a2919",
+                    "width": 320
+                },
+                {
+                    "height": 160,
+                    "url": "https://i.scdn.co/image/ab6761610000f178cd8b52d7840e971b958a2919",
+                    "width": 160
+                }
+            ],
+            "name": "Spiritbox",
+            "popularity": 65,
+            "type": "artist",
+            "uri": "spotify:artist:4MzJMcHQBl9SIYSjwWn8QW"
+        },
+        {
+            "external_urls": {
+                "spotify": "https://open.spotify.com/artist/3Ri4H12KFyu98LMjSoij5V"
+            },
+            "followers": {
+                "href": null,
+                "total": 1430437
+            },
+            "genres": [
+                "american metalcore"
+            ],
+            "href": "https://api.spotify.com/v1/artists/3Ri4H12KFyu98LMjSoij5V",
+            "id": "3Ri4H12KFyu98LMjSoij5V",
+            "images": [
+                {
+                    "height": 640,
+                    "url": "https://i.scdn.co/image/ab6761610000e5eb5d4b995885f2d687bb5c48ac",
+                    "width": 640
+                },
+                {
+                    "height": 320,
+                    "url": "https://i.scdn.co/image/ab676161000051745d4b995885f2d687bb5c48ac",
+                    "width": 320
+                },
+                {
+                    "height": 160,
+                    "url": "https://i.scdn.co/image/ab6761610000f1785d4b995885f2d687bb5c48ac",
+                    "width": 160
+                }
+            ],
+            "name": "Bad Omens",
+            "popularity": 73,
+            "type": "artist",
+            "uri": "spotify:artist:3Ri4H12KFyu98LMjSoij5V"
+        }
+    ],
+    "total": 153,
+    "limit": 5,
+    "offset": 0,
+    "href": "https://api.spotify.com/v1/me/top/artists?limit=5",
+    "next": "https://api.spotify.com/v1/me/top/artists?offset=5&limit=5",
+    "previous": null
+}
