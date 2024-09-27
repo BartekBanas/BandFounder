@@ -1,6 +1,6 @@
-namespace BandFounder.Application.Dtos;
+namespace BandFounder.Application.Dtos.Spotify;
 
-public class SpotifyTokenStorage
+public class TokenStorage
 {
     public required string AccessToken { get; set; }
     public required string RefreshToken { get; set; }

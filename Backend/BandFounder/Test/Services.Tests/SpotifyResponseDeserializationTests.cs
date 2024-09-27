@@ -1,5 +1,5 @@
 using System.Text.Json;
-using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Spotify;
 
 namespace Services.Tests;
 
@@ -16,7 +16,7 @@ public class SpotifyResponseDeserializationTests
     public void ShouldDeserializeSpotifyTopArtists()
     {
         var jsonString = File.ReadAllText(SpotifyTopArtistsResponsePath);
-        var spotifyResponse = JsonSerializer.Deserialize<SpotifyTopArtistsResponse>(jsonString) ?? throw new InvalidOperationException();
+        var spotifyResponse = JsonSerializer.Deserialize<TopArtistsResponse>(jsonString) ?? throw new InvalidOperationException();
 
         Assert.That(spotifyResponse, Is.Not.Null);
         Assert.That(spotifyResponse.Items, Is.Not.Null);

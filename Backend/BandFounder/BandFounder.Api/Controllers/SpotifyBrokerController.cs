@@ -1,4 +1,4 @@
-﻿using BandFounder.Application.Dtos;
+﻿using BandFounder.Application.Dtos.Spotify;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +17,7 @@ public class SpotifyBrokerController : ControllerBase
     }
 
     [HttpPost("authorize")]
-    public async Task<IActionResult> AuthorizeSpotifyAccount([FromBody] SpotifyAuthorizationRequest request)
+    public async Task<IActionResult> AuthorizeSpotifyAccount([FromBody] AuthorizationRequest request)
     {
         var spotifyAccessTokenService = new SpotifyAccessTokenService();
         await spotifyAccessTokenService.SaveAccessTokenAsync(request.AccessToken, request.RefreshToken, request.Duration);

@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Spotify;
 
 namespace BandFounder.Application.Services;
 
@@ -10,7 +10,7 @@ public class SpotifyAccessTokenService
 
     public async Task SaveAccessTokenAsync(string accessToken, string refreshToken, int durationInSeconds)
     {
-        var tokenData = new SpotifyTokenStorage
+        var tokenData = new TokenStorage
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
@@ -81,7 +81,7 @@ public class SpotifyAccessTokenService
         response.EnsureSuccessStatusCode();
         
         var responseContent = await response.Content.ReadAsStringAsync();
-        var spotifyAccessCredentials = JsonSerializer.Deserialize<SpotifyTokenRefreshResponse>(responseContent);
+        var spotifyAccessCredentials = JsonSerializer.Deserialize<TokenRefreshResponse>(responseContent);
 
         if (spotifyAccessCredentials is null)
         {
@@ -93,7 +93,7 @@ public class SpotifyAccessTokenService
         return spotifyAccessCredentials.AccessToken;
     }
 
-    private async Task<SpotifyTokenStorage> GetAccessTokenFromFileAsync()
+    private async Task<TokenStorage> GetAccessTokenFromFileAsync()
     {
         if (!File.Exists(StoreFilePath))
         {
@@ -101,7 +101,7 @@ public class SpotifyAccessTokenService
         }
 
         var json = await File.ReadAllTextAsync(StoreFilePath);
-        var tokenData = JsonSerializer.Deserialize<SpotifyTokenStorage>(json);
+        var tokenData = JsonSerializer.Deserialize<TokenStorage>(json);
 
         return tokenData ?? throw new InvalidOperationException();
     }

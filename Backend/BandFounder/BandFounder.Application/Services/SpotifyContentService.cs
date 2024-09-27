@@ -1,11 +1,11 @@
 using System.Text.Json;
-using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Spotify;
 
 namespace BandFounder.Application.Services;
 
 public class SpotifyContentService
 {
-    public static async Task<SpotifyTopArtistsResponse> GetTopArtistsAsync()
+    public static async Task<TopArtistsResponse> GetTopArtistsAsync()
     {
         var tokenService = new SpotifyAccessTokenService();
         var accessToken = await tokenService.GetAccessTokenAsync();
@@ -20,6 +20,6 @@ public class SpotifyContentService
         response.EnsureSuccessStatusCode();
         var responseBody = await response.Content.ReadAsStringAsync();
         
-        return JsonSerializer.Deserialize<SpotifyTopArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
+        return JsonSerializer.Deserialize<TopArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
     }
 }
