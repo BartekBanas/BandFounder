@@ -1,4 +1,5 @@
-﻿using BandFounder.Application.Services;
+﻿using BandFounder.Application.Dtos;
+using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;
@@ -13,5 +14,22 @@ public class SpotifyBrokerController : ControllerBase
         var credentials = await credentialManager.LoadCredentials();
 
         return Ok(credentials);
+    }
+
+    [HttpPost("authorize")]
+    public async Task<IActionResult> AuthorizeSpotifyAccount([FromBody] SpotifyAuthorizationRequest request)
+    {
+        var spotifyAccessTokenService = new SpotifyAccessTokenService();
+        await spotifyAccessTokenService.SaveAccessTokenAsync(request.AccessToken, request.RefreshToken, request.Duration);
+
+        return Ok();
+    }
+
+    [HttpGet("top/artists")]
+    public async Task<IActionResult> GetSpotifyUsersArtists()
+    {
+        var artists = await SpotifyContentService.GetTopArtistsAsync();
+
+        return Ok(artists);
     }
 }
