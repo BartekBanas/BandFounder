@@ -26,9 +26,17 @@ public class SpotifyBrokerController : ControllerBase
     }
 
     [HttpGet("top/artists")]
-    public async Task<IActionResult> GetSpotifyUsersArtists()
+    public async Task<IActionResult> GetSpotifyUsersTopArtists()
     {
         var artists = await SpotifyContentService.GetTopArtistsAsync();
+
+        return Ok(artists);
+    }
+
+    [HttpGet("followed/artists")]
+    public async Task<IActionResult> GetSpotifyUsersFollowedArtists()
+    {
+        var artists = await SpotifyContentService.GetFollowedArtistsAsync();
 
         return Ok(artists);
     }
