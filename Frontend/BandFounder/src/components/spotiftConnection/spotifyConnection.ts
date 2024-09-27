@@ -1,4 +1,5 @@
 import {SpotifyAppCredentialService} from "./spotifyAppCredentialService";
+import {API_URL} from "../../config";
 
 const configLoader = new SpotifyAppCredentialService();
 
@@ -14,7 +15,7 @@ export function requestAuthorization() {
     url += "&response_type=code";
     url += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
     url += "&show_dialog=true";
-    url += "&scope=user-read-private user-read-email user-modify-playback-state user-read-playback-position user-library-read streaming user-read-playback-state user-read-recently-played playlist-read-private";
+    url += "&scope=user-top-read";
     window.location.href = url; // Show Spotify's authorization screen
 }
 
@@ -44,7 +45,8 @@ function fetchAccessToken(code: string) {
     body += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
     body += "&client_id=" + configLoader.clientId;
     body += "&client_secret=" + configLoader.clientSecret;
-    callAuthorizationApi(body).then(_ => window.location.href = BaseAppUrl);
+    callAuthorizationApi(body)
+        // .then(_ => window.location.href = BaseAppUrl);
 }
 
 async function callAuthorizationApi(body: any) {
@@ -87,5 +89,31 @@ function handleAuthorizationResponse(data: any): void {
         console.log("Refresh token stored:", data.refresh_token);
     } else {
         console.log("No refresh token in response");
+    }
+
+    submitAuthorizationRequest(data.access_token, data.refresh_token, data.expires_in)
+        .then(_ => console.log('Authorization request submitted'));
+}
+
+async function submitAuthorizationRequest(accessToken: string, refreshToken: string, duration: number) {
+    console.log('Submitting authorization request');
+    console.log('Access token:', accessToken, 'Refresh token:', refreshToken, 'Duration:', duration);
+    const response = await fetch(`${API_URL}/spotifyBroker/authorize`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            duration: duration
+        })
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+        throw new Error(responseText);
     }
 }
