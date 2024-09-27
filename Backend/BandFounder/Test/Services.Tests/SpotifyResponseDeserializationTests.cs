@@ -5,8 +5,6 @@ namespace Services.Tests;
 
 public class SpotifyResponseDeserializationTests
 {
-    private const string SpotifyTopArtistsResponsePath = "./spotifyTopArtistsResponse.json";
-    
     [SetUp]
     public void Setup()
     {
@@ -15,9 +13,14 @@ public class SpotifyResponseDeserializationTests
     [Test]
     public void ShouldDeserializeSpotifyTopArtists()
     {
-        var jsonString = File.ReadAllText(SpotifyTopArtistsResponsePath);
+        // Arrange
+        var jsonFilePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "spotifyTopArtistsResponse.json");
+        var jsonString = File.ReadAllText(jsonFilePath);
+        
+        // Act
         var spotifyResponse = JsonSerializer.Deserialize<TopArtistsResponse>(jsonString) ?? throw new InvalidOperationException();
 
+        // Assert
         Assert.That(spotifyResponse, Is.Not.Null);
         Assert.That(spotifyResponse.Items, Is.Not.Null);
         Assert.That(spotifyResponse.Items, Has.Count.EqualTo(5));
@@ -40,10 +43,10 @@ public class SpotifyResponseDeserializationTests
     {
         // Arrange
         var jsonFilePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "spotifyFollowedArtistsResponse.json");
+        var jsonString = File.ReadAllText(jsonFilePath);
 
         // Act
-        var json = File.ReadAllText(jsonFilePath);
-        var spotifyResponse = JsonSerializer.Deserialize<FollowedArtistsResponse>(json);
+        var spotifyResponse = JsonSerializer.Deserialize<FollowedArtistsResponse>(jsonString);
 
         // Assert
         Assert.NotNull(spotifyResponse);
