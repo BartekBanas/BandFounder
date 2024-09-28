@@ -1,6 +1,6 @@
 using System.Text;
-using BandFounder.Api.Configuration;
 using BandFounder.Api.Controllers;
+using BandFounder.Application.Services.Jwt;
 using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +41,8 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true
     };
 });
+
+services.AddScoped<IJwtService, JwtService>();
 
 var app = builder.Build();
 

@@ -1,4 +1,4 @@
-﻿namespace BandFounder.Api.Configuration;
+﻿namespace BandFounder.Application.Services.Jwt;
 
 public class JwtConfiguration
 {
