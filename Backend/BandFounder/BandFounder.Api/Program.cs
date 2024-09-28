@@ -1,6 +1,10 @@
+using System.Text;
+using BandFounder.Api.Configuration;
 using BandFounder.Api.Controllers;
 using BandFounder.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -14,6 +18,29 @@ services.AddSwaggerGen();
 
 builder.Services.AddDbContext<BandFounderDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase")));
+
+services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
+
+var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConfiguration>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(bearerOptions =>
+{
+    bearerOptions.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = jwtConfig.Issuer,
+        ValidAudience = jwtConfig.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey
+            (Encoding.UTF8.GetBytes(jwtConfig.SecretKey)),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+});
 
 var app = builder.Build();
 
@@ -34,9 +61,8 @@ app.UseCors(policyBuilder => policyBuilder
 
 app.UseHttpsRedirection();
 
-// app.UseAuthentication();
-
-// app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
