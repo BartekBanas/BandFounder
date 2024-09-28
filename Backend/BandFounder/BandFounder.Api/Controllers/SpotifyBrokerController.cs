@@ -1,5 +1,5 @@
 ﻿using BandFounder.Application.Dtos.Spotify;
-using BandFounder.Application.Services;
+using BandFounder.Application.Services.Spotify;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;
