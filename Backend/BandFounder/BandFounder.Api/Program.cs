@@ -1,5 +1,6 @@
 using System.Text;
 using BandFounder.Api.Controllers;
+using BandFounder.Api.Extensions;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain;
@@ -25,6 +26,8 @@ builder.Services.AddDbContext<BandFounderDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase")));
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
+
+services.AddAuthorizationSwaggerGen();
 
 var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConfiguration>();
 builder.Services.AddAuthentication(options =>
