@@ -1,4 +1,8 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using System.Text;
+using BandFounder.Application.Services.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace BandFounder.Api.Extensions;
 
@@ -35,6 +39,29 @@ public static class BuilderServicesExtensions
                     Array.Empty<string>()
                 }
             });
+        });
+    }
+
+    public static void AddJwtAuthentication(this IServiceCollection services, JwtConfiguration jwtConfig)
+    {
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(bearerOptions =>
+        {
+            bearerOptions.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidIssuer = jwtConfig.Issuer,
+                ValidAudience = jwtConfig.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey
+                    (Encoding.UTF8.GetBytes(jwtConfig.SecretKey)),
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true
+            };
         });
     }
 }

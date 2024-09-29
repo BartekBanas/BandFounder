@@ -1,4 +1,3 @@
-using System.Text;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
 using BandFounder.Application.Services;
@@ -7,9 +6,7 @@ using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -27,28 +24,9 @@ builder.Services.AddDbContext<BandFounderDbContext>(options =>
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
 
-services.AddAuthorizationSwaggerGen();
-
 var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConfiguration>();
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(bearerOptions =>
-{
-    bearerOptions.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidIssuer = jwtConfig.Issuer,
-        ValidAudience = jwtConfig.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey
-            (Encoding.UTF8.GetBytes(jwtConfig.SecretKey)),
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true
-    };
-});
+services.AddJwtAuthentication(jwtConfig!);
+services.AddAuthorizationSwaggerGen();
 
 services.AddValidatorsFromAssembly(typeof(BandFounder.Application.Validation.AssemblyMarker).Assembly);
 
