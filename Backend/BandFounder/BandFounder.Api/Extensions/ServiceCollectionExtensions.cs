@@ -6,7 +6,7 @@ using Microsoft.OpenApi.Models;
 
 namespace BandFounder.Api.Extensions;
 
-public static class BuilderServicesExtensions
+public static class ServiceCollectionExtensions
 {
     public static void AddAuthorizationSwaggerGen(this IServiceCollection services)
     {
