@@ -18,6 +18,7 @@ var services = builder.Services;
 
 services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
 services.AddEndpointsApiExplorer();
+services.AddHttpContextAccessor();
 services.AddSwaggerGen();
 
 builder.Services.AddDbContext<BandFounderDbContext>(options =>
@@ -49,9 +50,12 @@ builder.Services.AddAuthentication(options =>
 services.AddValidatorsFromAssembly(typeof(BandFounder.Application.Validation.AssemblyMarker).Assembly);
 
 services.AddScoped<IJwtService, JwtService>();
+services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
 
 services.AddScoped<IRepository<Account>, Repository<Account, BandFounderDbContext>>();
 services.AddScoped<IHashingService, HashingService>();
+
+services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
 
