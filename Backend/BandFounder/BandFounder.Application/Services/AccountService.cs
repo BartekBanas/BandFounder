@@ -14,9 +14,9 @@ public interface IAccountService
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
     Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
     Task RegisterAccountAsync(RegisterAccountDto registerDto);
+    Task<string> AuthenticateAsync(LoginDto loginDto);
     Task<AccountDto> UpdateAccountAsync(Guid accountId, UpdateAccountDto updateDto);
     Task DeleteAccountAsync(Guid accountId);
-    Task<string> AuthenticateAsync(LoginDto loginDto);
 }
 
 public class AccountService : IAccountService
@@ -86,6 +86,24 @@ public class AccountService : IAccountService
         
         await _accountRepository.SaveChangesAsync();
     }
+
+    public async Task<string> AuthenticateAsync(LoginDto loginDto)
+    {
+        var foundAccount = await _accountRepository
+            .GetOneAsync(account =>
+                account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
+
+        if (foundAccount == default)
+            throw new ForbiddenError();
+
+        if (!_hashingService.VerifyPassword(foundAccount, loginDto.Password))
+            throw new ForbiddenError();
+
+        var claims = GenerateClaimsIdentity(foundAccount);
+
+        var token = _jwtService.GenerateSymmetricJwtToken(claims);
+        return token;
+    }
     
     public async Task<AccountDto> UpdateAccountAsync(Guid accountId, UpdateAccountDto updateDto)
     {
@@ -138,24 +156,6 @@ public class AccountService : IAccountService
         await _accountRepository.DeleteOneAsync(accountId);
 
         await _accountRepository.SaveChangesAsync();
-    }
-
-    public async Task<string> AuthenticateAsync(LoginDto loginDto)
-    {
-        var foundAccount = await _accountRepository
-            .GetOneAsync(account =>
-                account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
-
-        if (foundAccount == default)
-            throw new ForbiddenError();
-
-        if (!_hashingService.VerifyPassword(foundAccount, loginDto.Password))
-            throw new ForbiddenError();
-
-        var claims = GenerateClaimsIdentity(foundAccount);
-
-        var token = _jwtService.GenerateSymmetricJwtToken(claims);
-        return token;
     }
 
     private static ClaimsIdentity GenerateClaimsIdentity(Account account)
