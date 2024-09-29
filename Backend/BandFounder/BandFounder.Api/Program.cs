@@ -1,7 +1,11 @@
 using System.Text;
 using BandFounder.Api.Controllers;
+using BandFounder.Application.Services;
 using BandFounder.Application.Services.Jwt;
+using BandFounder.Domain;
+using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -42,7 +46,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+services.AddValidatorsFromAssembly(typeof(BandFounder.Application.Validation.AssemblyMarker).Assembly);
+
 services.AddScoped<IJwtService, JwtService>();
+
+services.AddScoped<IRepository<Account>, Repository<Account, BandFounderDbContext>>();
+services.AddScoped<IHashingService, HashingService>();
 
 var app = builder.Build();
 
