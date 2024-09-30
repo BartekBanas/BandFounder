@@ -6,4 +6,17 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="BCrypt.Net-Core" Version="1.6.0" />
+      <PackageReference Include="FluentValidation" Version="11.10.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0-rc.1.24431.7" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\BandFounder.Domain\BandFounder.Domain.csproj" />
+      <ProjectReference Include="..\BandFounder.Infrastructure\BandFounder.Infrastructure.csproj" />
+    </ItemGroup>
+
 </Project>

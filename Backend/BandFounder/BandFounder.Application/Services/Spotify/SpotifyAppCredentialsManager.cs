@@ -1,7 +1,7 @@
 using System.Text.Json;
 using BandFounder.Application.Dtos.Spotify;
 
-namespace BandFounder.Application.Services;
+namespace BandFounder.Application.Services.Spotify;
 
 public class SpotifyAppCredentialsManager
 {
