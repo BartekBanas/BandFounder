@@ -3,12 +3,25 @@ using BandFounder.Application.Dtos.Spotify;
 
 namespace BandFounder.Application.Services.Spotify;
 
-public class SpotifyContentService
+public interface ISpotifyContentService
 {
-    public static async Task<TopArtistsResponse> GetTopArtistsAsync()
+    Task<TopArtistsResponse> GetTopArtistsAsync();
+    Task<List<Artist>> GetFollowedArtistsAsync();
+}
+
+public class SpotifyContentService : ISpotifyContentService
+{
+    private readonly ISpotifyCredentialsService _credentialsService;
+
+    public SpotifyContentService(ISpotifyCredentialsService credentialsService)
     {
-        var tokenService = new SpotifyAccessTokenService();
-        var accessToken = await tokenService.GetAccessTokenAsync();
+        _credentialsService = credentialsService;
+    }
+
+    public async Task<TopArtistsResponse> GetTopArtistsAsync()
+    {
+        var accessToken = await _credentialsService.GetAccessTokenAsync();
+        
         const string url = "https://api.spotify.com/v1/me/top/artists?limit=5";
 
         using var client = new HttpClient();
@@ -23,9 +36,10 @@ public class SpotifyContentService
         return JsonSerializer.Deserialize<TopArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
     }
     
-    public static async Task<List<Artist>> GetFollowedArtistsAsync()
+    public async Task<List<Artist>> GetFollowedArtistsAsync()
     {
-        var accessToken = await new SpotifyAccessTokenService().GetAccessTokenAsync();
+        var accessToken = await _credentialsService.GetAccessTokenAsync();
+        
         var url = "https://api.spotify.com/v1/me/following?type=artist";
         var allArtists = new List<Artist>();
 
