@@ -7,28 +7,37 @@ namespace BandFounder.Api.Controllers;
 [Route("api/spotifyBroker")]
 public class SpotifyBrokerController : ControllerBase
 {
-    [HttpGet("credentials")]
-    public async Task<IActionResult> GetSpotifyAppCredentials()
-    {
-        var credentialManager = new SpotifyAppCredentialsManager();
-        var credentials = await credentialManager.LoadCredentials();
+    private readonly ISpotifyContentService _spotifyContentService;
+    private readonly ISpotifyCredentialsService _spotifyCredentialsService;
 
-        return Ok(credentials);
+    public SpotifyBrokerController(
+        ISpotifyContentService spotifyContentService,
+        ISpotifyCredentialsService spotifyCredentialsService)
+    {
+        _spotifyContentService = spotifyContentService;
+        _spotifyCredentialsService = spotifyCredentialsService;
     }
 
     [HttpPost("authorize")]
-    public async Task<IActionResult> AuthorizeSpotifyAccount([FromBody] AuthorizationRequest request)
+    public async Task<IActionResult> AuthorizeSpotifyAccount([FromBody] SpotifyAuthorizationDto dto)
     {
-        var spotifyAccessTokenService = new SpotifyAccessTokenService();
-        await spotifyAccessTokenService.SaveAccessTokenAsync(request.AccessToken, request.RefreshToken, request.Duration);
+        await _spotifyCredentialsService.CreateSpotifyCredentials(dto);
 
         return Ok();
+    }
+
+    [HttpGet("credentials")]
+    public async Task<IActionResult> GetSpotifyAppCredentials()
+    {
+        var credentialsDto = await _spotifyCredentialsService.GetSpotifyCredentials();
+
+        return Ok(credentialsDto);
     }
 
     [HttpGet("top/artists")]
     public async Task<IActionResult> GetSpotifyUsersTopArtists()
     {
-        var artists = await SpotifyContentService.GetTopArtistsAsync();
+        var artists = await _spotifyContentService.GetTopArtistsAsync();
 
         return Ok(artists);
     }
@@ -36,7 +45,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpGet("followed/artists")]
     public async Task<IActionResult> GetSpotifyUsersFollowedArtists()
     {
-        var artists = await SpotifyContentService.GetFollowedArtistsAsync();
+        var artists = await _spotifyContentService.GetFollowedArtistsAsync();
 
         return Ok(artists);
     }
