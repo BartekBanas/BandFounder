@@ -16,6 +16,8 @@ public interface ISpotifyCredentialsService
 
 public class SpotifyCredentialsService : ISpotifyCredentialsService
 {
+    private const string SpotifyRefreshTokenUrl = "https://accounts.spotify.com/api/token";
+    
     private readonly IRepository<SpotifyCredentials> _credentialsRepository;
     private readonly IRepository<Account> _accountRepository;
     private readonly IUserAuthenticationService _authenticationService;
@@ -82,15 +84,10 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
 
     private async Task<string> RefreshTokenAsync(string refreshToken)
     {
-        var spotifyAppCredentials = await new SpotifyAppCredentialsManager().LoadCredentials();
-
-        const string url = "https://accounts.spotify.com/api/token";
         using var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        var request = new HttpRequestMessage(HttpMethod.Post, SpotifyRefreshTokenUrl);
 
-        var authenticationHeaderValue =
-            Convert.ToBase64String(
-                Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
+        var authenticationHeaderValue = await GetAuthenticationHeader();
         request.Headers.Add("Authorization", $"Basic {authenticationHeaderValue}");
 
         var content = new FormUrlEncodedContent(new[]
@@ -116,6 +113,14 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         await SaveRefreshedAccessTokenAsync(spotifyAccessCredentials.AccessToken, spotifyAccessCredentials.Duration);
 
         return spotifyAccessCredentials.AccessToken;
+    }
+
+    private async Task<string> GetAuthenticationHeader()
+    {
+        var spotifyAppCredentials = await new SpotifyAppCredentialsManager().LoadCredentials();
+        
+        return Convert.ToBase64String(
+           Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
     }
 
     private async Task SaveRefreshedAccessTokenAsync(string accessToken, int duration)
