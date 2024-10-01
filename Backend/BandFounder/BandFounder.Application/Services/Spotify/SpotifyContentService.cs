@@ -5,7 +5,7 @@ namespace BandFounder.Application.Services.Spotify;
 
 public interface ISpotifyContentService
 {
-    Task<TopArtistsResponse> GetTopArtistsAsync();
+    Task<List<ArtistDto>> GetTopArtistsAsync();
     Task<List<ArtistDto>> GetFollowedArtistsAsync();
 }
 
@@ -21,7 +21,7 @@ public class SpotifyContentService : ISpotifyContentService
         _credentialsService = credentialsService;
     }
 
-    public async Task<TopArtistsResponse> GetTopArtistsAsync()
+    public async Task<List<ArtistDto>> GetTopArtistsAsync()
     {
         var accessToken = await _credentialsService.GetAccessTokenAsync();
         
@@ -34,7 +34,9 @@ public class SpotifyContentService : ISpotifyContentService
         response.EnsureSuccessStatusCode();
         var responseBody = await response.Content.ReadAsStringAsync();
         
-        return JsonSerializer.Deserialize<TopArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
+        var responseDto = JsonSerializer.Deserialize<TopArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
+        
+        return responseDto.Items;
     }
     
     public async Task<List<ArtistDto>> GetFollowedArtistsAsync()
