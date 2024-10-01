@@ -49,4 +49,12 @@ public class SpotifyBrokerController : ControllerBase
 
         return Ok(artists);
     }
+
+    [HttpPost("artists")]
+    public async Task<IActionResult> DownloadSpotifyArtists()
+    {
+        var artists = await _spotifyContentService.SaveRelevantArtists();
+
+        return Ok(artists);
+    }
 }
