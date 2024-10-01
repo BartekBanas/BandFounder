@@ -5,6 +5,7 @@ using BandFounder.Application.Services.Jwt;
 using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Domain.Entities.Spotify;
 using BandFounder.Infrastructure;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,7 @@ services.AddScoped<IJwtService, JwtService>();
 services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
 
 services.AddScoped<IRepository<Account>, Repository<Account, BandFounderDbContext>>();
+services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();
 services.AddScoped<IRepository<SpotifyCredentials>, Repository<SpotifyCredentials, BandFounderDbContext>>();
 
 services.AddScoped<IHashingService, HashingService>();
@@ -45,7 +47,7 @@ services.AddScoped<ISpotifyContentService, SpotifyContentService>();
 
 var app = builder.Build();
 
-// app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
+app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();
 
 // Configure the HTTP request pipeline.
