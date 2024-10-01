@@ -11,7 +11,7 @@ public class FollowedArtistsResponse
 public class ArtistsResponse
 {
     [JsonPropertyName("items")]
-    public required List<Artist> Items { get; init; }
+    public required List<ArtistDto> Items { get; init; }
 
     [JsonPropertyName("next")]
     public string? Next { get; init; }
