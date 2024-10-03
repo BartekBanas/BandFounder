@@ -23,17 +23,20 @@ public class SpotifyContentService : ISpotifyContentService
 
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<Account> _accountRepository;
+    private readonly IRepository<Genre> _genreRepository;
 
     public SpotifyContentService(
         ISpotifyCredentialsService credentialsService,
         IUserAuthenticationService userAuthenticationService,
-        IRepository<Artist> artistRepository, 
-        IRepository<Account> accountRepository)
+        IRepository<Artist> artistRepository,
+        IRepository<Account> accountRepository,
+        IRepository<Genre> genreRepository)
     {
         _credentialsService = credentialsService;
         _userAuthenticationService = userAuthenticationService;
         _artistRepository = artistRepository;
         _accountRepository = accountRepository;
+        _genreRepository = genreRepository;
     }
 
     public async Task<List<ArtistDto>> SaveRelevantArtists()
@@ -61,8 +64,27 @@ public class SpotifyContentService : ISpotifyContentService
                     Id = artistDto.Id,
                     Name = artistDto.Name,
                     Popularity = artistDto.Popularity,
-                    Genres = artistDto.Genres.Select(genre => new Genre { Name = genre }).ToList()
+                    Genres = []
                 };
+
+                // Check and add genres
+                foreach (var genreName in artistDto.Genres)
+                {
+                    // Check if genre already exists
+                    var existingGenre = await _genreRepository.GetOneAsync(genreName);
+                    if (existingGenre == null)
+                    {
+                        // If the genre does not exist, create a new Genre entity
+                        var newGenre = new Genre { Name = genreName };
+                        await _genreRepository.CreateAsync(newGenre);
+                        newArtist.Genres.Add(newGenre);
+                    }
+                    else
+                    {
+                        // If the genre already exists, add it to the artist's genres
+                        newArtist.Genres.Add(existingGenre);
+                    }
+                }
 
                 // Add the new artist to the DbSet
                 await _artistRepository.CreateAsync(newArtist);
@@ -84,6 +106,8 @@ public class SpotifyContentService : ISpotifyContentService
             }
         }
 
+        await _accountRepository.SaveChangesAsync();
+        
         return savedArtists;
     }
 
