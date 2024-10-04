@@ -81,8 +81,6 @@ public class AccountService : IAccountService
         await _validator.ValidateAsync(newAccount);
 
         await _accountRepository.CreateAsync(newAccount);
-
-        // Create new Credentials
         
         await _accountRepository.SaveChangesAsync();
     }
