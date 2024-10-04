@@ -14,14 +14,14 @@ public class SpotifyContentManager : ISpotifyContentManager
 {
     private readonly ISpotifyContentRetriever _spotifyContentRetriever;
     private readonly IUserAuthenticationService _userAuthenticationService;
-    
+
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<Account> _accountRepository;
     private readonly IRepository<Genre> _genreRepository;
 
     public SpotifyContentManager(
         ISpotifyContentRetriever spotifyContentRetriever,
-        IUserAuthenticationService userAuthenticationService, 
+        IUserAuthenticationService userAuthenticationService,
         IRepository<Artist> artistRepository,
         IRepository<Account> accountRepository,
         IRepository<Genre> genreRepository)
@@ -35,73 +35,82 @@ public class SpotifyContentManager : ISpotifyContentManager
 
     public async Task<List<ArtistDto>> SaveRelevantArtists()
     {
-        var topArtists = await _spotifyContentRetriever.GetTopArtistsAsync();
-        var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync();
-
+        var userArtists = await GetUserArtistsAsync();
         var userId = _userAuthenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(userId);
-
-        var usersArtists = topArtists.Concat(followedArtists).DistinctBy(artist => artist.Id).ToList();
-
         var savedArtists = new List<ArtistDto>();
 
-        foreach (var artistDto in usersArtists)
+        foreach (var artistDto in userArtists)
         {
-            // Check if artist already exists in the database
-            var existingArtist = await _artistRepository.GetOneAsync(artistDto.Id);
-
-            if (existingArtist == null)
-            {
-                // If the artist does not exist, create a new Artist entity
-                var newArtist = new Artist
-                {
-                    Id = artistDto.Id,
-                    Name = artistDto.Name,
-                    Popularity = artistDto.Popularity,
-                    Genres = []
-                };
-
-                // Check and add genres
-                foreach (var genreName in artistDto.Genres)
-                {
-                    // Check if genre already exists
-                    var existingGenre = await _genreRepository.GetOneAsync(genreName);
-                    if (existingGenre == null)
-                    {
-                        // If the genre does not exist, create a new Genre entity
-                        var newGenre = new Genre { Name = genreName };
-                        await _genreRepository.CreateAsync(newGenre);
-                        newArtist.Genres.Add(newGenre);
-                    }
-                    else
-                    {
-                        // If the genre already exists, add it to the artist's genres
-                        newArtist.Genres.Add(existingGenre);
-                    }
-                }
-
-                // Add the new artist to the DbSet
-                await _artistRepository.CreateAsync(newArtist);
-                savedArtists.Add(artistDto); // Add to saved list
-
-                // Add new artist to the account's artist collection
-                account.Artists.Add(newArtist);
-            }
-            else
-            {
-                // Artist already exists, add existing artist to the account's artist collection
-                if (account.Artists.All(artist => artist.Id != existingArtist.Id))
-                {
-                    account.Artists.Add(existingArtist);
-                }
-
-                // Optionally add to savedArtists if you want to keep track of all relevant artists
-                savedArtists.Add(artistDto);
-            }
+            await SaveArtistAndAddToAccountAsync(artistDto, account, savedArtists);
         }
 
         await _accountRepository.SaveChangesAsync();
-
         return savedArtists;
+    }
+
+    private async Task<List<ArtistDto>> GetUserArtistsAsync()
+    {
+        var topArtists = await _spotifyContentRetriever.GetTopArtistsAsync();
+        var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync();
+        return topArtists.Concat(followedArtists).DistinctBy(artist => artist.Id).ToList();
+    }
+
+    private async Task SaveArtistAndAddToAccountAsync(ArtistDto artistDto, Account account, List<ArtistDto> savedArtists)
+    {
+        var existingArtist = await _artistRepository.GetOneAsync(artistDto.Id);
+
+        if (existingArtist == null)
+        {
+            var newArtist = await CreateNewArtistAsync(artistDto);
+            await _artistRepository.CreateAsync(newArtist);
+            savedArtists.Add(artistDto);
+            account.Artists.Add(newArtist);
+        }
+        else
+        {
+            AddExistingArtistToAccount(existingArtist, account);
+            savedArtists.Add(artistDto);
+        }
+    }
+
+    private async Task<Artist> CreateNewArtistAsync(ArtistDto artistDto)
+    {
+        var newArtist = new Artist
+        {
+            Id = artistDto.Id,
+            Name = artistDto.Name,
+            Popularity = artistDto.Popularity,
+            Genres = new List<Genre>()
+        };
+
+        await AddGenresToArtistAsync(artistDto.Genres, newArtist);
+        return newArtist;
+    }
+
+    private async Task AddGenresToArtistAsync(List<string> genreNames, Artist artist)
+    {
+        foreach (var genreName in genreNames)
+        {
+            var existingGenre = await _genreRepository.GetOneAsync(genreName);
+            if (existingGenre == null)
+            {
+                var newGenre = new Genre { Name = genreName };
+                await _genreRepository.CreateAsync(newGenre);
+                artist.Genres.Add(newGenre);
+            }
+            else
+            {
+                artist.Genres.Add(existingGenre);
+            }
+        }
+    }
+
+    private void AddExistingArtistToAccount(Artist existingArtist, Account account)
+    {
+        if (account.Artists.All(artist => artist.Id != existingArtist.Id))
+        {
+            account.Artists.Add(existingArtist);
+        }
     }
 }
