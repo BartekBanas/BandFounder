@@ -8,13 +8,16 @@ namespace BandFounder.Api.Controllers;
 public class SpotifyBrokerController : ControllerBase
 {
     private readonly ISpotifyContentService _spotifyContentService;
+    private readonly ISpotifyContentManager _spotifyContentManager;
     private readonly ISpotifyCredentialsService _spotifyCredentialsService;
 
     public SpotifyBrokerController(
         ISpotifyContentService spotifyContentService,
+        ISpotifyContentManager spotifyContentManager,
         ISpotifyCredentialsService spotifyCredentialsService)
     {
         _spotifyContentService = spotifyContentService;
+        _spotifyContentManager = spotifyContentManager;
         _spotifyCredentialsService = spotifyCredentialsService;
     }
 
@@ -53,7 +56,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpPost("artists")]
     public async Task<IActionResult> DownloadSpotifyArtists()
     {
-        var artists = await _spotifyContentService.SaveRelevantArtists();
+        var artists = await _spotifyContentManager.SaveRelevantArtists();
 
         return Ok(artists);
     }
