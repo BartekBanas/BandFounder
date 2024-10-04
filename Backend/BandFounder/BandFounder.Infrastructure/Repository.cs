@@ -144,6 +144,27 @@ public class Repository<TEntity, TDbContext> : IRepository<TEntity>
 
         return entity;
     }
+    
+    public virtual async Task<TEntity> GetOneRequiredAsync(object key, string keyPropertyName, params string[] includeProperties)
+    {
+        IQueryable<TEntity> query = _dbSet;
+
+        // Eagerly load the specified include properties
+        foreach (var includeProperty in includeProperties)
+        {
+            query = query.Include(includeProperty);
+        }
+
+        // Use the key property name to find the entity
+        var entity = await query.FirstOrDefaultAsync(e => EF.Property<object>(e, keyPropertyName).Equals(key));
+
+        if (entity == null)
+        {
+            throw new ItemNotFoundErrorException();
+        }
+
+        return entity;
+    }
 
     public virtual async Task<TEntity> GetOneRequiredAsync(params object[] keys)
     {
