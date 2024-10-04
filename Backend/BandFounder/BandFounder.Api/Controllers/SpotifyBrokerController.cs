@@ -37,7 +37,7 @@ public class SpotifyBrokerController : ControllerBase
         return Ok(credentialsDto);
     }
 
-    [HttpGet("top/artists")]
+    [HttpGet("artists/top")]
     public async Task<IActionResult> GetSpotifyUsersTopArtists()
     {
         var artists = await _spotifyContentRetriever.GetTopArtistsAsync();
@@ -45,7 +45,7 @@ public class SpotifyBrokerController : ControllerBase
         return Ok(artists);
     }
 
-    [HttpGet("followed/artists")]
+    [HttpGet("artists/followed")]
     public async Task<IActionResult> GetSpotifyUsersFollowedArtists()
     {
         var artists = await _spotifyContentRetriever.GetFollowedArtistsAsync();
