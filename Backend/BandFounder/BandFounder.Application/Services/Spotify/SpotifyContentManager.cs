@@ -7,6 +7,7 @@ namespace BandFounder.Application.Services.Spotify;
 
 public interface ISpotifyContentManager
 {
+    Task<Dictionary<string, int>> GetWagedGenres(Guid? userId = null);
     Task<List<ArtistDto>> SaveRelevantArtists();
 }
 
@@ -31,6 +32,30 @@ public class SpotifyContentManager : ISpotifyContentManager
         _artistRepository = artistRepository;
         _accountRepository = accountRepository;
         _genreRepository = genreRepository;
+    }
+    
+    public async Task<Dictionary<string, int>> GetWagedGenres(Guid? userId = null)
+    {
+        var targetUserId = userId ?? _userAuthenticationService.GetUserId();
+
+        var account = await _accountRepository.GetOneRequiredAsync(
+            targetUserId, nameof(Artist.Id), "Artists", "Artists.Genres");
+        
+        var genreCount = new Dictionary<string, int>();
+
+        foreach (var genre in account.Artists.SelectMany(artist => artist.Genres))
+        {
+            if (genreCount.ContainsKey(genre.Name))
+            {
+                genreCount[genre.Name]++;
+            }
+            else
+            {
+                genreCount[genre.Name] = 1;
+            }
+        }
+
+        return genreCount;
     }
 
     public async Task<List<ArtistDto>> SaveRelevantArtists()

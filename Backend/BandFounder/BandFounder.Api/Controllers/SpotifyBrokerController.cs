@@ -60,4 +60,12 @@ public class SpotifyBrokerController : ControllerBase
 
         return Ok(artists);
     }
+
+    [HttpPost("genres/waged")]
+    public async Task<IActionResult> GetWagedGenres()
+    {
+        var wagedGenres = await _spotifyContentManager.GetWagedGenres();
+
+        return Ok(wagedGenres);
+    }
 }
