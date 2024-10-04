@@ -44,7 +44,7 @@ services.AddScoped<IHashingService, HashingService>();
 
 services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<ISpotifyCredentialsService, SpotifyCredentialsService>();
-services.AddScoped<ISpotifyContentService, SpotifyContentService>();
+services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
 
 var app = builder.Build();

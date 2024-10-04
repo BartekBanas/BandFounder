@@ -12,7 +12,7 @@ public interface ISpotifyContentManager
 
 public class SpotifyContentManager : ISpotifyContentManager
 {
-    private readonly ISpotifyContentService _spotifyContentService;
+    private readonly ISpotifyContentRetriever _spotifyContentRetriever;
     private readonly IUserAuthenticationService _userAuthenticationService;
     
     private readonly IRepository<Artist> _artistRepository;
@@ -20,13 +20,13 @@ public class SpotifyContentManager : ISpotifyContentManager
     private readonly IRepository<Genre> _genreRepository;
 
     public SpotifyContentManager(
-        ISpotifyContentService spotifyContentService,
+        ISpotifyContentRetriever spotifyContentRetriever,
         IUserAuthenticationService userAuthenticationService, 
         IRepository<Artist> artistRepository,
         IRepository<Account> accountRepository,
         IRepository<Genre> genreRepository)
     {
-        _spotifyContentService = spotifyContentService;
+        _spotifyContentRetriever = spotifyContentRetriever;
         _userAuthenticationService = userAuthenticationService;
         _artistRepository = artistRepository;
         _accountRepository = accountRepository;
@@ -35,8 +35,8 @@ public class SpotifyContentManager : ISpotifyContentManager
 
     public async Task<List<ArtistDto>> SaveRelevantArtists()
     {
-        var topArtists = await _spotifyContentService.GetTopArtistsAsync();
-        var followedArtists = await _spotifyContentService.GetFollowedArtistsAsync();
+        var topArtists = await _spotifyContentRetriever.GetTopArtistsAsync();
+        var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync();
 
         var userId = _userAuthenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(userId);

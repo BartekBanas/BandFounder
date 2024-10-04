@@ -7,16 +7,16 @@ namespace BandFounder.Api.Controllers;
 [Route("api/spotifyBroker")]
 public class SpotifyBrokerController : ControllerBase
 {
-    private readonly ISpotifyContentService _spotifyContentService;
+    private readonly ISpotifyContentRetriever _spotifyContentRetriever;
     private readonly ISpotifyContentManager _spotifyContentManager;
     private readonly ISpotifyCredentialsService _spotifyCredentialsService;
 
     public SpotifyBrokerController(
-        ISpotifyContentService spotifyContentService,
+        ISpotifyContentRetriever spotifyContentRetriever,
         ISpotifyContentManager spotifyContentManager,
         ISpotifyCredentialsService spotifyCredentialsService)
     {
-        _spotifyContentService = spotifyContentService;
+        _spotifyContentRetriever = spotifyContentRetriever;
         _spotifyContentManager = spotifyContentManager;
         _spotifyCredentialsService = spotifyCredentialsService;
     }
@@ -40,7 +40,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpGet("top/artists")]
     public async Task<IActionResult> GetSpotifyUsersTopArtists()
     {
-        var artists = await _spotifyContentService.GetTopArtistsAsync();
+        var artists = await _spotifyContentRetriever.GetTopArtistsAsync();
 
         return Ok(artists);
     }
@@ -48,7 +48,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpGet("followed/artists")]
     public async Task<IActionResult> GetSpotifyUsersFollowedArtists()
     {
-        var artists = await _spotifyContentService.GetFollowedArtistsAsync();
+        var artists = await _spotifyContentRetriever.GetFollowedArtistsAsync();
 
         return Ok(artists);
     }

@@ -3,20 +3,20 @@ using BandFounder.Application.Dtos.Spotify;
 
 namespace BandFounder.Application.Services.Spotify;
 
-public interface ISpotifyContentService
+public interface ISpotifyContentRetriever
 {
     Task<List<ArtistDto>> GetTopArtistsAsync();
     Task<List<ArtistDto>> GetFollowedArtistsAsync();
 }
 
-public class SpotifyContentService : ISpotifyContentService
+public class SpotifyContentRetriever : ISpotifyContentRetriever
 {
     private const string SpotifyTopArtistsUrl = "https://api.spotify.com/v1/me/top/artists?limit=50";
     private const string SpotifyFollowedArtistsUrl = "https://api.spotify.com/v1/me/following?type=artist";
     
     private readonly ISpotifyCredentialsService _credentialsService;
 
-    public SpotifyContentService(ISpotifyCredentialsService credentialsService)
+    public SpotifyContentRetriever(ISpotifyCredentialsService credentialsService)
     {
         _credentialsService = credentialsService;
     }
