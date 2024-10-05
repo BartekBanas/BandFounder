@@ -41,21 +41,21 @@ public class SpotifyContentManager : ISpotifyContentManager
         var account = await _accountRepository.GetOneRequiredAsync(
             targetUserId, nameof(Artist.Id), "Artists", "Artists.Genres");
         
-        var genreCount = new Dictionary<string, int>();
+        var wagedGenres = new Dictionary<string, int>();
 
         foreach (var genre in account.Artists.SelectMany(artist => artist.Genres))
         {
-            if (genreCount.ContainsKey(genre.Name))
+            if (!wagedGenres.TryAdd(genre.Name, 1))
             {
-                genreCount[genre.Name]++;
-            }
-            else
-            {
-                genreCount[genre.Name] = 1;
+                wagedGenres[genre.Name]++;
             }
         }
 
-        return genreCount;
+        var sortedWagedGenres = wagedGenres
+            .OrderByDescending(genre => genre.Value)
+            .ToDictionary(genre => genre.Key, genre => genre.Value);
+
+        return sortedWagedGenres;
     }
 
     public async Task<List<ArtistDto>> SaveRelevantArtists()
