@@ -9,7 +9,7 @@ public interface ISpotifyContentManager
 {
     Task<Dictionary<string, int>> GetWagedGenres(Guid? userId = null);
     Task<List<ArtistDto>> SaveRelevantArtists();
-    Task<List<ArtistDto>> GetUsersArtistsAsync();
+    Task<List<ArtistDto>> RetrieveSpotifyUsersArtistsAsync();
 }
 
 public class SpotifyContentManager : ISpotifyContentManager
@@ -61,7 +61,7 @@ public class SpotifyContentManager : ISpotifyContentManager
 
     public async Task<List<ArtistDto>> SaveRelevantArtists()
     {
-        var userArtists = await GetUsersArtistsAsync();
+        var userArtists = await RetrieveSpotifyUsersArtistsAsync();
         var userId = _userAuthenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(userId);
         var savedArtists = new List<ArtistDto>();
@@ -75,7 +75,7 @@ public class SpotifyContentManager : ISpotifyContentManager
         return savedArtists;
     }
 
-    public async Task<List<ArtistDto>> GetUsersArtistsAsync()
+    public async Task<List<ArtistDto>> RetrieveSpotifyUsersArtistsAsync()
     {
         var topArtists = await _spotifyContentRetriever.GetTopArtistsAsync();
         var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync();
