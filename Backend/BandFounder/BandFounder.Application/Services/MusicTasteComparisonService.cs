@@ -1,3 +1,5 @@
+using BandFounder.Domain.Entities;
+
 namespace BandFounder.Application.Services;
 
 public class MusicTasteComparisonService
@@ -15,18 +17,20 @@ public class MusicTasteComparisonService
     public async Task<int> CompareMusicTasteAsync(Guid userId)
     {
         var senderId = _userAuthenticationService.GetUserId();
+        
+        var user1 = await _accountService.GetDetailedAccount(senderId);
+        var user2 = await _accountService.GetDetailedAccount(userId);
 
-        var genreSimilarityScore = await CalculateGenreSimilarity(senderId, userId);
-
-        var artistSimilarityScore = await CalculateArtistSimilarity(senderId, userId);
+        var genreSimilarityScore = CalculateGenreSimilarity(user1, user2);
+        var artistSimilarityScore = CalculateArtistSimilarity(user1, user2);
 
         return genreSimilarityScore + artistSimilarityScore;
     }
 
-    private async Task<int> CalculateGenreSimilarity(Guid userId1, Guid userId2)
+    private int CalculateGenreSimilarity(Account user1, Account user2)
     {
-        var user1Genres = await GetWagedGenres(userId1);
-        var user2Genres = await GetWagedGenres(userId2);
+        var user1Genres = GetWagedGenres(user1);
+        var user2Genres = GetWagedGenres(user2);
 
         var genreSimilarityScore = 0;
 
@@ -43,11 +47,8 @@ public class MusicTasteComparisonService
         return genreSimilarityScore;
     }
 
-    private async Task<int> CalculateArtistSimilarity(Guid userId1, Guid userId2)
+    private int CalculateArtistSimilarity(Account user1, Account user2)
     {
-        var user1 = await _accountService.GetDetailedAccount(userId1);
-        var user2 = await _accountService.GetDetailedAccount(userId2);
-
         var user1ArtistIds = user1.Artists.Select(artist => artist.Id).ToHashSet();
         var user2ArtistIds = user2.Artists.Select(artist => artist.Id).ToHashSet();
 
@@ -58,10 +59,8 @@ public class MusicTasteComparisonService
         return artistSimilarityScore;
     }
 
-    private async Task<Dictionary<string, int>> GetWagedGenres(Guid userId)
+    private Dictionary<string, int> GetWagedGenres(Account account)
     {
-        var account = await _accountService.GetDetailedAccount(userId);
-
         var wagedGenres = new Dictionary<string, int>();
 
         foreach (var genre in account.Artists.SelectMany(artist => artist.Genres))
