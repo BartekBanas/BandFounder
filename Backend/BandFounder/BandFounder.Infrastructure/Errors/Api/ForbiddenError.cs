@@ -1,6 +1,6 @@
-﻿namespace BandFounder.Application.Errors;
+﻿namespace BandFounder.Infrastructure.Errors.Api;
 
-public class ForbiddenError : ErrorException
+public class ForbiddenError : Exception
 {
     public ForbiddenError()
     {
