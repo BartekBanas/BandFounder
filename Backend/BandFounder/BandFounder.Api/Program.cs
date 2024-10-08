@@ -7,6 +7,7 @@ using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Entities.Spotify;
 using BandFounder.Infrastructure;
+using BandFounder.Infrastructure.Middleware;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,7 +48,13 @@ services.AddScoped<ISpotifyCredentialsService, SpotifyCredentialsService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
 
+services.AddScoped<InfrastructureErrorHandlingMiddleware>();
+services.AddScoped<ErrorHandlingMiddleware>();
+
 var app = builder.Build();
+
+app.UseMiddleware<InfrastructureErrorHandlingMiddleware>();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();
