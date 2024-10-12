@@ -8,6 +8,8 @@ public class BandFounderDbContext : DbContext
 {
     public DbSet<Account> Accounts { get; set; }
     public DbSet<SpotifyCredentials> SpotifyCredentials { get; set; }
+    public DbSet<Artist> Artists { get; set; }
+    public DbSet<Genre> Genres { get; set; }
     
     public BandFounderDbContext(DbContextOptions options) : base(options)
     {
