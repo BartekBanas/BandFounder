@@ -6,7 +6,7 @@ namespace BandFounder.Domain.Entities;
 public class MusicProjectListing : Entity
 {
     [Key]
-    public required Guid Id { get; set; }
+    public Guid Id { get; set; }
 
     public required Guid AccountId { get; set; }
     public virtual Account Owner { get; set; } = null!;
