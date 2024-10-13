@@ -4,7 +4,7 @@ using BandFounder.Domain.Entities.Spotify;
 namespace BandFounder.Domain.Entities;
 
 public class Account : Entity
-{ 
+{
     [Key] 
     public required Guid Id { get; set; }
     
