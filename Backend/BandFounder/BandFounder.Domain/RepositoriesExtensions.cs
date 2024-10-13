@@ -1,5 +1,4 @@
 using BandFounder.Domain.Entities;
-using BandFounder.Domain.Entities.Spotify;
 
 namespace BandFounder.Domain;
 

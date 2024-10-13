@@ -3,7 +3,6 @@ using BandFounder.Application.Services;
 using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
-using BandFounder.Domain.Entities.Spotify;
 using NSubstitute;
 
 namespace Services.Tests;

@@ -1,7 +1,6 @@
 using BandFounder.Application.Dtos.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
-using BandFounder.Domain.Entities.Spotify;
 
 namespace BandFounder.Application.Services.Spotify;
 

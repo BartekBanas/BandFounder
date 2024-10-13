@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BandFounder.Domain.Entities.Spotify;
+namespace BandFounder.Domain.Entities;
 
 public class Genre : Entity
 {

@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using BandFounder.Domain.Entities.Spotify;
 
 namespace BandFounder.Domain.Entities;
 

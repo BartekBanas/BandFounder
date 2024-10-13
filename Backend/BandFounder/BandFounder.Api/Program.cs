@@ -5,7 +5,6 @@ using BandFounder.Application.Services.Jwt;
 using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
-using BandFounder.Domain.Entities.Spotify;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Middleware;
 using FluentValidation;
