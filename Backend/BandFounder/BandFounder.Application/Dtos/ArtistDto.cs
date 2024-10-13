@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace BandFounder.Application.Dtos.Spotify;
+namespace BandFounder.Application.Dtos;
 
 public class ArtistDto
 {

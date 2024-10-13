@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Spotify;
 
 namespace BandFounder.Application.Services.Spotify;

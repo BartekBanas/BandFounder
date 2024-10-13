@@ -1,4 +1,4 @@
-using BandFounder.Application.Dtos.Spotify;
+using BandFounder.Application.Dtos;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 
