@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using BandFounder.Domain;
+using BandFounder.Domain.Entities;
 using BandFounder.Domain.Entities.Spotify;
 using NSubstitute;
 
@@ -7,12 +9,13 @@ namespace Domain.Tests;
 public class RepositoriesExtensionsTests
 {
     private IRepository<Genre> _genreRepository;
+    private IRepository<MusicianRole> _musicianRoleRepository;
 
     [SetUp]
     public void SetUp()
     {
-        // Set up a mock repository for Genre
         _genreRepository = Substitute.For<IRepository<Genre>>();
+        _musicianRoleRepository = Substitute.For<IRepository<MusicianRole>>();
     }
     
     [Test]
@@ -115,5 +118,80 @@ public class RepositoriesExtensionsTests
 
         // Assert
         await _genreRepository.Received(1).CreateAsync(Arg.Is<Genre>(genre => genre.Name == normalizedGenreName));
+    }
+    
+    [Test]
+    public void GetOrCreateAsync_ShouldThrowArgumentException_WhenRoleNameIsEmpty()
+    {
+        // Arrange
+        var emptyRoleName = "  ";
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<ArgumentException>(
+            () => _musicianRoleRepository.GetOrCreateAsync(emptyRoleName));
+        Assert.That(ex.Message, Is.EqualTo("Role name cannot be empty or whitespace."));
+    }
+
+    [Test]
+    public async Task GetOrCreateAsync_ShouldReturnExistingRole_WhenRoleAlreadyExists()
+    {
+        // Arrange
+        var roleName = "Guitarist";
+        var normalizedRoleName = "Guitarist";
+        var existingRole = new MusicianRole { RoleName = normalizedRoleName };
+
+        // Mock the repository to return an existing role
+        _musicianRoleRepository
+            .GetOneAsync(Arg.Any<Expression<Func<MusicianRole, bool>>>())
+            .Returns(existingRole);
+
+        // Act
+        var result = await _musicianRoleRepository.GetOrCreateAsync(roleName);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(existingRole));
+        await _musicianRoleRepository.DidNotReceive().CreateAsync(Arg.Any<MusicianRole>());
+    }
+
+    [Test]
+    public async Task GetOrCreateAsync_ShouldCreateNewRole_WhenRoleDoesNotExist()
+    {
+        // Arrange
+        var roleName = "Drummer";
+        var normalizedRoleName = "Drummer";
+        MusicianRole? nullRole = null;
+
+        // Mock the repository to return null (no existing role found)
+        _musicianRoleRepository
+            .GetOneAsync(Arg.Any<Expression<Func<MusicianRole, bool>>>())
+            .Returns(nullRole);
+
+        // Act
+        var result = await _musicianRoleRepository.GetOrCreateAsync(roleName);
+
+        // Assert
+        Assert.That(result.RoleName, Is.EqualTo(normalizedRoleName));
+        await _musicianRoleRepository.Received(1).CreateAsync(Arg.Is<MusicianRole>(r => r.RoleName == normalizedRoleName));
+    }
+
+    [Test]
+    public async Task GetOrCreateAsync_ShouldNormalizeRoleName()
+    {
+        // Arrange
+        var roleName = "  lead   guitarist ";
+        var normalizedRoleName = "Lead Guitarist";
+        MusicianRole? nullRole = null;
+
+        // Mock the repository to return null (no existing role found)
+        _musicianRoleRepository
+            .GetOneAsync(Arg.Any<Expression<Func<MusicianRole, bool>>>())
+            .Returns(nullRole);
+
+        // Act
+        var result = await _musicianRoleRepository.GetOrCreateAsync(roleName);
+
+        // Assert
+        Assert.That(result.RoleName, Is.EqualTo(normalizedRoleName));
+        await _musicianRoleRepository.Received(1).CreateAsync(Arg.Is<MusicianRole>(r => r.RoleName == normalizedRoleName));
     }
 }
