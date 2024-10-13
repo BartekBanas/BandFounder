@@ -7,6 +7,7 @@ namespace BandFounder.Application.Services;
 public interface IMusicCollaborationService
 {
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
+    Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync();
 }
 
 public class MusicCollaborationService : IMusicCollaborationService
@@ -19,7 +20,7 @@ public class MusicCollaborationService : IMusicCollaborationService
 
     public MusicCollaborationService(
         IAccountService accountService,
-        IUserAuthenticationService userAuthenticationService, 
+        IUserAuthenticationService userAuthenticationService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
         IRepository<MusicProjectListing> musicProjectListingRepository)
@@ -33,8 +34,8 @@ public class MusicCollaborationService : IMusicCollaborationService
 
     public async Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto)
     {
-        var accountId = _userAuthenticationService.GetUserId();
-        await _accountService.GetAccountAsync(accountId);
+        var userId = _userAuthenticationService.GetUserId();
+        await _accountService.GetAccountAsync(userId);
 
         if (dto.GenreName is not null)
         {
@@ -43,7 +44,7 @@ public class MusicCollaborationService : IMusicCollaborationService
 
         var musicProjectListing = new MusicProjectListing
         {
-            AccountId = accountId,
+            AccountId = userId,
             GenreName = dto.GenreName,
             Type = dto.Type,
             Description = dto.Description
@@ -67,5 +68,14 @@ public class MusicCollaborationService : IMusicCollaborationService
         await _musicianRoleRepository.SaveChangesAsync();
 
         return musicProjectListing;
+    }
+
+    public async Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync()
+    {
+        var userId = _userAuthenticationService.GetUserId();
+
+        var myProjectListings = await _musicProjectListingRepository.GetAsync(project => project.Owner.Id == userId);
+
+        return myProjectListings;
     }
 }
