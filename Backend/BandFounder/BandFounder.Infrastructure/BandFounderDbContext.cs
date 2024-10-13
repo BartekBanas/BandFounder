@@ -64,7 +64,7 @@ public class BandFounderDbContext : DbContext
 
         // Configuring many-to-many relationship between Account and MusicianRole
         modelBuilder.Entity<Account>()
-            .HasMany(account => account.MusicRoles)
+            .HasMany(account => account.MusicianRoles)
             .WithMany(role => role.Accounts);
         // .UsingEntity<Dictionary<string, object>>(
         //     "AccountMusicRole",

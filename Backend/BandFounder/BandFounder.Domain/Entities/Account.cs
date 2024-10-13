@@ -22,4 +22,10 @@ public class Account : Entity
     
     // Many-to-Many relationship with Artist
     public virtual List<Artist> Artists { get; set; } = [];
+    
+    // One-to-Many relationship with MusicCollaboration
+    public virtual List<MusicProjectListing> MusicProjectListings { get; set; } = [];
+    
+    // Many-to-Many relationship with MusicRole
+    public virtual List<MusicianRole> MusicianRoles { get; set; } = [];
 }
