@@ -53,13 +53,13 @@ public class BandFounderDbContext : DbContext
         modelBuilder.Entity<MusicProjectListing>()
             .HasMany(listing => listing.MusicianSlots)
             .WithOne(slot => slot.Listing)
-            .HasForeignKey(slot => slot.Listing.Id);
+            .HasForeignKey(slot => slot.ListingId);
 
         // Configuring one-to-many relationship: MusicianSlot has one MusicianRole
         modelBuilder.Entity<MusicianSlot>()
             .HasOne(slot => slot.Role)
             .WithMany()
-            .HasForeignKey(slot => slot.Role.Id);
+            .HasForeignKey(slot => slot.RoleId);
 
         // Configuring many-to-many relationship between Account and MusicianRole
         modelBuilder.Entity<Account>()
