@@ -58,6 +58,19 @@ public class RepositoriesExtensionsTests
         // Assert
         Assert.That(result, Is.EqualTo(expectedOutput));
     }
+    
+    [TestCase("k-pop girl group", "K-pop Girl Group")]
+    [TestCase("nu-metalcore", "Nu-metalcore")]
+    [TestCase("pov: indie", "Pov: Indie")]
+    [TestCase("australian post-hardcore", "Australian Post-hardcore")]
+    public void NormalizeGenreName_ShouldHandleComplexCasesCorrectly(string input, string expectedOutput)
+    {
+        // Act
+        var result = RepositoriesExtensions.NormalizeName(input);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(expectedOutput));
+    }
 
     [Test]
     public async Task TryAddGenreAsync_ShouldThrowArgumentException_WhenGenreNameIsEmpty()
