@@ -6,8 +6,9 @@ namespace BandFounder.Application.Services;
 
 public interface IMusicCollaborationService
 {
-    Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
+    Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync();
     Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync();
+    Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
 }
 
 public class MusicCollaborationService : IMusicCollaborationService
@@ -30,6 +31,22 @@ public class MusicCollaborationService : IMusicCollaborationService
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
         _musicProjectListingRepository = musicProjectListingRepository;
+    }
+    
+    public async Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync()
+    {
+        var projectListings = await _musicProjectListingRepository.GetAsync();
+
+        return projectListings;
+    }
+    
+    public async Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync()
+    {
+        var userId = _userAuthenticationService.GetUserId();
+
+        var myProjectListings = await _musicProjectListingRepository.GetAsync(project => project.Owner.Id == userId);
+
+        return myProjectListings;
     }
 
     public async Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto)
@@ -68,14 +85,5 @@ public class MusicCollaborationService : IMusicCollaborationService
         await _musicianRoleRepository.SaveChangesAsync();
 
         return musicProjectListing;
-    }
-
-    public async Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync()
-    {
-        var userId = _userAuthenticationService.GetUserId();
-
-        var myProjectListings = await _musicProjectListingRepository.GetAsync(project => project.Owner.Id == userId);
-
-        return myProjectListings;
     }
 }

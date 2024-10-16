@@ -17,6 +17,15 @@ public class MusicCollaborationController : Controller
     }
 
     [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetMusicProjectListings()
+    {
+        var musicProjects = await _musicCollaborationService.GetMusicProjectsAsync();
+        
+        return Ok(musicProjects);
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMyMusicProjectListings()
     {
