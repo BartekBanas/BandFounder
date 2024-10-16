@@ -117,10 +117,11 @@ public class SpotifyContentManager : ISpotifyContentManager
     {
         foreach (var genreName in genreNames)
         {
-            var existingGenre = await _genreRepository.GetOneAsync(genreName);
+            var normalizedGenreName = RepositoriesExtensions.NormalizeName(genreName);
+            var existingGenre = await _genreRepository.GetOneAsync(normalizedGenreName);
             if (existingGenre == null)
             {
-                var newGenre = new Genre { Name = genreName };
+                var newGenre = new Genre { Name = normalizedGenreName };
                 await _genreRepository.CreateAsync(newGenre);
                 artist.Genres.Add(newGenre);
             }
