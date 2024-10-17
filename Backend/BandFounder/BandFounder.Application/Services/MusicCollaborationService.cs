@@ -17,6 +17,7 @@ public class MusicCollaborationService : IMusicCollaborationService
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly IRepository<Genre> _genreRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
+    private readonly IRepository<MusicianSlot> _musicianSlotRepository;
     private readonly IRepository<MusicProjectListing> _musicProjectListingRepository;
 
     public MusicCollaborationService(
@@ -24,12 +25,14 @@ public class MusicCollaborationService : IMusicCollaborationService
         IUserAuthenticationService userAuthenticationService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
+        IRepository<MusicianSlot> musicianSlotRepository,
         IRepository<MusicProjectListing> musicProjectListingRepository)
     {
         _accountService = accountService;
         _userAuthenticationService = userAuthenticationService;
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
+        _musicianSlotRepository = musicianSlotRepository;
         _musicProjectListingRepository = musicProjectListingRepository;
     }
     
