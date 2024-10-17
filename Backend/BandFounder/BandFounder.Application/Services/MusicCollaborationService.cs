@@ -19,6 +19,8 @@ public class MusicCollaborationService : IMusicCollaborationService
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IRepository<MusicianSlot> _musicianSlotRepository;
     private readonly IRepository<MusicProjectListing> _musicProjectListingRepository;
+    
+    private Guid UserId => _userAuthenticationService.GetUserId();
 
     public MusicCollaborationService(
         IAccountService accountService,
@@ -45,9 +47,7 @@ public class MusicCollaborationService : IMusicCollaborationService
     
     public async Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync()
     {
-        var userId = _userAuthenticationService.GetUserId();
-
-        var myProjectListings = await _musicProjectListingRepository.GetAsync(project => project.Owner.Id == userId);
+        var myProjectListings = await _musicProjectListingRepository.GetAsync(project => project.Owner.Id == UserId);
 
         return myProjectListings;
     }
