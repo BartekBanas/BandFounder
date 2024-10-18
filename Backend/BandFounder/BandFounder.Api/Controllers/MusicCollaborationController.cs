@@ -1,5 +1,6 @@
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Services;
+using BandFounder.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,6 +40,15 @@ public class MusicCollaborationController : Controller
     public async Task<IActionResult> CreateMusicProjectListing(MusicProjectListingCreateDto dto)
     {
         await _musicCollaborationService.CreateMusicProjectListingAsync(dto);
+        
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPut("slot/{musicSlotId:guid}")]
+    public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid musicSlotId, SlotStatus status)
+    {
+        await _musicCollaborationService.UpdateSlotStatus(musicSlotId, status);
         
         return Ok();
     }
