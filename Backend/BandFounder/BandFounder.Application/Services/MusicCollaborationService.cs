@@ -1,6 +1,7 @@
 using BandFounder.Application.Dtos;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Errors.Api;
 
 namespace BandFounder.Application.Services;
 
@@ -9,6 +10,7 @@ public interface IMusicCollaborationService
     Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync();
     Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync();
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
+    Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null);
 }
 
 public class MusicCollaborationService : IMusicCollaborationService
@@ -88,5 +90,19 @@ public class MusicCollaborationService : IMusicCollaborationService
         await _musicianRoleRepository.SaveChangesAsync();
 
         return musicProjectListing;
+    }
+
+    public async Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null)
+    {
+        var musicianSlot = await _musicianSlotRepository.GetOneRequiredAsync(slotId);
+        var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync
+            (listing => listing.Id == musicianSlot.ListingId);
+
+        if (UserId != projectListing.AccountId)
+        {
+            throw new ForbiddenError("You do not have access to this music project listing");
+        }
+        
+        musicianSlot.Status = slotStatus;
     }
 }
