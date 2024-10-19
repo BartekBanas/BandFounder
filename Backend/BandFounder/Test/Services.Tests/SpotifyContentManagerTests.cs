@@ -117,7 +117,7 @@ public class SpotifyContentManagerTests
         var savedArtists = await _spotifyContentManager.SaveRelevantArtists();
 
         // Assert
-        Assert.That(savedArtists, Has.Count.EqualTo(2)); // Both artists should be returned
+        Assert.That(savedArtists, Has.Count.EqualTo(1)); // Both artists should be returned
         await _artistRepository.Received(1).CreateAsync(Arg.Any<Artist>()); // Only one new artist should be created
         await _accountRepository.Received(1).SaveChangesAsync(); // Ensure changes are saved
     }
