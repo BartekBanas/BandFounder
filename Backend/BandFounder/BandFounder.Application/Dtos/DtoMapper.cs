@@ -34,4 +34,28 @@ public static class DtoMapper
     {
         return spotifyCredentials.Select(credentials => credentials.ToDto());
     }
+
+    public static IEnumerable<MusicProjectListingDto> ToDto(this IEnumerable<MusicProjectListing> musicProjectListings)
+    {
+        return musicProjectListings.Select(listing => listing.ToDto());
+    }
+
+    public static MusicProjectListingDto ToDto(this MusicProjectListing musicProjectListing)
+    {
+        return new MusicProjectListingDto
+        {
+            Id = musicProjectListing.Id,
+            Name = musicProjectListing.Name,
+            GenreName = musicProjectListing.GenreName,
+            Description = musicProjectListing.Description,
+            Type = musicProjectListing.Type,
+            MusicianSlots = musicProjectListing.MusicianSlots
+                .Select(slot => new MusicianSlotDto
+                {
+                    Id = slot.Id,
+                    Role = slot.Role.RoleName,
+                    Status = slot.Status
+                }).ToList()
+        };
+    }
 }
