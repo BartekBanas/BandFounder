@@ -68,7 +68,7 @@ public class SpotifyBrokerController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("genres/waged")]
+    [HttpGet("genres/waged")]
     public async Task<IActionResult> GetWagedGenres()
     {
         var wagedGenres = await _spotifyContentManager.GetWagedGenres();
