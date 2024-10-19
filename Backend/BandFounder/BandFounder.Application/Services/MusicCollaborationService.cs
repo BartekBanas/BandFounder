@@ -67,6 +67,7 @@ public class MusicCollaborationService : IMusicCollaborationService
         var musicProjectListing = new MusicProjectListing
         {
             AccountId = userId,
+            Name = dto.Name,
             GenreName = dto.GenreName,
             Type = dto.Type,
             Description = dto.Description

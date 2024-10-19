@@ -4,8 +4,9 @@ namespace BandFounder.Application.Dtos;
 
 public class MusicProjectListingCreateDto
 {
+    public required string Name { get; set; }
     public string? GenreName { get; set; }
     public required MusicProjectType Type { get; set; }
     public string? Description { get; set; }
-    public List<MusicianSlotCreateDto> MusicianSlots { get; set; } = [];
+    public required List<MusicianSlotCreateDto> MusicianSlots { get; set; } = [];
 }

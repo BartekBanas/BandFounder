@@ -11,8 +11,8 @@ public class BandFounderDbContext : DbContext
     public DbSet<Genre> Genres { get; set; }
     
     public DbSet<MusicianRole> MusicianRoles { get; set; }
-    public DbSet<MusicProjectListing> MusicProjectListings { get; set; }
     public DbSet<MusicianSlot> MusicianSlots { get; set; }
+    public DbSet<MusicProjectListing> MusicProjectListings { get; set; }
     
     public BandFounderDbContext(DbContextOptions options) : base(options)
     {
