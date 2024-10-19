@@ -4,7 +4,7 @@ namespace BandFounder.Domain;
 
 public static class RepositoriesExtensions
 {
-    public static async Task TryAdd(this IRepository<Genre> repository, string genreName)
+    public static async Task<Genre> GetOrCreateAsync(this IRepository<Genre> repository, string genreName)
     {
         // Validate input: check if it's null, empty or contains only white spaces
         if (string.IsNullOrWhiteSpace(genreName))
@@ -21,7 +21,14 @@ public static class RepositoriesExtensions
         // If genre does not exist, create a new genre
         if (existingGenre is null)
         {
-            await repository.CreateAsync(new Genre { Name = normalizedGenreName });
+            var newGenre = new Genre { Name = normalizedGenreName };
+            await repository.CreateAsync(newGenre);
+            
+            return newGenre;
+        }
+        else
+        {
+            return existingGenre;
         }
     }
     

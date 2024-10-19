@@ -59,16 +59,17 @@ public class MusicCollaborationService : IMusicCollaborationService
         var userId = _userAuthenticationService.GetUserId();
         await _accountService.GetAccountAsync(userId);
 
+        Genre? projectGenre = null;
         if (dto.GenreName is not null)
         {
-            await _genreRepository.TryAdd(dto.GenreName);
+            projectGenre = await _genreRepository.GetOrCreateAsync(dto.GenreName);
         }
 
         var musicProjectListing = new MusicProjectListing
         {
             AccountId = userId,
             Name = dto.Name,
-            GenreName = dto.GenreName,
+            Genre = projectGenre,
             Type = dto.Type,
             Description = dto.Description
         };

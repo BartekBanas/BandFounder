@@ -80,7 +80,7 @@ public class RepositoriesExtensionsTests
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<ArgumentException>(
-            () => _genreRepository.TryAdd(emptyGenreName));
+            () => _genreRepository.GetOrCreateAsync(emptyGenreName));
         Assert.That(ex.Message, Is.EqualTo("Genre name cannot be empty or whitespace."));
     }
 
@@ -94,7 +94,7 @@ public class RepositoriesExtensionsTests
         _genreRepository.GetOneAsync(normalizedGenreName).Returns(new Genre { Name = normalizedGenreName });
 
         // Act
-        await _genreRepository.TryAdd(genreName);
+        await _genreRepository.GetOrCreateAsync(genreName);
 
         // Assert
         await _genreRepository.DidNotReceive().CreateAsync(Arg.Any<Genre>());
@@ -110,7 +110,7 @@ public class RepositoriesExtensionsTests
         _genreRepository.GetOneAsync(normalizedGenreName).Returns((Genre)null);
 
         // Act
-        await _genreRepository.TryAdd(genreName);
+        await _genreRepository.GetOrCreateAsync(genreName);
 
         // Assert
         await _genreRepository.Received(1).CreateAsync(Arg.Is<Genre>(genre => genre.Name == normalizedGenreName));
@@ -126,7 +126,7 @@ public class RepositoriesExtensionsTests
         _genreRepository.GetOneAsync(normalizedGenreName).Returns((Genre)null);
 
         // Act
-        await _genreRepository.TryAdd(genreName);
+        await _genreRepository.GetOrCreateAsync(genreName);
 
         // Assert
         await _genreRepository.Received(1).CreateAsync(Arg.Is<Genre>(genre => genre.Name == normalizedGenreName));
