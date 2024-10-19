@@ -67,7 +67,15 @@ public class SpotifyContentManager : ISpotifyContentManager
 
         foreach (var artistDto in userArtists)
         {
-            await SaveArtistAndAddToAccountAsync(artistDto, account, savedArtists);
+            var existingArtist = await _artistRepository.GetOneAsync(artistDto.Id);
+
+            if (existingArtist == null)
+            {
+                var newArtist = await CreateNewArtistAsync(artistDto);
+                await _artistRepository.CreateAsync(newArtist);
+                savedArtists.Add(artistDto);
+                account.Artists.Add(newArtist);
+            }
         }
 
         await _accountRepository.SaveChangesAsync();
