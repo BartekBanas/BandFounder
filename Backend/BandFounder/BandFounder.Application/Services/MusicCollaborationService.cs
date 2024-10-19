@@ -7,6 +7,7 @@ namespace BandFounder.Application.Services;
 
 public interface IMusicCollaborationService
 {
+    Task<MusicProjectListingDto> GetListingAsync(Guid listingId);
     Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync();
     Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync();
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
@@ -38,6 +39,14 @@ public class MusicCollaborationService : IMusicCollaborationService
         _musicianRoleRepository = musicianRoleRepository;
         _musicianSlotRepository = musicianSlotRepository;
         _musicProjectListingRepository = musicProjectListingRepository;
+    }
+
+    public async Task<MusicProjectListingDto> GetListingAsync(Guid listingId)
+    {
+        var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync(listingId, "Id",
+            nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role");
+        
+        return projectListing.ToDto();
     }
     
     public async Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync()

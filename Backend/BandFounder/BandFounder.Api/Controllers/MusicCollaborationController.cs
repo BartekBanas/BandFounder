@@ -18,6 +18,15 @@ public class MusicCollaborationController : Controller
     }
 
     [Authorize]
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetMusicProjectListing([FromRoute] Guid id)
+    {
+        var listing = await _musicCollaborationService.GetListingAsync(id);
+        
+        return Ok(listing);
+    }
+
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetMusicProjectListings()
     {
