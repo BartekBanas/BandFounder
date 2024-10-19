@@ -10,18 +10,18 @@ namespace BandFounder.Api.Controllers;
 [Route("api/collaboration")]
 public class MusicCollaborationController : Controller
 {
-    private readonly IMusicCollaborationService _musicCollaborationService;
+    private readonly ICollaborationService _collaborationService;
 
-    public MusicCollaborationController(IMusicCollaborationService musicCollaborationService)
+    public MusicCollaborationController(ICollaborationService collaborationService)
     {
-        _musicCollaborationService = musicCollaborationService;
+        _collaborationService = collaborationService;
     }
 
     [Authorize]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetMusicProjectListing([FromRoute] Guid id)
     {
-        var listing = await _musicCollaborationService.GetListingAsync(id);
+        var listing = await _collaborationService.GetListingAsync(id);
         
         return Ok(listing);
     }
@@ -30,7 +30,7 @@ public class MusicCollaborationController : Controller
     [HttpGet]
     public async Task<IActionResult> GetMusicProjectListings()
     {
-        var musicProjects = await _musicCollaborationService.GetMusicProjectsAsync();
+        var musicProjects = await _collaborationService.GetMusicProjectsAsync();
         
         return Ok(musicProjects);
     }
@@ -39,7 +39,7 @@ public class MusicCollaborationController : Controller
     [HttpGet("me")]
     public async Task<IActionResult> GetMyMusicProjectListings()
     {
-        var myProjects = await _musicCollaborationService.GetMyMusicProjectsAsync();
+        var myProjects = await _collaborationService.GetMyMusicProjectsAsync();
         
         return Ok(myProjects);
     }
@@ -48,7 +48,7 @@ public class MusicCollaborationController : Controller
     [HttpPost]
     public async Task<IActionResult> CreateMusicProjectListing(MusicProjectListingCreateDto dto)
     {
-        await _musicCollaborationService.CreateMusicProjectListingAsync(dto);
+        await _collaborationService.CreateMusicProjectListingAsync(dto);
         
         return Ok();
     }
@@ -57,7 +57,7 @@ public class MusicCollaborationController : Controller
     [HttpPut("slot/{musicSlotId:guid}")]
     public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid musicSlotId, SlotStatus status)
     {
-        await _musicCollaborationService.UpdateSlotStatus(musicSlotId, status);
+        await _collaborationService.UpdateSlotStatus(musicSlotId, status);
         
         return Ok();
     }

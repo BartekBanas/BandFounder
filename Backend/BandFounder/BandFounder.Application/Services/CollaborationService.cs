@@ -5,7 +5,7 @@ using BandFounder.Infrastructure.Errors.Api;
 
 namespace BandFounder.Application.Services;
 
-public interface IMusicCollaborationService
+public interface ICollaborationService
 {
     Task<MusicProjectListingDto> GetListingAsync(Guid listingId);
     Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync();
@@ -14,7 +14,7 @@ public interface IMusicCollaborationService
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null);
 }
 
-public class MusicCollaborationService : IMusicCollaborationService
+public class CollaborationService : ICollaborationService
 {
     private readonly IAccountService _accountService;
     private readonly IUserAuthenticationService _userAuthenticationService;
@@ -25,7 +25,7 @@ public class MusicCollaborationService : IMusicCollaborationService
     
     private Guid UserId => _userAuthenticationService.GetUserId();
 
-    public MusicCollaborationService(
+    public CollaborationService(
         IAccountService accountService,
         IUserAuthenticationService userAuthenticationService,
         IRepository<Genre> genreRepository,
