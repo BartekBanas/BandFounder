@@ -92,11 +92,6 @@ public class SpotifyContentManager : ISpotifyContentManager
             savedArtists.Add(artistDto);
             account.Artists.Add(newArtist);
         }
-        else
-        {
-            AddExistingArtistToAccount(existingArtist, account);
-            savedArtists.Add(artistDto);
-        }
     }
 
     private async Task<Artist> CreateNewArtistAsync(ArtistDto artistDto)
@@ -129,14 +124,6 @@ public class SpotifyContentManager : ISpotifyContentManager
             {
                 artist.Genres.Add(existingGenre);
             }
-        }
-    }
-
-    private void AddExistingArtistToAccount(Artist existingArtist, Account account)
-    {
-        if (account.Artists.All(artist => artist.Id != existingArtist.Id))
-        {
-            account.Artists.Add(existingArtist);
         }
     }
 }
