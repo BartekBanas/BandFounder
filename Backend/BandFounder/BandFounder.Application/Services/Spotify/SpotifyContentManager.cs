@@ -89,19 +89,6 @@ public class SpotifyContentManager : ISpotifyContentManager
         return topArtists.Concat(followedArtists).DistinctBy(artist => artist.Id).ToList();
     }
 
-    private async Task SaveArtistAndAddToAccountAsync(ArtistDto artistDto, Account account, List<ArtistDto> savedArtists)
-    {
-        var existingArtist = await _artistRepository.GetOneAsync(artistDto.Id);
-
-        if (existingArtist == null)
-        {
-            var newArtist = await CreateNewArtistAsync(artistDto);
-            await _artistRepository.CreateAsync(newArtist);
-            savedArtists.Add(artistDto);
-            account.Artists.Add(newArtist);
-        }
-    }
-
     private async Task<Artist> CreateNewArtistAsync(ArtistDto artistDto)
     {
         var newArtist = new Artist
@@ -109,29 +96,16 @@ public class SpotifyContentManager : ISpotifyContentManager
             Id = artistDto.Id,
             Name = artistDto.Name,
             Popularity = artistDto.Popularity,
-            Genres = new List<Genre>()
+            Genres = []
         };
 
-        await AddGenresToArtistAsync(artistDto.Genres, newArtist);
-        return newArtist;
-    }
-
-    private async Task AddGenresToArtistAsync(List<string> genreNames, Artist artist)
-    {
-        foreach (var genreName in genreNames)
+        foreach (var genreName in artistDto.Genres)
         {
-            var normalizedGenreName = RepositoriesExtensions.NormalizeName(genreName);
-            var existingGenre = await _genreRepository.GetOneAsync(normalizedGenreName);
-            if (existingGenre == null)
-            {
-                var newGenre = new Genre { Name = normalizedGenreName };
-                await _genreRepository.CreateAsync(newGenre);
-                artist.Genres.Add(newGenre);
-            }
-            else
-            {
-                artist.Genres.Add(existingGenre);
-            }
+            var genre = await _genreRepository.GetOrCreateAsync(genreName);
+            
+            newArtist.Genres.Add(genre);
         }
+        
+        return newArtist;
     }
 }
