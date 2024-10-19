@@ -48,13 +48,13 @@ public static class DtoMapper
             Name = musicProjectListing.Name,
             GenreName = musicProjectListing.GenreName,
             Description = musicProjectListing.Description,
-            Type = musicProjectListing.Type,
+            Type = musicProjectListing.Type.ToString(),
             MusicianSlots = musicProjectListing.MusicianSlots
                 .Select(slot => new MusicianSlotDto
                 {
                     Id = slot.Id,
                     Role = slot.Role.RoleName,
-                    Status = slot.Status
+                    Status = slot.Status.ToString()
                 }).ToList()
         };
     }
