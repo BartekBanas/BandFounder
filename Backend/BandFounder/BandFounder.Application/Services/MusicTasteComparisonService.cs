@@ -2,7 +2,12 @@ using BandFounder.Domain.Entities;
 
 namespace BandFounder.Application.Services;
 
-public class MusicTasteComparisonService
+public interface IMusicTasteComparisonService
+{
+    Task<int> CompareMusicTasteAsync(Guid userId);
+}
+
+public class MusicTasteComparisonService : IMusicTasteComparisonService
 {
     private readonly IAccountService _accountService;
     private readonly IUserAuthenticationService _userAuthenticationService;
