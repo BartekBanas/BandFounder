@@ -9,6 +9,7 @@ public interface ICollaborationService
 {
     Task<MusicProjectListingDto> GetListingAsync(Guid listingId);
     Task<IEnumerable<MusicProjectListingDto>> GetMusicProjectsAsync();
+    Task<ListingsFeedDto> GetListingsFeedAsync();
     Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync();
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null);
@@ -18,6 +19,8 @@ public class CollaborationService : ICollaborationService
 {
     private readonly IAccountService _accountService;
     private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly IMusicTasteComparisonService _musicTasteComparisonService;
+    
     private readonly IRepository<Genre> _genreRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IRepository<MusicianSlot> _musicianSlotRepository;
@@ -28,6 +31,7 @@ public class CollaborationService : ICollaborationService
     public CollaborationService(
         IAccountService accountService,
         IUserAuthenticationService userAuthenticationService,
+        IMusicTasteComparisonService musicTasteComparisonService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
         IRepository<MusicianSlot> musicianSlotRepository,
@@ -35,6 +39,7 @@ public class CollaborationService : ICollaborationService
     {
         _accountService = accountService;
         _userAuthenticationService = userAuthenticationService;
+        _musicTasteComparisonService = musicTasteComparisonService;
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
         _musicianSlotRepository = musicianSlotRepository;
@@ -55,6 +60,33 @@ public class CollaborationService : ICollaborationService
             [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
 
         return projectListings.ToDto();
+    }
+    
+    public async Task<ListingsFeedDto> GetListingsFeedAsync()
+    {
+        var projectListings = await _musicProjectListingRepository.GetAsync(includeProperties:
+            [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
+        
+        var projectListingsWithScores = new List<ListingWithScore>();
+
+        foreach (var projectListing in projectListings)
+        {
+            var similarityScore = await _musicTasteComparisonService.CompareMusicTasteAsync(projectListing.AccountId);
+            projectListingsWithScores.Add(new ListingWithScore()
+            {
+                Listing = projectListing.ToDto(),
+                SimilarityScore = similarityScore
+            });
+        }
+        
+        projectListingsWithScores = projectListingsWithScores
+            .OrderByDescending(listing => listing.SimilarityScore)
+            .ToList();
+        
+        return new ListingsFeedDto
+        {
+            Listings = projectListingsWithScores
+        };
     }
     
     public async Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync()

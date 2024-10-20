@@ -30,7 +30,7 @@ public class MusicCollaborationController : Controller
     [HttpGet]
     public async Task<IActionResult> GetMusicProjectListings()
     {
-        var musicProjects = await _collaborationService.GetMusicProjectsAsync();
+        var musicProjects = await _collaborationService.GetListingsFeedAsync();
         
         return Ok(musicProjects);
     }
