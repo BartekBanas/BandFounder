@@ -8,8 +8,8 @@ namespace BandFounder.Application.Services;
 public interface ICollaborationService
 {
     Task<MusicProjectListingDto> GetListingAsync(Guid listingId);
-    Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync();
-    Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync();
+    Task<IEnumerable<MusicProjectListingDto>> GetMusicProjectsAsync();
+    Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync();
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null);
 }
@@ -43,24 +43,27 @@ public class CollaborationService : ICollaborationService
 
     public async Task<MusicProjectListingDto> GetListingAsync(Guid listingId)
     {
-        var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync(listingId, "Id",
-            nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role");
+        var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync(listingId, includeProperties:
+            [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
         
         return projectListing.ToDto();
     }
     
-    public async Task<IEnumerable<MusicProjectListing>> GetMusicProjectsAsync()
+    public async Task<IEnumerable<MusicProjectListingDto>> GetMusicProjectsAsync()
     {
-        var projectListings = await _musicProjectListingRepository.GetAsync();
+        var projectListings = await _musicProjectListingRepository.GetAsync(includeProperties:
+            [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
 
-        return projectListings;
+        return projectListings.ToDto();
     }
     
-    public async Task<IEnumerable<MusicProjectListing>> GetMyMusicProjectsAsync()
+    public async Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync()
     {
-        var myProjectListings = await _musicProjectListingRepository.GetAsync(project => project.Owner.Id == UserId);
+        var myProjectListings = await _musicProjectListingRepository.GetAsync(
+            filter: listing => listing.AccountId == UserId,
+            includeProperties: [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
 
-        return myProjectListings;
+        return myProjectListings.ToDto();
     }
 
     public async Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto)
