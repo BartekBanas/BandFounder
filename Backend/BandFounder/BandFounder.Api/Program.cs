@@ -50,6 +50,7 @@ services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<ISpotifyCredentialsService, SpotifyCredentialsService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
+services.AddScoped<IMusicTasteComparisonService, MusicTasteComparisonService>();
 services.AddScoped<ICollaborationService, CollaborationService>();
 
 services.AddScoped<InfrastructureErrorHandlingMiddleware>();
