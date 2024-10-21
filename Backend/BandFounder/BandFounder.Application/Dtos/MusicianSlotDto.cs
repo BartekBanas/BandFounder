@@ -1,5 +1,3 @@
-using BandFounder.Domain.Entities;
-
 namespace BandFounder.Application.Dtos;
 
 public class MusicianSlotDto
