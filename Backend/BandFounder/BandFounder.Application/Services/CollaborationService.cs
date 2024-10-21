@@ -150,5 +150,7 @@ public class CollaborationService : ICollaborationService
         }
         
         musicianSlot.Status = slotStatus;
+        
+        await _musicianSlotRepository.SaveChangesAsync();
     }
 }
