@@ -8,11 +8,11 @@ namespace BandFounder.Api.Controllers;
 
 [ApiController]
 [Route("api/collaboration")]
-public class MusicCollaborationController : Controller
+public class CollaborationController : Controller
 {
     private readonly ICollaborationService _collaborationService;
 
-    public MusicCollaborationController(ICollaborationService collaborationService)
+    public CollaborationController(ICollaborationService collaborationService)
     {
         _collaborationService = collaborationService;
     }
