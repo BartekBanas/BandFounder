@@ -14,7 +14,7 @@ public interface IAccountService
     Task<Account> GetDetailedAccount(Guid accountId);
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
     Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
-    Task RegisterAccountAsync(RegisterAccountDto registerDto);
+    Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
     Task<AccountDto> UpdateAccountAsync(Guid accountId, UpdateAccountDto updateDto);
     Task DeleteAccountAsync(Guid accountId);
@@ -72,7 +72,7 @@ public class AccountService : IAccountService
         return dtos;
     }
 
-    public async Task RegisterAccountAsync(RegisterAccountDto registerDto)
+    public async Task<string> RegisterAccountAsync(RegisterAccountDto registerDto)
     {
         var passwordHash = _hashingService.HashPassword(registerDto.Password);
 
@@ -90,6 +90,10 @@ public class AccountService : IAccountService
         await _accountRepository.CreateAsync(newAccount);
         
         await _accountRepository.SaveChangesAsync();
+        var claims = GenerateClaimsIdentity(newAccount);
+
+        var token = _jwtService.GenerateSymmetricJwtToken(claims);
+        return token;
     }
 
     public async Task<string> AuthenticateAsync(LoginDto loginDto)

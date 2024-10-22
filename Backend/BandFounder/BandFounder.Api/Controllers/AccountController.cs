@@ -21,9 +21,9 @@ public class AccountController : Controller
     [HttpPost]
     public async Task<IActionResult> RegisterAccount([FromBody] RegisterAccountDto dto)
     {
-        await _accountService.RegisterAccountAsync(dto);
-
-        return Ok();
+        var token = await _accountService.RegisterAccountAsync(dto);
+        
+        return Ok(token);
     }
 
     [HttpPost("authenticate")]
