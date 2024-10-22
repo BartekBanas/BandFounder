@@ -74,6 +74,14 @@ public class AccountService : IAccountService
 
     public async Task<string> RegisterAccountAsync(RegisterAccountDto registerDto)
     {
+        var existingAccount = await _accountRepository
+            .GetOneAsync(account => account.Email == registerDto.Email || account.Name == registerDto.Name);
+
+        if (existingAccount != null)
+        {
+            throw new ConflictError("An account with the same email or username already exists.");
+        }
+        
         var passwordHash = _hashingService.HashPassword(registerDto.Password);
 
         var newAccount = new Account()
