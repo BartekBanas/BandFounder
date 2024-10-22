@@ -58,8 +58,8 @@ services.AddScoped<ErrorHandlingMiddleware>();
 
 var app = builder.Build();
 
-app.UseMiddleware<InfrastructureErrorHandlingMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<InfrastructureErrorHandlingMiddleware>();
 
 // app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();

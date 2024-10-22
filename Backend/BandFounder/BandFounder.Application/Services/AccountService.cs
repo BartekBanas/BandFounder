@@ -74,14 +74,6 @@ public class AccountService : IAccountService
 
     public async Task<string> RegisterAccountAsync(RegisterAccountDto registerDto)
     {
-        var existingAccount = await _accountRepository
-            .GetOneAsync(account => account.Email == registerDto.Email || account.Name == registerDto.Name);
-
-        if (existingAccount != null)
-        {
-            throw new ConflictError("An account with the same email or username already exists.");
-        }
-        
         var passwordHash = _hashingService.HashPassword(registerDto.Password);
 
         var newAccount = new Account()
@@ -93,8 +85,10 @@ public class AccountService : IAccountService
             DateCreated = DateTime.UtcNow,
         };
         
-        await _validator.ValidateAsync(newAccount);
-
+        var result = await _validator.ValidateAsync(newAccount);
+        if (result.IsValid == false)
+            throw new BadRequestError(result.Errors.First().ErrorMessage);
+        
         await _accountRepository.CreateAsync(newAccount);
         
         await _accountRepository.SaveChangesAsync();

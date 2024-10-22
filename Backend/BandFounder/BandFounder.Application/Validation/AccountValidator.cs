@@ -8,13 +8,13 @@ namespace BandFounder.Application.Validation;
 public class AccountValidator : AbstractValidator<Account>
 {
     private readonly IRepository<Account> _accountRepository;
-
+    
     public AccountValidator(IRepository<Account> accountRepository)
     {
         _accountRepository = accountRepository;
-        
+
         RuleFor(account => account.Email).EmailAddress().NotEmpty();
-        RuleFor(account => account.Name).Length(3, 32).NotEmpty();
+        RuleFor(account => account.Name).Length(3, 32).NotEmpty().Matches(@"^\S*$").WithMessage("Please use only english letters and numbers in username");
         RuleFor(account => account.PasswordHash).NotEmpty();
         RuleFor(account => account).CustomAsync(ValidateUniqueName);
         RuleFor(account => account).CustomAsync(ValidateUniqueEmail);

@@ -1,4 +1,5 @@
-﻿using BandFounder.Infrastructure.Errors.Api;
+﻿using BandFounder.Infrastructure.Errors;
+using BandFounder.Infrastructure.Errors.Api;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -55,7 +56,18 @@ public class ErrorHandlingMiddleware : IMiddleware
             context.Response.ContentType = "text/plain";
             await context.Response.WriteAsync(error.Message);
         }
-
+        // // Infsrastructure errors
+        // catch (ItemNotFoundErrorException error)
+        // {
+        //     context.Response.StatusCode = StatusCodes.Status404NotFound;
+        //     await context.Response.WriteAsync(error.Message);
+        // }
+        // catch (ItemDuplicatedErrorException error)
+        // {
+        //     context.Response.StatusCode = StatusCodes.Status409Conflict;
+        //     await context.Response.WriteAsync(error.Message);
+        // }
+        
         // Internal Server Error
         catch (Exception error)
         {
