@@ -59,7 +59,7 @@ public static class RepositoriesExtensions
     {
         // Split by spaces, remove extra spaces, and capitalize each word
         var words = input.Trim()
-            .Split([' '], StringSplitOptions.RemoveEmptyEntries)
+            .Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries)
             .Select(word => char.ToUpper(word[0]) + word.Substring(1).ToLower());
     
         // Join words back into a single string with a single space separating them
