@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;
 
+[Authorize]
 [Route("api/spotifyBroker")]
 public class SpotifyBrokerController : ControllerBase
 {
@@ -12,6 +13,7 @@ public class SpotifyBrokerController : ControllerBase
     private readonly ISpotifyContentManager _spotifyContentManager;
     private readonly ISpotifyCredentialsService _spotifyCredentialsService;
 
+    
     public SpotifyBrokerController(
         ISpotifyContentRetriever spotifyContentRetriever,
         ISpotifyContentManager spotifyContentManager,
@@ -21,8 +23,7 @@ public class SpotifyBrokerController : ControllerBase
         _spotifyContentManager = spotifyContentManager;
         _spotifyCredentialsService = spotifyCredentialsService;
     }
-
-    [Authorize]
+    
     [HttpPost("authorize")]
     public async Task<IActionResult> AuthorizeSpotifyAccount([FromBody] SpotifyAuthorizationDto dto)
     {
@@ -30,8 +31,7 @@ public class SpotifyBrokerController : ControllerBase
 
         return Ok();
     }
-
-    [Authorize]
+    
     [HttpGet("credentials")]
     public async Task<IActionResult> GetSpotifyAppCredentials()
     {
@@ -39,8 +39,7 @@ public class SpotifyBrokerController : ControllerBase
 
         return Ok(credentialsDto);
     }
-
-    [Authorize]
+    
     [HttpGet("artists/top")]
     public async Task<IActionResult> GetSpotifyUsersTopArtists()
     {
@@ -48,8 +47,7 @@ public class SpotifyBrokerController : ControllerBase
 
         return Ok(artists);
     }
-
-    [Authorize]
+    
     [HttpGet("artists/followed")]
     public async Task<IActionResult> GetSpotifyUsersFollowedArtists()
     {
@@ -57,8 +55,7 @@ public class SpotifyBrokerController : ControllerBase
 
         return Ok(artists);
     }
-
-    [Authorize]
+    
     [HttpPost("artists")]
     public async Task<IActionResult> DownloadSpotifyArtists()
     {
@@ -66,8 +63,7 @@ public class SpotifyBrokerController : ControllerBase
 
         return Ok(artists);
     }
-
-    [Authorize]
+    
     [HttpGet("genres/waged")]
     public async Task<IActionResult> GetWagedGenres()
     {
