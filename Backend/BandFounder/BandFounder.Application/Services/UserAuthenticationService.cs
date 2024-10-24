@@ -6,6 +6,7 @@ namespace BandFounder.Application.Services;
 public interface IUserAuthenticationService
 {
     Guid GetUserId();
+    ClaimsPrincipal GetUserClaims();
 }
 
 public class UserAuthenticationService : IUserAuthenticationService
@@ -43,5 +44,15 @@ public class UserAuthenticationService : IUserAuthenticationService
         {
             throw new UnauthorizedAccessException();
         }
+    }
+
+    public ClaimsPrincipal GetUserClaims()
+    {
+        if (_httpContextAccessor.HttpContext is null)
+        {
+            throw new UnauthorizedAccessException();
+        }
+        
+        return _httpContextAccessor.HttpContext.User;
     }
 }
