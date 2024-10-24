@@ -13,7 +13,7 @@ public class SpotifyContentManagerTests
     private SpotifyContentManager _spotifyContentManager;
     
     private ISpotifyContentRetriever _spotifyContentRetriever;
-    private IUserAuthenticationService _userAuthenticationService;
+    private IAuthenticationService _authenticationService;
     private IRepository<Artist> _artistRepository;
     private IRepository<Account> _accountRepository;
     private IRepository<Genre> _genreRepository;
@@ -21,7 +21,7 @@ public class SpotifyContentManagerTests
     [SetUp]
     public void Setup()
     {
-        _userAuthenticationService = Substitute.For<IUserAuthenticationService>();
+        _authenticationService = Substitute.For<IAuthenticationService>();
         _artistRepository = Substitute.For<IRepository<Artist>>();
         _accountRepository = Substitute.For<IRepository<Account>>();
         _genreRepository = Substitute.For<IRepository<Genre>>();
@@ -29,7 +29,7 @@ public class SpotifyContentManagerTests
 
         _spotifyContentManager = new SpotifyContentManager(
             _spotifyContentRetriever,
-            _userAuthenticationService,
+            _authenticationService,
             _artistRepository,
             _accountRepository,
             _genreRepository);
@@ -56,7 +56,7 @@ public class SpotifyContentManagerTests
         };
 
         // Mock dependencies
-        _userAuthenticationService.GetUserId().Returns(userId);
+        _authenticationService.GetUserId().Returns(userId);
         _accountRepository.GetOneRequiredAsync(userId).Returns(Task.FromResult(account));
         _artistRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Artist>(null!)); // Artist doesn't exist
         _genreRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Genre>(null!)); // Genre doesn't exist
@@ -105,7 +105,7 @@ public class SpotifyContentManagerTests
         };
 
         // Mock dependencies
-        _userAuthenticationService.GetUserId().Returns(userId);
+        _authenticationService.GetUserId().Returns(userId);
         _accountRepository.GetOneRequiredAsync(userId).Returns(Task.FromResult(account));
         _artistRepository.GetOneAsync("artist1")!.Returns(Task.FromResult(existingArtist)); // Artist already exists
         _artistRepository.GetOneAsync("artist2")!.Returns(Task.FromResult<Artist>(null!)); // Second artist does not exist

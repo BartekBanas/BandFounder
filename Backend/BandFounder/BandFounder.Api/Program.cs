@@ -49,7 +49,7 @@ services.AddAuthorizationSwaggerGen();
 services.AddValidatorsFromAssembly(typeof(BandFounder.Application.Validation.AssemblyMarker).Assembly);
 
 services.AddScoped<IJwtService, JwtService>();
-services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
+services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 services.AddScoped<IRepository<Account>, Repository<Account, BandFounderDbContext>>();
 services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();

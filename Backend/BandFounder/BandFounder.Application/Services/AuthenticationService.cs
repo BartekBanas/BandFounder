@@ -3,17 +3,17 @@ using Microsoft.AspNetCore.Http;
 
 namespace BandFounder.Application.Services;
 
-public interface IUserAuthenticationService
+public interface IAuthenticationService
 {
     Guid GetUserId();
     ClaimsPrincipal GetUserClaims();
 }
 
-public class UserAuthenticationService : IUserAuthenticationService
+public class AuthenticationService : IAuthenticationService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public UserAuthenticationService(IHttpContextAccessor httpContextAccessor)
+    public AuthenticationService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
     }

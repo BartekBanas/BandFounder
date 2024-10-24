@@ -11,11 +11,11 @@ public class ChatroomService
 {
     private readonly IRepository<Chatroom> _chatRoomRepository;
     
-    private readonly IUserAuthenticationService _authenticationService;
+    private readonly IAuthenticationService _authenticationService;
     private readonly IAuthorizationService _authorizationService;
     private readonly IAccountService _accountService;
 
-    public ChatroomService(IRepository<Chatroom> chatRoomRepository, IUserAuthenticationService authenticationService,
+    public ChatroomService(IRepository<Chatroom> chatRoomRepository, IAuthenticationService authenticationService,
         IAuthorizationService authorizationService, IAccountService accountService)
     {
         _chatRoomRepository = chatRoomRepository;

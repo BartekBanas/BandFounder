@@ -18,7 +18,7 @@ public interface ICollaborationService
 public class CollaborationService : ICollaborationService
 {
     private readonly IAccountService _accountService;
-    private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly IAuthenticationService _authenticationService;
     private readonly IMusicTasteComparisonService _musicTasteComparisonService;
     
     private readonly IRepository<Genre> _genreRepository;
@@ -26,11 +26,11 @@ public class CollaborationService : ICollaborationService
     private readonly IRepository<MusicianSlot> _musicianSlotRepository;
     private readonly IRepository<MusicProjectListing> _musicProjectListingRepository;
     
-    private Guid UserId => _userAuthenticationService.GetUserId();
+    private Guid UserId => _authenticationService.GetUserId();
 
     public CollaborationService(
         IAccountService accountService,
-        IUserAuthenticationService userAuthenticationService,
+        IAuthenticationService authenticationService,
         IMusicTasteComparisonService musicTasteComparisonService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
@@ -38,7 +38,7 @@ public class CollaborationService : ICollaborationService
         IRepository<MusicProjectListing> musicProjectListingRepository)
     {
         _accountService = accountService;
-        _userAuthenticationService = userAuthenticationService;
+        _authenticationService = authenticationService;
         _musicTasteComparisonService = musicTasteComparisonService;
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
@@ -100,7 +100,7 @@ public class CollaborationService : ICollaborationService
 
     public async Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto)
     {
-        var userId = _userAuthenticationService.GetUserId();
+        var userId = _authenticationService.GetUserId();
         await _accountService.GetAccountAsync(userId);
 
         Genre? projectGenre = null;

@@ -10,18 +10,18 @@ public interface IMusicTasteComparisonService
 public class MusicTasteComparisonService : IMusicTasteComparisonService
 {
     private readonly IAccountService _accountService;
-    private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly IAuthenticationService _authenticationService;
 
     public MusicTasteComparisonService(IAccountService accountService,
-        IUserAuthenticationService userAuthenticationService)
+        IAuthenticationService authenticationService)
     {
         _accountService = accountService;
-        _userAuthenticationService = userAuthenticationService;
+        _authenticationService = authenticationService;
     }
 
     public async Task<int> CompareMusicTasteAsync(Guid userId)
     {
-        var senderId = _userAuthenticationService.GetUserId();
+        var senderId = _authenticationService.GetUserId();
         
         var user1 = await _accountService.GetDetailedAccount(senderId);
         var user2 = await _accountService.GetDetailedAccount(userId);

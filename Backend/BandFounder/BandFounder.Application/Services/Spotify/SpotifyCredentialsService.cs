@@ -20,12 +20,12 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
     
     private readonly IRepository<SpotifyCredentials> _credentialsRepository;
     private readonly IRepository<Account> _accountRepository;
-    private readonly IUserAuthenticationService _authenticationService;
+    private readonly IAuthenticationService _authenticationService;
 
     public SpotifyCredentialsService(
         IRepository<SpotifyCredentials> credentialsRepository,
         IRepository<Account> accountRepository,
-        IUserAuthenticationService authenticationService)
+        IAuthenticationService authenticationService)
     {
         _credentialsRepository = credentialsRepository;
         _accountRepository = accountRepository;
