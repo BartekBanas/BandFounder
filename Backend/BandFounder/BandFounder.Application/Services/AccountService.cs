@@ -52,7 +52,7 @@ public class AccountService : IAccountService
     public async Task<Account> GetDetailedAccount(Guid accountId)
     {
         return await _accountRepository.GetOneRequiredAsync(
-            accountId, "Id", "Artists", "Artists.Genres");
+            accountId, "Id", "Artists", "Artists.Genres", "Chatrooms", "MusicianRoles");
     }
 
     public async Task<IEnumerable<AccountDto>> GetAccountsAsync()
