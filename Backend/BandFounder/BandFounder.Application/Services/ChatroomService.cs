@@ -7,7 +7,17 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace BandFounder.Application.Services;
 
-public class ChatroomService
+public interface IChatroomService
+{
+    Task<ChatRoomDto> CreateChatroom(ChatroomCreateDto request);
+    Task<ChatRoomDto> GetChatroom(Guid chatroomId);
+    Task<IEnumerable<ChatRoomDto>> GetUserChatrooms();
+    Task DeleteChatroom(Guid chatroomId);
+    Task InviteToChatroom(ChatroomInvitationDto request);
+    Task LeaveChatroom(Guid chatroomId);
+}
+
+public class ChatroomService : IChatroomService
 {
     private readonly IRepository<Chatroom> _chatRoomRepository;
     
