@@ -63,6 +63,7 @@ services.AddScoped<IRepository<MusicProjectListing>, Repository<MusicProjectList
 services.AddScoped<IHashingService, HashingService>();
 
 services.AddScoped<IAccountService, AccountService>();
+services.AddScoped<IMessageService, MessageService>();
 services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyCredentialsService, SpotifyCredentialsService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();

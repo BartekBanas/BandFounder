@@ -6,7 +6,14 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace BandFounder.Application.Services;
 
-public class MessageService
+public interface IMessageService
+{
+    Task SendMessage(SendMessageDto dto);
+    Task<IEnumerable<MessageDto>> GetChatroomMessages(Guid chatRoomId);
+    Task<IEnumerable<MessageDto>> GetChatroomPagedMessages(GetPagedMessagesDto request);
+}
+
+public class MessageService : IMessageService
 {
     private readonly IRepository<Chatroom> _chatRoomRepository;
     private readonly IRepository<Message> _messageRepository;
