@@ -41,7 +41,7 @@ public class ChatroomService : IChatroomService
 
         await _accountService.GetAccountAsync(userId);
 
-        var newChatRoom = CreateChatroomEntity(userId, request);
+        var newChatRoom = await CreateChatroomEntity(userId, request);
 
         await _chatRoomRepository.CreateAsync(newChatRoom);
 
@@ -156,18 +156,57 @@ public class ChatroomService : IChatroomService
         await _chatRoomRepository.SaveChangesAsync();
     }
 
-    private static Chatroom CreateChatroomEntity(Guid ownerId, ChatroomCreateDto request)
+    private async Task<Chatroom> CreateChatroomEntity(Guid issuerId, ChatroomCreateDto chatroomCreateDto)
     {
-        return new Chatroom()
+        var issuer = await _accountService.GetDetailedAccount(issuerId);
+
+        return chatroomCreateDto.ChatRoomType switch
         {
-            OwnerId = ownerId,
-            ChatRoomType = request.ChatRoomType,
-            Name = request.ChatRoomType switch
-            {
-                ChatRoomType.Direct => "Private chatroom",
-                ChatRoomType.General => request.Name,
-                _ => throw new ArgumentOutOfRangeException()
-            }
+            ChatRoomType.General => await CreateGeneralChatroom(issuer, chatroomCreateDto),
+            ChatRoomType.Direct => await CreateDirectChatroom(issuer, chatroomCreateDto),
+            _ => throw new BadRequestError("Invalid chatroom type")
         };
+    }
+
+    private async Task<Chatroom> CreateGeneralChatroom(Account issuer, ChatroomCreateDto chatroomCreateDto)
+    {
+        if (string.IsNullOrEmpty(chatroomCreateDto.Name))
+        {
+            throw new BadRequestError("Chatroom name is required");
+        }
+
+        var chatroom = new Chatroom
+        {
+            ChatRoomType = chatroomCreateDto.ChatRoomType,
+            Name = chatroomCreateDto.Name,
+            Owner = issuer,
+            Members = [issuer]
+        };
+        
+        return chatroom;
+    }
+
+    private async Task<Chatroom> CreateDirectChatroom(Account issuer, ChatroomCreateDto chatroomCreateDto)
+    {
+        Account recipient;
+        
+        try
+        {
+            recipient = await _accountService.GetDetailedAccount((Guid)chatroomCreateDto.InvitedAccountId!);
+        }
+        catch (Exception e)
+        {
+            throw new BadRequestError("Invited account is invalid");
+        }
+
+        var chatroom = new Chatroom
+        {
+            ChatRoomType = chatroomCreateDto.ChatRoomType,
+            Name = "Private chatroom",
+            Owner = issuer,
+            Members = [issuer, recipient]
+        };
+        
+        return chatroom;
     }
 }
