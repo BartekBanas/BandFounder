@@ -1,4 +1,5 @@
 using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Listings;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure.Errors.Api;

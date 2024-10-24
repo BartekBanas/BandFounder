@@ -1,4 +1,5 @@
 ﻿using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Services.Authorization;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;

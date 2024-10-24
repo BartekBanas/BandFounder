@@ -1,4 +1,4 @@
-﻿namespace BandFounder.Application.Dtos;
+﻿namespace BandFounder.Application.Dtos.Messages;
 
 public class SendMessageDto(string content)
 {

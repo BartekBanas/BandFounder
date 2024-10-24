@@ -1,4 +1,4 @@
-using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;

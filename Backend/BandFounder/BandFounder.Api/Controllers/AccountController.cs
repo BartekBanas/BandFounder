@@ -1,4 +1,4 @@
-﻿using BandFounder.Application.Dtos;
+﻿using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

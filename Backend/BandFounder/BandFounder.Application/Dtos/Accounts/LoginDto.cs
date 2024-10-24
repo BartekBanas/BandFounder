@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BandFounder.Application.Dtos;
+namespace BandFounder.Application.Dtos.Accounts;
 
 public class LoginDto
 {

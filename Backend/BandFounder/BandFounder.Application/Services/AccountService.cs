@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;

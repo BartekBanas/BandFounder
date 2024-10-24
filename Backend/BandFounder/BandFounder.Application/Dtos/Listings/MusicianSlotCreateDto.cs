@@ -1,6 +1,6 @@
 using BandFounder.Domain.Entities;
 
-namespace BandFounder.Application.Dtos;
+namespace BandFounder.Application.Dtos.Listings;
 
 public class MusicianSlotCreateDto
 {
