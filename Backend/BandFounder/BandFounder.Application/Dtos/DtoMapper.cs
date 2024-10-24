@@ -58,4 +58,35 @@ public static class DtoMapper
                 }).ToList()
         };
     }
+    
+    public static IEnumerable<MessageDto> ToDto(this IEnumerable<Message> messages)
+    {
+        return messages.Select(message => message.ToDto());
+    }
+
+    public static MessageDto ToDto(this Message message)
+    {
+        return new MessageDto()
+        {
+            Id = message.Id,
+            SenderId = message.SenderId,
+            Content = message.Content,
+            SentDate = message.SentDate
+        };
+    }
+    
+    public static IEnumerable<ChatRoomDto> ToDto(this IEnumerable<Chatroom> chatrooms)
+    {
+        return chatrooms.Select(chatroom => chatroom.ToDto());
+    }
+
+    public static ChatRoomDto ToDto(this Chatroom chatroom)
+    {
+        return new ChatRoomDto()
+        {
+            Id = chatroom.Id,
+            Name = chatroom.Name,
+            MembersIds = chatroom.Members.Select(member => member.Id).ToList()
+        };
+    }
 }
