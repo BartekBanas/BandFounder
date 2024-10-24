@@ -1,6 +1,9 @@
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
 using BandFounder.Application.Services;
+using BandFounder.Application.Services.Authorization;
+using BandFounder.Application.Services.Authorization.Handlers;
+using BandFounder.Application.Services.Authorization.Requirements;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
@@ -8,6 +11,7 @@ using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Middleware;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +29,18 @@ builder.Services.AddDbContext<BandFounderDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase")));
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
+
+services.AddScoped<IAuthorizationHandler, ChatRoomAuthorizationHandler>();
+services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
+
+services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.IsMemberOf, policy =>
+        policy.Requirements.Add(new IsMemberOfRequirement()));
+    
+    options.AddPolicy(AuthorizationPolicies.IsOwnerOf, policy =>
+        policy.Requirements.Add(new IsOwnerRequirement()));
+});
 
 var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConfiguration>();
 services.AddJwtAuthentication(jwtConfig!);
