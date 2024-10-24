@@ -4,7 +4,7 @@ namespace BandFounder.Application.Dtos.Chatrooms;
 
 public class ChatroomCreateDto
 {
-    public ChatRoomType ChatRoomType { get; }
-    public required string Name { get; set; }
-    public Guid InvitedAccountId { get; set; }
+    public required ChatRoomType ChatRoomType { get; init; }
+    public string? Name { get; init; }
+    public Guid? InvitedAccountId { get; init; }
 }
