@@ -6,6 +6,8 @@ namespace BandFounder.Infrastructure;
 public class BandFounderDbContext : DbContext
 {
     public DbSet<Account> Accounts { get; set; }
+    public DbSet<Chatroom> Chatrooms { get; set; }
+    public DbSet<Account> Messages { get; set; }
     public DbSet<SpotifyCredentials> SpotifyCredentials { get; set; }
     public DbSet<Artist> Artists { get; set; }
     public DbSet<Genre> Genres { get; set; }
@@ -69,5 +71,24 @@ public class BandFounderDbContext : DbContext
         //     "AccountMusicRole",
         //     j => j.HasOne<MusicianRole>().WithMany().HasForeignKey("MusicRoleId"),
         //     j => j.HasOne<Account>().WithMany().HasForeignKey("AccountId"));
+        
+        // Many-to-Many relationship: Account <-> Chatroom
+        modelBuilder.Entity<Account>()
+            .HasMany(account => account.Chatrooms)
+            .WithMany(chatroom => chatroom.Members);
+
+        // One-to-Many relationship: Chatroom -> Message
+        modelBuilder.Entity<Chatroom>()
+            .HasMany(chatroom => chatroom.Messages)
+            .WithOne(message => message.Chatroom)
+            .HasForeignKey(message => message.ChatRoomId)
+            .OnDelete(DeleteBehavior.Cascade);  // When a chatroom is deleted, its messages are also deleted
+
+        // One-to-Many relationship: Account -> Message
+        modelBuilder.Entity<Account>()
+            .HasMany<Message>()
+            .WithOne(message => message.Sender)
+            .HasForeignKey(message => message.SenderId)
+            .OnDelete(DeleteBehavior.Restrict); // When an account is deleted, their sent messages are not automatically deleted
     }
 }
