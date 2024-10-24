@@ -1,0 +1,162 @@
+﻿using BandFounder.Application.Dtos;
+using BandFounder.Application.Services.Authorization;
+using BandFounder.Domain;
+using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Errors.Api;
+using Microsoft.AspNetCore.Authorization;
+
+namespace BandFounder.Application.Services;
+
+public class ChatroomService
+{
+    private readonly IRepository<Chatroom> _chatRoomRepository;
+    
+    private readonly IUserAuthenticationService _authenticationService;
+    private readonly IAuthorizationService _authorizationService;
+    private readonly IAccountService _accountService;
+
+    public ChatroomService(IRepository<Chatroom> chatRoomRepository, IUserAuthenticationService authenticationService,
+        IAuthorizationService authorizationService, IAccountService accountService)
+    {
+        _chatRoomRepository = chatRoomRepository;
+        _authenticationService = authenticationService;
+        _authorizationService = authorizationService;
+        _accountService = accountService;
+    }
+
+    public async Task<ChatRoomDto> CreateChatroom(ChatroomCreateDto request)
+    {
+        var userId = _authenticationService.GetUserId();
+
+        await _accountService.GetAccountAsync(userId);
+
+        var newChatRoom = CreateChatroomEntity(userId, request);
+
+        await _chatRoomRepository.CreateAsync(newChatRoom);
+
+        await _chatRoomRepository.SaveChangesAsync();
+
+        return newChatRoom.ToDto();
+    }
+
+    public async Task<ChatRoomDto> GetChatroom(Guid chatroomId)
+    {
+        var user = _authenticationService.GetUserClaims();
+
+        var chatroom = await _chatRoomRepository.GetOneRequiredAsync(
+            chatRoom => chatRoom.Id == chatroomId, nameof(Chatroom.Members));
+
+        await _authorizationService.AuthorizeRequiredAsync(user, chatroom, AuthorizationPolicies.IsMemberOf);
+
+        return chatroom.ToDto();
+    }
+
+    public async Task<IEnumerable<ChatRoomDto>> GetUserChatrooms()
+    {
+        var userId = _authenticationService.GetUserId();
+        
+        var account = await _accountService.GetDetailedAccount(userId);
+        
+        var usersChatrooms = account.Chatrooms;
+        
+        return usersChatrooms.ToDto();
+    }
+
+    public async Task DeleteChatroom(Guid chatroomId)
+    {
+        var user = _authenticationService.GetUserClaims();
+
+        var chatroom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == chatroomId,
+            nameof(Chatroom.Members), nameof(Chatroom.Messages));
+
+        switch (chatroom.ChatRoomType)
+        {
+            case ChatRoomType.General:
+                await _authorizationService.AuthorizeRequiredAsync(user, chatroom, AuthorizationPolicies.IsOwnerOf);
+                break;
+
+            case ChatRoomType.Direct:
+            {
+                await _authorizationService.AuthorizeRequiredAsync(user, chatroom, AuthorizationPolicies.IsMemberOf);
+
+                if (chatroom.Members.Count > 1)
+                {
+                    throw new ForbiddenError("You cannot delete private conversations");
+                }
+
+                break;
+            }
+        }
+
+        await _chatRoomRepository.DeleteOneAsync(chatroom.Id);
+        await _chatRoomRepository.SaveChangesAsync();
+    }
+    
+    public async Task InviteToChatroom(ChatroomInvitationDto request)
+    {
+        var user = _authenticationService.GetUserClaims();
+        var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == request.ChatroomId,
+            nameof(Chatroom.Members));
+        
+        await _authorizationService.AuthorizeRequiredAsync(user, chatRoom, AuthorizationPolicies.IsMemberOf);
+
+        if (chatRoom.ChatRoomType is ChatRoomType.Direct)
+        {
+            throw new BadRequestError("You cannot invite anyone to a direct messaging chatroom");
+        }
+
+        CheckUserMembershipInChatroom(chatRoom, request.AccountId);
+
+        await _authorizationService.AuthorizeRequiredAsync(user, chatRoom, AuthorizationPolicies.IsOwnerOf);
+
+        var invitedAccount = await _accountService.GetDetailedAccount(request.AccountId);
+
+        chatRoom.Members.Add(invitedAccount);
+
+        await _chatRoomRepository.SaveChangesAsync();
+    }
+
+    private static void CheckUserMembershipInChatroom(Chatroom chatRoom, Guid accountId)
+    {
+        if (chatRoom.Members.Any(account => account.Id == accountId))
+        {
+            throw new BadRequestError("Selected user is already a member of this chatroom");
+        }
+    }
+
+    public async Task LeaveChatroom(Guid chatroomId)
+    {
+        var user = _authenticationService.GetUserClaims();
+        var chatroom = await _chatRoomRepository.GetOneRequiredAsync(
+            filter: chatRoom => chatRoom.Id == chatroomId, includeProperties: nameof(Chatroom.Members));
+
+        await _authorizationService.AuthorizeRequiredAsync(user, chatroom, AuthorizationPolicies.IsMemberOf);
+
+        if (chatroom.Members.Count == 1)
+        {
+            await _chatRoomRepository.DeleteOneAsync(chatroom.Id);
+        }
+        else
+        {
+            chatroom.Members.Remove(
+                chatroom.Members.First(account => account.Id == _authenticationService.GetUserId()));
+        }
+
+        await _chatRoomRepository.SaveChangesAsync();
+    }
+
+    private static Chatroom CreateChatroomEntity(Guid ownerId, ChatroomCreateDto request)
+    {
+        return new Chatroom()
+        {
+            OwnerId = ownerId,
+            ChatRoomType = request.ChatRoomType,
+            Name = request.ChatRoomType switch
+            {
+                ChatRoomType.Direct => "Private chatroom",
+                ChatRoomType.General => request.Name,
+                _ => throw new ArgumentOutOfRangeException()
+            }
+        };
+    }
+}
