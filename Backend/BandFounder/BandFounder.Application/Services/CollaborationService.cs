@@ -72,7 +72,7 @@ public class CollaborationService : ICollaborationService
 
         foreach (var projectListing in projectListings)
         {
-            var similarityScore = await _musicTasteComparisonService.CompareMusicTasteAsync(projectListing.AccountId);
+            var similarityScore = await _musicTasteComparisonService.CompareMusicTasteAsync(projectListing.OwnerId);
             projectListingsWithScores.Add(new ListingWithScore()
             {
                 Listing = projectListing.ToDto(),
@@ -93,7 +93,7 @@ public class CollaborationService : ICollaborationService
     public async Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync()
     {
         var myProjectListings = await _musicProjectListingRepository.GetAsync(
-            filter: listing => listing.AccountId == UserId,
+            filter: listing => listing.OwnerId == UserId,
             includeProperties: [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
 
         return myProjectListings.ToDto();
@@ -112,7 +112,7 @@ public class CollaborationService : ICollaborationService
 
         var musicProjectListing = new MusicProjectListing
         {
-            AccountId = userId,
+            OwnerId = userId,
             Name = dto.Name,
             Genre = projectGenre,
             Type = dto.Type,
@@ -145,7 +145,7 @@ public class CollaborationService : ICollaborationService
         var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync
             (listing => listing.Id == musicianSlot.ListingId);
 
-        if (UserId != projectListing.AccountId)
+        if (UserId != projectListing.OwnerId)
         {
             throw new ForbiddenError("You do not have access to this music project listing");
         }

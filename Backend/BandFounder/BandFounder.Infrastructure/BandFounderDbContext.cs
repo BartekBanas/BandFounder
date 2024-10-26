@@ -42,7 +42,7 @@ public class BandFounderDbContext : DbContext
         modelBuilder.Entity<MusicProjectListing>()
             .HasOne(projectListing => projectListing.Owner)
             .WithMany(account => account.MusicProjectListings)
-            .HasForeignKey(projectListing => projectListing.AccountId);
+            .HasForeignKey(projectListing => projectListing.OwnerId);
 
         // Many-to-One relationship: MusicCollaboration has an optional Genre
         modelBuilder.Entity<MusicProjectListing>()

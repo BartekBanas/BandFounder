@@ -7,8 +7,9 @@ public class MusicProjectListing : Entity
     [Key]
     public Guid Id { get; set; }
 
-    public required Guid AccountId { get; set; }
     public required string Name { get; set; }
+    
+    public required Guid OwnerId { get; set; }
     public virtual Account Owner { get; set; } = null!;
 
     public string? GenreName { get; set; }
