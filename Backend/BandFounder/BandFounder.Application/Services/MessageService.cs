@@ -43,9 +43,10 @@ public class MessageService : IMessageService
 
         var newMessage = new Message
         {
+            ChatRoomId = chatRoom.Id,
             SenderId = userId,
             Content = dto.Content,
-            ChatRoomId = chatRoom.Id
+            SentDate = DateTime.UtcNow
         };
 
         chatRoom.Messages.Add(newMessage);

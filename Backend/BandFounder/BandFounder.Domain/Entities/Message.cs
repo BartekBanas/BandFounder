@@ -8,16 +8,14 @@ public class Message : Entity
     [Key]
     public Guid Id { get; set; }
 
+    [ForeignKey(nameof(Chatroom))] public Guid ChatRoomId { get; set; }
+    public virtual Chatroom Chatroom { get; set; } = null!;
+
+    [ForeignKey(nameof(Sender))] public Guid SenderId { get; set; }
+    public virtual Account Sender { get; set; } = null!;
+    
     public string Content { get; set; } = null!;
 
-    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime SentDate { get; set; }
 
-    [ForeignKey(nameof(Sender))]
-    public Guid SenderId { get; set; }
-    public virtual Account Sender { get; set; } = null!;
-
-    [ForeignKey(nameof(Chatroom))]
-    public Guid ChatRoomId { get; set; }
-    public virtual Chatroom Chatroom { get; set; } = null!;
 }
