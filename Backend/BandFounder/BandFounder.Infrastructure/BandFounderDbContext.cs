@@ -76,6 +76,12 @@ public class BandFounderDbContext : DbContext
         modelBuilder.Entity<Account>()
             .HasMany(account => account.Chatrooms)
             .WithMany(chatroom => chatroom.Members);
+        
+        // Many-to-One relationship: MusicCollaboration has one owner (Account)
+        modelBuilder.Entity<Chatroom>()
+            .HasOne(chatroom => chatroom.Owner)
+            .WithMany()
+            .HasForeignKey(chatroom => chatroom.OwnerId);
 
         // One-to-Many relationship: Chatroom -> Message
         modelBuilder.Entity<Chatroom>()
