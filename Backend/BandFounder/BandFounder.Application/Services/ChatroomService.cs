@@ -105,11 +105,16 @@ public class ChatroomService : IChatroomService
     
     public async Task InviteToChatroom(ChatroomInvitationDto request)
     {
-        var user = _authenticationService.GetUserClaims();
+        var userClaims = _authenticationService.GetUserClaims();
+        if (request.AccountId == _authenticationService.GetUserId())
+        {
+            throw new BadRequestError("You cannot invite yourself to a chatroom");
+        }
+        
         var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == request.ChatroomId,
             nameof(Chatroom.Members));
         
-        await _authorizationService.AuthorizeRequiredAsync(user, chatRoom, AuthorizationPolicies.IsMemberOf);
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsMemberOf);
 
         if (chatRoom.ChatRoomType is ChatRoomType.Direct)
         {
@@ -118,7 +123,7 @@ public class ChatroomService : IChatroomService
 
         CheckUserMembershipInChatroom(chatRoom, request.AccountId);
 
-        await _authorizationService.AuthorizeRequiredAsync(user, chatRoom, AuthorizationPolicies.IsOwnerOf);
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsOwnerOf);
 
         var invitedAccount = await _accountService.GetDetailedAccount(request.AccountId);
 
