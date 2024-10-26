@@ -1,4 +1,5 @@
 using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Listings;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure.Errors.Api;
@@ -18,7 +19,7 @@ public interface ICollaborationService
 public class CollaborationService : ICollaborationService
 {
     private readonly IAccountService _accountService;
-    private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly IAuthenticationService _authenticationService;
     private readonly IMusicTasteComparisonService _musicTasteComparisonService;
     
     private readonly IRepository<Genre> _genreRepository;
@@ -26,11 +27,11 @@ public class CollaborationService : ICollaborationService
     private readonly IRepository<MusicianSlot> _musicianSlotRepository;
     private readonly IRepository<MusicProjectListing> _musicProjectListingRepository;
     
-    private Guid UserId => _userAuthenticationService.GetUserId();
+    private Guid UserId => _authenticationService.GetUserId();
 
     public CollaborationService(
         IAccountService accountService,
-        IUserAuthenticationService userAuthenticationService,
+        IAuthenticationService authenticationService,
         IMusicTasteComparisonService musicTasteComparisonService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
@@ -38,7 +39,7 @@ public class CollaborationService : ICollaborationService
         IRepository<MusicProjectListing> musicProjectListingRepository)
     {
         _accountService = accountService;
-        _userAuthenticationService = userAuthenticationService;
+        _authenticationService = authenticationService;
         _musicTasteComparisonService = musicTasteComparisonService;
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
@@ -71,7 +72,7 @@ public class CollaborationService : ICollaborationService
 
         foreach (var projectListing in projectListings)
         {
-            var similarityScore = await _musicTasteComparisonService.CompareMusicTasteAsync(projectListing.AccountId);
+            var similarityScore = await _musicTasteComparisonService.CompareMusicTasteAsync(projectListing.OwnerId);
             projectListingsWithScores.Add(new ListingWithScore()
             {
                 Listing = projectListing.ToDto(),
@@ -92,7 +93,7 @@ public class CollaborationService : ICollaborationService
     public async Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync()
     {
         var myProjectListings = await _musicProjectListingRepository.GetAsync(
-            filter: listing => listing.AccountId == UserId,
+            filter: listing => listing.OwnerId == UserId,
             includeProperties: [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
 
         return myProjectListings.ToDto();
@@ -100,7 +101,7 @@ public class CollaborationService : ICollaborationService
 
     public async Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto)
     {
-        var userId = _userAuthenticationService.GetUserId();
+        var userId = _authenticationService.GetUserId();
         await _accountService.GetAccountAsync(userId);
 
         Genre? projectGenre = null;
@@ -111,7 +112,7 @@ public class CollaborationService : ICollaborationService
 
         var musicProjectListing = new MusicProjectListing
         {
-            AccountId = userId,
+            OwnerId = userId,
             Name = dto.Name,
             Genre = projectGenre,
             Type = dto.Type,
@@ -144,7 +145,7 @@ public class CollaborationService : ICollaborationService
         var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync
             (listing => listing.Id == musicianSlot.ListingId);
 
-        if (UserId != projectListing.AccountId)
+        if (UserId != projectListing.OwnerId)
         {
             throw new ForbiddenError("You do not have access to this music project listing");
         }

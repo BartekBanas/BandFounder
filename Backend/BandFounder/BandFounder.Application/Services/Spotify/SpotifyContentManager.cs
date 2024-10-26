@@ -14,7 +14,7 @@ public interface ISpotifyContentManager
 public class SpotifyContentManager : ISpotifyContentManager
 {
     private readonly ISpotifyContentRetriever _spotifyContentRetriever;
-    private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly IAuthenticationService _authenticationService;
 
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<Account> _accountRepository;
@@ -22,13 +22,13 @@ public class SpotifyContentManager : ISpotifyContentManager
 
     public SpotifyContentManager(
         ISpotifyContentRetriever spotifyContentRetriever,
-        IUserAuthenticationService userAuthenticationService,
+        IAuthenticationService authenticationService,
         IRepository<Artist> artistRepository,
         IRepository<Account> accountRepository,
         IRepository<Genre> genreRepository)
     {
         _spotifyContentRetriever = spotifyContentRetriever;
-        _userAuthenticationService = userAuthenticationService;
+        _authenticationService = authenticationService;
         _artistRepository = artistRepository;
         _accountRepository = accountRepository;
         _genreRepository = genreRepository;
@@ -36,7 +36,7 @@ public class SpotifyContentManager : ISpotifyContentManager
     
     public async Task<Dictionary<string, int>> GetWagedGenres(Guid? userId = null)
     {
-        var targetUserId = userId ?? _userAuthenticationService.GetUserId();
+        var targetUserId = userId ?? _authenticationService.GetUserId();
 
         var account = await _accountRepository.GetOneRequiredAsync(
             targetUserId, nameof(Artist.Id), "Artists", "Artists.Genres");
@@ -61,7 +61,7 @@ public class SpotifyContentManager : ISpotifyContentManager
     public async Task<List<ArtistDto>> SaveRelevantArtists()
     {
         var userArtists = await RetrieveSpotifyUsersArtistsAsync();
-        var userId = _userAuthenticationService.GetUserId();
+        var userId = _authenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(userId);
         var savedArtists = new List<ArtistDto>();
 

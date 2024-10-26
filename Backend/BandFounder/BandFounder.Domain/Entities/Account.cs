@@ -27,4 +27,7 @@ public class Account : Entity
     
     // Many-to-Many relationship with MusicRole
     public virtual List<MusicianRole> MusicianRoles { get; set; } = [];
+    
+    // Many-to-Many relationship with Chatroom
+    public virtual List<Chatroom> Chatrooms { get; set; } = [];
 }

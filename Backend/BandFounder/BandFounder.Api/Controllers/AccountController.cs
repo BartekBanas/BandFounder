@@ -1,4 +1,4 @@
-﻿using BandFounder.Application.Dtos;
+﻿using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,12 +10,12 @@ namespace BandFounder.Api.Controllers;
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;
-    private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly IAuthenticationService _authenticationService;
 
-    public AccountController(IAccountService accountService, IUserAuthenticationService userAuthenticationService)
+    public AccountController(IAccountService accountService, IAuthenticationService authenticationService)
     {
         _accountService = accountService;
-        _userAuthenticationService = userAuthenticationService;
+        _authenticationService = authenticationService;
     }
 
     [HttpPost]
@@ -76,7 +76,7 @@ public class AccountController : Controller
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMyAccount([FromBody] UpdateAccountDto dto)
     {
-        var userId = _userAuthenticationService.GetUserId();
+        var userId = _authenticationService.GetUserId();
 
         var updatedAccount = await _accountService.UpdateAccountAsync(userId, dto);
 
@@ -87,7 +87,7 @@ public class AccountController : Controller
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteMyAccount()
     {
-        var userId = _userAuthenticationService.GetUserId();
+        var userId = _authenticationService.GetUserId();
 
         await _accountService.DeleteAccountAsync(userId);
 

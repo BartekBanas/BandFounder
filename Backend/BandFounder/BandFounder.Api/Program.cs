@@ -1,6 +1,9 @@
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
 using BandFounder.Application.Services;
+using BandFounder.Application.Services.Authorization;
+using BandFounder.Application.Services.Authorization.Handlers;
+using BandFounder.Application.Services.Authorization.Requirements;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
@@ -8,6 +11,7 @@ using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Middleware;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +30,18 @@ builder.Services.AddDbContext<BandFounderDbContext>(options =>
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
 
+services.AddScoped<IAuthorizationHandler, ChatRoomAuthorizationHandler>();
+services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
+
+services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.IsMemberOf, policy =>
+        policy.Requirements.Add(new IsMemberOfRequirement()));
+    
+    options.AddPolicy(AuthorizationPolicies.IsOwnerOf, policy =>
+        policy.Requirements.Add(new IsOwnerRequirement()));
+});
+
 var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConfiguration>();
 services.AddJwtAuthentication(jwtConfig!);
 services.AddAuthorizationSwaggerGen();
@@ -33,9 +49,11 @@ services.AddAuthorizationSwaggerGen();
 services.AddValidatorsFromAssembly(typeof(BandFounder.Application.Validation.AssemblyMarker).Assembly);
 
 services.AddScoped<IJwtService, JwtService>();
-services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
+services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 services.AddScoped<IRepository<Account>, Repository<Account, BandFounderDbContext>>();
+services.AddScoped<IRepository<Message>, Repository<Message, BandFounderDbContext>>();
+services.AddScoped<IRepository<Chatroom>, Repository<Chatroom, BandFounderDbContext>>();
 services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();
 services.AddScoped<IRepository<Genre>, Repository<Genre, BandFounderDbContext>>();
 services.AddScoped<IRepository<SpotifyCredentials>, Repository<SpotifyCredentials, BandFounderDbContext>>();
@@ -47,6 +65,8 @@ services.AddScoped<IRepository<MusicProjectListing>, Repository<MusicProjectList
 services.AddScoped<IHashingService, HashingService>();
 
 services.AddScoped<IAccountService, AccountService>();
+services.AddScoped<IMessageService, MessageService>();
+services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyCredentialsService, SpotifyCredentialsService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();

@@ -1,4 +1,4 @@
-namespace BandFounder.Application.Dtos;
+namespace BandFounder.Application.Dtos.Listings;
 
 public class ListingsFeedDto
 {
