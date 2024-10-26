@@ -52,6 +52,8 @@ services.AddScoped<IJwtService, JwtService>();
 services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 services.AddScoped<IRepository<Account>, Repository<Account, BandFounderDbContext>>();
+services.AddScoped<IRepository<Message>, Repository<Message, BandFounderDbContext>>();
+services.AddScoped<IRepository<Chatroom>, Repository<Chatroom, BandFounderDbContext>>();
 services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();
 services.AddScoped<IRepository<Genre>, Repository<Genre, BandFounderDbContext>>();
 services.AddScoped<IRepository<SpotifyCredentials>, Repository<SpotifyCredentials, BandFounderDbContext>>();
