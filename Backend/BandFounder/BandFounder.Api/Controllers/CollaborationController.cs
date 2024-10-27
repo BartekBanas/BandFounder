@@ -54,6 +54,15 @@ public class CollaborationController : Controller
     }
 
     [Authorize]
+    [HttpPost("contact/{listingId:guid}")]
+    public async Task<IActionResult> CreateMusicProjectListing(Guid listingId)
+    {
+        await _collaborationService.Contact(listingId);
+        
+        return Ok();
+    }
+
+    [Authorize]
     [HttpPut("slot/{musicSlotId:guid}")]
     public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid musicSlotId, SlotStatus status)
     {
