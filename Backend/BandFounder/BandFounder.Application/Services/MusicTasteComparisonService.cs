@@ -4,6 +4,7 @@ namespace BandFounder.Application.Services;
 
 public interface IMusicTasteComparisonService
 {
+    Task<IEnumerable<string>> GetCommonArtists(Guid requesterId, Guid targetUserId);
     Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId);
 }
 
@@ -17,6 +18,17 @@ public class MusicTasteComparisonService : IMusicTasteComparisonService
     {
         _accountService = accountService;
         _authenticationService = authenticationService;
+    }
+
+    public async Task<IEnumerable<string>> GetCommonArtists(Guid requesterId, Guid targetUserId)
+    {
+        var user1 = await _accountService.GetDetailedAccount(requesterId);
+        var user2 = await _accountService.GetDetailedAccount(targetUserId);
+        
+        var user1Genres = GetWagedGenres(user1);
+        var user2Genres = GetWagedGenres(user2);
+
+        return user1Genres.Keys.Union(user2Genres.Keys);
     }
 
     public async Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId)
