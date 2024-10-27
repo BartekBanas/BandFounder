@@ -22,7 +22,7 @@ public class CollaborationService : ICollaborationService
 {
     private readonly IAccountService _accountService;
     private readonly IAuthenticationService _authenticationService;
-    private readonly IMusicTasteComparisonService _musicTasteComparisonService;
+    private readonly IMusicTasteComparisonService _musicTasteService;
     private readonly IChatroomService _chatroomService;
     
     private readonly IRepository<Genre> _genreRepository;
@@ -35,7 +35,7 @@ public class CollaborationService : ICollaborationService
     public CollaborationService(
         IAccountService accountService,
         IAuthenticationService authenticationService,
-        IMusicTasteComparisonService musicTasteComparisonService,
+        IMusicTasteComparisonService musicTasteService,
         IChatroomService chatroomService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
@@ -44,7 +44,7 @@ public class CollaborationService : ICollaborationService
     {
         _accountService = accountService;
         _authenticationService = authenticationService;
-        _musicTasteComparisonService = musicTasteComparisonService;
+        _musicTasteService = musicTasteService;
         _chatroomService = chatroomService;
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
@@ -70,6 +70,7 @@ public class CollaborationService : ICollaborationService
     
     public async Task<ListingsFeedDto> GetListingsFeedAsync()
     {
+        var userId = _authenticationService.GetUserId();
         var projectListings = await _musicProjectListingRepository.GetAsync(includeProperties:
             [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
         
@@ -77,7 +78,7 @@ public class CollaborationService : ICollaborationService
 
         foreach (var projectListing in projectListings)
         {
-            var similarityScore = await _musicTasteComparisonService.CompareMusicTasteAsync(projectListing.OwnerId);
+            var similarityScore = await _musicTasteService.CompareMusicTasteAsync(userId, projectListing.OwnerId);
             projectListingsWithScores.Add(new ListingWithScore()
             {
                 Listing = projectListing.ToDto(),

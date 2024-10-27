@@ -4,7 +4,7 @@ namespace BandFounder.Application.Services;
 
 public interface IMusicTasteComparisonService
 {
-    Task<int> CompareMusicTasteAsync(Guid userId);
+    Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId);
 }
 
 public class MusicTasteComparisonService : IMusicTasteComparisonService
@@ -19,12 +19,10 @@ public class MusicTasteComparisonService : IMusicTasteComparisonService
         _authenticationService = authenticationService;
     }
 
-    public async Task<int> CompareMusicTasteAsync(Guid userId)
+    public async Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId)
     {
-        var senderId = _authenticationService.GetUserId();
-        
-        var user1 = await _accountService.GetDetailedAccount(senderId);
-        var user2 = await _accountService.GetDetailedAccount(userId);
+        var user1 = await _accountService.GetDetailedAccount(requesterId);
+        var user2 = await _accountService.GetDetailedAccount(targetUserId);
 
         var genreSimilarityScore = CalculateGenreSimilarity(user1, user2);
         var artistSimilarityScore = CalculateArtistSimilarity(user1, user2);
