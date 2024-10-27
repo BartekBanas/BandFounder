@@ -1,4 +1,5 @@
 using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
@@ -14,6 +15,7 @@ public interface ICollaborationService
     Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync();
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null);
+    Task Contact(Guid musicProjectListingId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -21,6 +23,7 @@ public class CollaborationService : ICollaborationService
     private readonly IAccountService _accountService;
     private readonly IAuthenticationService _authenticationService;
     private readonly IMusicTasteComparisonService _musicTasteComparisonService;
+    private readonly IChatroomService _chatroomService;
     
     private readonly IRepository<Genre> _genreRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
@@ -33,6 +36,7 @@ public class CollaborationService : ICollaborationService
         IAccountService accountService,
         IAuthenticationService authenticationService,
         IMusicTasteComparisonService musicTasteComparisonService,
+        IChatroomService chatroomService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
         IRepository<MusicianSlot> musicianSlotRepository,
@@ -41,6 +45,7 @@ public class CollaborationService : ICollaborationService
         _accountService = accountService;
         _authenticationService = authenticationService;
         _musicTasteComparisonService = musicTasteComparisonService;
+        _chatroomService = chatroomService;
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
         _musicianSlotRepository = musicianSlotRepository;
@@ -153,5 +158,18 @@ public class CollaborationService : ICollaborationService
         musicianSlot.Status = slotStatus;
         
         await _musicianSlotRepository.SaveChangesAsync();
+    }
+
+    public async Task Contact(Guid musicProjectListingId)
+    {
+        var listing = await _musicProjectListingRepository.GetOneRequiredAsync(musicProjectListingId);
+        
+        var chatroomCreateDto = new ChatroomCreateDto()
+        {
+            ChatRoomType = ChatRoomType.Direct,
+            InvitedAccountId = listing.OwnerId
+        };
+
+        await _chatroomService.CreateChatroom(chatroomCreateDto);
     }
 }
