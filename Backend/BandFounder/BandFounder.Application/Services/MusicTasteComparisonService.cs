@@ -11,13 +11,10 @@ public interface IMusicTasteComparisonService
 public class MusicTasteComparisonService : IMusicTasteComparisonService
 {
     private readonly IAccountService _accountService;
-    private readonly IAuthenticationService _authenticationService;
 
-    public MusicTasteComparisonService(IAccountService accountService,
-        IAuthenticationService authenticationService)
+    public MusicTasteComparisonService(IAccountService accountService)
     {
         _accountService = accountService;
-        _authenticationService = authenticationService;
     }
 
     public async Task<IEnumerable<string>> GetCommonArtists(Guid requesterId, Guid targetUserId)
@@ -25,10 +22,12 @@ public class MusicTasteComparisonService : IMusicTasteComparisonService
         var user1 = await _accountService.GetDetailedAccount(requesterId);
         var user2 = await _accountService.GetDetailedAccount(targetUserId);
         
-        var user1Genres = GetWagedGenres(user1);
-        var user2Genres = GetWagedGenres(user2);
+        var user1ArtistIds = user1.Artists.Select(artist => artist.Id).ToHashSet();
+        var user2ArtistIds = user2.Artists.Select(artist => artist.Id).ToHashSet();
 
-        return user1Genres.Keys.Union(user2Genres.Keys);
+        var commonArtists = user1ArtistIds.Intersect(user2ArtistIds);
+
+        return commonArtists;
     }
 
     public async Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId)
