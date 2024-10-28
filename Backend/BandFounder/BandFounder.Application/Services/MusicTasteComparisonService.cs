@@ -5,6 +5,7 @@ namespace BandFounder.Application.Services;
 public interface IMusicTasteComparisonService
 {
     Task<IEnumerable<string>> GetCommonArtists(Guid requesterId, Guid targetUserId);
+    Task<IEnumerable<string>> GetCommonGenres(Guid requesterId, Guid targetUserId);
     Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId);
 }
 
@@ -28,6 +29,21 @@ public class MusicTasteComparisonService : IMusicTasteComparisonService
         var commonArtists = user1ArtistIds.Intersect(user2ArtistIds);
 
         return commonArtists;
+    }
+
+    public async Task<IEnumerable<string>> GetCommonGenres(Guid requesterId, Guid targetUserId)
+    {
+        var user1 = await _accountService.GetDetailedAccount(requesterId);
+        var user2 = await _accountService.GetDetailedAccount(targetUserId);
+        
+        var user1Genres = GetWagedGenres(user1);
+        var user2Genres = GetWagedGenres(user2);
+
+        var commonGenres = user1Genres.Keys
+            .Intersect(user2Genres.Keys)
+            .OrderByDescending(genre => Math.Min(user1Genres[genre], user2Genres[genre]));
+        
+        return commonGenres;
     }
 
     public async Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId)
