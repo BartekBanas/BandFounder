@@ -11,10 +11,17 @@ namespace BandFounder.Api.Controllers;
 public class CollaborationController : Controller
 {
     private readonly ICollaborationService _collaborationService;
+    private readonly IMusicTasteComparisonService _musicTasteComparisonService;
+    private readonly IAuthenticationService _authenticationService;
 
-    public CollaborationController(ICollaborationService collaborationService)
+    public CollaborationController(
+        ICollaborationService collaborationService,
+        IMusicTasteComparisonService musicTasteComparisonService,
+        IAuthenticationService authenticationService)
     {
         _collaborationService = collaborationService;
+        _musicTasteComparisonService = musicTasteComparisonService;
+        _authenticationService = authenticationService;
     }
 
     [Authorize]
@@ -51,6 +58,19 @@ public class CollaborationController : Controller
         await _collaborationService.CreateMusicProjectListingAsync(dto);
         
         return Ok();
+    }
+
+    [Authorize]
+    [HttpGet("{userId:guid}/commonTaste")]
+    public async Task<IActionResult> GetCommonArtistsAndGenres(Guid userId)
+    {
+        var senderId = _authenticationService.GetUserId();
+        var commonGenres = await _musicTasteComparisonService.GetCommonArtists(senderId, userId);
+        var commonArtists = await _musicTasteComparisonService.GetCommonArtists(senderId, userId);
+        
+        var responseDto = new CommonGenresAndArtistsDto(commonArtists, commonGenres);
+        
+        return Ok(responseDto);
     }
 
     [Authorize]
