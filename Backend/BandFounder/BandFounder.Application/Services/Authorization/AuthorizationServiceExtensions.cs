@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using BandFounder.Infrastructure.Errors.Api;
+using BandFounder.Application.Error;
 using Microsoft.AspNetCore.Authorization;
 
 namespace BandFounder.Application.Services.Authorization;

@@ -1,10 +1,10 @@
 ﻿using System.Security.Claims;
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Accounts;
+using BandFounder.Application.Error;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure.Errors.Api;
 using FluentValidation;
 
 namespace BandFounder.Application.Services;

@@ -1,4 +1,4 @@
-﻿namespace BandFounder.Infrastructure.Errors.Api;
+﻿namespace BandFounder.Application.Error;
 
 public class ConflictError : Exception
 {
