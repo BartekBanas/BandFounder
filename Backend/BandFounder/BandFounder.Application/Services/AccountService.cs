@@ -86,7 +86,11 @@ public class AccountService : IAccountService
             DateCreated = DateTime.UtcNow,
         };
         
-        await _validator.ValidateAsync(newAccount);
+        var validationResult = await _validator.ValidateAsync(newAccount);
+        if (validationResult.IsValid is false)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
 
         await _accountRepository.CreateAsync(newAccount);
         
@@ -136,7 +140,11 @@ public class AccountService : IAccountService
             PasswordHash = passwordHash ?? "testAccountPassword"
         };
 
-        await _validator.ValidateAsync(testAccount);
+        var validationResult = await _validator.ValidateAsync(testAccount);
+        if (validationResult.IsValid is false)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
         
         var updatedAccount = new Account
         {
