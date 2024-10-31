@@ -38,8 +38,8 @@ public class SpotifyBrokerController : ControllerBase
     }
     
     [Authorize]
-    [HttpPost("authorize")]
-    public async Task<IActionResult> AuthorizeSpotifyAccount([FromBody] SpotifyAuthorizationDto dto)
+    [HttpPost("connect")]
+    public async Task<IActionResult> ConnectToSpotify([FromBody] SpotifyConnectionDto dto)
     {
         var userId = _authenticationService.GetUserId();
         

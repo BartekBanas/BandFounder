@@ -8,7 +8,7 @@ namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyCredentialsService
 {
-    Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto, Guid userId);
+    Task CreateSpotifyCredentials(SpotifyConnectionDto dto, Guid userId);
     Task<SpotifyCredentialsDto> GetSpotifyCredentials(Guid userId);
     Task<string> GetAccessTokenAsync(Guid userId);
 }
@@ -28,7 +28,7 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         _accountRepository = accountRepository;
     }
 
-    public async Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto, Guid userId)
+    public async Task CreateSpotifyCredentials(SpotifyConnectionDto dto, Guid userId)
     {
         var account = await _accountRepository.GetOneRequiredAsync(userId);
 

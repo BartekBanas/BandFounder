@@ -98,7 +98,7 @@ function handleAuthorizationResponse(data: any): void {
 async function submitAuthorizationRequest(accessToken: string, refreshToken: string, duration: number) {
     console.log('Submitting authorization request');
     console.log('Access token:', accessToken, 'Refresh token:', refreshToken, 'Duration:', duration);
-    const response = await fetch(`${API_URL}/spotifyBroker/authorize`, {
+    const response = await fetch(`${API_URL}/spotifyBroker/connect`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
