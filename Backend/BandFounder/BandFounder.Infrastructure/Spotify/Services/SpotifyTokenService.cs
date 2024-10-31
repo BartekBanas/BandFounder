@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Errors;
 using BandFounder.Infrastructure.Spotify.Dto;
 
 namespace BandFounder.Infrastructure.Spotify.Services;
@@ -61,7 +62,7 @@ public class SpotifyTokenService : ISpotifyTokenService
 
         if (spotifyCredentials is null)
         {
-            throw new InvalidOperationException("Your account hasn't been connected to a spotify account");
+            throw new SpotifyAccountNotLinkedError();
         }
 
         // Check if the stored token is still valid
