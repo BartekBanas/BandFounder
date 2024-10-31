@@ -52,13 +52,11 @@ public class AccountController : Controller
 
     [Authorize]
     [HttpGet("me")]
-    public Task<IActionResult> Me()
+    public async Task<IActionResult> Me()
     {
-        var claims = User.Claims;
-
-        var claimsInfo = claims.ToDictionary(claim => claim.Type, claim => claim.Value);
-
-        return Task.FromResult<IActionResult>(Ok(claimsInfo));
+        var accountDto = await _accountService.GetAccountAsync();
+        
+        return Ok(accountDto);
     }
 
     [Authorize]
