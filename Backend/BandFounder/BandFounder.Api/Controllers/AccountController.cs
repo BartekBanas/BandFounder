@@ -10,12 +10,10 @@ namespace BandFounder.Api.Controllers;
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;
-    private readonly IAuthenticationService _authenticationService;
 
-    public AccountController(IAccountService accountService, IAuthenticationService authenticationService)
+    public AccountController(IAccountService accountService)
     {
         _accountService = accountService;
-        _authenticationService = authenticationService;
     }
 
     [HttpPost]
@@ -76,9 +74,7 @@ public class AccountController : Controller
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMyAccount([FromBody] UpdateAccountDto dto)
     {
-        var userId = _authenticationService.GetUserId();
-
-        var updatedAccount = await _accountService.UpdateAccountAsync(dto, userId);
+        var updatedAccount = await _accountService.UpdateAccountAsync(dto);
 
         return Ok(updatedAccount);
     }
@@ -87,9 +83,7 @@ public class AccountController : Controller
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteMyAccount()
     {
-        var userId = _authenticationService.GetUserId();
-
-        await _accountService.DeleteAccountAsync(userId);
+        await _accountService.DeleteAccountAsync();
 
         return Ok();
     }
