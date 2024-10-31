@@ -94,4 +94,13 @@ public class AccountController : Controller
         
         return Ok();
     }
+
+    [Authorize]
+    [HttpDelete("role")]
+    public async Task<IActionResult> RemoveMusicianRole([FromQuery] string role)
+    {
+        await _accountService.RemoveMusicianRole(role);
+        
+        return Ok();
+    }
 }

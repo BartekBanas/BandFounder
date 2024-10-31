@@ -19,6 +19,7 @@ public interface IAccountService
     Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
     Task DeleteAccountAsync(Guid? accountId = null);
     Task AddMusicianRole(string role, Guid? accountId = null);
+    Task RemoveMusicianRole(string role, Guid? accountId = null);
 }
 
 public class AccountService : IAccountService
@@ -196,6 +197,25 @@ public class AccountService : IAccountService
         var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
         
         account.MusicianRoles.Add(musicianRole);
+        
+        await _accountRepository.SaveChangesAsync();
+    }
+    
+    public async Task RemoveMusicianRole(string role, Guid? accountId = null)
+    {
+        accountId ??= _authenticationService.GetUserId();
+        
+        var account = await GetDetailedAccount((Guid)accountId);
+        
+        role = role.NormalizeName();
+        var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.RoleName == role);
+        
+        if (musicianRole == null)
+        {
+            throw new NotFoundError("Role not found.");
+        }
+        
+        account.MusicianRoles.Remove(musicianRole);
         
         await _accountRepository.SaveChangesAsync();
     }
