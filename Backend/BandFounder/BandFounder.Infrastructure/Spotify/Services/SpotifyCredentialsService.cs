@@ -1,17 +1,16 @@
 using System.Text;
 using System.Text.Json;
-using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace BandFounder.Application.Services.Spotify;
+namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyCredentialsService
 {
-    Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto);
-    Task<SpotifyCredentialsDto> GetSpotifyCredentials();
-    Task<string> GetAccessTokenAsync();
+    Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto, Guid userId);
+    Task<SpotifyCredentialsDto> GetSpotifyCredentials(Guid userId);
+    Task<string> GetAccessTokenAsync(Guid userId);
 }
 
 public class SpotifyCredentialsService : ISpotifyCredentialsService
@@ -20,21 +19,17 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
     
     private readonly IRepository<SpotifyCredentials> _credentialsRepository;
     private readonly IRepository<Account> _accountRepository;
-    private readonly IAuthenticationService _authenticationService;
 
     public SpotifyCredentialsService(
         IRepository<SpotifyCredentials> credentialsRepository,
-        IRepository<Account> accountRepository,
-        IAuthenticationService authenticationService)
+        IRepository<Account> accountRepository)
     {
         _credentialsRepository = credentialsRepository;
         _accountRepository = accountRepository;
-        _authenticationService = authenticationService;
     }
 
-    public async Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto)
+    public async Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto, Guid userId)
     {
-        var userId = _authenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(userId);
 
         var tokenExpirationDate = DateTime.UtcNow.AddSeconds(dto.Duration - 60);
@@ -53,17 +48,15 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         await _credentialsRepository.SaveChangesAsync();
     }
 
-    public async Task<SpotifyCredentialsDto> GetSpotifyCredentials()
+    public async Task<SpotifyCredentialsDto> GetSpotifyCredentials(Guid userId)
     {
-        var userId = _authenticationService.GetUserId();
         var spotifyCredentials = await _credentialsRepository.GetOneAsync(userId);
 
         return spotifyCredentials!.ToDto();
     }
 
-    public async Task<string> GetAccessTokenAsync()
+    public async Task<string> GetAccessTokenAsync(Guid userId)
     {
-        var userId = _authenticationService.GetUserId();
         var spotifyCredentials = await _credentialsRepository.GetOneAsync(userId);
 
         if (spotifyCredentials is null)
@@ -78,11 +71,11 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         }
         else
         {
-            return await RefreshTokenAsync(spotifyCredentials.RefreshToken);
+            return await RefreshTokenAsync(userId, spotifyCredentials.RefreshToken);
         }
     }
 
-    private async Task<string> RefreshTokenAsync(string refreshToken)
+    private async Task<string> RefreshTokenAsync(Guid userId, string refreshToken)
     {
         using var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Post, SpotifyRefreshTokenUrl);
@@ -110,7 +103,7 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
             throw new Exception(); // TODO get more creative
         }
 
-        await SaveRefreshedAccessTokenAsync(spotifyAccessCredentials.AccessToken, spotifyAccessCredentials.Duration);
+        await SaveRefreshedAccessTokenAsync(userId, spotifyAccessCredentials.AccessToken, spotifyAccessCredentials.Duration);
 
         return spotifyAccessCredentials.AccessToken;
     }
@@ -123,9 +116,8 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
            Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
     }
 
-    private async Task SaveRefreshedAccessTokenAsync(string accessToken, int duration)
+    private async Task SaveRefreshedAccessTokenAsync(Guid userId, string accessToken, int duration)
     {
-        var userId = _authenticationService.GetUserId();
         var spotifyCredentials = await _credentialsRepository.GetOneRequiredAsync(userId);
 
         spotifyCredentials.AccessToken = accessToken;

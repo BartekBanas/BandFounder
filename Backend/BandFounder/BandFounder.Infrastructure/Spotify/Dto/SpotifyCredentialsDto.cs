@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BandFounder.Application.Dtos.Spotify;
+namespace BandFounder.Infrastructure.Spotify.Dto;
 
 public class SpotifyCredentialsDto
 {

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace BandFounder.Application.Dtos.Spotify;
+namespace BandFounder.Infrastructure.Spotify.Dto;
 
 public class FollowedArtistsResponse
 {
