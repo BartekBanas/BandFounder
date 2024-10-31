@@ -1,6 +1,7 @@
-using BandFounder.Application.Dtos;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Spotify.Dto;
+using BandFounder.Infrastructure.Spotify.Services;
 
 namespace BandFounder.Application.Services.Spotify;
 
@@ -84,8 +85,11 @@ public class SpotifyContentManager : ISpotifyContentManager
 
     public async Task<List<ArtistDto>> RetrieveSpotifyUsersArtistsAsync()
     {
-        var topArtists = await _spotifyContentRetriever.GetTopArtistsAsync();
-        var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync();
+        var userId = _authenticationService.GetUserId();
+        
+        var topArtists = await _spotifyContentRetriever.GetTopArtistsAsync(userId);
+        var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync(userId);
+        
         return topArtists.Concat(followedArtists).DistinctBy(artist => artist.Id).ToList();
     }
 

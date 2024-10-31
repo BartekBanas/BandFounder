@@ -20,15 +20,20 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await next(context);
         }
-        catch (Exception ex) when (ex is BadRequestError or ValidationException)
+        catch (ValidationException ex)
+        {
+            var validationFailure = ex.Errors.FirstOrDefault();
+            await HandleErrorAsync(context, StatusCodes.Status400BadRequest, validationFailure!.ErrorMessage);
+        }
+        catch (Exception ex) when (ex is BadRequestError)
         {
             await HandleErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (Exception ex) when (ex is UnauthorizedAccessException or SpotifyAccountNotLinkedError)
         {
             await HandleErrorAsync(context, StatusCodes.Status401Unauthorized, ex.Message);
         }
-        catch (ForbiddenError ex)
+        catch (Exception ex) when (ex is ForbiddenError)
         {
             await HandleErrorAsync(context, StatusCodes.Status403Forbidden, ex.Message);
         }

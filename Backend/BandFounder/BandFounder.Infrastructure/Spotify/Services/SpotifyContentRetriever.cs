@@ -1,13 +1,12 @@
 using System.Text.Json;
-using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Spotify;
+using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace BandFounder.Application.Services.Spotify;
+namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyContentRetriever
 {
-    Task<List<ArtistDto>> GetTopArtistsAsync();
-    Task<List<ArtistDto>> GetFollowedArtistsAsync();
+    Task<List<ArtistDto>> GetTopArtistsAsync(Guid userId);
+    Task<List<ArtistDto>> GetFollowedArtistsAsync(Guid userId);
 }
 
 public class SpotifyContentRetriever : ISpotifyContentRetriever
@@ -15,16 +14,16 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
     private const string SpotifyTopArtistsUrl = "https://api.spotify.com/v1/me/top/artists?limit=50";
     private const string SpotifyFollowedArtistsUrl = "https://api.spotify.com/v1/me/following?type=artist";
     
-    private readonly ISpotifyCredentialsService _credentialsService;
+    private readonly ISpotifyTokenService _tokenService;
 
-    public SpotifyContentRetriever(ISpotifyCredentialsService credentialsService)
+    public SpotifyContentRetriever(ISpotifyTokenService tokenService)
     {
-        _credentialsService = credentialsService;
+        _tokenService = tokenService;
     }
 
-    public async Task<List<ArtistDto>> GetTopArtistsAsync()
+    public async Task<List<ArtistDto>> GetTopArtistsAsync(Guid userId)
     {
-        var accessToken = await _credentialsService.GetAccessTokenAsync();
+        var accessToken = await _tokenService.GetAccessTokenAsync(userId);
         
         using var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get, SpotifyTopArtistsUrl);
@@ -40,9 +39,9 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
         return responseDto.Items;
     }
     
-    public async Task<List<ArtistDto>> GetFollowedArtistsAsync()
+    public async Task<List<ArtistDto>> GetFollowedArtistsAsync(Guid userId)
     {
-        var accessToken = await _credentialsService.GetAccessTokenAsync();
+        var accessToken = await _tokenService.GetAccessTokenAsync(userId);
         
         var url = SpotifyFollowedArtistsUrl;
         var followedArtists = new List<ArtistDto>();

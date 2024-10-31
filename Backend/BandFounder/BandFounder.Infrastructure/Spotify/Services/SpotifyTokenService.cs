@@ -1,40 +1,36 @@
 using System.Text;
 using System.Text.Json;
-using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Errors;
+using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace BandFounder.Application.Services.Spotify;
+namespace BandFounder.Infrastructure.Spotify.Services;
 
-public interface ISpotifyCredentialsService
+public interface ISpotifyTokenService
 {
-    Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto);
-    Task<SpotifyCredentialsDto> GetSpotifyCredentials();
-    Task<string> GetAccessTokenAsync();
+    Task CreateTokenSpotifyCredentials(SpotifyConnectionDto dto, Guid userId);
+    Task<SpotifyCredentialsDto> GetSpotifyTokenCredentials(Guid userId);
+    Task<string> GetAccessTokenAsync(Guid userId);
 }
 
-public class SpotifyCredentialsService : ISpotifyCredentialsService
+public class SpotifyTokenService : ISpotifyTokenService
 {
     private const string SpotifyRefreshTokenUrl = "https://accounts.spotify.com/api/token";
     
     private readonly IRepository<SpotifyCredentials> _credentialsRepository;
     private readonly IRepository<Account> _accountRepository;
-    private readonly IAuthenticationService _authenticationService;
 
-    public SpotifyCredentialsService(
+    public SpotifyTokenService(
         IRepository<SpotifyCredentials> credentialsRepository,
-        IRepository<Account> accountRepository,
-        IAuthenticationService authenticationService)
+        IRepository<Account> accountRepository)
     {
         _credentialsRepository = credentialsRepository;
         _accountRepository = accountRepository;
-        _authenticationService = authenticationService;
     }
 
-    public async Task CreateSpotifyCredentials(SpotifyAuthorizationDto dto)
+    public async Task CreateTokenSpotifyCredentials(SpotifyConnectionDto dto, Guid userId)
     {
-        var userId = _authenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(userId);
 
         var tokenExpirationDate = DateTime.UtcNow.AddSeconds(dto.Duration - 60);
@@ -53,22 +49,20 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         await _credentialsRepository.SaveChangesAsync();
     }
 
-    public async Task<SpotifyCredentialsDto> GetSpotifyCredentials()
+    public async Task<SpotifyCredentialsDto> GetSpotifyTokenCredentials(Guid userId)
     {
-        var userId = _authenticationService.GetUserId();
         var spotifyCredentials = await _credentialsRepository.GetOneAsync(userId);
 
         return spotifyCredentials!.ToDto();
     }
 
-    public async Task<string> GetAccessTokenAsync()
+    public async Task<string> GetAccessTokenAsync(Guid userId)
     {
-        var userId = _authenticationService.GetUserId();
         var spotifyCredentials = await _credentialsRepository.GetOneAsync(userId);
 
         if (spotifyCredentials is null)
         {
-            throw new InvalidOperationException("Your account hasn't been connected to a spotify account");
+            throw new SpotifyAccountNotLinkedError();
         }
 
         // Check if the stored token is still valid
@@ -78,11 +72,11 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         }
         else
         {
-            return await RefreshTokenAsync(spotifyCredentials.RefreshToken);
+            return await RefreshTokenAsync(userId, spotifyCredentials.RefreshToken);
         }
     }
 
-    private async Task<string> RefreshTokenAsync(string refreshToken)
+    private async Task<string> RefreshTokenAsync(Guid userId, string refreshToken)
     {
         using var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Post, SpotifyRefreshTokenUrl);
@@ -110,22 +104,21 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
             throw new Exception(); // TODO get more creative
         }
 
-        await SaveRefreshedAccessTokenAsync(spotifyAccessCredentials.AccessToken, spotifyAccessCredentials.Duration);
+        await SaveRefreshedAccessTokenAsync(userId, spotifyAccessCredentials.AccessToken, spotifyAccessCredentials.Duration);
 
         return spotifyAccessCredentials.AccessToken;
     }
 
     private async Task<string> GetAuthenticationHeader()
     {
-        var spotifyAppCredentials = await new SpotifyAppCredentialsManager().LoadCredentials();
+        var spotifyAppCredentials = await new SpotifyAppCredentialsService().LoadCredentials();
         
         return Convert.ToBase64String(
            Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
     }
 
-    private async Task SaveRefreshedAccessTokenAsync(string accessToken, int duration)
+    private async Task SaveRefreshedAccessTokenAsync(Guid userId, string accessToken, int duration)
     {
-        var userId = _authenticationService.GetUserId();
         var spotifyCredentials = await _credentialsRepository.GetOneRequiredAsync(userId);
 
         spotifyCredentials.AccessToken = accessToken;

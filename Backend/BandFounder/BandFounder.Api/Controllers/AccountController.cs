@@ -10,12 +10,10 @@ namespace BandFounder.Api.Controllers;
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;
-    private readonly IAuthenticationService _authenticationService;
 
-    public AccountController(IAccountService accountService, IAuthenticationService authenticationService)
+    public AccountController(IAccountService accountService)
     {
         _accountService = accountService;
-        _authenticationService = authenticationService;
     }
 
     [HttpPost]
@@ -54,31 +52,27 @@ public class AccountController : Controller
 
     [Authorize]
     [HttpGet("me")]
-    public Task<IActionResult> Me()
+    public async Task<IActionResult> Me()
     {
-        var claims = User.Claims;
-
-        var claimsInfo = claims.ToDictionary(claim => claim.Type, claim => claim.Value);
-
-        return Task.FromResult<IActionResult>(Ok(claimsInfo));
+        var accountDto = await _accountService.GetAccountAsync();
+        
+        return Ok(accountDto);
     }
 
     [Authorize]
     [HttpGet("{accountGuid:guid}")]
     public async Task<IActionResult> GetAccount([FromRoute] Guid accountGuid)
     {
-        var user = await _accountService.GetAccountAsync(accountGuid);
+        var accountDto = await _accountService.GetAccountAsync(accountGuid);
 
-        return Ok(user);
+        return Ok(accountDto);
     }
 
     [Authorize]
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMyAccount([FromBody] UpdateAccountDto dto)
     {
-        var userId = _authenticationService.GetUserId();
-
-        var updatedAccount = await _accountService.UpdateAccountAsync(userId, dto);
+        var updatedAccount = await _accountService.UpdateAccountAsync(dto);
 
         return Ok(updatedAccount);
     }
@@ -87,10 +81,26 @@ public class AccountController : Controller
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteMyAccount()
     {
-        var userId = _authenticationService.GetUserId();
+        await _accountService.DeleteAccountAsync();
 
-        await _accountService.DeleteAccountAsync(userId);
+        return Ok();
+    }
 
+    [Authorize]
+    [HttpPut("role")]
+    public async Task<IActionResult> AddMusicianRole([FromQuery] string role)
+    {
+        await _accountService.AddMusicianRole(role);
+        
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpDelete("role")]
+    public async Task<IActionResult> RemoveMusicianRole([FromQuery] string role)
+    {
+        await _accountService.RemoveMusicianRole(role);
+        
         return Ok();
     }
 }

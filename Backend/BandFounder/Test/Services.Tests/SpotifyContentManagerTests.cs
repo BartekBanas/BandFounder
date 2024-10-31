@@ -1,8 +1,9 @@
-using BandFounder.Application.Dtos;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Spotify.Dto;
+using BandFounder.Infrastructure.Spotify.Services;
 using NSubstitute;
 
 namespace Services.Tests;
@@ -61,8 +62,8 @@ public class SpotifyContentManagerTests
         _artistRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Artist>(null!)); // Artist doesn't exist
         _genreRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Genre>(null!)); // Genre doesn't exist
 
-        _spotifyContentRetriever.GetTopArtistsAsync().Returns(Task.FromResult(topArtists));
-        _spotifyContentRetriever.GetFollowedArtistsAsync().Returns(Task.FromResult(followedArtists));
+        _spotifyContentRetriever.GetTopArtistsAsync(userId).Returns(Task.FromResult(topArtists));
+        _spotifyContentRetriever.GetFollowedArtistsAsync(userId).Returns(Task.FromResult(followedArtists));
 
         // Act
         var savedArtists = await _spotifyContentManager.SaveRelevantArtists();
@@ -110,8 +111,8 @@ public class SpotifyContentManagerTests
         _artistRepository.GetOneAsync("artist1")!.Returns(Task.FromResult(existingArtist)); // Artist already exists
         _artistRepository.GetOneAsync("artist2")!.Returns(Task.FromResult<Artist>(null!)); // Second artist does not exist
 
-        _spotifyContentRetriever.GetTopArtistsAsync().Returns(Task.FromResult(topArtists));
-        _spotifyContentRetriever.GetFollowedArtistsAsync().Returns(Task.FromResult(followedArtists));
+        _spotifyContentRetriever.GetTopArtistsAsync(userId).Returns(Task.FromResult(topArtists));
+        _spotifyContentRetriever.GetFollowedArtistsAsync(userId).Returns(Task.FromResult(followedArtists));
 
         // Act
         var savedArtists = await _spotifyContentManager.SaveRelevantArtists();

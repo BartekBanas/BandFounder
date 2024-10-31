@@ -55,7 +55,7 @@ public static class RepositoriesExtensions
         }
     }
 
-    public static string NormalizeName(string input)
+    public static string NormalizeName(this string input)
     {
         // Split by spaces, remove extra spaces, and capitalize each word
         var words = input.Trim()
