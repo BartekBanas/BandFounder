@@ -26,18 +26,21 @@ public class AccountService : IAccountService
     private readonly IRepository<Account> _accountRepository;
 
     private readonly IValidator<Account> _validator;
+    private readonly IAuthenticationService _authenticationService;
     private readonly IHashingService _hashingService;
     private readonly IJwtService _jwtService;
 
     public AccountService(
         IRepository<Account> accountRepository, 
         IValidator<Account> validator,
+        IAuthenticationService authenticationService,
         IHashingService hashingService,
         IJwtService jwtService)
     {
         _accountRepository = accountRepository;
-        _hashingService = hashingService;
         _validator = validator;
+        _authenticationService = authenticationService;
+        _hashingService = hashingService;
         _jwtService = jwtService;
     }
 
