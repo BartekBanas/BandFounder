@@ -197,7 +197,7 @@ public class ChatroomService : IChatroomService
         
         try
         {
-            recipient = await _accountService.GetDetailedAccount((Guid)chatroomCreateDto.InvitedAccountId!);
+            recipient = await _accountService.GetDetailedAccount(chatroomCreateDto.InvitedAccountId!);
         }
         catch (Exception e)
         {

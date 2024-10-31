@@ -11,7 +11,7 @@ namespace BandFounder.Application.Services;
 public interface IAccountService
 {
     Task<AccountDto> GetAccountAsync(Guid? accountId = null);
-    Task<Account> GetDetailedAccount(Guid accountId);
+    Task<Account> GetDetailedAccount(Guid? accountId = null);
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
     Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
@@ -58,8 +58,10 @@ public class AccountService : IAccountService
         return dtos;
     }
 
-    public async Task<Account> GetDetailedAccount(Guid accountId)
+    public async Task<Account> GetDetailedAccount(Guid? accountId = null)
     {
+        accountId ??= _authenticationService.GetUserId();
+        
         return await _accountRepository.GetOneRequiredAsync(
             accountId, "Id", "Artists", "Artists.Genres", "Chatrooms", "MusicianRoles");
     }
@@ -192,7 +194,7 @@ public class AccountService : IAccountService
     {
         accountId ??= _authenticationService.GetUserId();
         
-        var account = await GetDetailedAccount((Guid)accountId);
+        var account = await GetDetailedAccount(accountId);
         
         var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
         
@@ -210,7 +212,7 @@ public class AccountService : IAccountService
     {
         accountId ??= _authenticationService.GetUserId();
         
-        var account = await GetDetailedAccount((Guid)accountId);
+        var account = await GetDetailedAccount(accountId);
         
         role = role.NormalizeName();
         var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.RoleName == role);
