@@ -12,19 +12,19 @@ public class SpotifyBrokerController : ControllerBase
 {
     private readonly ISpotifyContentRetriever _spotifyContentRetriever;
     private readonly ISpotifyContentManager _spotifyContentManager;
-    private readonly ISpotifyCredentialsService _spotifyCredentialsService;
+    private readonly ISpotifyTokenService _spotifyTokenService;
     
     private readonly IAuthenticationService _authenticationService;
     
     public SpotifyBrokerController(
         ISpotifyContentRetriever spotifyContentRetriever,
         ISpotifyContentManager spotifyContentManager,
-        ISpotifyCredentialsService spotifyCredentialsService, 
+        ISpotifyTokenService spotifyTokenService, 
         IAuthenticationService authenticationService)
     {
         _spotifyContentRetriever = spotifyContentRetriever;
         _spotifyContentManager = spotifyContentManager;
-        _spotifyCredentialsService = spotifyCredentialsService;
+        _spotifyTokenService = spotifyTokenService;
         _authenticationService = authenticationService;
     }
     
@@ -43,7 +43,7 @@ public class SpotifyBrokerController : ControllerBase
     {
         var userId = _authenticationService.GetUserId();
         
-        await _spotifyCredentialsService.CreateSpotifyCredentials(dto, userId);
+        await _spotifyTokenService.CreateTokenSpotifyCredentials(dto, userId);
 
         return Ok();
     }
@@ -54,7 +54,7 @@ public class SpotifyBrokerController : ControllerBase
     {
         var userId = _authenticationService.GetUserId();
 
-        var credentialsDto = await _spotifyCredentialsService.GetSpotifyCredentials(userId);
+        var credentialsDto = await _spotifyTokenService.GetSpotifyTokenCredentials(userId);
 
         return Ok(credentialsDto);
     }

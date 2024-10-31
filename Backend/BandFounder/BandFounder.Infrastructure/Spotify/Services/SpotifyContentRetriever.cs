@@ -14,16 +14,16 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
     private const string SpotifyTopArtistsUrl = "https://api.spotify.com/v1/me/top/artists?limit=50";
     private const string SpotifyFollowedArtistsUrl = "https://api.spotify.com/v1/me/following?type=artist";
     
-    private readonly ISpotifyCredentialsService _credentialsService;
+    private readonly ISpotifyTokenService _tokenService;
 
-    public SpotifyContentRetriever(ISpotifyCredentialsService credentialsService)
+    public SpotifyContentRetriever(ISpotifyTokenService tokenService)
     {
-        _credentialsService = credentialsService;
+        _tokenService = tokenService;
     }
 
     public async Task<List<ArtistDto>> GetTopArtistsAsync(Guid userId)
     {
-        var accessToken = await _credentialsService.GetAccessTokenAsync(userId);
+        var accessToken = await _tokenService.GetAccessTokenAsync(userId);
         
         using var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get, SpotifyTopArtistsUrl);
@@ -41,7 +41,7 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
     
     public async Task<List<ArtistDto>> GetFollowedArtistsAsync(Guid userId)
     {
-        var accessToken = await _credentialsService.GetAccessTokenAsync(userId);
+        var accessToken = await _tokenService.GetAccessTokenAsync(userId);
         
         var url = SpotifyFollowedArtistsUrl;
         var followedArtists = new List<ArtistDto>();

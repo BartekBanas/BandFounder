@@ -6,21 +6,21 @@ using BandFounder.Infrastructure.Spotify.Dto;
 
 namespace BandFounder.Infrastructure.Spotify.Services;
 
-public interface ISpotifyCredentialsService
+public interface ISpotifyTokenService
 {
-    Task CreateSpotifyCredentials(SpotifyConnectionDto dto, Guid userId);
-    Task<SpotifyCredentialsDto> GetSpotifyCredentials(Guid userId);
+    Task CreateTokenSpotifyCredentials(SpotifyConnectionDto dto, Guid userId);
+    Task<SpotifyCredentialsDto> GetSpotifyTokenCredentials(Guid userId);
     Task<string> GetAccessTokenAsync(Guid userId);
 }
 
-public class SpotifyCredentialsService : ISpotifyCredentialsService
+public class SpotifyTokenService : ISpotifyTokenService
 {
     private const string SpotifyRefreshTokenUrl = "https://accounts.spotify.com/api/token";
     
     private readonly IRepository<SpotifyCredentials> _credentialsRepository;
     private readonly IRepository<Account> _accountRepository;
 
-    public SpotifyCredentialsService(
+    public SpotifyTokenService(
         IRepository<SpotifyCredentials> credentialsRepository,
         IRepository<Account> accountRepository)
     {
@@ -28,7 +28,7 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         _accountRepository = accountRepository;
     }
 
-    public async Task CreateSpotifyCredentials(SpotifyConnectionDto dto, Guid userId)
+    public async Task CreateTokenSpotifyCredentials(SpotifyConnectionDto dto, Guid userId)
     {
         var account = await _accountRepository.GetOneRequiredAsync(userId);
 
@@ -48,7 +48,7 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
         await _credentialsRepository.SaveChangesAsync();
     }
 
-    public async Task<SpotifyCredentialsDto> GetSpotifyCredentials(Guid userId)
+    public async Task<SpotifyCredentialsDto> GetSpotifyTokenCredentials(Guid userId)
     {
         var spotifyCredentials = await _credentialsRepository.GetOneAsync(userId);
 

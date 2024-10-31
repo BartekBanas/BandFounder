@@ -68,7 +68,7 @@ services.AddScoped<IHashingService, HashingService>();
 services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<IMessageService, MessageService>();
 services.AddScoped<IChatroomService, ChatroomService>();
-services.AddScoped<ISpotifyCredentialsService, SpotifyCredentialsService>();
+services.AddScoped<ISpotifyTokenService, SpotifyTokenService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
 services.AddScoped<IMusicTasteComparisonService, MusicTasteComparisonService>();
