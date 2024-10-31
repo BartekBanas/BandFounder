@@ -18,7 +18,7 @@ public interface IAccountService
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
     Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
-    Task DeleteAccountAsync(Guid accountId);
+    Task DeleteAccountAsync(Guid? accountId = null);
 }
 
 public class AccountService : IAccountService
@@ -174,8 +174,10 @@ public class AccountService : IAccountService
         return dto;
     }
     
-    public async Task DeleteAccountAsync(Guid accountId)
+    public async Task DeleteAccountAsync(Guid? accountId = null)
     {
+        accountId ??= _authenticationService.GetUserId();
+        
         await _accountRepository.DeleteOneAsync(accountId);
 
         await _accountRepository.SaveChangesAsync();
