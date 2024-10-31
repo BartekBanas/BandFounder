@@ -18,11 +18,13 @@ public interface IAccountService
     Task<string> AuthenticateAsync(LoginDto loginDto);
     Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
     Task DeleteAccountAsync(Guid? accountId = null);
+    Task AddMusicianRole(string role, Guid? accountId = null);
 }
 
 public class AccountService : IAccountService
 {
     private readonly IRepository<Account> _accountRepository;
+    private readonly IRepository<MusicianRole> _musicianRoleRepository;
 
     private readonly IValidator<Account> _validator;
     private readonly IAuthenticationService _authenticationService;
@@ -30,13 +32,15 @@ public class AccountService : IAccountService
     private readonly IJwtService _jwtService;
 
     public AccountService(
-        IRepository<Account> accountRepository, 
+        IRepository<Account> accountRepository,
+        IRepository<MusicianRole> musicianRoleRepository,
         IValidator<Account> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
         IJwtService jwtService)
     {
         _accountRepository = accountRepository;
+        _musicianRoleRepository = musicianRoleRepository;
         _validator = validator;
         _authenticationService = authenticationService;
         _hashingService = hashingService;
@@ -180,6 +184,19 @@ public class AccountService : IAccountService
         
         await _accountRepository.DeleteOneAsync(accountId);
 
+        await _accountRepository.SaveChangesAsync();
+    }
+
+    public async Task AddMusicianRole(string role, Guid? accountId = null)
+    {
+        accountId ??= _authenticationService.GetUserId();
+        
+        var account = await _accountRepository.GetOneRequiredAsync(accountId);
+        
+        var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
+        
+        account.MusicianRoles.Add(musicianRole);
+        
         await _accountRepository.SaveChangesAsync();
     }
 }

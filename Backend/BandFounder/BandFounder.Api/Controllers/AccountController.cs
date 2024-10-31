@@ -63,9 +63,9 @@ public class AccountController : Controller
     [HttpGet("{accountGuid:guid}")]
     public async Task<IActionResult> GetAccount([FromRoute] Guid accountGuid)
     {
-        var user = await _accountService.GetAccountAsync(accountGuid);
+        var accountDto = await _accountService.GetAccountAsync(accountGuid);
 
-        return Ok(user);
+        return Ok(accountDto);
     }
 
     [Authorize]
@@ -83,6 +83,15 @@ public class AccountController : Controller
     {
         await _accountService.DeleteAccountAsync();
 
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPut("role")]
+    public async Task<IActionResult> AddMusicianRole([FromQuery] string role)
+    {
+        await _accountService.AddMusicianRole(role);
+        
         return Ok();
     }
 }
