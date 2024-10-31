@@ -192,9 +192,14 @@ public class AccountService : IAccountService
     {
         accountId ??= _authenticationService.GetUserId();
         
-        var account = await _accountRepository.GetOneRequiredAsync(accountId);
+        var account = await GetDetailedAccount((Guid)accountId);
         
         var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
+        
+        if (account.MusicianRoles.Any(currentRole => currentRole.Id == musicianRole.Id))
+        {
+            return;
+        }
         
         account.MusicianRoles.Add(musicianRole);
         
