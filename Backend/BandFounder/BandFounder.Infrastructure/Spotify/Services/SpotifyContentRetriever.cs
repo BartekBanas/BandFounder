@@ -1,13 +1,12 @@
 using System.Text.Json;
-using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Spotify;
+using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace BandFounder.Application.Services.Spotify;
+namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyContentRetriever
 {
-    Task<List<ArtistDto>> GetTopArtistsAsync();
-    Task<List<ArtistDto>> GetFollowedArtistsAsync();
+    Task<List<ArtistDto>> GetTopArtistsAsync(Guid userId);
+    Task<List<ArtistDto>> GetFollowedArtistsAsync(Guid userId);
 }
 
 public class SpotifyContentRetriever : ISpotifyContentRetriever
@@ -22,9 +21,9 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
         _credentialsService = credentialsService;
     }
 
-    public async Task<List<ArtistDto>> GetTopArtistsAsync()
+    public async Task<List<ArtistDto>> GetTopArtistsAsync(Guid userId)
     {
-        var accessToken = await _credentialsService.GetAccessTokenAsync();
+        var accessToken = await _credentialsService.GetAccessTokenAsync(userId);
         
         using var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get, SpotifyTopArtistsUrl);
@@ -40,9 +39,9 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
         return responseDto.Items;
     }
     
-    public async Task<List<ArtistDto>> GetFollowedArtistsAsync()
+    public async Task<List<ArtistDto>> GetFollowedArtistsAsync(Guid userId)
     {
-        var accessToken = await _credentialsService.GetAccessTokenAsync();
+        var accessToken = await _credentialsService.GetAccessTokenAsync(userId);
         
         var url = SpotifyFollowedArtistsUrl;
         var followedArtists = new List<ArtistDto>();

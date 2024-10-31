@@ -10,6 +10,7 @@ using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
+using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;

@@ -1,13 +1,13 @@
 using System.Text.Json;
-using BandFounder.Application.Dtos.Spotify;
+using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace BandFounder.Application.Services.Spotify;
+namespace BandFounder.Infrastructure.Spotify.Services;
 
-public class SpotifyAppCredentialsManager
+public class SpotifyAppCredentialsService
 {
     private readonly string _filePath;
 
-    public SpotifyAppCredentialsManager(string filePath = "./spotifyAppCredentials.json")
+    public SpotifyAppCredentialsService(string filePath = "./spotifyAppCredentials.json")
     {
         _filePath = filePath;
     }

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using BandFounder.Application.Dtos.Spotify;
+using BandFounder.Infrastructure.Spotify.Dto;
 
 namespace Services.Tests;
 
