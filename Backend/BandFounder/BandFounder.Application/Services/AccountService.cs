@@ -17,7 +17,7 @@ public interface IAccountService
     Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
-    Task<AccountDto> UpdateAccountAsync(Guid accountId, UpdateAccountDto updateDto);
+    Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
     Task DeleteAccountAsync(Guid accountId);
 }
 
@@ -122,8 +122,10 @@ public class AccountService : IAccountService
         return token;
     }
     
-    public async Task<AccountDto> UpdateAccountAsync(Guid accountId, UpdateAccountDto updateDto)
+    public async Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null)
     {
+        accountId ??= _authenticationService.GetUserId();
+        
         var originalAccount = _accountRepository.GetOneRequiredAsync(accountId).Result;
 
         string? passwordHash = null;
