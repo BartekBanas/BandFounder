@@ -1,5 +1,6 @@
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
+using BandFounder.Application.Error;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Authorization;
 using BandFounder.Application.Services.Authorization.Handlers;
@@ -9,7 +10,6 @@ using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
-using BandFounder.Infrastructure.Middleware;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -73,12 +73,10 @@ services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
 services.AddScoped<IMusicTasteComparisonService, MusicTasteComparisonService>();
 services.AddScoped<ICollaborationService, CollaborationService>();
 
-services.AddScoped<InfrastructureErrorHandlingMiddleware>();
 services.AddScoped<ErrorHandlingMiddleware>();
 
 var app = builder.Build();
 
-app.UseMiddleware<InfrastructureErrorHandlingMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
