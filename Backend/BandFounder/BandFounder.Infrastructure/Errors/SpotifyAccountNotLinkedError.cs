@@ -3,7 +3,7 @@ namespace BandFounder.Infrastructure.Errors;
 public class SpotifyAccountNotLinkedError : InfrastructureErrorException
 {
     private const string DefaultMessage =
-        "Spotify account not linked: Please connect connect your spotify account first.";
+        "Spotify account not linked: Please connect Bandfounder with your Spotify account first.";
 
     public SpotifyAccountNotLinkedError() : base(DefaultMessage)
     {
