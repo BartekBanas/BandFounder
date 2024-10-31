@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using BandFounder.Application.Dtos;
+﻿using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services.Jwt;
@@ -99,7 +98,7 @@ public class AccountService : IAccountService
         await _accountRepository.CreateAsync(newAccount);
         
         await _accountRepository.SaveChangesAsync();
-        var claims = GenerateClaimsIdentity(newAccount);
+        var claims = _authenticationService.GenerateClaimsIdentity(newAccount);
 
         var token = _jwtService.GenerateSymmetricJwtToken(claims);
         return token;
@@ -117,7 +116,7 @@ public class AccountService : IAccountService
         if (!_hashingService.VerifyPassword(foundAccount, loginDto.Password))
             throw new ForbiddenError();
 
-        var claims = GenerateClaimsIdentity(foundAccount);
+        var claims = _authenticationService.GenerateClaimsIdentity(foundAccount);
 
         var token = _jwtService.GenerateSymmetricJwtToken(claims);
         return token;
@@ -182,16 +181,5 @@ public class AccountService : IAccountService
         await _accountRepository.DeleteOneAsync(accountId);
 
         await _accountRepository.SaveChangesAsync();
-    }
-
-    private static ClaimsIdentity GenerateClaimsIdentity(Account account)
-    {
-        return new ClaimsIdentity(new Claim[]
-        {
-            new(ClaimTypes.Sid, account.Id.ToString()),
-            new(ClaimTypes.PrimarySid, account.Id.ToString()),
-            new(ClaimTypes.Name, account.Name),
-            new(ClaimTypes.Email, account.Email),
-        });
     }
 }

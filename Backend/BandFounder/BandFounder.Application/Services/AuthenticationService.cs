@@ -1,10 +1,12 @@
 using System.Security.Claims;
+using BandFounder.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 
 namespace BandFounder.Application.Services;
 
 public interface IAuthenticationService
 {
+    ClaimsIdentity GenerateClaimsIdentity(Account account);
     Guid GetUserId();
     ClaimsPrincipal GetUserClaims();
 }
@@ -16,6 +18,17 @@ public class AuthenticationService : IAuthenticationService
     public AuthenticationService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
+    }
+
+    public ClaimsIdentity GenerateClaimsIdentity(Account account)
+    {
+        return new ClaimsIdentity(new Claim[]
+        {
+            new(ClaimTypes.Sid, account.Id.ToString()),
+            new(ClaimTypes.PrimarySid, account.Id.ToString()),
+            new(ClaimTypes.Name, account.Name),
+            new(ClaimTypes.Email, account.Email),
+        });
     }
 
     public Guid GetUserId()
