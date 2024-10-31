@@ -110,7 +110,7 @@ public class SpotifyCredentialsService : ISpotifyCredentialsService
 
     private async Task<string> GetAuthenticationHeader()
     {
-        var spotifyAppCredentials = await new SpotifyAppCredentialsManager().LoadCredentials();
+        var spotifyAppCredentials = await new SpotifyAppCredentialsService().LoadCredentials();
         
         return Convert.ToBase64String(
            Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
