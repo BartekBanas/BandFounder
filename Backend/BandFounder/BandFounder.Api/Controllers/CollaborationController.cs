@@ -35,9 +35,9 @@ public class CollaborationController : Controller
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetMusicProjectListings()
+    public async Task<IActionResult> GetMusicProjectListings([FromQuery] FeedFilterOptions filterOptions)
     {
-        var musicProjects = await _collaborationService.GetListingsFeedAsync();
+        var musicProjects = await _collaborationService.GetListingsFeedAsync(filterOptions);
         
         return Ok(musicProjects);
     }

@@ -11,7 +11,7 @@ public interface ICollaborationService
 {
     Task<MusicProjectListingDto> GetListingAsync(Guid listingId);
     Task<IEnumerable<MusicProjectListingDto>> GetMusicProjectsAsync();
-    Task<ListingsFeedDto> GetListingsFeedAsync();
+    Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions);
     Task<IEnumerable<MusicProjectListingDto>> GetMyMusicProjectsAsync();
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null);
@@ -68,15 +68,20 @@ public class CollaborationService : ICollaborationService
         return projectListings.ToDto();
     }
     
-    public async Task<ListingsFeedDto> GetListingsFeedAsync()
+    public async Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions)
     {
         var userId = _authenticationService.GetUserId();
+        var userAccount = await _accountService.GetDetailedAccount(userId);
+        
         var projectListings = await _musicProjectListingRepository.GetAsync(includeProperties:
             [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
+
+        var listingsList = projectListings.ToList();
+        FilterListings(userAccount, listingsList, filterOptions);
         
         var projectListingsWithScores = new List<ListingWithScore>();
 
-        foreach (var projectListing in projectListings)
+        foreach (var projectListing in listingsList)
         {
             var similarityScore = await _musicTasteService.CompareMusicTasteAsync(userId, projectListing.OwnerId);
             projectListingsWithScores.Add(new ListingWithScore()
@@ -172,5 +177,18 @@ public class CollaborationService : ICollaborationService
         };
 
         await _chatroomService.CreateChatroom(chatroomCreateDto);
+    }
+
+    private void FilterListings(Account account, List<MusicProjectListing> listings, FeedFilterOptions filterOptions)
+    {
+        if (filterOptions.MatchRole)
+        {
+            listings.RemoveAll(listing => 
+                !listing.MusicianSlots.Any(slot => 
+                    slot.Status == SlotStatus.Available &&
+                    account.MusicianRoles.Any(role => role.Id == slot.Role.Id)
+                )
+            );
+        }
     }
 }
