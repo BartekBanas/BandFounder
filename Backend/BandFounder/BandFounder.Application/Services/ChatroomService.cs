@@ -173,7 +173,7 @@ public class ChatroomService : IChatroomService
         };
     }
 
-    private async Task<Chatroom> CreateGeneralChatroom(Account issuer, ChatroomCreateDto chatroomCreateDto)
+    private async Task<Chatroom> CreateGeneralChatroom(Account? issuer, ChatroomCreateDto chatroomCreateDto)
     {
         if (string.IsNullOrEmpty(chatroomCreateDto.Name))
         {
@@ -191,9 +191,9 @@ public class ChatroomService : IChatroomService
         return chatroom;
     }
 
-    private async Task<Chatroom> CreateDirectChatroom(Account issuer, ChatroomCreateDto chatroomCreateDto)
+    private async Task<Chatroom> CreateDirectChatroom(Account? issuer, ChatroomCreateDto chatroomCreateDto)
     {
-        Account recipient;
+        Account? recipient;
         
         try
         {

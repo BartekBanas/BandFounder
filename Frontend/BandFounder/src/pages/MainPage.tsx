@@ -4,7 +4,8 @@ import React from "react";
 export function MainPage() {
     return (
         <div className="App-header">
-            <SpotifyAuthorizationButton/>
+            <h1>You are logged in faggot</h1>
+            {/*<SpotifyAuthorizationButton/>*/}
         </div>
     );
 }

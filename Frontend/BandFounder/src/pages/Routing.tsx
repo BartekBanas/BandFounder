@@ -2,6 +2,9 @@ import {FC} from "react";
 import {useRoutes} from "react-router-dom";
 import {MainPage} from "./MainPage";
 import {SpotifyConnection} from "./SpotifyConnection";
+import {LoginPage} from "./LoginPage";
+import useAccountAuthorization from "../hooks/useAccountAuthorization";
+import {RegisterPage} from "./RegisterPage";
 
 const publicRoutes = [
     {
@@ -9,18 +12,39 @@ const publicRoutes = [
         children: [
             {
                 path: '/',
-                element: <MainPage/>
+                element: <LoginPage/>
             },
             {
-                path: '/spotifyConnection/*',
-                element: <SpotifyConnection/>
+                path: '/register',
+                element: <RegisterPage/>
             },
+            {
+                path: '*',
+                element: <LoginPage/>
+            }
         ]
     }
 ];
 
-const privateRoutes = [{}]
+const privateRoutes = [{
+    path: '/',
+    children: [
+        {
+            path: '*',
+            element: <MainPage/>
+        }
+]
+}]
 
 export const Routing: FC = function () {
-    return useRoutes(publicRoutes);
+    const isAuthorized = useAccountAuthorization();
+    let routes;
+    if(isAuthorized){
+        routes = privateRoutes;
+    }
+    else{
+        routes = publicRoutes;
+    }
+
+    return useRoutes(routes);
 };

@@ -8,7 +8,7 @@ namespace BandFounder.Application.Dtos;
 
 public static class DtoMapper
 {
-    public static AccountDto ToDto(this Account account)
+    public static AccountDto ToDto(this Account? account)
     {
         return new AccountDto
         {
@@ -18,7 +18,7 @@ public static class DtoMapper
         };
     }
 
-    public static IEnumerable<AccountDto> ToDto(this IEnumerable<Account> accounts)
+    public static IEnumerable<AccountDto> ToDto(this IEnumerable<Account?> accounts)
     {
         return accounts.Select(account => account.ToDto());
     }
