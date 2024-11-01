@@ -21,6 +21,18 @@ var configuration = builder.Configuration;
 // Add services to the container.
 var services = builder.Services;
 
+// Register the CORS policy
+services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontendApp", policyBuilder =>
+    {
+        policyBuilder.WithOrigins("http://localhost:3000") // Allow requests from frontend origin
+                     .AllowAnyHeader()                     // Allow any headers
+                     .AllowAnyMethod()                     // Allow any HTTP methods
+                     .AllowCredentials();                  // Allow credentials (e.g., cookies, authorization headers)
+    });
+});
+
 services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
 services.AddEndpointsApiExplorer();
 services.AddHttpContextAccessor();
@@ -78,9 +90,10 @@ services.AddScoped<ErrorHandlingMiddleware>();
 
 var app = builder.Build();
 
+// Add middleware for error handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
+// Initialize the database
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();
 
 // Configure the HTTP request pipeline.
@@ -90,11 +103,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(policyBuilder => policyBuilder
-    .AllowAnyHeader()
-    .WithOrigins("http://localhost:3000")
-    .AllowAnyMethod()
-    .AllowCredentials());
+// Apply the CORS policy globally
+app.UseCors("AllowFrontendApp");
 
 app.UseHttpsRedirection();
 
