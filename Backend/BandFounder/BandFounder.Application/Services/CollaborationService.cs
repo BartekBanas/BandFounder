@@ -54,7 +54,9 @@ public class CollaborationService : ICollaborationService
 
     public async Task<MusicProjectListingDto> GetListingAsync(Guid listingId)
     {
-        var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync(listingId, includeProperties:
+        var projectListing = await _musicProjectListingRepository.GetOneRequiredAsync(
+            filter: listing => listing.Id == listingId,
+            includeProperties:
             [nameof(MusicProjectListing.Owner), nameof(MusicProjectListing.MusicianSlots), "MusicianSlots.Role"]);
         
         return projectListing.ToDto();
