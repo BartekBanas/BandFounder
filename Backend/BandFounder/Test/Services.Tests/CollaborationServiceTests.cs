@@ -112,4 +112,87 @@ public class CollaborationServiceTests
         Assert.AreEqual(1, result.Listings.Count);
         Assert.AreEqual(listings[0].Id, result.Listings.First().Listing.Id);
     }
+
+    [TestCase(SlotStatus.Filled, true)]
+    [TestCase(SlotStatus.Filled, false)]
+    [TestCase(SlotStatus.Available, true)]
+    public async Task GetListingsFeedAsync_WithRoleFilter_FiltersOutIncorrectListings(SlotStatus status, bool differentRole)
+    {
+        // Arrange
+        const string roleName = "Guitarist";
+        var userId = Guid.NewGuid();
+        var roleId = Guid.NewGuid();
+
+        var accountServiceMock = Substitute.For<IAccountService>();
+        var authenticationServiceMock = Substitute.For<IAuthenticationService>();
+        var musicTasteServiceMock = Substitute.For<IMusicTasteComparisonService>();
+        var musicProjectListingRepositoryMock = Substitute.For<IRepository<MusicProjectListing>>();
+
+        var filterOptions = new FeedFilterOptions { MatchRole = true };
+        
+        var userAccount = new Account
+        {
+            Id = userId,
+            MusicianRoles =
+            [
+                new MusicianRole
+                {
+                    Id = roleId,
+                    RoleName = roleName
+                }
+            ],
+            Name = null,
+            PasswordHash = null,
+            Email = null,
+            DateCreated = default
+        };
+
+        var listings = new List<MusicProjectListing>
+        {
+            new()
+            {
+                MusicianSlots =
+                [
+                    new MusicianSlot
+                    {
+                        Role = new MusicianRole
+                        {
+                            Id = differentRole ? new Guid() : roleId,
+                            RoleName = differentRole ? "Drummer" : roleName
+                        },
+                        Status = status
+                    }
+                ],
+                OwnerId = Guid.NewGuid(),
+                Name = null,
+                Type = MusicProjectType.CollaborativeSong
+            }
+        };
+
+        authenticationServiceMock.GetUserId().Returns(userId);
+        accountServiceMock.GetDetailedAccount(userId).Returns(userAccount);
+        musicProjectListingRepositoryMock.GetAsync(
+            Arg.Any<Expression<Func<MusicProjectListing, bool>>>(),
+            Arg.Any<Func<IQueryable<MusicProjectListing>, IOrderedQueryable<MusicProjectListing>>>(),
+            Arg.Any<string[]>()
+        ).Returns(listings);
+        musicTasteServiceMock.CompareMusicTasteAsync(Arg.Any<Guid>(), Arg.Any<Guid>()).Returns(1);
+
+        var service = new CollaborationService(
+            accountServiceMock,
+            authenticationServiceMock,
+            musicTasteServiceMock,
+            _chatroomServiceMock,
+            _genreRepositoryMock,
+            _musicianRoleRepositoryMock,
+            _musicianSlotRepositoryMock,
+            musicProjectListingRepositoryMock
+        );
+
+        // Act
+        var result = await service.GetListingsFeedAsync(filterOptions);
+
+        // Assert
+        Assert.AreEqual(result.Listings.Count, 0);
+    }
 }
