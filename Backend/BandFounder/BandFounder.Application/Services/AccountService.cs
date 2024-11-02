@@ -121,11 +121,11 @@ public class AccountService : IAccountService
             .GetOneAsync(account =>
                 account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
 
-        if (foundAccount == default)
-            throw new ForbiddenError();
+        if (foundAccount is null)
+            throw new ForbiddenError("Username of email is incorrect");
 
         if (!_hashingService.VerifyPassword(foundAccount, loginDto.Password))
-            throw new ForbiddenError();
+            throw new ForbiddenError("Password is incorrect");
 
         var claims = _authenticationService.GenerateClaimsIdentity(foundAccount);
 
