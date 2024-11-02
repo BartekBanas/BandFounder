@@ -16,19 +16,27 @@ export function SpotifyConnection() {
             });
         }, 1000);
 
-        try {
-            accessSpotifyConnection();
-            navigate("/home"); // Navigate to /home after accessing Spotify connection
-        } catch (Exception) {
-            console.log(Exception);
-        }
+        const connectToSpotify = async () => {
+            try {
+                await accessSpotifyConnection();
+                navigate("/home"); // Navigate to /home after accessing Spotify connection
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+        connectToSpotify();
 
         return () => clearInterval(interval);
     }, [navigate]);
 
-    const handleConnect = () => {
-        accessSpotifyConnection();
-        navigate("/home"); // Navigate to /home on button click
+    const handleConnect = async () => {
+        try {
+            await accessSpotifyConnection();
+            navigate("/home"); // Navigate to /home on button click
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     return (

@@ -18,6 +18,28 @@ export function requestAuthorization() {
     window.location.href = url; // Show Spotify's authorization screen
 }
 
+export async function isUserSpotifyConnected(){
+    const cookies = new Cookies();
+    const auth_token = cookies.get('auth_token');
+    try {
+        const response = await fetch(`${API_URL}/spotifyBroker/tokens`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Authorization': `Bearer ${auth_token}`
+            },
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        return true;
+    } catch (Exception) {
+        console.error(Exception);
+        return false;
+    }
+}
+
 export function accessSpotifyConnection() {
     const code = new URLSearchParams(window.location.search).get('code');
     if (code) {
@@ -36,6 +58,7 @@ export function deleteSpotifyCredential() {
             }
         });
         console.log('Spotify credential deleted');
+        window.location.reload();
     } catch (error) {
         console.error('Error deleting Spotify credential:', error);
     }
