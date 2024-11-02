@@ -14,6 +14,7 @@ public interface IAuthenticationService
 public class AuthenticationService : IAuthenticationService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private const string NotLoggedInMessage = "You need to be logged in to perform this action.";
 
     public AuthenticationService(IHttpContextAccessor httpContextAccessor)
     {
@@ -39,7 +40,7 @@ public class AuthenticationService : IAuthenticationService
 
             if (user is { Identity.IsAuthenticated: false })
             {
-                throw new UnauthorizedAccessException();
+                throw new UnauthorizedAccessException(NotLoggedInMessage);
             }
 
             var claim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid);
@@ -55,7 +56,7 @@ public class AuthenticationService : IAuthenticationService
         }
         else
         {
-            throw new UnauthorizedAccessException();
+            throw new UnauthorizedAccessException(NotLoggedInMessage);
         }
     }
 
@@ -63,7 +64,7 @@ public class AuthenticationService : IAuthenticationService
     {
         if (_httpContextAccessor.HttpContext is null)
         {
-            throw new UnauthorizedAccessException();
+            throw new UnauthorizedAccessException(NotLoggedInMessage);
         }
         
         return _httpContextAccessor.HttpContext.User;

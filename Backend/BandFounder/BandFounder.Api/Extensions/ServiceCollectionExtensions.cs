@@ -62,6 +62,12 @@ public static class ServiceCollectionExtensions
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true
             };
+            
+            // Custom message for 401 Unauthorized responses
+            bearerOptions.Events = new JwtBearerEvents
+            {
+                OnChallenge = _ => throw new UnauthorizedAccessException("You need to be logged in to perform this action.")
+            };
         });
     }
 }
