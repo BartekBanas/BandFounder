@@ -16,11 +16,6 @@ export function requestAuthorization() {
 export function accessSpotifyConnection() {
     const code = new URLSearchParams(window.location.search).get('code');
     if (code) {
-        const cookies = new Cookies();
-        cookies.set('spotifyCode', code, {
-            expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
-            sameSite: 'strict',
-        });
         fetchAccessToken(code);
     }
 }
@@ -29,6 +24,7 @@ async function fetchAccessToken(code:string) {
     const body = `grant_type=authorization_code&code=${code}&redirect_uri=${encodeURIComponent(SpotifyConnectionPageUrl)}&client_id=${configLoader.clientId}&client_secret=${configLoader.clientSecret}`;
 
     try {
+
         const response = await fetch(SpotifyFetchTokenUrl, {
             method: 'POST',
             headers: {

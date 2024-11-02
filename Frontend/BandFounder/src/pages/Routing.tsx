@@ -30,8 +30,16 @@ const privateRoutes = [{
     path: '/',
     children: [
         {
-            path: '*',
+          path: '/',
             element: <MainPage/>
+        },
+        {
+          path: '/home',
+            element: <MainPage/>
+        },
+        {
+            path: '/spotifyConnection/callback/',
+            element: <SpotifyConnection/>
         }
 ]
 }]
