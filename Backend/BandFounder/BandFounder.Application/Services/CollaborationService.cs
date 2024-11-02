@@ -200,5 +200,10 @@ public class CollaborationService : ICollaborationService
         {
             listings.RemoveAll(listing => listing.Type != filterOptions.ListingType);
         }
+
+        if (filterOptions.Genre is not null)
+        {
+            listings.RemoveAll(listing => listing.GenreName != filterOptions.Genre);
+        }
     }
 }
