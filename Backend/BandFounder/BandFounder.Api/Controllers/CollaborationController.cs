@@ -90,4 +90,13 @@ public class CollaborationController : Controller
         
         return Ok();
     }
+
+    [Authorize]
+    [HttpDelete("{listingId:guid}")]
+    public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid listingId)
+    {
+        await _collaborationService.DeleteListing(listingId);
+        
+        return Ok();
+    }
 }

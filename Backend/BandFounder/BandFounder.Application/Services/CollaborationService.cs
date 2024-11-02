@@ -16,6 +16,7 @@ public interface ICollaborationService
     Task<MusicProjectListing> CreateMusicProjectListingAsync(MusicProjectListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? musicProjectListingId = null);
     Task Contact(Guid musicProjectListingId);
+    Task DeleteListing(Guid listingId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -179,6 +180,19 @@ public class CollaborationService : ICollaborationService
         };
 
         await _chatroomService.CreateChatroom(chatroomCreateDto);
+    }
+
+    public async Task DeleteListing(Guid listingId)
+    {
+        var listing = await _musicProjectListingRepository.GetOneRequiredAsync(listingId);
+
+        if (listing.OwnerId != UserId)
+        {
+            throw new ForbiddenError("You may only delete your own listings.");
+        }
+        
+        await _musicProjectListingRepository.DeleteOneAsync(listing.Id);
+        await _musicProjectListingRepository.SaveChangesAsync();
     }
 
     private void FilterListings(Account account, List<MusicProjectListing> listings, FeedFilterOptions filterOptions)
