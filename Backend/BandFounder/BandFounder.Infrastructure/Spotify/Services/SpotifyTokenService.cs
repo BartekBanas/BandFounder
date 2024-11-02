@@ -53,7 +53,12 @@ public class SpotifyTokenService : ISpotifyTokenService
     {
         var spotifyCredentials = await _credentialsRepository.GetOneAsync(userId);
 
-        return spotifyCredentials!.ToDto();
+        if (spotifyCredentials is null)
+        {
+            throw new SpotifyAccountNotLinkedError();
+        }
+
+        return spotifyCredentials.ToDto();
     }
 
     public async Task<string> GetAccessTokenAsync(Guid userId)
