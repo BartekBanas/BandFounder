@@ -16,6 +16,11 @@ export function requestAuthorization() {
 export function accessSpotifyConnection() {
     const code = new URLSearchParams(window.location.search).get('code');
     if (code) {
+        const cookies = new Cookies();
+        cookies.set('spotifyCode', code, {
+            expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
+            sameSite: 'strict',
+        });
         fetchAccessToken(code);
     }
 }
@@ -61,13 +66,13 @@ function handleAuthorizationResponse(data:any) {
     } else {
         console.warn("No refresh token in response");
     }
-
     submitAuthorizationRequest(data.access_token, data.refresh_token, data.expires_in);
 }
 
 async function submitAuthorizationRequest(accessToken:string, refreshToken:string, duration:string) {
     const jwt = new Cookies().get('auth_token');
-
+    const spotifyCode = new Cookies().get('spotifyCode');
+    console.log(123);
     try {
         const response = await fetch(`${API_URL}/spotifyBroker/connect`, {
             method: 'POST',
