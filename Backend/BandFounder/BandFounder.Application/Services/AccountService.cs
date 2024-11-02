@@ -11,7 +11,7 @@ namespace BandFounder.Application.Services;
 public interface IAccountService
 {
     Task<AccountDto> GetAccountAsync(Guid? accountId = null);
-    Task<Account> GetDetailedAccount(Guid? accountId = null);
+    Task<Account?> GetDetailedAccount(Guid? accountId = null);
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
     Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
@@ -24,18 +24,18 @@ public interface IAccountService
 
 public class AccountService : IAccountService
 {
-    private readonly IRepository<Account> _accountRepository;
+    private readonly IRepository<Account?> _accountRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
 
-    private readonly IValidator<Account> _validator;
+    private readonly IValidator<Account?> _validator;
     private readonly IAuthenticationService _authenticationService;
     private readonly IHashingService _hashingService;
     private readonly IJwtService _jwtService;
 
     public AccountService(
-        IRepository<Account> accountRepository,
+        IRepository<Account?> accountRepository,
         IRepository<MusicianRole> musicianRoleRepository,
-        IValidator<Account> validator,
+        IValidator<Account?> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
         IJwtService jwtService)
@@ -58,7 +58,7 @@ public class AccountService : IAccountService
         return dtos;
     }
 
-    public async Task<Account> GetDetailedAccount(Guid? accountId = null)
+    public async Task<Account?> GetDetailedAccount(Guid? accountId = null)
     {
         accountId ??= _authenticationService.GetUserId();
         
@@ -112,10 +112,10 @@ public class AccountService : IAccountService
     }
 
     public async Task<string> AuthenticateAsync(LoginDto loginDto)
-    {
+    { 
         var foundAccount = await _accountRepository
-            .GetOneAsync(account =>
-                account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
+                .GetOneAsync(account =>
+                    account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
 
         if (foundAccount == default)
             throw new ForbiddenError();
