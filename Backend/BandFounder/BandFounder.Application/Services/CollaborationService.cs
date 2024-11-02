@@ -190,5 +190,10 @@ public class CollaborationService : ICollaborationService
                 )
             );
         }
+
+        if (filterOptions.ListingType is not null)
+        {
+            listings.RemoveAll(listing => listing.Type != filterOptions.ListingType);
+        }
     }
 }
