@@ -17,7 +17,7 @@ public class Chatroom : Entity
     public ChatRoomType ChatRoomType { get; set; }
 
     // Many-to-Many relationship with Account
-    public virtual List<Account> Members { get; set; } = [];
+    public virtual List<Account?> Members { get; set; } = [];
     
     // One-to-Many relationship with Message
     public virtual List<Message> Messages { get; set; } = [];
