@@ -2,15 +2,20 @@ import { SpotifyAppCredentialService } from "./spotifyAppCredentialService";
 import { API_URL } from "../../config";
 import Cookies from "universal-cookie";
 
-const configLoader = new SpotifyAppCredentialService();
+var configLoader = new SpotifyAppCredentialService();
 const BaseAppUrl = "http://localhost:3000/";
 const SpotifyConnectionPageUrl = BaseAppUrl + "spotifyConnection/callback/";
 const SpotifyAuthorizeUrl = "https://accounts.spotify.com/authorize";
 const SpotifyFetchTokenUrl = "https://accounts.spotify.com/api/token";
 
 export function requestAuthorization() {
-    const url = `${SpotifyAuthorizeUrl}?client_id=${configLoader.clientId}&response_type=code&redirect_uri=${encodeURIComponent(SpotifyConnectionPageUrl)}&show_dialog=true&scope=user-top-read user-follow-read`;
-    window.location.href = url;
+    let url = SpotifyAuthorizeUrl;
+    url += "?client_id=" + configLoader.clientId;
+    url += "&response_type=code";
+    url += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
+    url += "&show_dialog=true";
+    url += "&scope=user-top-read user-follow-read";
+    window.location.href = url; // Show Spotify's authorization screen
 }
 
 export function accessSpotifyConnection() {
@@ -20,22 +25,52 @@ export function accessSpotifyConnection() {
     }
 }
 
-async function fetchAccessToken(code:string) {
-    const body = `grant_type=authorization_code&code=${code}&redirect_uri=${encodeURIComponent(SpotifyConnectionPageUrl)}&client_id=${configLoader.clientId}&client_secret=${configLoader.clientSecret}`;
-
+export function deleteSpotifyCredential() {
+    const jwt = new Cookies().get('auth_token');
     try {
-
-        const response = await fetch(SpotifyFetchTokenUrl, {
+        fetch(`${API_URL}/account/clearProfile`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Basic ${btoa(configLoader.clientId + ":" + configLoader.clientSecret)}`
-            },
-            body: body
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+        console.log('Spotify credential deleted');
+    } catch (error) {
+        console.error('Error deleting Spotify credential:', error);
+    }
+}
+function fetchAccessToken(code: string) {
+    configLoader = new SpotifyAppCredentialService();
+
+    let body = "grant_type=authorization_code";
+
+    body += "&code=" + code;
+    body += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
+
+    body += "&client_id=" + localStorage.getItem('client_id');
+    console.log(123);
+    body += "&client_secret=" + localStorage.getItem('client_secret');
+
+    callAuthorizationApi(body)
+    // .then(_ => window.location.href = BaseAppUrl);
+}
+
+async function callAuthorizationApi(body: any) {
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/x-www-form-urlencoded');
+    headers.append('Authorization', 'Basic ' + btoa(localStorage.getItem('client_id') + ":" + localStorage.getItem('client_secret')));
+
+    try {
+        const response = await fetch(SpotifyFetchTokenUrl, {
+            method: 'POST',
+            headers: headers,
+            body: body,
         });
 
         if (!response.ok) {
-            console.error('Authorization failed:', await response.text());
+            const errorText = await response.text();
+            console.log('Authorization failed:', errorText);
             return;
         }
 
@@ -46,7 +81,7 @@ async function fetchAccessToken(code:string) {
     }
 }
 
-function handleAuthorizationResponse(data:any) {
+function handleAuthorizationResponse(data: any) {
     console.log('Authorization response:', data);
 
     if (data.access_token) {
@@ -65,7 +100,7 @@ function handleAuthorizationResponse(data:any) {
     submitAuthorizationRequest(data.access_token, data.refresh_token, data.expires_in);
 }
 
-async function submitAuthorizationRequest(accessToken:string, refreshToken:string, duration:string) {
+async function submitAuthorizationRequest(accessToken: string, refreshToken: string, duration: string) {
     const jwt = new Cookies().get('auth_token');
     const spotifyCode = new Cookies().get('spotifyCode');
     console.log(123);

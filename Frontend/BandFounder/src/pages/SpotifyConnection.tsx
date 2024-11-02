@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { accessSpotifyConnection } from "../components/spotiftConnection/spotifyConnection";
 
 export function SpotifyConnection() {
     const [dots, setDots] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -12,15 +14,21 @@ export function SpotifyConnection() {
                 }
                 return prevDots + ".";
             });
-        }, 500);
+        }, 1000);
 
-        accessSpotifyConnection();
+        try {
+            accessSpotifyConnection();
+            navigate("/home"); // Navigate to /home after accessing Spotify connection
+        } catch (Exception) {
+            console.log(Exception);
+        }
 
         return () => clearInterval(interval);
-    }, []);
+    }, [navigate]);
 
     const handleConnect = () => {
         accessSpotifyConnection();
+        navigate("/home"); // Navigate to /home on button click
     };
 
     return (
