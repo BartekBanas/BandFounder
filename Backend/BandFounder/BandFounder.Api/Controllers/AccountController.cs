@@ -103,4 +103,13 @@ public class AccountController : Controller
         
         return Ok();
     }
+
+    [Authorize]
+    [HttpDelete("/clearProfile")]
+    public async Task<IActionResult> ClearProfile()
+    {
+        await _accountService.ClearUserMusicProfile();
+        
+        return Ok();
+    }
 }

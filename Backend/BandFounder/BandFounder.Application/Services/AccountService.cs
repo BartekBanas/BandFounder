@@ -20,12 +20,14 @@ public interface IAccountService
     Task DeleteAccountAsync(Guid? accountId = null);
     Task AddMusicianRole(string role, Guid? accountId = null);
     Task RemoveMusicianRole(string role, Guid? accountId = null);
+    Task ClearUserMusicProfile(Guid? accountId = null);
 }
 
 public class AccountService : IAccountService
 {
     private readonly IRepository<Account> _accountRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
+    private readonly IRepository<SpotifyCredentials> _spotifyCredentialsRepository;
 
     private readonly IValidator<Account> _validator;
     private readonly IAuthenticationService _authenticationService;
@@ -35,6 +37,7 @@ public class AccountService : IAccountService
     public AccountService(
         IRepository<Account> accountRepository,
         IRepository<MusicianRole> musicianRoleRepository,
+        IRepository<SpotifyCredentials> spotifyCredentialsRepository,
         IValidator<Account> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
@@ -42,6 +45,7 @@ public class AccountService : IAccountService
     {
         _accountRepository = accountRepository;
         _musicianRoleRepository = musicianRoleRepository;
+        _spotifyCredentialsRepository = spotifyCredentialsRepository;
         _validator = validator;
         _authenticationService = authenticationService;
         _hashingService = hashingService;
@@ -223,6 +227,21 @@ public class AccountService : IAccountService
         }
         
         account.MusicianRoles.Remove(musicianRole);
+        
+        await _accountRepository.SaveChangesAsync();
+    }
+
+    public async Task ClearUserMusicProfile(Guid? accountId = null)
+    {
+        accountId ??= _authenticationService.GetUserId();
+        var account = await GetDetailedAccount(accountId);
+
+        if (account.SpotifyCredentials is not null)
+        {
+            await _spotifyCredentialsRepository.DeleteOneAsync(account.SpotifyCredentials.AccountId);
+        }
+        
+        account.Artists.Clear();
         
         await _accountRepository.SaveChangesAsync();
     }
