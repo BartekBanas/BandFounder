@@ -181,6 +181,11 @@ public class CollaborationService : ICollaborationService
 
     private void FilterListings(Account account, List<MusicProjectListing> listings, FeedFilterOptions filterOptions)
     {
+        if (filterOptions.ExcludeOwn)
+        {
+            listings.RemoveAll(listing => listing.OwnerId == account.Id);
+        }
+        
         if (filterOptions.MatchRole)
         {
             listings.RemoveAll(listing => 

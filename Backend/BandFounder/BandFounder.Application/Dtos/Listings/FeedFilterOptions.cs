@@ -4,6 +4,7 @@ namespace BandFounder.Application.Dtos.Listings;
 
 public class FeedFilterOptions
 {
+    public bool ExcludeOwn { get; set; }
     public bool MatchRole { get; set; }
     public MusicProjectType? ListingType { get; set; }
 }
