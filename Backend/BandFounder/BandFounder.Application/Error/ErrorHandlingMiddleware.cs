@@ -41,7 +41,7 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await HandleErrorAsync(context, StatusCodes.Status404NotFound, ex.Message);
         }
-        catch (Exception ex) when (ex is ItemDuplicatedErrorException or ConflictError)
+        catch (Exception ex) when (ex is ItemDuplicatedErrorException or ConflictError or SpotifyAccountAlreadyConnectedException)
         {
             await HandleErrorAsync(context, StatusCodes.Status409Conflict, ex.Message);
         }

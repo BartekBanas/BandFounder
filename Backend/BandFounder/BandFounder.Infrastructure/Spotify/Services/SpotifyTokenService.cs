@@ -32,6 +32,12 @@ public class SpotifyTokenService : ISpotifyTokenService
     public async Task CreateTokenSpotifyCredentials(SpotifyConnectionDto dto, Guid userId)
     {
         var account = await _accountRepository.GetOneRequiredAsync(userId);
+        
+        var existingCredential = await _credentialsRepository.GetOneAsync(userId);
+        if (existingCredential is not null)
+        {
+            throw new SpotifyAccountAlreadyConnectedException();
+        }
 
         var tokenExpirationDate = DateTime.UtcNow.AddSeconds(dto.Duration - 60);
 
@@ -53,7 +59,12 @@ public class SpotifyTokenService : ISpotifyTokenService
     {
         var spotifyCredentials = await _credentialsRepository.GetOneAsync(userId);
 
-        return spotifyCredentials!.ToDto();
+        if (spotifyCredentials is null)
+        {
+            throw new SpotifyAccountNotLinkedError();
+        }
+
+        return spotifyCredentials.ToDto();
     }
 
     public async Task<string> GetAccessTokenAsync(Guid userId)
