@@ -105,7 +105,7 @@ public class AccountController : Controller
     }
 
     [Authorize]
-    [HttpDelete("/clearProfile")]
+    [HttpPost("clearProfile")]
     public async Task<IActionResult> ClearProfile()
     {
         await _accountService.ClearUserMusicProfile();

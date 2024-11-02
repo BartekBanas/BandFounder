@@ -65,9 +65,9 @@ public class AccountService : IAccountService
     public async Task<Account> GetDetailedAccount(Guid? accountId = null)
     {
         accountId ??= _authenticationService.GetUserId();
-        
-        return await _accountRepository.GetOneRequiredAsync(
-            accountId, "Id", "Artists", "Artists.Genres", "Chatrooms", "MusicianRoles");
+
+        return await _accountRepository.GetOneRequiredAsync(accountId, keyPropertyName: "Id",
+            includeProperties: ["Artists", "Artists.Genres", "Chatrooms", "MusicianRoles", "SpotifyCredentials"]);
     }
 
     public async Task<IEnumerable<AccountDto>> GetAccountsAsync()
