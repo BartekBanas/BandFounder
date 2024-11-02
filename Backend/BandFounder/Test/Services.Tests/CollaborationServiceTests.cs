@@ -9,6 +9,11 @@ namespace Services.Tests;
 
 public class CollaborationServiceTests
 {
+    private readonly IChatroomService _chatroomServiceMock = Substitute.For<IChatroomService>();
+    private readonly IRepository<Genre> _genreRepositoryMock = Substitute.For<IRepository<Genre>>();
+    private readonly IRepository<MusicianRole> _musicianRoleRepositoryMock = Substitute.For<IRepository<MusicianRole>>();
+    private readonly IRepository<MusicianSlot> _musicianSlotRepositoryMock = Substitute.For<IRepository<MusicianSlot>>();
+
     [Test]
     public async Task GetListingsFeedAsync_WithRoleFilter_FiltersListingsCorrectly()
     {
@@ -19,10 +24,6 @@ public class CollaborationServiceTests
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();
         var musicTasteServiceMock = Substitute.For<IMusicTasteComparisonService>();
-        var chatroomServiceMock = Substitute.For<IChatroomService>();
-        var genreRepositoryMock = Substitute.For<IRepository<Genre>>();
-        var musicianRoleRepositoryMock = Substitute.For<IRepository<MusicianRole>>();
-        var musicianSlotRepositoryMock = Substitute.For<IRepository<MusicianSlot>>();
         var musicProjectListingRepositoryMock = Substitute.For<IRepository<MusicProjectListing>>();
 
         var filterOptions = new FeedFilterOptions { MatchRole = true };
@@ -32,7 +33,7 @@ public class CollaborationServiceTests
             Id = userId,
             MusicianRoles = new List<MusicianRole>
             {
-                new MusicianRole
+                new()
                 {
                     Id = roleId,
                     RoleName = "Guitarist"
@@ -46,11 +47,11 @@ public class CollaborationServiceTests
 
         var listings = new List<MusicProjectListing>
         {
-            new MusicProjectListing
+            new()
             {
                 MusicianSlots = new List<MusicianSlot>
                 {
-                    new MusicianSlot
+                    new()
                     {
                         Role = new MusicianRole
                         {
@@ -64,11 +65,11 @@ public class CollaborationServiceTests
                 Name = null,
                 Type = MusicProjectType.Band
             },
-            new MusicProjectListing
+            new()
             {
                 MusicianSlots = new List<MusicianSlot>
                 {
-                    new MusicianSlot
+                    new()
                     {
                         Role = new MusicianRole
                         {
@@ -93,15 +94,14 @@ public class CollaborationServiceTests
         ).Returns(listings);
         musicTasteServiceMock.CompareMusicTasteAsync(Arg.Any<Guid>(), Arg.Any<Guid>()).Returns(1);
 
-
         var service = new CollaborationService(
             accountServiceMock,
             authenticationServiceMock,
             musicTasteServiceMock,
-            chatroomServiceMock,
-            genreRepositoryMock,
-            musicianRoleRepositoryMock,
-            musicianSlotRepositoryMock,
+            _chatroomServiceMock,
+            _genreRepositoryMock,
+            _musicianRoleRepositoryMock,
+            _musicianSlotRepositoryMock,
             musicProjectListingRepositoryMock
         );
 
