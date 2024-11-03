@@ -21,18 +21,6 @@ var configuration = builder.Configuration;
 // Add services to the container.
 var services = builder.Services;
 
-// Register the CORS policy
-services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontendApp", policyBuilder =>
-    {
-        policyBuilder.WithOrigins("http://localhost:3000") // Allow requests from frontend origin
-                     .AllowAnyHeader()                     // Allow any headers
-                     .AllowAnyMethod()                     // Allow any HTTP methods
-                     .AllowCredentials();                  // Allow credentials (e.g., cookies, authorization headers)
-    });
-});
-
 services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
 services.AddEndpointsApiExplorer();
 services.AddHttpContextAccessor();
@@ -73,7 +61,7 @@ services.AddScoped<IRepository<SpotifyCredentials>, Repository<SpotifyCredential
 
 services.AddScoped<IRepository<MusicianRole>, Repository<MusicianRole, BandFounderDbContext>>();
 services.AddScoped<IRepository<MusicianSlot>, Repository<MusicianSlot, BandFounderDbContext>>();
-services.AddScoped<IRepository<MusicProjectListing>, Repository<MusicProjectListing, BandFounderDbContext>>();
+services.AddScoped<IRepository<Listing>, Repository<Listing, BandFounderDbContext>>();
 
 services.AddScoped<IHashingService, HashingService>();
 
@@ -84,7 +72,7 @@ services.AddScoped<ISpotifyTokenService, SpotifyTokenService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
 services.AddScoped<IMusicTasteComparisonService, MusicTasteComparisonService>();
-services.AddScoped<ICollaborationService, CollaborationService>();
+services.AddScoped<IListingService, ListingService>();
 
 services.AddScoped<ErrorHandlingMiddleware>();
 
@@ -103,8 +91,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Apply the CORS policy globally
-app.UseCors("AllowFrontendApp");
+app.UseCors(policyBuilder => policyBuilder
+    .AllowAnyHeader()
+    .WithOrigins("http://localhost:3000")
+    .AllowAnyMethod()
+    .AllowCredentials());
 
 app.UseHttpsRedirection();
 

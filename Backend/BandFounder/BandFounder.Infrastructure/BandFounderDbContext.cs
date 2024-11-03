@@ -14,7 +14,7 @@ public class BandFounderDbContext : DbContext
     
     public DbSet<MusicianRole> MusicianRoles { get; set; }
     public DbSet<MusicianSlot> MusicianSlots { get; set; }
-    public DbSet<MusicProjectListing> MusicProjectListings { get; set; }
+    public DbSet<Listing> Listings { get; set; }
     
     public BandFounderDbContext(DbContextOptions options) : base(options)
     {
@@ -38,21 +38,21 @@ public class BandFounderDbContext : DbContext
             .HasMany(artist => artist.Genres)
             .WithMany(genre => genre.Artists);
         
-        // Many-to-One relationship: MusicCollaboration has one owner (Account)
-        modelBuilder.Entity<MusicProjectListing>()
+        // Many-to-One relationship: Listing has one owner (Account)
+        modelBuilder.Entity<Listing>()
             .HasOne(projectListing => projectListing.Owner)
-            .WithMany(account => account.MusicProjectListings)
+            .WithMany(account => account.Listings)
             .HasForeignKey(projectListing => projectListing.OwnerId);
 
-        // Many-to-One relationship: MusicCollaboration has an optional Genre
-        modelBuilder.Entity<MusicProjectListing>()
+        // Many-to-One relationship: Listing has an optional Genre
+        modelBuilder.Entity<Listing>()
             .HasOne(projectListing => projectListing.Genre)
             .WithMany()
             .HasForeignKey(projectListing => projectListing.GenreName)
             .IsRequired(false);
         
-        // Configuring one-to-many relationship: MusicProjectListing has many MusicianSlots
-        modelBuilder.Entity<MusicProjectListing>()
+        // Configuring one-to-many relationship: Listing has many MusicianSlots
+        modelBuilder.Entity<Listing>()
             .HasMany(listing => listing.MusicianSlots)
             .WithOne(slot => slot.Listing)
             .HasForeignKey(slot => slot.ListingId);
@@ -77,7 +77,7 @@ public class BandFounderDbContext : DbContext
             .HasMany(account => account.Chatrooms)
             .WithMany(chatroom => chatroom.Members);
         
-        // Many-to-One relationship: MusicCollaboration has one owner (Account)
+        // Many-to-One relationship: Listing has one owner (Account)
         modelBuilder.Entity<Chatroom>()
             .HasOne(chatroom => chatroom.Owner)
             .WithMany()

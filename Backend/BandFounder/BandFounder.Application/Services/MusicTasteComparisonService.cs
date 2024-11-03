@@ -57,7 +57,7 @@ public class MusicTasteComparisonService : IMusicTasteComparisonService
         return genreSimilarityScore + artistSimilarityScore;
     }
 
-    private int CalculateGenreSimilarity(Account? user1, Account? user2)
+    private int CalculateGenreSimilarity(Account user1, Account user2)
     {
         var user1Genres = GetWagedGenres(user1);
         var user2Genres = GetWagedGenres(user2);
@@ -77,7 +77,7 @@ public class MusicTasteComparisonService : IMusicTasteComparisonService
         return genreSimilarityScore;
     }
 
-    private int CalculateArtistSimilarity(Account? user1, Account? user2)
+    private int CalculateArtistSimilarity(Account user1, Account user2)
     {
         var user1ArtistIds = user1.Artists.Select(artist => artist.Id).ToHashSet();
         var user2ArtistIds = user2.Artists.Select(artist => artist.Id).ToHashSet();
@@ -89,7 +89,7 @@ public class MusicTasteComparisonService : IMusicTasteComparisonService
         return artistSimilarityScore;
     }
 
-    public virtual Dictionary<string, int> GetWagedGenres(Account? account)
+    public virtual Dictionary<string, int> GetWagedGenres(Account account)
     {
         var wagedGenres = new Dictionary<string, int>();
 

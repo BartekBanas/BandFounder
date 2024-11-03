@@ -7,7 +7,7 @@ using NSubstitute;
 
 namespace Services.Tests;
 
-public class CollaborationServiceTests
+public class ListingServiceTests
 {
     private readonly IChatroomService _chatroomServiceMock = Substitute.For<IChatroomService>();
     private readonly IRepository<Genre> _genreRepositoryMock = Substitute.For<IRepository<Genre>>();
@@ -24,7 +24,7 @@ public class CollaborationServiceTests
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();
         var musicTasteServiceMock = Substitute.For<IMusicTasteComparisonService>();
-        var musicProjectListingRepositoryMock = Substitute.For<IRepository<MusicProjectListing>>();
+        var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
 
         var filterOptions = new FeedFilterOptions { MatchRole = true };
     
@@ -45,7 +45,7 @@ public class CollaborationServiceTests
             DateCreated = default
         };
 
-        var listings = new List<MusicProjectListing>
+        var listings = new List<Listing>
         {
             new()
             {
@@ -63,7 +63,7 @@ public class CollaborationServiceTests
                 },
                 OwnerId = Guid.NewGuid(),
                 Name = null,
-                Type = MusicProjectType.Band
+                Type = ListingType.Band
             },
             new()
             {
@@ -81,20 +81,20 @@ public class CollaborationServiceTests
                 },
                 OwnerId = Guid.NewGuid(),
                 Name = null,
-                Type = MusicProjectType.Band
+                Type = ListingType.Band
             }
         };
 
         authenticationServiceMock.GetUserId().Returns(userId);
         accountServiceMock.GetDetailedAccount(userId).Returns(userAccount);
-        musicProjectListingRepositoryMock.GetAsync(
-            Arg.Any<Expression<Func<MusicProjectListing, bool>>>(),
-            Arg.Any<Func<IQueryable<MusicProjectListing>, IOrderedQueryable<MusicProjectListing>>>(),
+        listingRepositoryMock.GetAsync(
+            Arg.Any<Expression<Func<Listing, bool>>>(),
+            Arg.Any<Func<IQueryable<Listing>, IOrderedQueryable<Listing>>>(),
             Arg.Any<string[]>()
         ).Returns(listings);
         musicTasteServiceMock.CompareMusicTasteAsync(Arg.Any<Guid>(), Arg.Any<Guid>()).Returns(1);
 
-        var service = new CollaborationService(
+        var service = new ListingService(
             accountServiceMock,
             authenticationServiceMock,
             musicTasteServiceMock,
@@ -102,7 +102,7 @@ public class CollaborationServiceTests
             _genreRepositoryMock,
             _musicianRoleRepositoryMock,
             _musicianSlotRepositoryMock,
-            musicProjectListingRepositoryMock
+            listingRepositoryMock
         );
 
         // Act
@@ -126,7 +126,7 @@ public class CollaborationServiceTests
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();
         var musicTasteServiceMock = Substitute.For<IMusicTasteComparisonService>();
-        var musicProjectListingRepositoryMock = Substitute.For<IRepository<MusicProjectListing>>();
+        var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
 
         var filterOptions = new FeedFilterOptions { MatchRole = true };
         
@@ -147,7 +147,7 @@ public class CollaborationServiceTests
             DateCreated = default
         };
 
-        var listings = new List<MusicProjectListing>
+        var listings = new List<Listing>
         {
             new()
             {
@@ -165,20 +165,20 @@ public class CollaborationServiceTests
                 ],
                 OwnerId = Guid.NewGuid(),
                 Name = null,
-                Type = MusicProjectType.CollaborativeSong
+                Type = ListingType.CollaborativeSong
             }
         };
 
         authenticationServiceMock.GetUserId().Returns(userId);
         accountServiceMock.GetDetailedAccount(userId).Returns(userAccount);
-        musicProjectListingRepositoryMock.GetAsync(
-            Arg.Any<Expression<Func<MusicProjectListing, bool>>>(),
-            Arg.Any<Func<IQueryable<MusicProjectListing>, IOrderedQueryable<MusicProjectListing>>>(),
+        listingRepositoryMock.GetAsync(
+            Arg.Any<Expression<Func<Listing, bool>>>(),
+            Arg.Any<Func<IQueryable<Listing>, IOrderedQueryable<Listing>>>(),
             Arg.Any<string[]>()
         ).Returns(listings);
         musicTasteServiceMock.CompareMusicTasteAsync(Arg.Any<Guid>(), Arg.Any<Guid>()).Returns(1);
 
-        var service = new CollaborationService(
+        var service = new ListingService(
             accountServiceMock,
             authenticationServiceMock,
             musicTasteServiceMock,
@@ -186,7 +186,7 @@ public class CollaborationServiceTests
             _genreRepositoryMock,
             _musicianRoleRepositoryMock,
             _musicianSlotRepositoryMock,
-            musicProjectListingRepositoryMock
+            listingRepositoryMock
         );
 
         // Act

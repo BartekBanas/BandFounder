@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BandFounder.Domain.Entities;
 
-public class MusicProjectListing : Entity
+public class Listing : Entity
 {
     [Key]
     public Guid Id { get; set; }
@@ -15,7 +15,7 @@ public class MusicProjectListing : Entity
     public string? GenreName { get; set; }
     public virtual Genre? Genre { get; set; }
 
-    public required MusicProjectType Type { get; set; }
+    public required ListingType Type { get; set; }
 
     public virtual List<MusicianSlot> MusicianSlots { get; set; } = [];
 
@@ -23,7 +23,7 @@ public class MusicProjectListing : Entity
     public string? Description { get; set; }
 }
 
-public enum MusicProjectType
+public enum ListingType
 {
     Band,
     CollaborativeSong

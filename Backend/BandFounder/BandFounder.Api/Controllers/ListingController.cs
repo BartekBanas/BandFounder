@@ -7,19 +7,19 @@ using Microsoft.AspNetCore.Mvc;
 namespace BandFounder.Api.Controllers;
 
 [ApiController]
-[Route("api/collaboration")]
-public class CollaborationController : Controller
+[Route("api/listing")]
+public class ListingController : Controller
 {
-    private readonly ICollaborationService _collaborationService;
+    private readonly IListingService _listingService;
     private readonly IMusicTasteComparisonService _musicTasteComparisonService;
     private readonly IAuthenticationService _authenticationService;
 
-    public CollaborationController(
-        ICollaborationService collaborationService,
+    public ListingController(
+        IListingService listingService,
         IMusicTasteComparisonService musicTasteComparisonService,
         IAuthenticationService authenticationService)
     {
-        _collaborationService = collaborationService;
+        _listingService = listingService;
         _musicTasteComparisonService = musicTasteComparisonService;
         _authenticationService = authenticationService;
     }
@@ -28,7 +28,7 @@ public class CollaborationController : Controller
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetMusicProjectListing([FromRoute] Guid id)
     {
-        var listing = await _collaborationService.GetListingAsync(id);
+        var listing = await _listingService.GetListingAsync(id);
         
         return Ok(listing);
     }
@@ -37,7 +37,7 @@ public class CollaborationController : Controller
     [HttpGet]
     public async Task<IActionResult> GetMusicProjectListings([FromQuery] FeedFilterOptions filterOptions)
     {
-        var musicProjects = await _collaborationService.GetListingsFeedAsync(filterOptions);
+        var musicProjects = await _listingService.GetListingsFeedAsync(filterOptions);
         
         return Ok(musicProjects);
     }
@@ -46,16 +46,16 @@ public class CollaborationController : Controller
     [HttpGet("me")]
     public async Task<IActionResult> GetMyMusicProjectListings()
     {
-        var myProjects = await _collaborationService.GetMyMusicProjectsAsync();
+        var myProjects = await _listingService.GetMyListingAsync();
         
         return Ok(myProjects);
     }
 
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> CreateMusicProjectListing(MusicProjectListingCreateDto dto)
+    public async Task<IActionResult> CreateMusicProjectListing(ListingCreateDto dto)
     {
-        await _collaborationService.CreateMusicProjectListingAsync(dto);
+        await _listingService.CreateListingAsync(dto);
         
         return Ok();
     }
@@ -77,7 +77,7 @@ public class CollaborationController : Controller
     [HttpPost("contact/{listingId:guid}")]
     public async Task<IActionResult> CreateMusicProjectListing(Guid listingId)
     {
-        await _collaborationService.Contact(listingId);
+        await _listingService.Contact(listingId);
         
         return Ok();
     }
@@ -86,7 +86,7 @@ public class CollaborationController : Controller
     [HttpPut("slot/{musicSlotId:guid}")]
     public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid musicSlotId, SlotStatus status)
     {
-        await _collaborationService.UpdateSlotStatus(musicSlotId, status);
+        await _listingService.UpdateSlotStatus(musicSlotId, status);
         
         return Ok();
     }
@@ -95,7 +95,7 @@ public class CollaborationController : Controller
     [HttpDelete("{listingId:guid}")]
     public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid listingId)
     {
-        await _collaborationService.DeleteListing(listingId);
+        await _listingService.DeleteListing(listingId);
         
         return Ok();
     }

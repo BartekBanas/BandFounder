@@ -13,7 +13,7 @@ public class MusicianSlot : Entity
     public virtual SlotStatus Status { get; set; }
 
     public virtual Guid ListingId { get; set; }
-    public virtual MusicProjectListing Listing { get; set; } = null!;
+    public virtual Listing Listing { get; set; } = null!;
 }
 
 public enum SlotStatus

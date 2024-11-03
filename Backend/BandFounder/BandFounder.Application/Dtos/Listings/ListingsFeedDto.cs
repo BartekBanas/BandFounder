@@ -7,6 +7,6 @@ public class ListingsFeedDto
 
 public class ListingWithScore
 {
-    public required MusicProjectListingDto Listing { get; set; }
+    public required ListingDto Listing { get; set; }
     public required int SimilarityScore { get; set; }
 }
