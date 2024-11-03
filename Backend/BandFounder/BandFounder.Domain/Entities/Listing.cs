@@ -23,6 +23,8 @@ public class Listing : Entity
 
     [MaxLength(100)]
     public string? Description { get; set; }
+    
+    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 }
 
 public enum ListingType

@@ -234,5 +234,10 @@ public class ListingService : IListingService
         {
             listings.RemoveAll(listing => listing.GenreName != filterOptions.Genre);
         }
+        
+        if (filterOptions.FromLatest)
+        {
+            listings.Sort((x, y) => y.DateCreated.CompareTo(x.DateCreated));
+        }
     }
 }
