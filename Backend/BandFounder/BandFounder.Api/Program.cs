@@ -38,7 +38,7 @@ services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthorizationPolicies.IsMemberOf, policy =>
         policy.Requirements.Add(new IsMemberOfRequirement()));
-    
+
     options.AddPolicy(AuthorizationPolicies.IsOwnerOf, policy =>
         policy.Requirements.Add(new IsOwnerRequirement()));
 });
@@ -78,10 +78,9 @@ services.AddScoped<ErrorHandlingMiddleware>();
 
 var app = builder.Build();
 
-// Add middleware for error handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Initialize the database
+// app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();
 
 // Configure the HTTP request pipeline.
