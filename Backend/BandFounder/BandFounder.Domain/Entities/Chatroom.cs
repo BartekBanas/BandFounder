@@ -13,7 +13,7 @@ public class Chatroom : Entity
     [ForeignKey(nameof(Owner))] public Guid? OwnerId { get; set; }
     public virtual Account Owner { get; set; }
     
-    [Column(TypeName = "varchar(24)")]
+    [Column(TypeName = "text")]
     public ChatRoomType ChatRoomType { get; set; }
 
     // Many-to-Many relationship with Account

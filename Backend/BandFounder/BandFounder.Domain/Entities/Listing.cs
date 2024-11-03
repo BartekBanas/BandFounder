@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BandFounder.Domain.Entities;
 
@@ -15,6 +16,7 @@ public class Listing : Entity
     public string? GenreName { get; set; }
     public virtual Genre? Genre { get; set; }
 
+    [Column(TypeName = "text")]
     public required ListingType Type { get; set; }
 
     public virtual List<MusicianSlot> MusicianSlots { get; set; } = [];
