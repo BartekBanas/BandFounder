@@ -8,7 +8,7 @@ public class BandFounderDbContext : DbContext
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Chatroom> Chatrooms { get; set; }
     public DbSet<Account> Messages { get; set; }
-    public DbSet<SpotifyCredentials> SpotifyCredentials { get; set; }
+    public DbSet<SpotifyTokens> SpotifyTokens { get; set; }
     public DbSet<Artist> Artists { get; set; }
     public DbSet<Genre> Genres { get; set; }
     
@@ -25,9 +25,9 @@ public class BandFounderDbContext : DbContext
     {
         // Configuring relationships
         modelBuilder.Entity<Account>()
-            .HasOne(account => account.SpotifyCredentials)
+            .HasOne(account => account.SpotifyTokens)
             .WithOne(spotifyCredentials => spotifyCredentials.Account)
-            .HasForeignKey<SpotifyCredentials>(spotifyCredentials => spotifyCredentials.AccountId);
+            .HasForeignKey<SpotifyTokens>(spotifyCredentials => spotifyCredentials.AccountId);
         
         // Configuring many-to-many relationship between Account and Artist
         modelBuilder.Entity<Account>()

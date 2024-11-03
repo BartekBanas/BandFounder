@@ -17,7 +17,7 @@ public class Account : Entity
     
     public required DateTime DateCreated { get; set; } = DateTime.UtcNow;
     
-    public virtual SpotifyCredentials? SpotifyCredentials { get; set; }
+    public virtual SpotifyTokens? SpotifyTokens { get; set; }
     
     // Many-to-Many relationship with Artist
     public virtual List<Artist> Artists { get; set; } = [];

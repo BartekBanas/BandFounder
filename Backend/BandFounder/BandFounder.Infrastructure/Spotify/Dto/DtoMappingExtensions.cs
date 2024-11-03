@@ -4,18 +4,18 @@ namespace BandFounder.Infrastructure.Spotify.Dto;
 
 public static class DtoMappingExtensions
 {
-    public static SpotifyCredentialsDto ToDto(this SpotifyCredentials spotifyCredentials)
+    public static SpotifyTokensDto ToDto(this SpotifyTokens spotifyTokens)
     {
-        return new SpotifyCredentialsDto
+        return new SpotifyTokensDto
         {
-            AccessToken = spotifyCredentials.AccessToken,
-            RefreshToken = spotifyCredentials.RefreshToken,
-            ExpirationDate = spotifyCredentials.ExpirationDate
+            AccessToken = spotifyTokens.AccessToken,
+            RefreshToken = spotifyTokens.RefreshToken,
+            ExpirationDate = spotifyTokens.ExpirationDate
         };
     }
 
-    public static IEnumerable<SpotifyCredentialsDto> ToDto(this IEnumerable<SpotifyCredentials> spotifyCredentials)
+    public static IEnumerable<SpotifyTokensDto> ToDto(this IEnumerable<SpotifyTokens> spotifyTokens)
     {
-        return spotifyCredentials.Select(credentials => credentials.ToDto());
+        return spotifyTokens.Select(tokens => tokens.ToDto());
     }
 }

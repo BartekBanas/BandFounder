@@ -57,7 +57,7 @@ services.AddScoped<IRepository<Message>, Repository<Message, BandFounderDbContex
 services.AddScoped<IRepository<Chatroom>, Repository<Chatroom, BandFounderDbContext>>();
 services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();
 services.AddScoped<IRepository<Genre>, Repository<Genre, BandFounderDbContext>>();
-services.AddScoped<IRepository<SpotifyCredentials>, Repository<SpotifyCredentials, BandFounderDbContext>>();
+services.AddScoped<IRepository<SpotifyTokens>, Repository<SpotifyTokens, BandFounderDbContext>>();
 
 services.AddScoped<IRepository<MusicianRole>, Repository<MusicianRole, BandFounderDbContext>>();
 services.AddScoped<IRepository<MusicianSlot>, Repository<MusicianSlot, BandFounderDbContext>>();
