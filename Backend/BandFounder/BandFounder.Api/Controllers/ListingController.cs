@@ -53,7 +53,7 @@ public class ListingController : Controller
 
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> CreateMusicProjectListing(ListingCreateDto dto)
+    public async Task<IActionResult> CreateListing(ListingCreateDto dto)
     {
         await _listingService.CreateListingAsync(dto);
         
@@ -61,23 +61,19 @@ public class ListingController : Controller
     }
 
     [Authorize]
-    [HttpGet("{userId:guid}/commonTaste")]
-    public async Task<IActionResult> GetCommonArtistsAndGenres(Guid userId)
+    [HttpGet("{listingId:guid}/commonTaste")]
+    public async Task<IActionResult> GetCommonArtistsAndGenres(Guid listingId)
     {
-        var senderId = _authenticationService.GetUserId();
-        var commonGenres = await _musicTasteComparisonService.GetCommonArtists(senderId, userId);
-        var commonArtists = await _musicTasteComparisonService.GetCommonArtists(senderId, userId);
-        
-        var responseDto = new CommonGenresAndArtistsDto(commonArtists, commonGenres);
+        var responseDto = await _listingService.GetCommonArtistsAndGenresWithListingsAsync(listingId);
         
         return Ok(responseDto);
     }
 
     [Authorize]
     [HttpPost("contact/{listingId:guid}")]
-    public async Task<IActionResult> CreateMusicProjectListing(Guid listingId)
+    public async Task<IActionResult> ContactListingOwner(Guid listingId)
     {
-        await _listingService.Contact(listingId);
+        await _listingService.ContactOwner(listingId);
         
         return Ok();
     }

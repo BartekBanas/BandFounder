@@ -13,9 +13,10 @@ public interface IListingService
     Task<IEnumerable<ListingDto>> GetListingsAsync();
     Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions);
     Task<IEnumerable<ListingDto>> GetMyListingAsync();
+    Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
     Task<Listing> CreateListingAsync(ListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
-    Task Contact(Guid listingId);
+    Task ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
 }
 
@@ -113,6 +114,18 @@ public class ListingService : IListingService
         return myListings.ToDto();
     }
 
+    public async Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null)
+    {
+        var userId = accountId ?? UserId;
+        
+        var listing = await _listingRepository.GetOneRequiredAsync(listingId);
+        
+        var commonArtists = await _musicTasteService.GetCommonArtists(userId, listing.OwnerId);
+        var commonGenres = await _musicTasteService.GetCommonGenres(userId, listing.OwnerId);
+        
+        return new ArtistsAndGenresDto(commonArtists, commonGenres);
+    }
+
     public async Task<Listing> CreateListingAsync(ListingCreateDto dto)
     {
         var userId = _authenticationService.GetUserId();
@@ -169,7 +182,7 @@ public class ListingService : IListingService
         await _musicianSlotRepository.SaveChangesAsync();
     }
 
-    public async Task Contact(Guid listingId)
+    public async Task ContactOwner(Guid listingId)
     {
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
         

@@ -1,11 +1,11 @@
 namespace BandFounder.Application.Dtos.Listings;
 
-public class CommonGenresAndArtistsDto
+public class ArtistsAndGenresDto
 {
     public IEnumerable<string> CommonArtists { get; set; }
     public IEnumerable<string> CommonGenres { get; set; }
     
-    public CommonGenresAndArtistsDto(IEnumerable<string> commonArtists, IEnumerable<string> commonGenres)
+    public ArtistsAndGenresDto(IEnumerable<string> commonArtists, IEnumerable<string> commonGenres)
     {
         CommonArtists = commonArtists;
         CommonGenres = commonGenres;
