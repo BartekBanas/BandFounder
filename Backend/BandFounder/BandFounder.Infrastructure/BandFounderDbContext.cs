@@ -3,23 +3,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BandFounder.Infrastructure;
 
-public class BandFounderDbContext : DbContext
+public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Chatroom> Chatrooms { get; set; }
     public DbSet<Account> Messages { get; set; }
-    public DbSet<SpotifyTokens> SpotifyTokens { get; set; }
     public DbSet<Artist> Artists { get; set; }
     public DbSet<Genre> Genres { get; set; }
     
-    public DbSet<MusicianRole> MusicianRoles { get; set; }
-    public DbSet<MusicianSlot> MusicianSlots { get; set; }
     public DbSet<Listing> Listings { get; set; }
+    public DbSet<MusicianSlot> MusicianSlots { get; set; }
+    public DbSet<MusicianRole> MusicianRoles { get; set; }
     
-    public BandFounderDbContext(DbContextOptions options) : base(options)
-    {
-        
-    }
+    public DbSet<SpotifyTokens> SpotifyTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,19 +54,15 @@ public class BandFounderDbContext : DbContext
             .HasForeignKey(slot => slot.ListingId);
 
         // Configuring one-to-many relationship: MusicianSlot has one MusicianRole
-        modelBuilder.Entity<MusicianSlot>()
-            .HasOne(slot => slot.Role)
-            .WithMany()
-            .HasForeignKey(slot => slot.RoleId);
+        // modelBuilder.Entity<MusicianSlot>()
+        //     .HasOne(slot => slot.Role)
+        //     .WithMany()
+        //     .HasForeignKey(slot => slot.RoleId);
 
         // Configuring many-to-many relationship between Account and MusicianRole
         modelBuilder.Entity<Account>()
             .HasMany(account => account.MusicianRoles)
             .WithMany(role => role.Accounts);
-        // .UsingEntity<Dictionary<string, object>>(
-        //     "AccountMusicRole",
-        //     j => j.HasOne<MusicianRole>().WithMany().HasForeignKey("MusicRoleId"),
-        //     j => j.HasOne<Account>().WithMany().HasForeignKey("AccountId"));
         
         // Many-to-Many relationship: Account <-> Chatroom
         modelBuilder.Entity<Account>()
@@ -95,6 +87,41 @@ public class BandFounderDbContext : DbContext
             .HasMany<Message>()
             .WithOne(message => message.Sender)
             .HasForeignKey(message => message.SenderId)
-            .OnDelete(DeleteBehavior.Restrict); // When an account is deleted, their sent messages are not automatically deleted
+            .OnDelete(DeleteBehavior.Restrict); // When an account is deleted, their messages are not automatically deleted
+        
+        PopulateMusicianRole(modelBuilder);
+    }
+
+    private void PopulateMusicianRole(ModelBuilder modelBuilder)
+    {
+        List<MusicianRole> defaultMusicianRoles =
+        [
+            new() { Name = "Any" },
+            new() { Name = "Vocalist" },
+            new() { Name = "Guitarist" },
+            new() { Name = "Bassist" },
+            new() { Name = "Drummer" },
+            new() { Name = "Keyboardist" },
+            new() { Name = "Pianist" },
+            new() { Name = "Saxophonist" },
+            new() { Name = "Trumpeter" },
+            new() { Name = "Violinist" },
+            new() { Name = "Cellist" },
+            new() { Name = "Harmonica Player" },
+            new() { Name = "DJ" },
+            new() { Name = "Synthesizer" },
+            new() { Name = "Sampler" },
+            new() { Name = "Sound Engineer" },
+            new() { Name = "Producer" },
+            new() { Name = "Acoustic Guitarist" },
+            new() { Name = "Flautist" },
+            new() { Name = "Clarinetist" },
+            new() { Name = "Accordionist" },
+            new() { Name = "Mandolin Player" },
+            new() { Name = "Banjo Player" },
+            new() { Name = "Ukulele Player" },
+        ];
+        
+        modelBuilder.Entity<MusicianRole>().HasData(defaultMusicianRoles);
     }
 }

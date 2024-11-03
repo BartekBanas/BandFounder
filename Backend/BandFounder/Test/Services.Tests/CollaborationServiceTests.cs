@@ -19,7 +19,6 @@ public class ListingServiceTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var roleId = Guid.NewGuid();
 
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();
@@ -35,8 +34,7 @@ public class ListingServiceTests
             {
                 new()
                 {
-                    Id = roleId,
-                    RoleName = "Guitarist"
+                    Name = "Guitarist"
                 }
             },
             Name = null,
@@ -55,8 +53,7 @@ public class ListingServiceTests
                     {
                         Role = new MusicianRole
                         {
-                            Id = roleId,
-                            RoleName = null
+                            Name = "Guitarist"
                         },
                         Status = SlotStatus.Available
                     }
@@ -73,8 +70,7 @@ public class ListingServiceTests
                     {
                         Role = new MusicianRole
                         {
-                            Id = Guid.NewGuid(),
-                            RoleName = null
+                            Name = "Drummer"
                         },
                         Status = SlotStatus.Filled
                     }
@@ -137,8 +133,7 @@ public class ListingServiceTests
             [
                 new MusicianRole
                 {
-                    Id = roleId,
-                    RoleName = roleName
+                    Name = roleName
                 }
             ],
             Name = null,
@@ -157,8 +152,7 @@ public class ListingServiceTests
                     {
                         Role = new MusicianRole
                         {
-                            Id = differentRole ? new Guid() : roleId,
-                            RoleName = differentRole ? "Drummer" : roleName
+                            Name = differentRole ? "Drummer" : roleName
                         },
                         Status = status
                     }

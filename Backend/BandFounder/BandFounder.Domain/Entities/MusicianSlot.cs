@@ -8,7 +8,6 @@ public class MusicianSlot : Entity
     [Key]
     public Guid Id { get; set; }
 
-    public virtual Guid RoleId { get; set; }
     public virtual MusicianRole Role { get; set; } = null!;
 
     [Column(TypeName = "text")]

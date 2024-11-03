@@ -206,7 +206,7 @@ public class AccountService : IAccountService
         
         var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
         
-        if (account.MusicianRoles.Any(currentRole => currentRole.Id == musicianRole.Id))
+        if (account.MusicianRoles.Any(currentRole => currentRole.Name == musicianRole.Name))
         {
             return;
         }
@@ -223,7 +223,7 @@ public class AccountService : IAccountService
         var account = await GetDetailedAccount(accountId);
         
         role = role.NormalizeName();
-        var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.RoleName == role);
+        var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.Name == role);
         
         if (musicianRole == null)
         {

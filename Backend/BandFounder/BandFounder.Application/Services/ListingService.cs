@@ -132,9 +132,9 @@ public class ListingService : IListingService
         await _accountService.GetAccountAsync(userId);
 
         Genre? projectGenre = null;
-        if (dto.GenreName is not null)
+        if (dto.Genre is not null)
         {
-            projectGenre = await _genreRepository.GetOrCreateAsync(dto.GenreName);
+            projectGenre = await _genreRepository.GetOrCreateAsync(dto.Genre);
         }
 
         var listing = new Listing
@@ -148,7 +148,7 @@ public class ListingService : IListingService
 
         foreach (var slotDto in dto.MusicianSlots)
         {
-            var role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.RoleName);
+            var role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.Role);
 
             var musicianSlot = new MusicianSlot
             {
@@ -220,7 +220,7 @@ public class ListingService : IListingService
             listings.RemoveAll(listing => 
                 !listing.MusicianSlots.Any(slot => 
                     slot.Status == SlotStatus.Available &&
-                    account.MusicianRoles.Any(role => role.RoleName == "Any" || role.Id == slot.Role.Id)
+                    account.MusicianRoles.Any(role => role.Name == "Any" || role.Name == slot.Role.Name)
                 )
             );
         }

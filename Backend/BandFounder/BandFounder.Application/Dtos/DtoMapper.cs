@@ -41,7 +41,7 @@ public static class DtoMapper
                 .Select(slot => new MusicianSlotDto
                 {
                     Id = slot.Id,
-                    Role = slot.Role.RoleName,
+                    Role = slot.Role.Name,
                     Status = slot.Status.ToString()
                 }).ToList()
         };

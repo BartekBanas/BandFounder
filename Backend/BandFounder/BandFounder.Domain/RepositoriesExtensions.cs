@@ -41,11 +41,11 @@ public static class RepositoriesExtensions
 
         var normalizedRoleName = NormalizeName(roleName);
 
-        var existingRole = await repository.GetOneAsync(musicianRole => musicianRole.RoleName == normalizedRoleName);
+        var existingRole = await repository.GetOneAsync(musicianRole => musicianRole.Name == normalizedRoleName);
         
         if (existingRole is null)
         {
-            var newRole = new MusicianRole { RoleName = normalizedRoleName };
+            var newRole = new MusicianRole { Name = normalizedRoleName };
             await repository.CreateAsync(newRole);
             return newRole;
         }
