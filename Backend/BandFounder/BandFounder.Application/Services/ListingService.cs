@@ -215,12 +215,12 @@ public class ListingService : IListingService
             listings.RemoveAll(listing => listing.OwnerId == account.Id);
         }
         
-        if (filterOptions.MatchRole)
+        if (filterOptions.MatchRole && account.MusicianRoles.Count > 0)
         {
             listings.RemoveAll(listing => 
                 !listing.MusicianSlots.Any(slot => 
                     slot.Status == SlotStatus.Available &&
-                    account.MusicianRoles.Any(role => role.Id == slot.Role.Id)
+                    account.MusicianRoles.Any(role => role.RoleName == "Any" || role.Id == slot.Role.Id)
                 )
             );
         }
