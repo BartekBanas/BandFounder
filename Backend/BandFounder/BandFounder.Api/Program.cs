@@ -73,6 +73,7 @@ services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
 services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
+services.AddScoped<IContentService, ContentService>();
 
 services.AddScoped<ErrorHandlingMiddleware>();
 
