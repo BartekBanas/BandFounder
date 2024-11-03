@@ -2,18 +2,18 @@ using BandFounder.Domain.Entities;
 
 namespace BandFounder.Application.Services;
 
-public interface IMusicTasteComparisonService
+public interface IMusicTasteService
 {
     Task<IEnumerable<string>> GetCommonArtists(Guid requesterId, Guid targetUserId);
     Task<IEnumerable<string>> GetCommonGenres(Guid requesterId, Guid targetUserId);
     Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId);
 }
 
-public class MusicTasteComparisonService : IMusicTasteComparisonService
+public class MusicTasteService : IMusicTasteService
 {
     private readonly IAccountService _accountService;
 
-    public MusicTasteComparisonService(IAccountService accountService)
+    public MusicTasteService(IAccountService accountService)
     {
         _accountService = accountService;
     }

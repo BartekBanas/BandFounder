@@ -11,17 +11,10 @@ namespace BandFounder.Api.Controllers;
 public class ListingController : Controller
 {
     private readonly IListingService _listingService;
-    private readonly IMusicTasteComparisonService _musicTasteComparisonService;
-    private readonly IAuthenticationService _authenticationService;
 
-    public ListingController(
-        IListingService listingService,
-        IMusicTasteComparisonService musicTasteComparisonService,
-        IAuthenticationService authenticationService)
+    public ListingController(IListingService listingService)
     {
         _listingService = listingService;
-        _musicTasteComparisonService = musicTasteComparisonService;
-        _authenticationService = authenticationService;
     }
 
     [Authorize]

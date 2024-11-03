@@ -71,7 +71,7 @@ services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyTokenService, SpotifyTokenService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
-services.AddScoped<IMusicTasteComparisonService, MusicTasteComparisonService>();
+services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 
 services.AddScoped<ErrorHandlingMiddleware>();

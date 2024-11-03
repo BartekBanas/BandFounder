@@ -23,7 +23,7 @@ public class ListingServiceTests
 
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();
-        var musicTasteServiceMock = Substitute.For<IMusicTasteComparisonService>();
+        var musicTasteServiceMock = Substitute.For<IMusicTasteService>();
         var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
 
         var filterOptions = new FeedFilterOptions { MatchRole = true };
@@ -125,7 +125,7 @@ public class ListingServiceTests
 
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();
-        var musicTasteServiceMock = Substitute.For<IMusicTasteComparisonService>();
+        var musicTasteServiceMock = Substitute.For<IMusicTasteService>();
         var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
 
         var filterOptions = new FeedFilterOptions { MatchRole = true };

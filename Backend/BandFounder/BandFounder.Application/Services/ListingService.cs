@@ -24,7 +24,7 @@ public class ListingService : IListingService
 {
     private readonly IAccountService _accountService;
     private readonly IAuthenticationService _authenticationService;
-    private readonly IMusicTasteComparisonService _musicTasteService;
+    private readonly IMusicTasteService _musicTasteService;
     private readonly IChatroomService _chatroomService;
     
     private readonly IRepository<Genre> _genreRepository;
@@ -37,7 +37,7 @@ public class ListingService : IListingService
     public ListingService(
         IAccountService accountService,
         IAuthenticationService authenticationService,
-        IMusicTasteComparisonService musicTasteService,
+        IMusicTasteService musicTasteService,
         IChatroomService chatroomService,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
