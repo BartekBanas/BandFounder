@@ -77,4 +77,18 @@ public static class DtoMapper
             MembersIds = chatroom.Members.Select(member => member.Id).ToList()
         };
     }
+    
+    public static IEnumerable<ArtistDto> ToDto(this IEnumerable<Artist> artists)
+    {
+        return artists.Select(artist => artist.ToDto());
+    }
+
+    public static ArtistDto ToDto(this Artist artist)
+    {
+        return new ArtistDto()
+        {
+            Name = artist.Name,
+            Genres = artist.Genres.Select(genre => genre.Name).ToList()
+        };
+    }
 }
