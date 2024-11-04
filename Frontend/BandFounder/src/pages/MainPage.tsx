@@ -1,12 +1,17 @@
-import SpotifyAuthorizationButton from "../components/spotiftConnection/SpotifyAuthorizationButton";
+// src/pages/MainPage.tsx
 import React, { useEffect, useState } from "react";
-import SpotifyDeleteCredentialButton from "../components/spotiftConnection/spotifyDeleteCredentialButton";
-import { isUserSpotifyConnected } from "../components/spotiftConnection/spotifyConnection";
 import { useNavigate } from "react-router-dom";
+import { isUserSpotifyConnected } from "../components/spotiftConnection/spotifyConnection";
+import SpotifyDeleteCredentialButton from "../components/spotiftConnection/spotifyDeleteCredentialButton";
+import SpotifyLogoButton from "../components/SpotifyDrawer/SpotifyLogoButton";
+import { Drawer, Button, List, ListItem, ListItemText } from "@mui/material";
+import SpotifyAuthorizationButton from "../components/spotiftConnection/SpotifyAuthorizationButton";
+import "../components/SpotifyDrawer/SpotifyLogoButton.css";
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
+    const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -19,23 +24,51 @@ export function MainPage() {
         checkSpotifyConnection();
     }, [navigate]);
 
+    const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+        if (event.type === 'keydown' && ((event as React.KeyboardEvent).key === 'Tab' || (event as React.KeyboardEvent).key === 'Shift')) {
+            return;
+        }
+        setDrawerOpen(open);
+    };
+
     if (loading) {
         return <div className="App-header"><h1>Loading...</h1></div>;
     }
 
     return (
         <div className="App-header">
-            {isConnectedToSpotify ? (
-                <>
-                    <h1>You are logged in (also on Spotify)</h1>
-                    <SpotifyDeleteCredentialButton />
-                </>
-            ) : (
-                <>
-                    <h1>You are logged in</h1>
-                    <SpotifyAuthorizationButton />
-                </>
-            )}
+            <SpotifyLogoButton
+                onClick={toggleDrawer(true)}
+                className={drawerOpen ? "drawer-open" : ""}
+            />
+            <Drawer
+                anchor="left"
+                open={drawerOpen}
+                onClose={toggleDrawer(false)}
+                sx={{ width: '140px' }} // Set the width here
+            >
+                <List>
+                    {isConnectedToSpotify ? (
+                        <>
+                            <ListItem>
+                                <ListItemText primary="You are logged in (also on Spotify)" />
+                            </ListItem>
+                            <ListItem>
+                                <SpotifyDeleteCredentialButton />
+                            </ListItem>
+                        </>
+                    ) : (
+                        <>
+                            <ListItem>
+                                <ListItemText primary="You are logged in" />
+                            </ListItem>
+                            <ListItem>
+                                <SpotifyAuthorizationButton/>
+                            </ListItem>
+                        </>
+                    )}
+                </List>
+            </Drawer>
         </div>
     );
 }
