@@ -3,6 +3,8 @@ using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Dtos.Messages;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Spotify.Dto;
+using ArtistDto = BandFounder.Application.Dtos.Listings.ArtistDto;
 
 namespace BandFounder.Application.Dtos;
 
@@ -15,6 +17,28 @@ public static class DtoMapper
             Id = account.Id.ToString(),
             Name = account.Name,
             Email = account.Email
+        };
+    }
+
+    public static IEnumerable<AccountDetailedDto> ToDetailedDto(this IEnumerable<Account> accounts)
+    {
+        return accounts.Select(account => account.ToDetailedDto());
+    }
+    
+    public static AccountDetailedDto ToDetailedDto(this Account account)
+    {
+        return new AccountDetailedDto
+        {
+            Name = account.Name,
+            Email = account.Email,
+            SpotifyTokens = account.SpotifyTokens is not null ? new SpotifyTokensDto()
+            {
+                AccessToken = account.SpotifyTokens.AccessToken,
+                RefreshToken = account.SpotifyTokens.RefreshToken,
+                ExpirationDate = account.SpotifyTokens.ExpirationDate
+            } : null,
+            MusicianRoles = account.MusicianRoles.Select(role => role.Name).ToList(),
+            Artists = account.Artists.Select(artist => artist.Name).ToList()
         };
     }
 
