@@ -43,7 +43,7 @@ public class SpotifyBrokerController : ControllerBase
     {
         var userId = _authenticationService.GetUserId();
         
-        await _spotifyTokenService.CreateTokenSpotifyCredentials(dto, userId);
+        await _spotifyTokenService.CreateSpotifyTokens(dto, userId);
 
         return Ok();
     }
@@ -54,7 +54,7 @@ public class SpotifyBrokerController : ControllerBase
     {
         var userId = _authenticationService.GetUserId();
 
-        var credentialsDto = await _spotifyTokenService.GetSpotifyTokenCredentials(userId);
+        var credentialsDto = await _spotifyTokenService.GetSpotifyTokens(userId);
 
         return Ok(credentialsDto);
     }

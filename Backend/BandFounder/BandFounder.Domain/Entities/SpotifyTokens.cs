@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BandFounder.Domain.Entities;
 
-public class SpotifyCredentials : Entity
+public class SpotifyTokens : Entity
 {
     [Key, ForeignKey("Account")]
     public required Guid AccountId { get; init; }

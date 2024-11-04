@@ -27,7 +27,7 @@ public class AccountService : IAccountService
 {
     private readonly IRepository<Account> _accountRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
-    private readonly IRepository<SpotifyCredentials> _spotifyCredentialsRepository;
+    private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
 
     private readonly IValidator<Account> _validator;
     private readonly IAuthenticationService _authenticationService;
@@ -37,7 +37,7 @@ public class AccountService : IAccountService
     public AccountService(
         IRepository<Account> accountRepository,
         IRepository<MusicianRole> musicianRoleRepository,
-        IRepository<SpotifyCredentials> spotifyCredentialsRepository,
+        IRepository<SpotifyTokens> spotifyTokensRepository,
         IValidator<Account> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
@@ -45,7 +45,7 @@ public class AccountService : IAccountService
     {
         _accountRepository = accountRepository;
         _musicianRoleRepository = musicianRoleRepository;
-        _spotifyCredentialsRepository = spotifyCredentialsRepository;
+        _spotifyTokensRepository = spotifyTokensRepository;
         _validator = validator;
         _authenticationService = authenticationService;
         _hashingService = hashingService;
@@ -66,8 +66,12 @@ public class AccountService : IAccountService
     {
         accountId ??= _authenticationService.GetUserId();
 
-        return await _accountRepository.GetOneRequiredAsync(accountId, keyPropertyName: "Id",
-            includeProperties: ["Artists", "Artists.Genres", "Chatrooms", "MusicianRoles", "SpotifyCredentials"]);
+        return await _accountRepository.GetOneRequiredAsync(key: accountId, keyPropertyName: "Id",
+            includeProperties:
+            [
+                nameof(Account.Artists), "Artists.Genres",
+                nameof(Account.Chatrooms), nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens)
+            ]);
     }
 
     public async Task<IEnumerable<AccountDto>> GetAccountsAsync()
@@ -202,7 +206,7 @@ public class AccountService : IAccountService
         
         var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
         
-        if (account.MusicianRoles.Any(currentRole => currentRole.Id == musicianRole.Id))
+        if (account.MusicianRoles.Any(currentRole => currentRole.Name == musicianRole.Name))
         {
             return;
         }
@@ -219,7 +223,7 @@ public class AccountService : IAccountService
         var account = await GetDetailedAccount(accountId);
         
         role = role.NormalizeName();
-        var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.RoleName == role);
+        var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.Name == role);
         
         if (musicianRole == null)
         {
@@ -236,9 +240,9 @@ public class AccountService : IAccountService
         accountId ??= _authenticationService.GetUserId();
         var account = await GetDetailedAccount(accountId);
 
-        if (account.SpotifyCredentials is not null)
+        if (account.SpotifyTokens is not null)
         {
-            await _spotifyCredentialsRepository.DeleteOneAsync(account.SpotifyCredentials.AccountId);
+            await _spotifyTokensRepository.DeleteOneAsync(account.SpotifyTokens.AccountId);
         }
         
         account.Artists.Clear();

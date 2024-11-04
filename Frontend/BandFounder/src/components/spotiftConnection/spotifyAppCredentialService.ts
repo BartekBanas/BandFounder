@@ -46,6 +46,7 @@ export class SpotifyAppCredentialService {
 
         const credentials: Credentials = JSON.parse(responseText);
         localStorage.setItem('client_id', credentials.clientId);
+        localStorage.setItem('client_secret', credentials.clientSecret);
         this._clientId = credentials.clientId;
         this._clientSecret = credentials.clientSecret;
     }

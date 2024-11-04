@@ -150,7 +150,7 @@ public class RepositoriesExtensionsTests
         // Arrange
         var roleName = "Guitarist";
         var normalizedRoleName = "Guitarist";
-        var existingRole = new MusicianRole { RoleName = normalizedRoleName };
+        var existingRole = new MusicianRole { Name = normalizedRoleName };
 
         // Mock the repository to return an existing role
         _musicianRoleRepository
@@ -182,8 +182,8 @@ public class RepositoriesExtensionsTests
         var result = await _musicianRoleRepository.GetOrCreateAsync(roleName);
 
         // Assert
-        Assert.That(result.RoleName, Is.EqualTo(normalizedRoleName));
-        await _musicianRoleRepository.Received(1).CreateAsync(Arg.Is<MusicianRole>(r => r.RoleName == normalizedRoleName));
+        Assert.That(result.Name, Is.EqualTo(normalizedRoleName));
+        await _musicianRoleRepository.Received(1).CreateAsync(Arg.Is<MusicianRole>(r => r.Name == normalizedRoleName));
     }
 
     [Test]
@@ -203,7 +203,7 @@ public class RepositoriesExtensionsTests
         var result = await _musicianRoleRepository.GetOrCreateAsync(roleName);
 
         // Assert
-        Assert.That(result.RoleName, Is.EqualTo(normalizedRoleName));
-        await _musicianRoleRepository.Received(1).CreateAsync(Arg.Is<MusicianRole>(r => r.RoleName == normalizedRoleName));
+        Assert.That(result.Name, Is.EqualTo(normalizedRoleName));
+        await _musicianRoleRepository.Received(1).CreateAsync(Arg.Is<MusicianRole>(r => r.Name == normalizedRoleName));
     }
 }

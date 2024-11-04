@@ -11,7 +11,7 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteComparisonService>(accountService);
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService);
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
