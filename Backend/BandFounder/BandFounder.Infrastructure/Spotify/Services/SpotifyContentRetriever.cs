@@ -45,6 +45,10 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
         
         var url = SpotifyFollowedArtistsUrl;
         var followedArtists = new List<ArtistDto>();
+        var artistIds = new HashSet<string>();
+        
+        const int maxRequests = 10;
+        var requestCount = 0;
 
         using var client = new HttpClient();
         do
@@ -58,11 +62,12 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
 
             var responseDto = JsonSerializer.Deserialize<FollowedArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
 
-            followedArtists.AddRange(responseDto.Artists.Items);
+            followedArtists.AddRange(responseDto.Artists.Items.Where(artist => artistIds.Add(artist.Id)));
 
             url = responseDto.Artists.Next;
+            requestCount++;
 
-        } while (!string.IsNullOrEmpty(url));
+        } while (!string.IsNullOrEmpty(url) && requestCount < maxRequests);
 
         return followedArtists;
     }
