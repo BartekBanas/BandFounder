@@ -6,5 +6,4 @@ public class BackupDto
 {
     public IEnumerable<AccountDetailedDto> Accounts { get; set; }
     public IEnumerable<ArtistDto> Artists { get; set; }
-    public IEnumerable<string> Genres { get; set; }
 }

@@ -33,8 +33,6 @@ public class BackupController : Controller
     [HttpGet]
     public async Task<IActionResult> GetBackup()
     {
-        var genres = (await _genreRepository.GetAsync()).Select(genre => genre.Name).ToList();
-        
         var artists = (await _artistRepository.GetAsync()).ToDto();
         
         List<AccountDetailedDto> accounts = [];
@@ -48,8 +46,7 @@ public class BackupController : Controller
         var dto = new BackupDto()
         {
             Accounts = accounts,
-            Artists = artists,
-            Genres = genres
+            Artists = artists
         };
         
         return Ok(dto);
