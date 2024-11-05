@@ -111,6 +111,7 @@ public static class DtoMapper
     {
         return new ArtistDto()
         {
+            Id = artist.Id,
             Name = artist.Name,
             Genres = artist.Genres.Select(genre => genre.Name).ToList()
         };
