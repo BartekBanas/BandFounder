@@ -14,5 +14,5 @@ public class SpotifyTokens : Entity
     
     public required DateTime ExpirationDate { get; set; }
     
-    public virtual required Account Account { get; init; } = null!;
+    public virtual Account Account { get; init; } = null!;
 }

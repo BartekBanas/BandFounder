@@ -12,7 +12,7 @@ public class Artist : Entity
     public int Popularity { get; set; }
 
     // Many-to-Many relationship with Genre
-    public required List<Genre> Genres { get; set; } = [];
+    public List<Genre> Genres { get; set; } = [];
     
     // Many-to-Many relationship with Account
     public virtual List<Account> Accounts { get; set; } = [];
