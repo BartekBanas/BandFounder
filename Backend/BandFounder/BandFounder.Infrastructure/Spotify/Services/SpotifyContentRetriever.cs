@@ -5,13 +5,13 @@ namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyContentRetriever
 {
-    Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId);
+    Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId, int limit = 50);
     Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(Guid userId);
 }
 
 public class SpotifyContentRetriever : ISpotifyContentRetriever
 {
-    private const string SpotifyTopArtistsUrl = "https://api.spotify.com/v1/me/top/artists?limit=50";
+    private const string SpotifyTopArtistsUrl = "https://api.spotify.com/v1/me/top/artists";
     private const string SpotifyFollowedArtistsUrl = "https://api.spotify.com/v1/me/following?type=artist";
     
     private readonly ISpotifyTokenService _tokenService;
@@ -21,12 +21,12 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
         _tokenService = tokenService;
     }
 
-    public async Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId)
+    public async Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId, int limit = 50)
     {
         var accessToken = await _tokenService.GetAccessTokenAsync(userId);
         
         using var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, SpotifyTopArtistsUrl);
+        var request = new HttpRequestMessage(HttpMethod.Get, SpotifyTopArtistsUrl + $"?limit={limit}");
         request.Headers.Add("Authorization", $"Bearer {accessToken}");
 
         var response = await client.SendAsync(request);
