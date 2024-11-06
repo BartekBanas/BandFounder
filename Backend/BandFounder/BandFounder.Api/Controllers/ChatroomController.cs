@@ -44,10 +44,10 @@ public class ChatroomController : Controller
     }
 
     [Authorize]
-    [HttpPost("invite")]
-    public async Task<IActionResult> InviteToChatroom([FromBody] ChatroomInvitationDto dto)
+    [HttpPost("{chatroomId:guid}/invite/{invitedUserId:guid}")]
+    public async Task<IActionResult> InviteToChatroom(Guid chatroomId, Guid invitedUserId)
     {
-        await _chatroomService.InviteToChatroom(dto);
+        await _chatroomService.InviteToChatroom(chatroomId, invitedUserId);
 
         return Ok();
     }
