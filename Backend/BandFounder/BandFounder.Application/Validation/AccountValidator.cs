@@ -1,5 +1,5 @@
-﻿using BandFounder.Domain;
-using BandFounder.Domain.Entities;
+﻿using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Errors;
 using FluentValidation;
 

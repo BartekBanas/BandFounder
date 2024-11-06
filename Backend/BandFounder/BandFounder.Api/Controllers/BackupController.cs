@@ -2,8 +2,8 @@ using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;

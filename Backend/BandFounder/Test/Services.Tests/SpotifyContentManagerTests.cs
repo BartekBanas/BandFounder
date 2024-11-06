@@ -1,7 +1,7 @@
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Spotify;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Services;
 using NSubstitute;

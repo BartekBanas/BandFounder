@@ -1,6 +1,6 @@
 using BandFounder.Domain.Entities;
 
-namespace BandFounder.Domain;
+namespace BandFounder.Infrastructure;
 
 public static class RepositoriesExtensions
 {
