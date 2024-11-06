@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using NSubstitute;
 
 namespace Domain.Tests;

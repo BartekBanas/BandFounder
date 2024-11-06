@@ -2,8 +2,8 @@ using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Error;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 
 namespace BandFounder.Application.Services;
 

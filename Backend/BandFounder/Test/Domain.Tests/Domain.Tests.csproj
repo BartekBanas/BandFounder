@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\BandFounder.Domain\BandFounder.Domain.csproj" />
+      <ProjectReference Include="..\..\BandFounder.Infrastructure\BandFounder.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>

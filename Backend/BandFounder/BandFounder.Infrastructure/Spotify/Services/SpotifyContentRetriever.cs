@@ -5,8 +5,8 @@ namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyContentRetriever
 {
-    Task<List<ArtistDto>> GetTopArtistsAsync(Guid userId);
-    Task<List<ArtistDto>> GetFollowedArtistsAsync(Guid userId);
+    Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId);
+    Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(Guid userId);
 }
 
 public class SpotifyContentRetriever : ISpotifyContentRetriever
@@ -21,7 +21,7 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
         _tokenService = tokenService;
     }
 
-    public async Task<List<ArtistDto>> GetTopArtistsAsync(Guid userId)
+    public async Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId)
     {
         var accessToken = await _tokenService.GetAccessTokenAsync(userId);
         
@@ -39,12 +39,12 @@ public class SpotifyContentRetriever : ISpotifyContentRetriever
         return responseDto.Items;
     }
     
-    public async Task<List<ArtistDto>> GetFollowedArtistsAsync(Guid userId)
+    public async Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(Guid userId)
     {
         var accessToken = await _tokenService.GetAccessTokenAsync(userId);
         
         var url = SpotifyFollowedArtistsUrl;
-        var followedArtists = new List<ArtistDto>();
+        var followedArtists = new List<SpotifyArtistDto>();
         var artistIds = new HashSet<string>();
         
         const int maxRequests = 10;

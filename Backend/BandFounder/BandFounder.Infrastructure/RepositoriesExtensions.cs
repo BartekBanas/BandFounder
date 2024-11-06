@@ -1,6 +1,7 @@
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace BandFounder.Domain;
+namespace BandFounder.Infrastructure;
 
 public static class RepositoriesExtensions
 {
@@ -52,6 +53,52 @@ public static class RepositoriesExtensions
         else
         {
             return existingRole;
+        }
+    }
+    
+    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> accountRepository, IRepository<Genre> genreRepository,
+        string artistName, List<string>? genres = null, int popularity = 0, string? id = null)
+    {
+        var artistEntity = await accountRepository.GetOneAsync(artist => artist.Name == artistName,
+            includeProperties: nameof(Artist.Genres));
+
+        if (artistEntity is not null) // Check for artist's lacking properties
+        {
+            if (artistEntity.Popularity == 0 && popularity > 0)
+            {
+                artistEntity.Popularity = popularity;
+            }
+            
+            if (artistEntity.Genres.Count == 0 && genres is not null)
+            {
+                foreach (var genreName in genres)
+                {
+                    var genre = await genreRepository.GetOrCreateAsync(genreName);
+
+                    artistEntity.Genres.Add(genre);
+                }
+            }
+            
+            return artistEntity;
+        }
+        else // Create a new artist
+        {
+            var newArtist = new Artist
+            {
+                Id = id ?? Guid.NewGuid().ToString(),
+                Name = artistName,
+                Popularity = popularity
+            };
+            
+            foreach (var genreName in genres ?? [])
+            {
+                var genre = await genreRepository.GetOrCreateAsync(genreName);
+                
+                newArtist.Genres.Add(genre);
+            }
+            
+            await accountRepository.CreateAsync(newArtist);
+            return newArtist;
         }
     }
 

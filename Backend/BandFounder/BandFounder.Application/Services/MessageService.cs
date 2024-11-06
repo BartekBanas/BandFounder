@@ -1,8 +1,8 @@
 ﻿using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Messages;
 using BandFounder.Application.Services.Authorization;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 
 namespace BandFounder.Application.Services;

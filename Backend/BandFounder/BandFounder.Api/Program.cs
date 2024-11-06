@@ -7,7 +7,6 @@ using BandFounder.Application.Services.Authorization.Handlers;
 using BandFounder.Application.Services.Authorization.Requirements;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Application.Services.Spotify;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Services;

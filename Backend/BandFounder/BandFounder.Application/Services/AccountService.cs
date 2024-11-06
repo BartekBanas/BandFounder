@@ -2,8 +2,8 @@
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services.Jwt;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using FluentValidation;
 
 namespace BandFounder.Application.Services;

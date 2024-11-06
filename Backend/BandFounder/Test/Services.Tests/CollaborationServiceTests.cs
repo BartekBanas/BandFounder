@@ -1,8 +1,8 @@
 using System.Linq.Expressions;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using NSubstitute;
 
 namespace Services.Tests;

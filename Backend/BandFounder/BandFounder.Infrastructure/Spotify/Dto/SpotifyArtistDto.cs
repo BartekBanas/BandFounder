@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace BandFounder.Infrastructure.Spotify.Dto;
 
-public class ArtistDto
+public class SpotifyArtistDto
 {
     [JsonPropertyName("genres")] public required List<string> Genres { get; set; }
 

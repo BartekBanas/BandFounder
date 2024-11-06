@@ -4,5 +4,5 @@ namespace BandFounder.Infrastructure.Spotify.Dto;
 
 public class TopArtistsResponse
 {
-    [JsonPropertyName("items")] public required List<ArtistDto> Items { get; init; }
+    [JsonPropertyName("items")] public required List<SpotifyArtistDto> Items { get; init; }
 }
