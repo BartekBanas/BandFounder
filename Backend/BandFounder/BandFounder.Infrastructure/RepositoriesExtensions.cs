@@ -1,4 +1,5 @@
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure.Spotify.Dto;
 
 namespace BandFounder.Infrastructure;
 
@@ -52,6 +53,36 @@ public static class RepositoriesExtensions
         else
         {
             return existingRole;
+        }
+    }
+    
+    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> repository, 
+        SpotifyArtistDto spotifyArtistDto, IRepository<Genre> genreRepository)
+    {
+        var artist = await repository.GetOneAsync(spotifyArtistDto.Id);
+        
+        if (artist is null) 
+        {
+            var newArtist = new Artist
+            {
+                Id = spotifyArtistDto.Id,
+                Name = spotifyArtistDto.Name,
+                Popularity = spotifyArtistDto.Popularity
+            };
+            
+            foreach (var genreName in spotifyArtistDto.Genres)
+            {
+                var genre = await genreRepository.GetOrCreateAsync(genreName);
+            
+                newArtist.Genres.Add(genre);
+            }
+            
+            await repository.CreateAsync(newArtist);
+            return newArtist;
+        }
+        else
+        {
+            return artist;
         }
     }
 
