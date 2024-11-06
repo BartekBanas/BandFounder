@@ -41,11 +41,11 @@ public class SpotifyContentManagerTests
     {
         // Arrange
         var userId = new Guid();
-        var topArtists = new List<ArtistDto>
+        var topArtists = new List<SpotifyArtistDto>
         {
             new() { Id = "artist1", Name = "Artist 1", Popularity = 90, Genres = ["rock"] },
         };
-        var followedArtists = new List<ArtistDto>
+        var followedArtists = new List<SpotifyArtistDto>
         {
             new() { Id = "artist2", Name = "Artist 2", Popularity = 80, Genres = ["pop"] },
         };
@@ -90,11 +90,11 @@ public class SpotifyContentManagerTests
                 }
             ]
         };
-        var topArtists = new List<ArtistDto>
+        var topArtists = new List<SpotifyArtistDto>
         {
             new() { Id = "artist1", Name = "Artist 1", Popularity = 90, Genres = ["rock"] },
         };
-        var followedArtists = new List<ArtistDto>
+        var followedArtists = new List<SpotifyArtistDto>
         {
             new() { Id = "artist2", Name = "Artist 2", Popularity = 80, Genres = ["pop"] },
         };

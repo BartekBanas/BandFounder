@@ -8,8 +8,8 @@ namespace BandFounder.Application.Services.Spotify;
 public interface ISpotifyContentManager
 {
     Task<Dictionary<string, int>> GetWagedGenres(Guid? userId = null);
-    Task<List<ArtistDto>> SaveRelevantArtists();
-    Task<List<ArtistDto>> RetrieveSpotifyUsersArtistsAsync();
+    Task<List<SpotifyArtistDto>> SaveRelevantArtists();
+    Task<List<SpotifyArtistDto>> RetrieveSpotifyUsersArtistsAsync();
 }
 
 public class SpotifyContentManager : ISpotifyContentManager
@@ -59,23 +59,23 @@ public class SpotifyContentManager : ISpotifyContentManager
         return sortedWagedGenres;
     }
 
-    public async Task<List<ArtistDto>> SaveRelevantArtists()
+    public async Task<List<SpotifyArtistDto>> SaveRelevantArtists()
     {
         var userArtists = await RetrieveSpotifyUsersArtistsAsync();
         var userId = _authenticationService.GetUserId();
-        var account = await _accountRepository.GetOneRequiredAsync(userId);
-        var savedArtists = new List<ArtistDto>();
+        var account = await _accountRepository.GetOneRequiredAsync(key: userId,
+            keyPropertyName: nameof(Account.Id), includeProperties: nameof(Account.Artists));
+        
+        var savedArtists = new List<SpotifyArtistDto>();
 
         foreach (var artistDto in userArtists)
         {
-            var existingArtist = await _artistRepository.GetOneAsync(artistDto.Id);
+            var artistEntity = await _artistRepository.GetOrCreateAsync(artistDto, _genreRepository);
 
-            if (existingArtist == null)
+            if (account.Artists.All(artist => artist.Id != artistEntity.Id))
             {
-                var newArtist = await CreateNewArtistAsync(artistDto);
-                await _artistRepository.CreateAsync(newArtist);
+                account.Artists.Add(artistEntity);
                 savedArtists.Add(artistDto);
-                account.Artists.Add(newArtist);
             }
         }
 
@@ -83,7 +83,7 @@ public class SpotifyContentManager : ISpotifyContentManager
         return savedArtists;
     }
 
-    public async Task<List<ArtistDto>> RetrieveSpotifyUsersArtistsAsync()
+    public async Task<List<SpotifyArtistDto>> RetrieveSpotifyUsersArtistsAsync()
     {
         var userId = _authenticationService.GetUserId();
         
@@ -91,25 +91,5 @@ public class SpotifyContentManager : ISpotifyContentManager
         var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync(userId);
         
         return topArtists.Concat(followedArtists).DistinctBy(artist => artist.Id).ToList();
-    }
-
-    private async Task<Artist> CreateNewArtistAsync(ArtistDto artistDto)
-    {
-        var newArtist = new Artist
-        {
-            Id = artistDto.Id,
-            Name = artistDto.Name,
-            Popularity = artistDto.Popularity,
-            Genres = []
-        };
-
-        foreach (var genreName in artistDto.Genres)
-        {
-            var genre = await _genreRepository.GetOrCreateAsync(genreName);
-            
-            newArtist.Genres.Add(genre);
-        }
-        
-        return newArtist;
     }
 }
