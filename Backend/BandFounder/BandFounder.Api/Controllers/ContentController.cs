@@ -1,4 +1,5 @@
 using BandFounder.Application.Services;
+using BandFounder.Application.Services.Spotify;
 using BandFounder.Infrastructure.Spotify.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,8 @@ public class ContentController(
     IContentService contentService,
     IAccountService accountService,
     ISpotifyContentRetriever spotifyContentRetriever,
-    IAuthenticationService authenticationService)
+    IAuthenticationService authenticationService,
+    ISpotifyContentManager spotifyContentManager)
     : Controller
 {
     [HttpGet("artists")]
@@ -77,5 +79,25 @@ public class ContentController(
         var artists = artistDtoList.Select(artist => artist.Name).ToList();
 
         return Ok(artists);
+    }
+    
+    [Authorize]
+    [HttpGet("account/me/genres")]
+    public async Task<IActionResult> GetMyGenres()
+    {
+        var wagedGenres = await spotifyContentManager.GetWagedGenres();
+        var genres = wagedGenres.Select(artist => artist.Key).ToList();
+
+        return Ok(genres);
+    }
+    
+    [Authorize]
+    [HttpGet("account/{accountId:guid}/genres")]
+    public async Task<IActionResult> GetUsersGenres([FromRoute] Guid accountId)
+    {
+        var wagedGenres = await spotifyContentManager.GetWagedGenres(accountId);
+        var genres = wagedGenres.Select(artist => artist.Key).ToList();
+
+        return Ok(genres);
     }
 }
