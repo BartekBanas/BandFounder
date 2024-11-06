@@ -85,6 +85,16 @@ public class AccountController : Controller
 
         return Ok();
     }
+    
+    [Authorize]
+    [HttpGet("{accountGuid:guid}/artists")]
+    public async Task<IActionResult> GetUsersArtists([FromRoute] Guid accountGuid)
+    {
+        var accountDto = await _accountService.GetDetailedAccount(accountGuid);
+        var artists = accountDto.Artists.Select(artist => artist.Name).ToList();
+
+        return Ok(artists);
+    }
 
     [Authorize]
     [HttpPut("role")]
