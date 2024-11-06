@@ -63,7 +63,7 @@ public class ListingController : Controller
     }
 
     [Authorize]
-    [HttpPost("contact/{listingId:guid}")]
+    [HttpPost("{listingId:guid}/contact")]
     public async Task<IActionResult> ContactListingOwner(Guid listingId)
     {
         await _listingService.ContactOwner(listingId);
