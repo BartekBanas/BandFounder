@@ -70,7 +70,8 @@ public class SpotifyContentManager : ISpotifyContentManager
 
         foreach (var artistDto in userArtists)
         {
-            var artistEntity = await _artistRepository.GetOrCreateAsync(artistDto, _genreRepository);
+            var artistEntity = await _artistRepository.GetOrCreateAsync(_genreRepository,
+                artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
 
             if (account.Artists.All(artist => artist.Id != artistEntity.Id))
             {

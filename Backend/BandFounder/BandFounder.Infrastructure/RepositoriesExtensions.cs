@@ -56,33 +56,49 @@ public static class RepositoriesExtensions
         }
     }
     
-    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> repository, 
-        SpotifyArtistDto spotifyArtistDto, IRepository<Genre> genreRepository)
+    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> accountRepository, IRepository<Genre> genreRepository,
+        string artistName, List<string>? genres = null, int popularity = 0, string? id = null)
     {
-        var artist = await repository.GetOneAsync(spotifyArtistDto.Id);
-        
-        if (artist is null) 
+        var artistEntity = await accountRepository.GetOneAsync(artist => artist.Name == artistName,
+            includeProperties: nameof(Artist.Genres));
+
+        if (artistEntity is not null) // Check for artist's lacking properties
+        {
+            if (artistEntity.Popularity == 0 && popularity > 0)
+            {
+                artistEntity.Popularity = popularity;
+            }
+            
+            if (artistEntity.Genres.Count == 0 && genres is not null)
+            {
+                foreach (var genreName in genres)
+                {
+                    var genre = await genreRepository.GetOrCreateAsync(genreName);
+
+                    artistEntity.Genres.Add(genre);
+                }
+            }
+            
+            return artistEntity;
+        }
+        else // Create a new artist
         {
             var newArtist = new Artist
             {
-                Id = spotifyArtistDto.Id,
-                Name = spotifyArtistDto.Name,
-                Popularity = spotifyArtistDto.Popularity
+                Id = id ?? Guid.NewGuid().ToString(),
+                Name = artistName,
+                Popularity = popularity
             };
             
-            foreach (var genreName in spotifyArtistDto.Genres)
+            foreach (var genreName in genres ?? [])
             {
                 var genre = await genreRepository.GetOrCreateAsync(genreName);
-            
+                
                 newArtist.Genres.Add(genre);
             }
             
-            await repository.CreateAsync(newArtist);
+            await accountRepository.CreateAsync(newArtist);
             return newArtist;
-        }
-        else
-        {
-            return artist;
         }
     }
 
