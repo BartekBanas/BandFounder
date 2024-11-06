@@ -5,6 +5,7 @@ import {SpotifyConnection} from "./SpotifyConnection";
 import {LoginPage} from "./LoginPage";
 import useAccountAuthorization from "../hooks/useAccountAuthorization";
 import {RegisterPage} from "./RegisterPage";
+import {ProfilePage} from "./ProfilePage";
 
 const publicRoutes = [
     {
@@ -36,6 +37,10 @@ const privateRoutes = [{
         {
           path: '/home',
             element: <MainPage/>
+        },
+        {
+          path: '/profile/*',
+          element: <ProfilePage/>
         },
         {
             path: '/spotifyConnection/callback/',
