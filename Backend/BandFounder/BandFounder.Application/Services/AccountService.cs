@@ -11,6 +11,7 @@ namespace BandFounder.Application.Services;
 public interface IAccountService
 {
     Task<AccountDto> GetAccountAsync(Guid? accountId = null);
+    Task<AccountDto> GetAccountAsync(string username);
     Task<Account> GetDetailedAccount(Guid? accountId = null);
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
     Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
@@ -56,6 +57,15 @@ public class AccountService : IAccountService
     {
         accountId ??= _authenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(accountId);
+
+        var dtos = account.ToDto();
+
+        return dtos;
+    }
+
+    public async Task<AccountDto> GetAccountAsync(string username)
+    {
+        var account = await _accountRepository.GetOneRequiredAsync(account => account.Name == username);
 
         var dtos = account.ToDto();
 
