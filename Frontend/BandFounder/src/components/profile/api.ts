@@ -2,6 +2,10 @@
 import Cookies from "universal-cookie";
 import {API_URL} from "../../config";
 
+export const getGUID = async () => {
+
+}
+
 export const getProfile = async () => {
     try {
         const username = window.location.pathname.split('/').pop();
@@ -15,8 +19,8 @@ export const getProfile = async () => {
         if (!response.ok) {
             throw new Error(await response.text());
         }
-        //return await response.json();
-        return username;
+        return await response.json();
+        //return username;
     } catch (error) {
         console.error('Error getting profile:', error);
     }
