@@ -72,7 +72,6 @@ function fetchAccessToken(code: string) {
     body += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
 
     body += "&client_id=" + localStorage.getItem('client_id');
-    console.log(123);
     body += "&client_secret=" + localStorage.getItem('client_secret');
 
     callAuthorizationApi(body)
@@ -126,7 +125,6 @@ function handleAuthorizationResponse(data: any) {
 async function submitAuthorizationRequest(accessToken: string, refreshToken: string, duration: string) {
     const jwt = new Cookies().get('auth_token');
     const spotifyCode = new Cookies().get('spotifyCode');
-    console.log(123);
     try {
         const response = await fetch(`${API_URL}/spotifyBroker/connect`, {
             method: 'POST',

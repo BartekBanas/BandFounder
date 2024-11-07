@@ -39,7 +39,7 @@ const privateRoutes = [{
             element: <MainPage/>
         },
         {
-          path: '/profile/*',
+          path: '/profile/:username',
           element: <ProfilePage/>
         },
         {

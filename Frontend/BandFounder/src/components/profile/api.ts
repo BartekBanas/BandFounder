@@ -4,6 +4,7 @@ import {API_URL} from "../../config";
 
 export const getProfile = async () => {
     try {
+        const username = window.location.pathname.split('/').pop();
         const response = await fetch(`${API_URL}/account`, {
             method: 'GET',
             headers: {
@@ -14,7 +15,8 @@ export const getProfile = async () => {
         if (!response.ok) {
             throw new Error(await response.text());
         }
-        return await response.json();
+        //return await response.json();
+        return username;
     } catch (error) {
         console.error('Error getting profile:', error);
     }
