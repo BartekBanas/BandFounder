@@ -37,6 +37,7 @@ export async function linkAccountWithSpotifyFromCode(): Promise<void> {
 
         const spotifyTokens = await getSpotifyTokens(body);
         await authorizeSpotifyAccountInBandfounder(spotifyTokens);
+        await linkAccountWithSpotifyArtists();
     }
 }
 
@@ -85,6 +86,25 @@ async function authorizeSpotifyAccountInBandfounder(tokens: spotifyTokens) {
         console.log('Authorization request submitted');
     } catch (error) {
         console.error('Error submitting authorization request:', error);
+    }
+}
+
+async function linkAccountWithSpotifyArtists() {
+    const jwt = new Cookies().get('auth_token');
+    try {
+        const response = await fetch(`${API_URL}/spotifyBroker/artists`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+    } catch (error) {
+        console.error('Error linking account with its Spotify artists:', error);
     }
 }
 
