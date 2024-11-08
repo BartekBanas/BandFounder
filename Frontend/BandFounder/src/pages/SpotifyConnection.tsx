@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { accessSpotifyConnection } from "../components/spotiftConnection/spotifyConnection";
+import { linkAccountWithSpotifyFromCode } from "../components/spotiftConnection/spotifyConnection";
 
 export function SpotifyConnection() {
     const [dots, setDots] = useState("");
@@ -16,23 +16,23 @@ export function SpotifyConnection() {
             });
         }, 1000);
 
-        const connectToSpotify = async () => {
+        const connectAccountWithSpotify = async () => {
             try {
-                await accessSpotifyConnection();
-                navigate("/home"); // Navigate to /home after accessing Spotify connection
+                await linkAccountWithSpotifyFromCode();
+                navigate("/home"); // Navigate to /home after linking account to Spotify
             } catch (error) {
                 console.log(error);
             }
         };
 
-        connectToSpotify();
+        connectAccountWithSpotify();
 
         return () => clearInterval(interval);
     }, [navigate]);
 
     const handleConnect = async () => {
         try {
-            await accessSpotifyConnection();
+            await linkAccountWithSpotifyFromCode();
             navigate("/home"); // Navigate to /home on button click
         } catch (error) {
             console.log(error);

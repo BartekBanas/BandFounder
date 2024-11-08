@@ -1,12 +1,12 @@
 // src/pages/MainPage.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { isUserSpotifyConnected } from "../components/spotiftConnection/spotifyConnection";
 import SpotifyDeleteCredentialButton from "../components/spotiftConnection/spotifyDeleteCredentialButton";
 import SpotifyLogoButton from "../components/SpotifyDrawer/SpotifyLogoButton";
 import { Drawer, Button, List, ListItem, ListItemText } from "@mui/material";
 import SpotifyAuthorizationButton from "../components/spotiftConnection/SpotifyAuthorizationButton";
 import "../components/SpotifyDrawer/SpotifyLogoButton.css";
+import UseSpotifyConnected from "../hooks/useSpotifyConnected";
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -16,7 +16,7 @@ export function MainPage() {
 
     useEffect(() => {
         const checkSpotifyConnection = async () => {
-            const isConnected = await isUserSpotifyConnected();
+            const isConnected = await UseSpotifyConnected();
             setIsConnectedToSpotify(isConnected);
             setLoading(false);
         };

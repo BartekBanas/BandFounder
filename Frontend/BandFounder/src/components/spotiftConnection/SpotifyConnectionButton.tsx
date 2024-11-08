@@ -1,13 +1,13 @@
 import React from 'react';
 import Button from '@mui/material/Button';
-import {accessSpotifyConnection} from './spotifyConnection';
+import {linkAccountWithSpotifyFromCode} from './spotifyConnection';
 
 export function AuthorizationButton() {
     return (
         <Button
             variant="contained"
             color="secondary"
-            onClick={accessSpotifyConnection}
+            onClick={linkAccountWithSpotifyFromCode}
         >
             Confirm Spotify Connection
         </Button>

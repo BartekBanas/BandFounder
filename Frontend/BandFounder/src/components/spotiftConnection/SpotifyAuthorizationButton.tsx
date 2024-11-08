@@ -1,13 +1,13 @@
 import React from 'react';
 import Button from '@mui/material/Button';
-import {requestAuthorization} from "./spotifyConnection";
+import {redirectToSpotifyAuthorizationPage} from "./spotifyConnection";
 
 function SpotifyAuthorizationButton() {
     return (
         <Button
             variant="contained"
             color="primary"
-            onClick={requestAuthorization}
+            onClick={redirectToSpotifyAuthorizationPage}
         >
             Request Authorization
         </Button>
