@@ -1,7 +1,7 @@
 // src/components/SpotifyDrawer/SpotifyLogoButton.tsx
 import React from "react";
 import { Button } from "@mui/material";
-import { requestAuthorization } from "../spotiftConnection/spotifyConnection";
+import { redirectToSpotifyAuthorizationPage } from "../spotiftConnection/spotifyConnection";
 import "./SpotifyLogoButton.css";
 
 interface SpotifyLogoButtonProps {
@@ -11,7 +11,7 @@ interface SpotifyLogoButtonProps {
 
 const SpotifyLogoButton: React.FC<SpotifyLogoButtonProps> = ({ onClick, className }) => {
     return (
-        <Button className={`spotify-logo-button ${className}`} onClick={onClick || requestAuthorization}>
+        <Button className={`spotify-logo-button ${className}`} onClick={onClick || redirectToSpotifyAuthorizationPage}>
             <span className="visually-hidden">Connect to Spotify</span>
         </Button>
     );

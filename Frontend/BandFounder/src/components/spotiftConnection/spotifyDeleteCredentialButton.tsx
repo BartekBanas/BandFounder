@@ -1,4 +1,3 @@
-// src/components/spotiftConnection/spotifyDeleteCredentialButton.tsx
 import React from 'react';
 import Button from '@mui/material/Button';
 import { deleteSpotifyCredential } from './spotifyConnection';
