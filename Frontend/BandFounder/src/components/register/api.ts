@@ -2,6 +2,12 @@ import {useCookies} from "react-cookie";
 import {API_URL} from "../../config";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 
+export interface RegisterFormType {
+    Name: string;
+    Password: string;
+    Email: string;
+}
+
 export const useRegisterApi = () => {
     const authCookieName = 'auth_token';
     const [, setCookie] = useCookies([authCookieName]);
