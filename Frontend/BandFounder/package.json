@@ -6,6 +6,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@mantine/core": "^7.13.5",
+    "@mantine/form": "^7.13.5",
     "@mantine/notifications": "^7.13.5",
     "@mui/material": "^6.1.6",
     "@testing-library/jest-dom": "^5.17.0",
