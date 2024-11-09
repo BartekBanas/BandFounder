@@ -11,6 +11,14 @@ export function mantineSuccessNotification(message: string): void {
     });
 }
 
+export function mantineInformationNotification(message: string): void {
+    showNotification({
+        color: 'blue',
+        message: message,
+        styles: notificationStyles,
+    });
+}
+
 export function mantineErrorNotification(message: string): void {
     showNotification({
         color: 'red',
