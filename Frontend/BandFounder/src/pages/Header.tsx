@@ -24,10 +24,8 @@ export const Header: FC = () => {
                     <UtilityDrawer/>
 
                     <div style={{flex: '1', textAlign: 'center'}}>
-                        <Text
-                            color={'#D5D7E0'}
-                        >
-                            Messegify
+                        <Text color={'#D5D7E0'}>
+                            Bandfounder
                         </Text>
                     </div>
 
