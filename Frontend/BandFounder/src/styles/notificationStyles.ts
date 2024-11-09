@@ -10,9 +10,10 @@ const notificationStyles = (theme: MantineTheme) => ({
     description: {color: theme.colors.gray[5]},
     closeButton: {
         color: theme.colors.gray[5],
+        backgroundColor: theme.colors.gray[8],
         '&:hover': {
             color: theme.colors.dark[0],
-            backgroundColor: theme.colors.gray[7],
+            backgroundColor: theme.colors.gray[1] + ' !important',
         }
     },
 });

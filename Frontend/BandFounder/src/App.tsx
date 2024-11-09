@@ -9,7 +9,7 @@ import '@mantine/notifications/styles.css';
 
 function App() {
     return (
-        <MantineProvider defaultColorScheme="dark" forceColorScheme={"light"}>
+        <MantineProvider defaultColorScheme="light">
             <BrowserRouter>
                 <Notifications/>
                 <Routing/>
