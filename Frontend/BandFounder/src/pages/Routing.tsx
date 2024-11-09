@@ -1,7 +1,7 @@
 import {FC} from "react";
 import {useRoutes} from "react-router-dom";
 import {MainPage} from "./MainPage";
-import {SpotifyConnection} from "./SpotifyConnection";
+import {SpotifyConnectionPage} from "./SpotifyConnectionPage";
 import {LoginPage} from "./LoginPage";
 import useAccountAuthorization from "../hooks/useAccountAuthorization";
 import {RegisterPage} from "./RegisterPage";
@@ -44,7 +44,7 @@ const privateRoutes = [{
         },
         {
             path: '/spotifyConnection/callback/',
-            element: <SpotifyConnection/>
+            element: <SpotifyConnectionPage/>
         }
 ]
 }]

@@ -3,7 +3,7 @@ import React, {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {linkAccountWithSpotifyFromCode} from "../components/spotiftConnection/spotifyConnection";
 
-export function SpotifyConnection() {
+export function SpotifyConnectionPage() {
     const navigate = useNavigate();
 
     useEffect(() => {
