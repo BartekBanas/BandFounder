@@ -1,12 +1,11 @@
-// src/pages/MainPage.tsx
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, {useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import SpotifyDeleteCredentialButton from "../components/spotiftConnection/spotifyDeleteCredentialButton";
 import SpotifyLogoButton from "../components/SpotifyDrawer/SpotifyLogoButton";
-import { Drawer, Button, List, ListItem, ListItemText } from "@mui/material";
+import {Drawer, List, ListItem, ListItemText} from "@mui/material";
 import SpotifyAuthorizationButton from "../components/spotiftConnection/SpotifyAuthorizationButton";
 import "../components/SpotifyDrawer/SpotifyLogoButton.css";
-import UseSpotifyConnected from "../hooks/useSpotifyConnected";
+import UseSpotifyConnected from "../hooks/useSpotifyAccountLinked";
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -45,22 +44,22 @@ export function MainPage() {
                 anchor="left"
                 open={drawerOpen}
                 onClose={toggleDrawer(false)}
-                sx={{ width: '140px' }} // Set the width here
+                sx={{width: '140px'}}
             >
                 <List>
                     {isConnectedToSpotify ? (
                         <>
                             <ListItem>
-                                <ListItemText primary="You are logged in (also on Spotify)" />
+                                <ListItemText primary="You are logged in (also on Spotify)"/>
                             </ListItem>
                             <ListItem>
-                                <SpotifyDeleteCredentialButton />
+                                <SpotifyDeleteCredentialButton/>
                             </ListItem>
                         </>
                     ) : (
                         <>
                             <ListItem>
-                                <ListItemText primary="You are logged in" />
+                                <ListItemText primary="You are logged in"/>
                             </ListItem>
                             <ListItem>
                                 <SpotifyAuthorizationButton/>
