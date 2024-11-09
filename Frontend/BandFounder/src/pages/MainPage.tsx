@@ -1,11 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import SpotifyDeleteCredentialButton from "../components/spotiftConnection/spotifyDeleteCredentialButton";
-import SpotifyLogoButton from "../components/SpotifyDrawer/SpotifyLogoButton";
-import {Drawer, List, ListItem, ListItemText} from "@mui/material";
-import SpotifyAuthorizationButton from "../components/spotiftConnection/SpotifyAuthorizationButton";
 import "../components/SpotifyDrawer/SpotifyLogoButton.css";
 import UseSpotifyConnected from "../hooks/useSpotifyAccountLinked";
+import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
+import {RingLoader} from "../components/common/RingLoader";
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -30,44 +28,28 @@ export function MainPage() {
         setDrawerOpen(open);
     };
 
-    if (loading) {
-        return <div className="App-header"><h1>Loading...</h1></div>;
+    const theme = createTheme({
+        components: {
+            Loader: Loader.extend({
+                defaultProps: {
+                    loaders: { ...Loader.defaultLoaders, ring: RingLoader },
+                    type: 'ring',
+                },
+            }),
+        },
+    });
+
+    if (true) {
+        return <div className="App-header">
+            <MantineThemeProvider theme={theme}>
+                <Loader size={200} />
+            </MantineThemeProvider>
+        </div>;
     }
 
     return (
         <div className="App-header">
-            <SpotifyLogoButton
-                onClick={toggleDrawer(true)}
-                className={drawerOpen ? "drawer-open" : ""}
-            />
-            <Drawer
-                anchor="left"
-                open={drawerOpen}
-                onClose={toggleDrawer(false)}
-                sx={{width: '140px'}}
-            >
-                <List>
-                    {isConnectedToSpotify ? (
-                        <>
-                            <ListItem>
-                                <ListItemText primary="You are logged in (also on Spotify)"/>
-                            </ListItem>
-                            <ListItem>
-                                <SpotifyDeleteCredentialButton/>
-                            </ListItem>
-                        </>
-                    ) : (
-                        <>
-                            <ListItem>
-                                <ListItemText primary="You are logged in"/>
-                            </ListItem>
-                            <ListItem>
-                                <SpotifyAuthorizationButton/>
-                            </ListItem>
-                        </>
-                    )}
-                </List>
-            </Drawer>
+
         </div>
     );
 }

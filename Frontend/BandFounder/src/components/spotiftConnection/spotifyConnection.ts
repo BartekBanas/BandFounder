@@ -118,7 +118,7 @@ async function linkAccountWithSpotifyArtists() {
     }
 }
 
-export function deleteSpotifyCredential() {
+export async function deleteSpotifyCredential() {
     const jwt = new Cookies().get('auth_token');
     try {
         fetch(`${API_URL}/account/clearProfile`, {
@@ -128,10 +128,10 @@ export function deleteSpotifyCredential() {
                 'Authorization': `Bearer ${jwt}`
             }
         }).then(r => {
-            console.log('Spotify credential deleted');
-            window.location.reload();
+            mantineSuccessNotification('Spotify account successfully disconnected');
         });
     } catch (error) {
+        mantineErrorNotification('Failed to disconnect your Spotify account');
         console.error('Error deleting Spotify credential:', error);
     }
 }

@@ -6,6 +6,7 @@ import {LoginPage} from "./LoginPage";
 import useAccountAuthorization from "../hooks/useAccountAuthorization";
 import {RegisterPage} from "./RegisterPage";
 import {ProfilePage} from "./ProfilePage";
+import {Main} from "./Main";
 
 const publicRoutes = [
     {
@@ -29,33 +30,33 @@ const publicRoutes = [
 
 const privateRoutes = [{
     path: '/',
+    element: <Main/>,
     children: [
         {
-          path: '/',
+            path: '/',
             element: <MainPage/>
         },
         {
-          path: '/home',
+            path: '/home',
             element: <MainPage/>
         },
         {
-          path: '/profile/:username',
-          element: <ProfilePage/>
+            path: '/profile/:username',
+            element: <ProfilePage/>
         },
         {
             path: '/spotifyConnection/callback/',
             element: <SpotifyConnectionPage/>
         }
-]
+    ]
 }]
 
 export const Routing: FC = function () {
     const isAuthorized = useAccountAuthorization();
     let routes;
-    if(isAuthorized){
+    if (isAuthorized) {
         routes = privateRoutes;
-    }
-    else{
+    } else {
         routes = publicRoutes;
     }
 
