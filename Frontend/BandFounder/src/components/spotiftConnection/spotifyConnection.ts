@@ -1,6 +1,11 @@
 import {SpotifyAppCredentialService} from "./spotifyAppCredentialService";
 import {API_URL} from "../../config";
 import Cookies from "universal-cookie";
+import {
+    mantineErrorNotification,
+    mantineInformationNotification,
+    mantineSuccessNotification
+} from "../common/mantineNotification";
 
 let configLoader = new SpotifyAppCredentialService();
 const BaseAppUrl = "http://localhost:3000/";
@@ -35,9 +40,14 @@ export async function linkAccountWithSpotifyFromCode(): Promise<void> {
         body += "&client_id=" + localStorage.getItem('client_id');
         body += "&client_secret=" + localStorage.getItem('client_secret');
 
-        const spotifyTokens = await getSpotifyTokens(body);
-        await authorizeSpotifyAccountInBandfounder(spotifyTokens);
-        await linkAccountWithSpotifyArtists();
+        try {
+            const spotifyTokens = await getSpotifyTokens(body);
+            await authorizeSpotifyAccountInBandfounder(spotifyTokens);
+            await linkAccountWithSpotifyArtists();
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+        mantineSuccessNotification('Linking your Spotify account was successful');
     }
 }
 
@@ -54,7 +64,7 @@ async function getSpotifyTokens(body: string): Promise<spotifyTokens> {
 
     if (!response.ok) {
         const errorText = await response.text();
-        console.log('Requesting tokens from Spotify failed: ', errorText);
+        mantineErrorNotification('Failed to request tokens from Spotify');
         throw new Error(errorText);
     }
 
@@ -65,46 +75,46 @@ async function getSpotifyTokens(body: string): Promise<spotifyTokens> {
 async function authorizeSpotifyAccountInBandfounder(tokens: spotifyTokens) {
     const jwt = new Cookies().get('auth_token');
 
-    try {
-        const response = await fetch(`${API_URL}/spotifyBroker/connect`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwt}`
-            },
-            body: JSON.stringify({
-                accessToken: tokens.access_token,
-                refreshToken: tokens.refresh_token,
-                duration: tokens.expires_in
-            })
-        });
+    // mantineErrorNotification('Poopy');
+    // throw new Error();
 
-        if (!response.ok) {
-            throw new Error(await response.text());
-        }
+    const response = await fetch(`${API_URL}/spotifyBroker/connect`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}`
+        },
+        body: JSON.stringify({
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            duration: tokens.expires_in
+        })
+    });
 
-        console.log('Authorization request submitted');
-    } catch (error) {
-        console.error('Error submitting authorization request:', error);
+    if (response.status === 409) {
+        mantineInformationNotification('Your account is already connected to a Spotify account');
+        throw new Error(await response.text());
+    } else if (!response.ok) {
+        mantineErrorNotification('An error occurred while linking your Spotify account');
+        throw new Error(await response.text());
     }
+
+    console.log('Authorization request submitted');
 }
 
 async function linkAccountWithSpotifyArtists() {
     const jwt = new Cookies().get('auth_token');
-    try {
-        const response = await fetch(`${API_URL}/spotifyBroker/artists`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwt}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(await response.text());
+    const response = await fetch(`${API_URL}/spotifyBroker/artists`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}`
         }
-    } catch (error) {
-        console.error('Error linking account with its Spotify artists:', error);
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('An error occurred while linking your favourite Spotify artists');
+        throw new Error(await response.text());
     }
 }
 

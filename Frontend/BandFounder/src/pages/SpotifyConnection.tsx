@@ -1,21 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { linkAccountWithSpotifyFromCode } from "../components/spotiftConnection/spotifyConnection";
+import {Center, Loader} from "@mantine/core";
+import React, {useEffect} from "react";
+import {useNavigate} from "react-router-dom";
+import {linkAccountWithSpotifyFromCode} from "../components/spotiftConnection/spotifyConnection";
 
 export function SpotifyConnection() {
-    const [dots, setDots] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setDots(prevDots => {
-                if (prevDots.length >= 3) {
-                    return "";
-                }
-                return prevDots + ".";
-            });
-        }, 1000);
-
         const connectAccountWithSpotify = async () => {
             try {
                 await linkAccountWithSpotifyFromCode();
@@ -26,14 +17,12 @@ export function SpotifyConnection() {
         };
 
         connectAccountWithSpotify();
-
-        return () => clearInterval(interval);
     }, [navigate]);
 
     const handleConnect = async () => {
         try {
             await linkAccountWithSpotifyFromCode();
-            navigate("/home"); // Navigate to /home on button click
+            navigate("/home");
         } catch (error) {
             console.log(error);
         }
@@ -41,8 +30,9 @@ export function SpotifyConnection() {
 
     return (
         <div className="App">
-            <h1>Connecting to spotify{dots}</h1>
-            <button onClick={handleConnect}>Connect</button>
+            <Center style={{minHeight: '100vh'}}>
+                <Loader size={100}/>
+            </Center>
         </div>
     );
 }
