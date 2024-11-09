@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import UseSpotifyConnected from "../../hooks/useSpotifyAccountLinked";
 import {useNavigate} from "react-router-dom";
 import {List, ListItem, ListItemText} from "@mui/material";
-import SpotifyDeleteCredentialButton from "../spotiftConnection/spotifyDeleteCredentialButton";
+import DisconnectSpotifyAccountButton from "../spotiftConnection/DisconnectSpotifyAccountButton";
 import SpotifyAuthorizationButton from "../spotiftConnection/SpotifyAuthorizationButton";
 import {deleteSpotifyCredential} from "../spotiftConnection/spotifyConnection";
 import {sleep} from "../../hooks/utils";
@@ -32,27 +32,15 @@ export function SpotifyConnectionButton() {
 
     return (
         <div>
-            <List>
-                {isConnectedToSpotify ? (
-                    <>
-                        <ListItem>
-                            <ListItemText primary="You are logged in (also on Spotify)"/>
-                        </ListItem>
-                        <ListItem>
-                            <SpotifyDeleteCredentialButton onDelete={handleDelete}/>
-                        </ListItem>
-                    </>
-                ) : (
-                    <>
-                        <ListItem>
-                            <ListItemText primary="You are logged in"/>
-                        </ListItem>
-                        <ListItem>
-                            <SpotifyAuthorizationButton/>
-                        </ListItem>
-                    </>
-                )}
-            </List>
+            {isConnectedToSpotify ? (
+                <>
+                    <DisconnectSpotifyAccountButton onDelete={handleDelete}/>
+                </>
+            ) : (
+                <>
+                    <SpotifyAuthorizationButton/>
+                </>
+            )}
         </div>
     );
 }
