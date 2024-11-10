@@ -4,6 +4,7 @@ import "../components/SpotifyDrawer/SpotifyLogoButton.css";
 import UseSpotifyConnected from "../hooks/useSpotifyAccountLinked";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../components/common/RingLoader";
+import ListingsListPublic from "../components/listing/listingsListPublic";
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -39,7 +40,7 @@ export function MainPage() {
         },
     });
 
-    if (true) {
+    if (loading) {
         return <div className="App-header">
             <MantineThemeProvider theme={theme}>
                 <Loader size={200} />
@@ -49,7 +50,7 @@ export function MainPage() {
 
     return (
         <div className="App-header">
-
+            <ListingsListPublic/>
         </div>
     );
 }
