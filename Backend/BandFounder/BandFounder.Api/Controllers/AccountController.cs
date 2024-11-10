@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BandFounder.Api.Controllers;
 
 [ApiController]
-[Route("api/account")]
+[Route("api/accounts")]
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;

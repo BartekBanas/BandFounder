@@ -16,7 +16,7 @@ export const useLoginApi = () => {
     const[cookies] = useCookies([tokenName]);
     return async (usernameOrEmail: string, password: string) => {
         try {
-            const response = await fetch(`${API_URL}/account/authenticate`, {
+            const response = await fetch(`${API_URL}/accounts/authenticate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
