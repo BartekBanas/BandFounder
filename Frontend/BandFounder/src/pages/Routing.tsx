@@ -3,10 +3,10 @@ import {useRoutes} from "react-router-dom";
 import {MainPage} from "./MainPage";
 import {SpotifyConnectionPage} from "./SpotifyConnectionPage";
 import {LoginPage} from "./LoginPage";
-import useAccountAuthorization from "../hooks/useAccountAuthorization";
 import {RegisterPage} from "./RegisterPage";
 import {ProfilePage} from "./ProfilePage";
 import {Main} from "./Main";
+import {useIsAuthenticated} from "../hooks/authentication";
 
 const publicRoutes = [
     {
@@ -52,7 +52,7 @@ const privateRoutes = [{
 }]
 
 export const Routing: FC = function () {
-    const isAuthorized = useAccountAuthorization();
+    const isAuthorized = useIsAuthenticated();
     let routes;
     if (isAuthorized) {
         routes = privateRoutes;

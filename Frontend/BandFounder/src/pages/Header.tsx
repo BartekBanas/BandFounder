@@ -2,7 +2,7 @@ import React, {FC} from 'react';
 import {Button, MantineProvider, Paper, Text} from '@mantine/core';
 import {Link} from "react-router-dom";
 import {UtilityDrawer} from '../components/accountDrawer/UtilityDrawer';
-import {removeAuthToken} from "../components/accountDrawer/api";
+import {removeAuthToken} from "../hooks/authentication";
 
 export const Header: FC = () => {
     return (
