@@ -6,7 +6,7 @@ import {LoginPage} from "./LoginPage";
 import useAccountAuthorization from "../hooks/useAccountAuthorization";
 import {RegisterPage} from "./RegisterPage";
 import {ProfilePage} from "./ProfilePage";
-import {Main} from "./Main";
+import {Main} from "./layout/Main";
 
 const publicRoutes = [
     {
