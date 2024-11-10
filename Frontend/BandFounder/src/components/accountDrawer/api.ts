@@ -1,6 +1,6 @@
 import {API_URL} from "../../config";
 import Cookies from "universal-cookie";
-import {removeAuthToken} from "../../hooks/authentication";
+import {removeAuthToken, removeUserId} from "../../hooks/authentication";
 
 export async function updateAccountRequest(name: string | null, password: string | null, email: string | null) {
     const requestBody: { name?: string; password?: string; email?: string } = {};
@@ -35,6 +35,7 @@ export async function deleteAccountRequest() {
     });
 
     removeAuthToken();
+    removeUserId();
 
     return response;
 }

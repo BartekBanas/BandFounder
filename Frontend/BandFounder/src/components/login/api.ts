@@ -1,51 +1,61 @@
-import { useCookies } from "react-cookie";
-import { API_URL } from "../../config";
-import Swal from "sweetalert2";
+import {API_URL} from "../../config";
+import {mantineErrorNotification, mantineInformationNotification} from "../common/mantineNotification";
+import {setAuthToken, setUserId} from "../../hooks/authentication";
 
-const headersCreator = (jwt:string) => {
-    return {
-        'Authorization' : `Bearer ${jwt}`,
-        'Content-Type': 'application/json',
-    };
+type AccountDto = {
+    id: string;
+    name: string;
+    email: string;
 }
 
 export const useLoginApi = () => {
-    const authCookieName = 'auth_token';
-    const [, setCookie] = useCookies([authCookieName]);
-    const tokenName = 'auth_token';
-    const[cookies] = useCookies([tokenName]);
     return async (usernameOrEmail: string, password: string) => {
-        try {
-            const response = await fetch(`${API_URL}/accounts/authenticate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                },
-                body: JSON.stringify({
-                    usernameOrEmail: usernameOrEmail,
-                    password: password,
-                }),
-            });
+        const authorizationToken = await login(usernameOrEmail, password);
+        const account = await getMyAccount(authorizationToken);
 
-            const JWT = await response.text();
-            if (!response.ok) {
-                Swal.fire({
-                    title: 'Error!',
-                    text: JWT,
-                    icon: 'error',
-                    confirmButtonText: 'Confirm'
-                });
-                throw new Error(JWT);
-            }
-            setCookie(authCookieName, JWT, {
-                expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
-                sameSite: true,
-            });
-
-            console.log(`Logged in successfully ${JWT}`);
-        } catch (error) {
-            console.error('Login error:', error);
-        }
+        setAuthToken(authorizationToken);
+        setUserId(account.id);
+        mantineInformationNotification(`Welcome ${account.name}`);
     };
 };
+
+async function login(usernameOrEmail: string, password: string) {
+    const response = await fetch(`${API_URL}/accounts/authenticate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+            usernameOrEmail: usernameOrEmail,
+            password: password,
+        }),
+    });
+
+    const responseContent = await response.text();
+
+    if (!response.ok) {
+        mantineErrorNotification("Login failed");
+        throw new Error(responseContent);
+    }
+
+    return responseContent;
+}
+
+async function getMyAccount(token: string): Promise<AccountDto> {
+    const response = await fetch(`${API_URL}/accounts/me`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to fetch account details');
+        throw new Error('Failed to fetch account details');
+    }
+
+    const account: AccountDto = await response.json();
+    return account;
+}

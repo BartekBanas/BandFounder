@@ -8,8 +8,11 @@ export function getAuthToken () {
     return Cookies.get('auth_token');
 }
 
-export function setAuthToken (token: string) {
-    return Cookies.set('auth_token', token);
+export function setAuthToken(token: string) {
+    return Cookies.set('auth_token', token, {
+        expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
+        sameSite: 'Strict',
+    });
 }
 
 export function removeAuthToken () {
