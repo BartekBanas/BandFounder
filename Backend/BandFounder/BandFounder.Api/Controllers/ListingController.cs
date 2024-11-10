@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BandFounder.Api.Controllers;
 
 [ApiController]
-[Route("api/listing")]
+[Route("api/listings")]
 public class ListingController : Controller
 {
     private readonly IListingService _listingService;
@@ -72,7 +72,7 @@ public class ListingController : Controller
     }
 
     [Authorize]
-    [HttpPut("slot/{musicSlotId:guid}")]
+    [HttpPut("slots/{musicSlotId:guid}")]
     public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid musicSlotId, SlotStatus status)
     {
         await _listingService.UpdateSlotStatus(musicSlotId, status);

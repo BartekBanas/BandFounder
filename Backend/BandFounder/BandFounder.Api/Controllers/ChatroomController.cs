@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BandFounder.Api.Controllers;
 
 [ApiController]
-[Route("api/chatroom")]
+[Route("api/chatrooms")]
 public class ChatroomController : Controller
 {
     private readonly IChatroomService _chatroomService;

@@ -10,7 +10,7 @@ export async function updateAccountRequest(name: string | null, password: string
 
     const token = new Cookies().get('auth_token');
 
-    const response = await fetch(`${API_URL}/account/me`, {
+    const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -25,7 +25,7 @@ export async function updateAccountRequest(name: string | null, password: string
 export async function deleteAccountRequest() {
     const token = new Cookies().get('auth_token');
 
-    const response = await fetch(`${API_URL}/account/me`, {
+    const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',

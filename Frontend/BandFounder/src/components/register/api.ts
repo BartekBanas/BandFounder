@@ -13,7 +13,7 @@ export const useRegisterApi = () => {
     const [, setCookie] = useCookies([authCookieName]);
 
     return async (name: string, email: string, password: string) => {
-        const response = await fetch(`${API_URL}/account/`, {
+        const response = await fetch(`${API_URL}/accounts/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

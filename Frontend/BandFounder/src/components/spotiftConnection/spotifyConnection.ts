@@ -121,7 +121,7 @@ async function linkAccountWithSpotifyArtists() {
 export async function deleteSpotifyCredential() {
     const jwt = new Cookies().get('auth_token');
     try {
-        fetch(`${API_URL}/account/clearProfile`, {
+        fetch(`${API_URL}/accounts/clearProfile`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

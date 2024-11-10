@@ -7,7 +7,7 @@ const MAX_GENRES_RETURNED = 10;
 
 export const getGUID = async (username: string) => {
     try {
-        const response = await fetch(`${API_URL}/account?username=${username}`, {
+        const response = await fetch(`${API_URL}/accounts?username=${username}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ export const getGUID = async (username: string) => {
 
 export const getAccount = async (guid: string) => {
     try {
-        const response = await fetch(`${API_URL}/account/${guid}`, {
+        const response = await fetch(`${API_URL}/accounts/${guid}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export const getAccount = async (guid: string) => {
 
 export const getTopArtists = async (guid: string) => {
     try{
-        const response = await fetch(`${API_URL}/account/${guid}/artists/top`, {
+        const response = await fetch(`${API_URL}/accounts/${guid}/artists/top`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const getTopArtists = async (guid: string) => {
 
 export const getTopGenres = async (guid: string): Promise<string[]> => {
     try {
-        const response = await fetch(`${API_URL}/account/${guid}/genres`, {
+        const response = await fetch(`${API_URL}/accounts/${guid}/genres`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
