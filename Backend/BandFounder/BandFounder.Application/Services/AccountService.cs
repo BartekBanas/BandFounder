@@ -58,18 +58,18 @@ public class AccountService : IAccountService
         accountId ??= _authenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(accountId);
 
-        var dtos = account.ToDto();
+        var accountDto = account.ToDto();
 
-        return dtos;
+        return accountDto;
     }
 
     public async Task<AccountDto> GetAccountAsync(string username)
     {
-        var account = await _accountRepository.GetOneRequiredAsync(account => account.Name == username);
+        var account = await _accountRepository.GetOneRequiredAsync(account => account.Name.ToLower() == username.ToLower());
 
-        var dtos = account.ToDto();
+        var accountDto = account.ToDto();
 
-        return dtos;
+        return accountDto;
     }
 
     public async Task<Account> GetDetailedAccount(Guid? accountId = null)
