@@ -22,8 +22,8 @@ public class AccountValidator : AbstractValidator<Account>
     
     private async Task ValidateUniqueName(Account account, ValidationContext<Account> context, CancellationToken token)
     {
-        var matchingAccounts = await _accountRepository
-            .GetAsync(foundAccount => foundAccount.Name == account.Name);
+        var matchingAccounts = await _accountRepository.GetAsync
+            (existingAccount => existingAccount.Name.ToLower() == account.Name.ToLower());
 
         if (matchingAccounts.Any())
         {
