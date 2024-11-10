@@ -57,6 +57,7 @@ public static class DtoMapper
         return new ListingDto
         {
             Id = listing.Id,
+            OwnerId = listing.OwnerId,
             Name = listing.Name,
             Genre = listing.GenreName,
             Description = listing.Description,
