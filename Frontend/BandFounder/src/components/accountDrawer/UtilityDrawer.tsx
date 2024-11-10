@@ -1,54 +1,50 @@
-import React, {FC} from 'react';
-import {useDisclosure} from "@mantine/hooks";
-import {Drawer, Group, ActionIcon, Flex, Title} from "@mantine/core";
-import {DeleteAccountButton} from "./DeleteAccountButton";
-import {UpdateAccountButton} from "./UpdateAccountButton";
-import {SpotifyConnectionButton} from "./SpotifyConnectionButton";
+import React, { FC, useState } from 'react';
+import { DeleteAccountButton } from './DeleteAccountButton';
+import { UpdateAccountButton } from './UpdateAccountButton';
+import { SpotifyConnectionButton } from './SpotifyConnectionButton';
+import './UtilityDrawer.css';
 
 interface UtilityDrawerProps {}
 
 export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
-    const [opened, {open, close}] = useDisclosure(false);
+    const [opened, setOpened] = useState(false);
+
+    const openDrawer = () => setOpened(true);
+    const closeDrawer = () => setOpened(false);
 
     return (
         <>
-            <Drawer opened={opened} onClose={close}>
-                <Title order={3}>
-                    Account Utilities
-                </Title>
+            {/* Overlay for clicking outside */}
+            {opened && <div className="drawer-overlay" onClick={closeDrawer}></div>}
 
-                <Flex
-                    mih={300}
-                    gap="xl"
-                    justify="center"
-                    align="center"
-                    direction="column"
-                    wrap="wrap"
-                >
-                    <UpdateAccountButton/>
-                    <DeleteAccountButton/>
-                    <SpotifyConnectionButton/>
-                </Flex>
-            </Drawer>
+            <div className={`drawer ${opened ? 'drawer-open' : ''}`}>
+                <div className="drawer-content">
+                    <h3>Account Utilities</h3>
+                    <div className="drawer-buttons">
+                        <UpdateAccountButton />
+                        <DeleteAccountButton />
+                        <SpotifyConnectionButton />
+                    </div>
+                    <button className="drawer-close" onClick={closeDrawer}>Close</button>
+                </div>
+            </div>
 
-            <Group>
-                <ActionIcon onClick={() => open()} size="xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" width={36} height={36} viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-                         className="icon icon-tabler icons-tabler-outline icon-tabler-adjustments">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M4 10a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                        <path d="M6 4v4"/>
-                        <path d="M6 12v8"/>
-                        <path d="M10 16a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                        <path d="M12 4v10"/>
-                        <path d="M12 18v2"/>
-                        <path d="M16 7a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                        <path d="M18 4v1"/>
-                        <path d="M18 9v11"/>
-                    </svg>
-                </ActionIcon>
-            </Group>
+            <button className="action-icon" onClick={openDrawer}>
+                <svg xmlns="http://www.w3.org/2000/svg" width={36} height={36} viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                     className="icon icon-tabler icons-tabler-outline icon-tabler-adjustments">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M4 10a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                    <path d="M6 4v4"/>
+                    <path d="M6 12v8"/>
+                    <path d="M10 16a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                    <path d="M12 4v10"/>
+                    <path d="M12 18v2"/>
+                    <path d="M16 7a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                    <path d="M18 4v1"/>
+                    <path d="M18 9v11"/>
+                </svg>
+            </button>
         </>
     );
 };
