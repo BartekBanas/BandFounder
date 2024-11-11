@@ -1,4 +1,6 @@
+using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Listings;
+using BandFounder.Application.Error;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -22,8 +24,13 @@ public class ListingController : Controller
     public async Task<IActionResult> GetMusicProjectListing([FromRoute] Guid id)
     {
         var listing = await _listingService.GetListingAsync(id);
+
+        if (listing is null)
+        {
+            throw new NotFoundError("Listing not found");
+        }
         
-        return Ok(listing);
+        return Ok(listing.ToDto());
     }
 
     [Authorize]

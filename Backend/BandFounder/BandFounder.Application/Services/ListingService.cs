@@ -9,8 +9,8 @@ namespace BandFounder.Application.Services;
 
 public interface IListingService
 {
-    Task<ListingDto> GetListingAsync(Guid listingId);
-    Task<IEnumerable<ListingDto>> GetListingsAsync();
+    Task<Listing?> GetListingAsync(Guid listingId);
+    Task<IEnumerable<Listing>> GetListingsAsync();
     Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions);
     Task<IEnumerable<ListingDto>> GetMyListingAsync();
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
@@ -54,22 +54,22 @@ public class ListingService : IListingService
         _listingRepository = listingRepository;
     }
 
-    public async Task<ListingDto> GetListingAsync(Guid listingId)
+    public async Task<Listing?> GetListingAsync(Guid listingId)
     {
-        var listing = await _listingRepository.GetOneRequiredAsync(
+        var listing = await _listingRepository.GetOneAsync(
             filter: listing => listing.Id == listingId,
             includeProperties:
             [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
         
-        return listing.ToDto();
+        return listing;
     }
     
-    public async Task<IEnumerable<ListingDto>> GetListingsAsync()
+    public async Task<IEnumerable<Listing>> GetListingsAsync()
     {
         var listings = await _listingRepository.GetAsync(includeProperties:
             [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
 
-        return listings.ToDto();
+        return listings;
     }
     
     public async Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions)
