@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { DeleteAccountButton } from './DeleteAccountButton';
 import { UpdateAccountButton } from './UpdateAccountButton';
 import { SpotifyConnectionButton } from './SpotifyConnectionButton';
+import {AddArtistModal} from "./AddArtistModal";
 import './UtilityDrawer.css';
 
 interface UtilityDrawerProps {}
@@ -24,6 +25,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                         <UpdateAccountButton />
                         <DeleteAccountButton />
                         <SpotifyConnectionButton />
+                        <AddArtistModal />
                     </div>
                     <button className="drawer-close" onClick={closeDrawer}>Close</button>
                 </div>
