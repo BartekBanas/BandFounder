@@ -3,7 +3,7 @@ import {useDisclosure} from "@mantine/hooks";
 import {Drawer, IconButton, Box, Typography} from "@mui/material";
 import {DeleteAccountButton} from "./DeleteAccountButton";
 import {UpdateAccountButton} from "./UpdateAccountButton";
-import {SpotifyConnectionButton} from "./SpotifyConnectionButton";
+import {SpotifyConnectionButton} from "./spotifyConnection/SpotifyConnectionButton";
 
 interface UtilityDrawerProps {
 }

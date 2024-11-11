@@ -1,7 +1,7 @@
 import { Button } from '@mui/material';
 import React from 'react';
 import {SpotifyIcon} from "./SpotifyIcon";
-import {muiDarkTheme} from "../accountDrawer/muiDarkTheme";
+import {muiDarkTheme} from "../../../assets/muiDarkTheme";
 
 interface SpotifyDeleteCredentialButtonProps {
     onDelete: () => void;

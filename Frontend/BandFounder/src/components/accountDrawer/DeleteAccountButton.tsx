@@ -2,7 +2,7 @@ import {useDisclosure} from '@mantine/hooks';
 import {deleteAccountRequest} from "./api";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {Box, Button, Modal, Stack, Typography} from '@mui/material';
-import {muiDarkTheme} from "./muiDarkTheme";
+import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
 export function DeleteAccountButton() {
     const [opened, {close, open}] = useDisclosure(false);

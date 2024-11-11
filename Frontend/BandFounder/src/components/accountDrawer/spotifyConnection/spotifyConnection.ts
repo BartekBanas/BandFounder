@@ -1,11 +1,11 @@
 import {SpotifyAppCredentialService} from "./spotifyAppCredentialService";
-import {API_URL} from "../../config";
+import {API_URL} from "../../../config";
 import Cookies from "universal-cookie";
 import {
     mantineErrorNotification,
     mantineInformationNotification,
     mantineSuccessNotification
-} from "../common/mantineNotification";
+} from "../../common/mantineNotification";
 
 let configLoader = new SpotifyAppCredentialService();
 const BaseAppUrl = "http://localhost:3000/";

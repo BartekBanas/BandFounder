@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@mui/material';
 import {redirectToSpotifyAuthorizationPage} from "./spotifyConnection";
 import {SpotifyIcon} from "./SpotifyIcon";
-import {muiDarkTheme} from "../accountDrawer/muiDarkTheme";
+import {muiDarkTheme} from "../../../assets/muiDarkTheme";
 
 function SpotifyAuthorizationButton() {
     return (

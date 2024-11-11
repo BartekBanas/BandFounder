@@ -1,7 +1,7 @@
 // src/components/SpotifyDrawer/SpotifyLogoButton.tsx
 import React from "react";
 import { Button } from "@mui/material";
-import { redirectToSpotifyAuthorizationPage } from "../spotiftConnection/spotifyConnection";
+import { redirectToSpotifyAuthorizationPage } from "../accountDrawer/spotifyConnection/spotifyConnection";
 import "./SpotifyLogoButton.css";
 
 interface SpotifyLogoButtonProps {

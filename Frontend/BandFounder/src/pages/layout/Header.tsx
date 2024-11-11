@@ -12,7 +12,7 @@ import {
     Typography
 } from '@mui/material';
 import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
-import {muiDarkTheme} from "../../components/accountDrawer/muiDarkTheme";
+import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
 export const Header: FC = () => {
     const handleLogout = () => {
