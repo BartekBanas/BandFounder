@@ -92,7 +92,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(policyBuilder => policyBuilder
     .AllowAnyHeader()
-    .WithOrigins("http://localhost:3000")
+    .WithOrigins("http://localhost:3000", "http://localhost:3001")
     .AllowAnyMethod()
     .AllowCredentials());
 
