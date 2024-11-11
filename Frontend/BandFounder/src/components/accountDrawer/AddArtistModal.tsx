@@ -1,17 +1,18 @@
 import React, {FC, useEffect, useState} from 'react';
-import {Autocomplete, Button, Flex, Group, Modal, Space} from '@mantine/core';
 import {API_URL} from '../../config';
 import {authorizedHeaders} from "../../hooks/utils";
 import {useDisclosure} from "@mantine/hooks";
 import {getUserId} from "../../hooks/authentication";
 import {getArtists} from "./api";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
+import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
+import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
 export const AddArtistModal: FC = () => {
     const [opened, {close, open}] = useDisclosure(false);
     const [artists, setArtists] = useState<string[]>([]);
     const [myArtists, setMyArtists] = useState<string[]>([]);
-    const [selectedArtistName, SetSelectedArtistName] = useState<string | null>(null);
+    const [selectedArtistName, setSelectedArtistName] = useState<string | null>(null);
 
     useEffect(() => {
         fetchArtists();
@@ -77,33 +78,46 @@ export const AddArtistModal: FC = () => {
 
     return (
         <>
-            <Modal opened={opened} onClose={close} size="auto" title="Add a new artist">
-                <Flex
-                    justify="center"
-                    align="center"
-                    direction="column"
+            <Button variant="contained" color="success" size="large" onClick={open}>
+                Add an artist
+            </Button>
+
+            <Modal open={opened} onClose={close}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: muiDarkTheme.palette.background.default,
+                        borderRadius: 2,
+                        boxShadow: 24,
+                        p: 4,
+                        outline: 'none',
+                    }}
                 >
-                    <Autocomplete
-                        size="md"
-                        maw={320}
-                        mx="auto"
-                        placeholder="Artist's name"
-                        data={filteredAccounts}
-                        onChange={(value) => {
-                            SetSelectedArtistName(value)
-                        }}
-                    />
+                    <Typography variant="h6" align="center" sx={{ mb: 3}}>
+                        Add a new artist
+                    </Typography>
 
-                    <Space h="xl"/>
+                    <Stack spacing={3} alignItems="center">
+                        <Autocomplete
+                            options={filteredAccounts}
+                            onInputChange={(event, value) => setSelectedArtistName(value)}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Artist's name" variant="outlined" fullWidth />
+                            )}
+                            sx={{ width: '90%' }}
+                        />
 
-                    <Button color="green" onClick={handleAddArtist}>
-                        Add artist
-                    </Button>
-                </Flex>
+                        <Button color="success" variant="contained" onClick={handleAddArtist}>
+                            Add artist
+                        </Button>
+                    </Stack>
+                </Box>
             </Modal>
-            <Group>
-                <Button color="green" size="md" onClick={open}>Add an artist</Button>
-            </Group>
         </>
+
     );
 };

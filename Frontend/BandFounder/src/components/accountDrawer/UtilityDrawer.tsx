@@ -4,6 +4,7 @@ import {Drawer, IconButton, Box, Typography} from "@mui/material";
 import {DeleteAccountButton} from "./DeleteAccountButton";
 import {UpdateAccountButton} from "./UpdateAccountButton";
 import {SpotifyConnectionButton} from "./spotifyConnection/SpotifyConnectionButton";
+import {AddArtistModal} from "./AddArtistModal";
 
 interface UtilityDrawerProps {
 }
@@ -45,6 +46,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                         <UpdateAccountButton/>
                         <DeleteAccountButton/>
                         <SpotifyConnectionButton/>
+                        <AddArtistModal/>
                     </Box>
                 </Box>
             </Drawer>
