@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
 import UseSpotifyConnected from "../../hooks/useSpotifyAccountLinked";
 import {useNavigate} from "react-router-dom";
-import {List, ListItem, ListItemText} from "@mui/material";
 import DisconnectSpotifyAccountButton from "../spotiftConnection/DisconnectSpotifyAccountButton";
 import SpotifyAuthorizationButton from "../spotiftConnection/SpotifyAuthorizationButton";
 import {deleteSpotifyCredential} from "../spotiftConnection/spotifyConnection";

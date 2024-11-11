@@ -1,15 +1,22 @@
 import React from 'react';
+import { Button } from '@mui/material';
 import {redirectToSpotifyAuthorizationPage} from "./spotifyConnection";
 import {SpotifyIcon} from "./SpotifyIcon";
-import {Button} from "@mantine/core";
+import {muiDarkTheme} from "../accountDrawer/muiDarkTheme";
 
 function SpotifyAuthorizationButton() {
     return (
         <Button
-            leftSection={<SpotifyIcon />}
-            size="md"
-            color="green"
+            variant="contained"
+            sx={{
+                backgroundColor: muiDarkTheme.palette.success.dark,
+                color: muiDarkTheme.palette.success.contrastText,
+                '&:hover': {
+                    backgroundColor: muiDarkTheme.palette.success.dark,
+                },
+            }}
             onClick={redirectToSpotifyAuthorizationPage}
+            startIcon={<SpotifyIcon />}
         >
             Link Spotify Account
         </Button>

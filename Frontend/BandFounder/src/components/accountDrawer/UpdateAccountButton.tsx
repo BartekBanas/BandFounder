@@ -5,7 +5,7 @@ import {useForm} from "@mantine/form";
 import {updateAccountRequest} from "./api";
 import {RegisterFormType} from "../register/api";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
-import {darkTheme} from "./darkTheme";
+import {muiDarkTheme} from "./muiDarkTheme";
 
 export function UpdateAccountButton() {
     const [opened, {close, open}] = useDisclosure(false);
@@ -47,7 +47,7 @@ export function UpdateAccountButton() {
                         transform: 'translate(-50%, -50%)',
                         width: 'auto',
                         maxWidth: 400,
-                        bgcolor: darkTheme.palette.background.default,
+                        bgcolor: muiDarkTheme.palette.background.default,
                         borderRadius: 2,
                         boxShadow: 24,
                         p: 4,

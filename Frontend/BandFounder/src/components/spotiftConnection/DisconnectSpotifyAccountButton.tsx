@@ -1,6 +1,7 @@
+import { Button } from '@mui/material';
 import React from 'react';
-import {Button} from "@mantine/core";
 import {SpotifyIcon} from "./SpotifyIcon";
+import {muiDarkTheme} from "../accountDrawer/muiDarkTheme";
 
 interface SpotifyDeleteCredentialButtonProps {
     onDelete: () => void;
@@ -9,9 +10,15 @@ interface SpotifyDeleteCredentialButtonProps {
 export default function DisconnectSpotifyAccountButton({ onDelete }: SpotifyDeleteCredentialButtonProps) {
     return (
         <Button
-            leftSection={<SpotifyIcon />}
-            size="md"
-            color="red"
+            variant="contained"
+            sx={{
+                backgroundColor: muiDarkTheme.palette.error.main,
+                color: muiDarkTheme.palette.error.contrastText,
+                '&:hover': {
+                    backgroundColor: muiDarkTheme.palette.error.dark,
+                },
+            }}
+            startIcon={<SpotifyIcon />}
             onClick={onDelete}
         >
             Disconnect with Spotify

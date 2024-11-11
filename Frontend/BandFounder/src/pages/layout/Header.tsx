@@ -12,7 +12,7 @@ import {
     Typography
 } from '@mui/material';
 import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
-import {darkTheme} from "../../components/accountDrawer/darkTheme";
+import {muiDarkTheme} from "../../components/accountDrawer/muiDarkTheme";
 
 export const Header: FC = () => {
     const handleLogout = () => {
@@ -22,7 +22,7 @@ export const Header: FC = () => {
     }
 
     return (
-        <ThemeProvider theme={darkTheme}>
+        <ThemeProvider theme={muiDarkTheme}>
             <CssBaseline/>
             <Box sx={{flexGrow: 1}}>
                 <AppBar position="static" color="transparent">
