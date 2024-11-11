@@ -1,7 +1,7 @@
 import {Center, Loader} from "@mantine/core";
 import React, {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
-import {linkAccountWithSpotifyFromCode} from "../components/spotiftConnection/spotifyConnection";
+import {linkAccountWithSpotifyFromCode} from "../components/accountDrawer/spotifyConnection/spotifyConnection";
 
 export function SpotifyConnectionPage() {
     const navigate = useNavigate();

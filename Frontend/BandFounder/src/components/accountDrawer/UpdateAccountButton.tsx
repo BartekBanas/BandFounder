@@ -1,10 +1,11 @@
 import {useDisclosure} from '@mantine/hooks';
-import {Modal, Button, Group, Paper, Stack, TextInput, PasswordInput, Space} from '@mantine/core';
+import {Modal, Box, TextField, Button, Stack, Typography, Divider} from '@mui/material';
 import React from "react";
 import {useForm} from "@mantine/form";
 import {updateAccountRequest} from "./api";
 import {RegisterFormType} from "../register/api";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
+import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
 export function UpdateAccountButton() {
     const [opened, {close, open}] = useDisclosure(false);
@@ -33,41 +34,43 @@ export function UpdateAccountButton() {
 
     return (
         <>
-            <Modal
-                opened={opened}
-                onClose={close}
-                size="auto"
-                styles={{
-                    title: {
-                        fontSize: '30px',
-                        textAlign: 'center',
-                        marginTop: '20px',
-                    },
-                }}
-                title="Update your account"
-            >
-                <Space h="xl"/>
-                <Paper shadow="sm" radius="md" p="lg" withBorder>
-                    <form onSubmit={form.onSubmit(handleUpdateAccount)}>
-                        <Stack>
-                            <TextInput type="username" label="Username" {...form.getInputProps('Name')} />
-                            <PasswordInput label="Password" withAsterisk {...form.getInputProps('Password')} />
-                            <TextInput type="email" label="Email" {...form.getInputProps('Email')} />
+            <Button variant="text" color="primary" size="large" onClick={open}>
+                Update Account
+            </Button>
 
-                            <Space h="sm"/>
+            <Modal open={opened} onClose={close}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 'auto',
+                        maxWidth: 400,
+                        bgcolor: muiDarkTheme.palette.background.default,
+                        borderRadius: 2,
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Typography variant="h5" align="center" sx={{mb: 3}}>
+                        Update your account
+                    </Typography>
+                    <form onSubmit={handleUpdateAccount}>
+                        <Stack spacing={3}>
+                            <TextField label="Username" variant="outlined"/>
+                            <TextField label="Password" variant="outlined" type="password"/>
+                            <TextField label="Email" variant="outlined" type="email"/>
 
-                            <Button type="submit">
+                            <Divider sx={{my: 3}}/>
+
+                            <Button type="submit" variant="contained" fullWidth color="success">
                                 Update Account
                             </Button>
                         </Stack>
                     </form>
-                </Paper>
+                </Box>
             </Modal>
-            <Group>
-                <Button color="blue" size="md" onClick={open}>
-                    Update Account
-                </Button>
-            </Group>
         </>
     );
 }

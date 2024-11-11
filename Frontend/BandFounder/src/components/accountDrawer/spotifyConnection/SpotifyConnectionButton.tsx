@@ -1,11 +1,10 @@
 import React, {useEffect, useState} from "react";
-import UseSpotifyConnected from "../../hooks/useSpotifyAccountLinked";
+import UseSpotifyConnected from "../../../hooks/useSpotifyAccountLinked";
 import {useNavigate} from "react-router-dom";
-import {List, ListItem, ListItemText} from "@mui/material";
-import DisconnectSpotifyAccountButton from "../spotiftConnection/DisconnectSpotifyAccountButton";
-import SpotifyAuthorizationButton from "../spotiftConnection/SpotifyAuthorizationButton";
-import {deleteSpotifyCredential} from "../spotiftConnection/spotifyConnection";
-import {sleep} from "../../hooks/utils";
+import DisconnectSpotifyAccountButton from "./DisconnectSpotifyAccountButton";
+import SpotifyAuthorizationButton from "./SpotifyAuthorizationButton";
+import {deleteSpotifyCredential} from "./spotifyConnection";
+import {sleep} from "../../../hooks/utils";
 
 export function SpotifyConnectionButton() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
