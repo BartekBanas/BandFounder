@@ -5,7 +5,7 @@ import {SpotifyConnectionPage} from "./SpotifyConnectionPage";
 import {LoginPage} from "./LoginPage";
 import {RegisterPage} from "./RegisterPage";
 import {ProfilePage} from "./ProfilePage";
-import {Main} from "./Main";
+import {Main} from "./layout/Main";
 import {useIsAuthenticated} from "../hooks/authentication";
 
 const publicRoutes = [
