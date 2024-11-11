@@ -17,13 +17,13 @@ public class Account : Entity
     
     public required DateTime DateCreated { get; set; } = DateTime.UtcNow;
     
-    public virtual SpotifyCredentials? SpotifyCredentials { get; set; }
+    public virtual SpotifyTokens? SpotifyTokens { get; set; }
     
     // Many-to-Many relationship with Artist
     public virtual List<Artist> Artists { get; set; } = [];
     
-    // One-to-Many relationship with MusicCollaboration
-    public virtual List<MusicProjectListing> MusicProjectListings { get; set; } = [];
+    // One-to-Many relationship with Listing
+    public virtual List<Listing> Listings { get; set; } = [];
     
     // Many-to-Many relationship with MusicRole
     public virtual List<MusicianRole> MusicianRoles { get; set; } = [];

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BandFounder.Api.Controllers;
 
 [ApiController]
-[Route("api/account")]
+[Route("api/accounts")]
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;
@@ -34,9 +34,15 @@ public class AccountController : Controller
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetAllAccounts([FromQuery] int? pageSize, [FromQuery] int? pageNumber)
+    public async Task<IActionResult> GetAllAccounts(string? username, int? pageSize, int? pageNumber)
     {
         IEnumerable<AccountDto> accountDtos;
+
+        if (username is not null)
+        {
+            var accountDto = await _accountService.GetAccountAsync(username);
+            return Ok(accountDto);
+        }
 
         if (pageSize != null && pageNumber != null)
         {

@@ -10,7 +10,7 @@ export class SpotifyAppCredentialService {
     private _clientSecret: string | null = null;
 
     constructor() {
-        this.fetchCredentials().then(_ => console.log("Credentials loaded\n" + "client_id: " + this.clientId + "\nclient_secret: " + this.clientSecret));
+        this.fetchCredentials();
     }
 
     get clientId(): string {
@@ -28,8 +28,6 @@ export class SpotifyAppCredentialService {
     }
 
     async fetchCredentials(): Promise<void> {
-        console.log("Base API: " + API_URL);
-
         const response = await fetch(`${API_URL}/spotifyBroker/credentials`, {
             method: 'GET',
             headers: {
@@ -46,6 +44,7 @@ export class SpotifyAppCredentialService {
 
         const credentials: Credentials = JSON.parse(responseText);
         localStorage.setItem('client_id', credentials.clientId);
+        localStorage.setItem('client_secret', credentials.clientSecret);
         this._clientId = credentials.clientId;
         this._clientSecret = credentials.clientSecret;
     }

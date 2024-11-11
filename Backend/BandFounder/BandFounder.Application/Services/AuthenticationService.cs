@@ -6,7 +6,7 @@ namespace BandFounder.Application.Services;
 
 public interface IAuthenticationService
 {
-    ClaimsIdentity GenerateClaimsIdentity(Account? account);
+    ClaimsIdentity GenerateClaimsIdentity(Account account);
     Guid GetUserId();
     ClaimsPrincipal GetUserClaims();
 }
@@ -21,7 +21,7 @@ public class AuthenticationService : IAuthenticationService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public ClaimsIdentity GenerateClaimsIdentity(Account? account)
+    public ClaimsIdentity GenerateClaimsIdentity(Account account)
     {
         return new ClaimsIdentity(new Claim[]
         {

@@ -5,7 +5,7 @@ namespace BandFounder.Application.Services;
 public interface IHashingService
 {
     string HashPassword(string password);
-    bool VerifyPassword(Account? account, string password);
+    bool VerifyPassword(Account account, string password);
 }
 
 public class HashingService : IHashingService
@@ -15,7 +15,7 @@ public class HashingService : IHashingService
         return BCrypt.Net.BCrypt.HashPassword(password);
     }
 
-    public bool VerifyPassword(Account? account, string password)
+    public bool VerifyPassword(Account account, string password)
     {
         return BCrypt.Net.BCrypt.Verify(password, account.PasswordHash);
     }

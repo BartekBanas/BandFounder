@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BandFounder.Domain.Entities;
 
-public class SpotifyCredentials : Entity
+public class SpotifyTokens : Entity
 {
     [Key, ForeignKey("Account")]
     public required Guid AccountId { get; init; }
@@ -14,5 +14,5 @@ public class SpotifyCredentials : Entity
     
     public required DateTime ExpirationDate { get; set; }
     
-    public virtual required Account Account { get; init; } = null!;
+    public virtual Account Account { get; init; } = null!;
 }

@@ -1,15 +1,17 @@
 import React from 'react';
-import Button from '@mui/material/Button';
-import {requestAuthorization} from "./spotifyConnection";
+import {redirectToSpotifyAuthorizationPage} from "./spotifyConnection";
+import {SpotifyIcon} from "./SpotifyIcon";
+import {Button} from "@mantine/core";
 
 function SpotifyAuthorizationButton() {
     return (
         <Button
-            variant="contained"
-            color="primary"
-            onClick={requestAuthorization}
+            leftSection={<SpotifyIcon />}
+            size="md"
+            color="green"
+            onClick={redirectToSpotifyAuthorizationPage}
         >
-            Request Authorization
+            Link Spotify Account
         </Button>
     );
 }

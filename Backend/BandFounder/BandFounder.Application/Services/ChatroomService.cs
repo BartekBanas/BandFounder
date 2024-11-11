@@ -2,8 +2,8 @@
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services.Authorization;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 
 namespace BandFounder.Application.Services;
@@ -14,7 +14,7 @@ public interface IChatroomService
     Task<ChatRoomDto> GetChatroom(Guid chatroomId);
     Task<IEnumerable<ChatRoomDto>> GetUserChatrooms();
     Task DeleteChatroom(Guid chatroomId);
-    Task InviteToChatroom(ChatroomInvitationDto request);
+    Task InviteToChatroom(Guid chatroomId, Guid invitedUserId);
     Task LeaveChatroom(Guid chatroomId);
 }
 
@@ -103,15 +103,15 @@ public class ChatroomService : IChatroomService
         await _chatRoomRepository.SaveChangesAsync();
     }
     
-    public async Task InviteToChatroom(ChatroomInvitationDto request)
+    public async Task InviteToChatroom(Guid chatroomId, Guid invitedUserId)
     {
         var userClaims = _authenticationService.GetUserClaims();
-        if (request.InvitedUserId == _authenticationService.GetUserId())
+        if (invitedUserId == _authenticationService.GetUserId())
         {
             throw new BadRequestError("You cannot invite yourself to a chatroom");
         }
         
-        var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == request.ChatroomId,
+        var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == chatroomId,
             nameof(Chatroom.Members));
         
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsMemberOf);
@@ -121,11 +121,11 @@ public class ChatroomService : IChatroomService
             throw new BadRequestError("You cannot invite anyone to a direct messaging chatroom");
         }
 
-        CheckUserMembershipInChatroom(chatRoom, request.InvitedUserId);
+        CheckUserMembershipInChatroom(chatRoom, invitedUserId);
 
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsOwnerOf);
 
-        var invitedAccount = await _accountService.GetDetailedAccount(request.InvitedUserId);
+        var invitedAccount = await _accountService.GetDetailedAccount(invitedUserId);
 
         chatRoom.Members.Add(invitedAccount);
 
@@ -173,7 +173,7 @@ public class ChatroomService : IChatroomService
         };
     }
 
-    private async Task<Chatroom> CreateGeneralChatroom(Account? issuer, ChatroomCreateDto chatroomCreateDto)
+    private async Task<Chatroom> CreateGeneralChatroom(Account issuer, ChatroomCreateDto chatroomCreateDto)
     {
         if (string.IsNullOrEmpty(chatroomCreateDto.Name))
         {
@@ -191,9 +191,9 @@ public class ChatroomService : IChatroomService
         return chatroom;
     }
 
-    private async Task<Chatroom> CreateDirectChatroom(Account? issuer, ChatroomCreateDto chatroomCreateDto)
+    private async Task<Chatroom> CreateDirectChatroom(Account issuer, ChatroomCreateDto chatroomCreateDto)
     {
-        Account? recipient;
+        Account recipient;
         
         try
         {

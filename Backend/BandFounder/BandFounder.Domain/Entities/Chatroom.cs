@@ -11,13 +11,13 @@ public class Chatroom : Entity
     public required string Name { get; set; }
 
     [ForeignKey(nameof(Owner))] public Guid? OwnerId { get; set; }
-    public virtual Account? Owner { get; set; }
+    public virtual Account Owner { get; set; }
     
-    [Column(TypeName = "varchar(24)")]
+    [Column(TypeName = "text")]
     public ChatRoomType ChatRoomType { get; set; }
 
     // Many-to-Many relationship with Account
-    public virtual List<Account?> Members { get; set; } = [];
+    public virtual List<Account> Members { get; set; } = [];
     
     // One-to-Many relationship with Message
     public virtual List<Message> Messages { get; set; } = [];

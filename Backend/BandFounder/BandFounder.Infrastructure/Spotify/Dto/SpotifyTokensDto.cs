@@ -1,6 +1,6 @@
 namespace BandFounder.Infrastructure.Spotify.Dto;
 
-public class SpotifyCredentialsDto
+public class SpotifyTokensDto
 {
     public required string AccessToken { get; set; }
     public required string RefreshToken { get; set; }

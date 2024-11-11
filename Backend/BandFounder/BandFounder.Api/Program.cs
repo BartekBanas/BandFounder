@@ -7,7 +7,6 @@ using BandFounder.Application.Services.Authorization.Handlers;
 using BandFounder.Application.Services.Authorization.Requirements;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Application.Services.Spotify;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Services;
@@ -20,18 +19,6 @@ var configuration = builder.Configuration;
 
 // Add services to the container.
 var services = builder.Services;
-
-// Register the CORS policy
-services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontendApp", policyBuilder =>
-    {
-        policyBuilder.WithOrigins("http://localhost:3000") // Allow requests from frontend origin
-                     .AllowAnyHeader()                     // Allow any headers
-                     .AllowAnyMethod()                     // Allow any HTTP methods
-                     .AllowCredentials();                  // Allow credentials (e.g., cookies, authorization headers)
-    });
-});
 
 services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
 services.AddEndpointsApiExplorer();
@@ -50,7 +37,7 @@ services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthorizationPolicies.IsMemberOf, policy =>
         policy.Requirements.Add(new IsMemberOfRequirement()));
-    
+
     options.AddPolicy(AuthorizationPolicies.IsOwnerOf, policy =>
         policy.Requirements.Add(new IsOwnerRequirement()));
 });
@@ -69,11 +56,11 @@ services.AddScoped<IRepository<Message>, Repository<Message, BandFounderDbContex
 services.AddScoped<IRepository<Chatroom>, Repository<Chatroom, BandFounderDbContext>>();
 services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();
 services.AddScoped<IRepository<Genre>, Repository<Genre, BandFounderDbContext>>();
-services.AddScoped<IRepository<SpotifyCredentials>, Repository<SpotifyCredentials, BandFounderDbContext>>();
+services.AddScoped<IRepository<SpotifyTokens>, Repository<SpotifyTokens, BandFounderDbContext>>();
 
 services.AddScoped<IRepository<MusicianRole>, Repository<MusicianRole, BandFounderDbContext>>();
 services.AddScoped<IRepository<MusicianSlot>, Repository<MusicianSlot, BandFounderDbContext>>();
-services.AddScoped<IRepository<MusicProjectListing>, Repository<MusicProjectListing, BandFounderDbContext>>();
+services.AddScoped<IRepository<Listing>, Repository<Listing, BandFounderDbContext>>();
 
 services.AddScoped<IHashingService, HashingService>();
 
@@ -83,17 +70,17 @@ services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyTokenService, SpotifyTokenService>();
 services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyContentManager, SpotifyContentManager>();
-services.AddScoped<IMusicTasteComparisonService, MusicTasteComparisonService>();
-services.AddScoped<ICollaborationService, CollaborationService>();
+services.AddScoped<IMusicTasteService, MusicTasteService>();
+services.AddScoped<IListingService, ListingService>();
+services.AddScoped<IContentService, ContentService>();
 
 services.AddScoped<ErrorHandlingMiddleware>();
 
 var app = builder.Build();
 
-// Add middleware for error handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Initialize the database
+// app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();
 
 // Configure the HTTP request pipeline.
@@ -103,8 +90,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Apply the CORS policy globally
-app.UseCors("AllowFrontendApp");
+app.UseCors(policyBuilder => policyBuilder
+    .AllowAnyHeader()
+    .WithOrigins("http://localhost:3000")
+    .AllowAnyMethod()
+    .AllowCredentials());
 
 app.UseHttpsRedirection();
 

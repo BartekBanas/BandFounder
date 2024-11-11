@@ -2,8 +2,8 @@
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services.Jwt;
-using BandFounder.Domain;
 using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
 using FluentValidation;
 
 namespace BandFounder.Application.Services;
@@ -11,6 +11,7 @@ namespace BandFounder.Application.Services;
 public interface IAccountService
 {
     Task<AccountDto> GetAccountAsync(Guid? accountId = null);
+    Task<AccountDto> GetAccountAsync(string username);
     Task<Account> GetDetailedAccount(Guid? accountId = null);
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
     Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
@@ -21,13 +22,15 @@ public interface IAccountService
     Task AddMusicianRole(string role, Guid? accountId = null);
     Task RemoveMusicianRole(string role, Guid? accountId = null);
     Task ClearUserMusicProfile(Guid? accountId = null);
+    Task AddArtist(Guid accountId, string artistName);
 }
 
 public class AccountService : IAccountService
 {
     private readonly IRepository<Account> _accountRepository;
+    private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
-    private readonly IRepository<SpotifyCredentials> _spotifyCredentialsRepository;
+    private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
 
     private readonly IValidator<Account> _validator;
     private readonly IAuthenticationService _authenticationService;
@@ -35,17 +38,19 @@ public class AccountService : IAccountService
     private readonly IJwtService _jwtService;
 
     public AccountService(
-        IRepository<Account> accountRepository,
+        IRepository<Account> accountRepository, 
+        IRepository<Artist> artistRepository,
         IRepository<MusicianRole> musicianRoleRepository,
-        IRepository<SpotifyCredentials> spotifyCredentialsRepository,
+        IRepository<SpotifyTokens> spotifyTokensRepository,
         IValidator<Account> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
         IJwtService jwtService)
     {
         _accountRepository = accountRepository;
+        _artistRepository = artistRepository;
         _musicianRoleRepository = musicianRoleRepository;
-        _spotifyCredentialsRepository = spotifyCredentialsRepository;
+        _spotifyTokensRepository = spotifyTokensRepository;
         _validator = validator;
         _authenticationService = authenticationService;
         _hashingService = hashingService;
@@ -62,12 +67,25 @@ public class AccountService : IAccountService
         return dtos;
     }
 
+    public async Task<AccountDto> GetAccountAsync(string username)
+    {
+        var account = await _accountRepository.GetOneRequiredAsync(account => account.Name == username);
+
+        var dtos = account.ToDto();
+
+        return dtos;
+    }
+
     public async Task<Account> GetDetailedAccount(Guid? accountId = null)
     {
         accountId ??= _authenticationService.GetUserId();
 
-        return await _accountRepository.GetOneRequiredAsync(accountId, keyPropertyName: "Id",
-            includeProperties: ["Artists", "Artists.Genres", "Chatrooms", "MusicianRoles", "SpotifyCredentials"]);
+        return await _accountRepository.GetOneRequiredAsync(key: accountId, keyPropertyName: "Id",
+            includeProperties:
+            [
+                nameof(Account.Artists), "Artists.Genres",
+                nameof(Account.Chatrooms), nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens)
+            ]);
     }
 
     public async Task<IEnumerable<AccountDto>> GetAccountsAsync()
@@ -202,7 +220,7 @@ public class AccountService : IAccountService
         
         var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
         
-        if (account.MusicianRoles.Any(currentRole => currentRole.Id == musicianRole.Id))
+        if (account.MusicianRoles.Any(currentRole => currentRole.Name == musicianRole.Name))
         {
             return;
         }
@@ -219,7 +237,7 @@ public class AccountService : IAccountService
         var account = await GetDetailedAccount(accountId);
         
         role = role.NormalizeName();
-        var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.RoleName == role);
+        var musicianRole = await _musicianRoleRepository.GetOneAsync(r => r.Name == role);
         
         if (musicianRole == null)
         {
@@ -236,13 +254,32 @@ public class AccountService : IAccountService
         accountId ??= _authenticationService.GetUserId();
         var account = await GetDetailedAccount(accountId);
 
-        if (account.SpotifyCredentials is not null)
+        if (account.SpotifyTokens is not null)
         {
-            await _spotifyCredentialsRepository.DeleteOneAsync(account.SpotifyCredentials.AccountId);
+            await _spotifyTokensRepository.DeleteOneAsync(account.SpotifyTokens.AccountId);
         }
         
         account.Artists.Clear();
         
+        await _accountRepository.SaveChangesAsync();
+    }
+
+    public async Task AddArtist(Guid accountId, string artistName)
+    {
+        var account = await GetDetailedAccount(accountId);
+        if (account.Id != _authenticationService.GetUserId())
+        {
+            throw new ForbiddenError("You cannot add artists to this account");
+        }
+
+        if (account.Artists.Select(artist => artist.Name).Contains(artistName))
+        {
+            throw new BadRequestError($"Artist {artistName} is already linked to this account");
+        }
+        
+        var artist = await _artistRepository.GetOrCreateAsync(artistName);
+        account.Artists.Add(artist);
+
         await _accountRepository.SaveChangesAsync();
     }
 }
