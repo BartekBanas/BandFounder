@@ -18,4 +18,9 @@ export const darkTheme = createTheme({
             secondary: '#b0bec5',
         }
     },
+    typography: {
+        button: {
+            textTransform: 'none', // Disable uppercase transformation
+        },
+    },
 });
