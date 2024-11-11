@@ -88,8 +88,17 @@ public class ListingController : Controller
     }
 
     [Authorize]
+    [HttpPut("{listingId:guid}")]
+    public async Task<IActionResult> UpdateListing([FromRoute] Guid listingId, [FromBody] ListingCreateDto dto)
+    {
+        await _listingService.UpdateListing(listingId, dto);
+        
+        return Ok();
+    }
+
+    [Authorize]
     [HttpDelete("{listingId:guid}")]
-    public async Task<IActionResult> UpdateMusicianSlotStatus([FromRoute] Guid listingId)
+    public async Task<IActionResult> DeleteListing([FromRoute] Guid listingId)
     {
         await _listingService.DeleteListing(listingId);
         
