@@ -61,6 +61,15 @@ public class ContentController(
     }
     
     [Authorize]
+    [HttpPost("accounts/{accountId:guid}/artists")]
+    public async Task<IActionResult> AddArtistToAccount([FromRoute] Guid accountId, [FromBody] string artistName)
+    {
+        await accountService.AddArtist(accountId, artistName);
+
+        return Ok();
+    }
+    
+    [Authorize]
     [HttpGet("accounts/me/artists/top")]
     public async Task<IActionResult> GetMyTopArtists()
     {
