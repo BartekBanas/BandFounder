@@ -4,7 +4,10 @@ export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const authorizedHeaders = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${getAuthToken()}`
+export function authorizedHeaders() {
+    const token = getAuthToken();
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+    };
 }
