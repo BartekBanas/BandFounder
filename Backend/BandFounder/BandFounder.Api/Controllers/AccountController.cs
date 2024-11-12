@@ -94,7 +94,7 @@ public class AccountController : Controller
 
     [Authorize]
     [HttpPut("roles")]
-    public async Task<IActionResult> AddMusicianRole([FromQuery] string role)
+    public async Task<IActionResult> AddMusicianRole([FromBody] string role)
     {
         await _accountService.AddMusicianRole(role);
         
