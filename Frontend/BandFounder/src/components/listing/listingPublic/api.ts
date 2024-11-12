@@ -1,5 +1,5 @@
 import Cookies from "universal-cookie";
-import {API_URL} from "../../config";
+import {API_URL} from "../../../config";
 
 export const getListing = async (listingId: string) => {
     try{
