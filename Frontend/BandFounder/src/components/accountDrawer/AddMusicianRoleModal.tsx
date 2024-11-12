@@ -72,6 +72,8 @@ export const AddMusicianRoleModal: FC = () => {
             mantineErrorNotification(`Failed to add ${selectedRole} role to your account`);
         }
 
+        fetchMyMusicianRoles();
+
         close();
     };
 
