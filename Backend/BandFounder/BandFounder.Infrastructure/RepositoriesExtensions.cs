@@ -102,6 +102,26 @@ public static class RepositoriesExtensions
         }
     }
 
+    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> accountRepository, string artistName)
+    {
+        var artistEntity = await accountRepository.GetOneAsync(artist => artist.Name == artistName,
+            includeProperties: nameof(Artist.Genres));
+
+        if (artistEntity is not null)
+        {
+            return artistEntity;
+        }
+
+        var newArtist = new Artist
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = artistName
+        };
+        
+        await accountRepository.CreateAsync(newArtist);
+        return newArtist;
+    }
+
     public static string NormalizeName(this string input)
     {
         // Split by spaces, remove extra spaces, and capitalize each word

@@ -41,7 +41,7 @@ public class ContentController(
     }
     
     [Authorize]
-    [HttpGet("account/me/artists")]
+    [HttpGet("accounts/me/artists")]
     public async Task<IActionResult> GetMyArtists()
     {
         var accountDto = await accountService.GetDetailedAccount();
@@ -51,7 +51,7 @@ public class ContentController(
     }
     
     [Authorize]
-    [HttpGet("account/{accountId:guid}/artists")]
+    [HttpGet("accounts/{accountId:guid}/artists")]
     public async Task<IActionResult> GetUsersArtists([FromRoute] Guid accountId)
     {
         var accountDto = await accountService.GetDetailedAccount(accountId);
@@ -61,7 +61,16 @@ public class ContentController(
     }
     
     [Authorize]
-    [HttpGet("account/me/artists/top")]
+    [HttpPost("accounts/{accountId:guid}/artists")]
+    public async Task<IActionResult> AddArtistToAccount([FromRoute] Guid accountId, [FromBody] string artistName)
+    {
+        await accountService.AddArtist(accountId, artistName);
+
+        return Ok();
+    }
+    
+    [Authorize]
+    [HttpGet("accounts/me/artists/top")]
     public async Task<IActionResult> GetMyTopArtists()
     {
         var userId = authenticationService.GetUserId();
@@ -72,7 +81,7 @@ public class ContentController(
     }
     
     [Authorize]
-    [HttpGet("account/{accountId:guid}/artists/top")]
+    [HttpGet("accounts/{accountId:guid}/artists/top")]
     public async Task<IActionResult> GetUsersTopArtists([FromRoute] Guid accountId)
     {
         var artistDtoList = await spotifyContentRetriever.GetTopArtistsAsync(accountId, 10);
@@ -82,7 +91,7 @@ public class ContentController(
     }
     
     [Authorize]
-    [HttpGet("account/me/genres")]
+    [HttpGet("accounts/me/genres")]
     public async Task<IActionResult> GetMyGenres()
     {
         var wagedGenres = await spotifyContentManager.GetWagedGenres();
@@ -92,7 +101,7 @@ public class ContentController(
     }
     
     [Authorize]
-    [HttpGet("account/{accountId:guid}/genres")]
+    [HttpGet("accounts/{accountId:guid}/genres")]
     public async Task<IActionResult> GetUsersGenres([FromRoute] Guid accountId)
     {
         var wagedGenres = await spotifyContentManager.GetWagedGenres(accountId);

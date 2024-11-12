@@ -1,0 +1,21 @@
+#mainHeader {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    background-color: #333; /* Add a background color if needed */
+    padding: 10px 0; /* Adjust padding as needed */
+}
+
+#mainHeader > *{
+    margin: 0 15px;
+}
+#header-text {
+    flex: 1;
+    text-align: center;
+}

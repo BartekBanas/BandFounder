@@ -28,7 +28,7 @@ export const LoginForm: FC<LoginFormProps> = ({}) => {
 
     async function handleLoginClick(e : any){
         e.preventDefault();
-        await navigate('/login');
+        navigate('/login');
     }
 
     return(

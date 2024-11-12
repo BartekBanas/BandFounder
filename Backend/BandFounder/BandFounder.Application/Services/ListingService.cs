@@ -9,8 +9,8 @@ namespace BandFounder.Application.Services;
 
 public interface IListingService
 {
-    Task<ListingDto> GetListingAsync(Guid listingId);
-    Task<IEnumerable<ListingDto>> GetListingsAsync();
+    Task<Listing?> GetListingAsync(Guid listingId);
+    Task<IEnumerable<Listing>> GetListingsAsync();
     Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions);
     Task<IEnumerable<ListingDto>> GetMyListingAsync();
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
@@ -18,6 +18,7 @@ public interface IListingService
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
     Task ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
+    Task UpdateListing(Guid listingId, ListingCreateDto dto);
 }
 
 public class ListingService : IListingService
@@ -54,22 +55,22 @@ public class ListingService : IListingService
         _listingRepository = listingRepository;
     }
 
-    public async Task<ListingDto> GetListingAsync(Guid listingId)
+    public async Task<Listing?> GetListingAsync(Guid listingId)
     {
-        var listing = await _listingRepository.GetOneRequiredAsync(
+        var listing = await _listingRepository.GetOneAsync(
             filter: listing => listing.Id == listingId,
             includeProperties:
             [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
         
-        return listing.ToDto();
+        return listing;
     }
     
-    public async Task<IEnumerable<ListingDto>> GetListingsAsync()
+    public async Task<IEnumerable<Listing>> GetListingsAsync()
     {
         var listings = await _listingRepository.GetAsync(includeProperties:
             [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
 
-        return listings.ToDto();
+        return listings;
     }
     
     public async Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions)
@@ -207,6 +208,69 @@ public class ListingService : IListingService
         await _listingRepository.DeleteOneAsync(listing.Id);
         await _listingRepository.SaveChangesAsync();
     }
+
+    public async Task UpdateListing(Guid listingId, ListingCreateDto dto)
+    {
+        var listing = await GetListingAsync(listingId);
+        if (listing is null)
+        {
+            throw new NotFoundError("Listing not found");
+        }
+        
+        if (listing.OwnerId != UserId)
+        {
+            throw new ForbiddenError("You cannot edit this listing");
+        }
+
+        // Update basic listing details
+        listing.Name = dto.Name;
+        listing.Genre = await _genreRepository.GetOrCreateAsync(dto.Genre);
+        listing.GenreName = dto.Genre;
+        listing.Type = dto.Type;
+        listing.Description = dto.Description;
+
+        // Process MusicianSlots
+        var existingSlots = listing.MusicianSlots.ToList();
+        var updatedSlots = new List<MusicianSlot>();
+
+        foreach (var slotDto in dto.MusicianSlots)
+        {
+            var role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.Role);
+            var existingSlot = existingSlots.FirstOrDefault(musicianSlot => musicianSlot.Role.Name == role.Name);
+
+            if (existingSlot != null)
+            {
+                // Update existing slot if it exists
+                existingSlot.Status = slotDto.Status;
+                updatedSlots.Add(existingSlot);
+                existingSlots.Remove(existingSlot); // Remove from the list of slots to delete
+            }
+            else
+            {
+                // Add new slot if no matching slot exists
+                updatedSlots.Add(new MusicianSlot
+                {
+                    Role = role,
+                    Status = slotDto.Status,
+                    ListingId = listingId
+                });
+            }
+        }
+
+        // Remove slots that were not updated (i.e. slots that are no longer part of the new dto)
+        foreach (var slotToRemove in existingSlots)
+        {
+            await _musicianSlotRepository.DeleteOneAsync(slotToRemove.Id);
+        }
+
+        // Assign updated slots to the listing
+        listing.MusicianSlots = updatedSlots;
+
+        // Save the changes
+        await _listingRepository.UpdateAsync(listing, listing.Id);
+        await _listingRepository.SaveChangesAsync();
+    }
+
 
     private void FilterListings(Account account, List<Listing> listings, FeedFilterOptions filterOptions)
     {

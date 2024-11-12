@@ -22,11 +22,13 @@ public interface IAccountService
     Task AddMusicianRole(string role, Guid? accountId = null);
     Task RemoveMusicianRole(string role, Guid? accountId = null);
     Task ClearUserMusicProfile(Guid? accountId = null);
+    Task AddArtist(Guid accountId, string artistName);
 }
 
 public class AccountService : IAccountService
 {
     private readonly IRepository<Account> _accountRepository;
+    private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
 
@@ -36,7 +38,8 @@ public class AccountService : IAccountService
     private readonly IJwtService _jwtService;
 
     public AccountService(
-        IRepository<Account> accountRepository,
+        IRepository<Account> accountRepository, 
+        IRepository<Artist> artistRepository,
         IRepository<MusicianRole> musicianRoleRepository,
         IRepository<SpotifyTokens> spotifyTokensRepository,
         IValidator<Account> validator,
@@ -45,6 +48,7 @@ public class AccountService : IAccountService
         IJwtService jwtService)
     {
         _accountRepository = accountRepository;
+        _artistRepository = artistRepository;
         _musicianRoleRepository = musicianRoleRepository;
         _spotifyTokensRepository = spotifyTokensRepository;
         _validator = validator;
@@ -58,18 +62,18 @@ public class AccountService : IAccountService
         accountId ??= _authenticationService.GetUserId();
         var account = await _accountRepository.GetOneRequiredAsync(accountId);
 
-        var dtos = account.ToDto();
+        var accountDto = account.ToDto();
 
-        return dtos;
+        return accountDto;
     }
 
     public async Task<AccountDto> GetAccountAsync(string username)
     {
-        var account = await _accountRepository.GetOneRequiredAsync(account => account.Name == username);
+        var account = await _accountRepository.GetOneRequiredAsync(account => account.Name.ToLower() == username.ToLower());
 
-        var dtos = account.ToDto();
+        var accountDto = account.ToDto();
 
-        return dtos;
+        return accountDto;
     }
 
     public async Task<Account> GetDetailedAccount(Guid? accountId = null)
@@ -257,6 +261,25 @@ public class AccountService : IAccountService
         
         account.Artists.Clear();
         
+        await _accountRepository.SaveChangesAsync();
+    }
+
+    public async Task AddArtist(Guid accountId, string artistName)
+    {
+        var account = await GetDetailedAccount(accountId);
+        if (account.Id != _authenticationService.GetUserId())
+        {
+            throw new ForbiddenError("You cannot add artists to this account");
+        }
+
+        if (account.Artists.Select(artist => artist.Name).Contains(artistName))
+        {
+            throw new BadRequestError($"Artist {artistName} is already linked to this account");
+        }
+        
+        var artist = await _artistRepository.GetOrCreateAsync(artistName);
+        account.Artists.Add(artist);
+
         await _accountRepository.SaveChangesAsync();
     }
 }
