@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { getListings } from './api';
-import ListingPublic from './listingPublic';
-import { Listing } from '../../types/Listing';
-import {log} from "node:util";
-import {ListingsFeedDto, ListingWithScore} from "../../types/ListingFeed";
-import getUser from "../common/frequentlyUsed";
+import {ListingsFeedDto, ListingWithScore} from "../../../types/ListingFeed";
+import getUser from "../../common/frequentlyUsed";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
-import {RingLoader} from "../common/RingLoader";
+import {RingLoader} from "../../common/RingLoader";
+import ListingPrivate from "./listingPrivate";
+import {Listing} from "../../../types/Listing";
 
-const ListingsListPublic: React.FC = () => {
-    const [listings, setListings] = useState<ListingWithScore[]>([]);
+const ListingsListPrivate: React.FC = () => {
+    const [listings, setListings] = useState<Listing[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const fetchListings = async () => {
             try {
                 const data = await getListings();
-                setListings(data.listings);
+                setListings(data);
+                console.log(data);
             } catch (error) {
                 console.error('Error getting listings:', error);
             }
@@ -24,21 +24,20 @@ const ListingsListPublic: React.FC = () => {
 
         fetchListings();
         setLoading(false);
-        console.log(listings);
     }, []);
 
-    const theme = createTheme({
-        components: {
-            Loader: Loader.extend({
-                defaultProps: {
-                    loaders: { ...Loader.defaultLoaders, ring: RingLoader },
-                    type: 'ring',
-                },
-            }),
-        },
-    });
-
     if (loading) {
+        const theme = createTheme({
+            components: {
+                Loader: Loader.extend({
+                    defaultProps: {
+                        loaders: { ...Loader.defaultLoaders, ring: RingLoader },
+                        type: 'ring',
+                    },
+                }),
+            },
+        });
+
         return <div className="App-header">
             <MantineThemeProvider theme={theme}>
                 <Loader size={200} />
@@ -50,7 +49,7 @@ const ListingsListPublic: React.FC = () => {
         <div className={'listingsList'}>
             {listings && listings.length > 0 ? (
                 listings.map((listing) => (
-                    <ListingPublic key={listing.listing.id} listingId={listing.listing.id} />
+                    <ListingPrivate key={listing.id} listingId={listing.id} />
                 ))
             ) : (
                 <p>No listings available</p>
@@ -60,4 +59,4 @@ const ListingsListPublic: React.FC = () => {
 
 };
 
-export default ListingsListPublic;
+export default ListingsListPrivate;
