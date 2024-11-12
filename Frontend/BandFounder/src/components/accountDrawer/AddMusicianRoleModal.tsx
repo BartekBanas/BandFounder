@@ -3,19 +3,16 @@ import {API_URL} from '../../config';
 import {useDisclosure} from "@mantine/hooks";
 import {getAuthToken} from "../../hooks/authentication";
 import {getMusicianRoles, getMyMusicianRoles} from "./api";
-import {
-    mantineErrorNotification,
-    mantineInformationNotification,
-    mantineSuccessNotification
-} from "../common/mantineNotification";
 import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography} from '@mui/material';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {useNotification} from "../common/NotificationProvider";
 
 interface AddMusicianRoleModalProps {
     onRoleAdded: () => void;
 }
 
 export const AddMusicianRoleModal: FC<AddMusicianRoleModalProps> = ({onRoleAdded}) => {
+    const { showSuccessMuiNotification, showInfoMuiNotification, showErrorMuiNotification } = useNotification();
     const [opened, {close, open}] = useDisclosure(false);
     const [roles, setRoles] = useState<string[]>([]);
     const [myRoles, setMyRoles] = useState<string[]>([]);
@@ -46,7 +43,7 @@ export const AddMusicianRoleModal: FC<AddMusicianRoleModalProps> = ({onRoleAdded
 
     const handleAddMusicianRole = async () => {
         if (!selectedRole || selectedRole.trim() === '') {
-            mantineErrorNotification("Please enter a role before adding.");
+            showErrorMuiNotification("Please enter a role before adding.");
             return;
         }
 
@@ -65,15 +62,15 @@ export const AddMusicianRoleModal: FC<AddMusicianRoleModalProps> = ({onRoleAdded
             }
 
             if (response.status === 204) {
-                mantineInformationNotification(`Your account already has role ${selectedRole} assigned`);
+                showInfoMuiNotification(`Your account already has role ${selectedRole} assigned`);
             } else {
-                mantineSuccessNotification(`Role ${selectedRole} was added to your account`);
+                showSuccessMuiNotification(`Role ${selectedRole} was added to your account`);
             }
 
             onRoleAdded();
 
         } catch (error) {
-            mantineErrorNotification(`Failed to add ${selectedRole} role to your account`);
+            showErrorMuiNotification(`Failed to add ${selectedRole} role to your account`);
         }
 
         close();
