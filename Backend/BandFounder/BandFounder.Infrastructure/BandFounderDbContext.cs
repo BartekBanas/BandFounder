@@ -108,7 +108,6 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             new() { Name = "Violinist" },
             new() { Name = "Cellist" },
             new() { Name = "Harmonica Player" },
-            new() { Name = "DJ" },
             new() { Name = "Synthesizer" },
             new() { Name = "Sampler" },
             new() { Name = "Sound Engineer" },
