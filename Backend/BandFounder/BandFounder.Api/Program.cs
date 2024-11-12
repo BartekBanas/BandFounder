@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
 using BandFounder.Application.Error;
@@ -20,7 +21,10 @@ var configuration = builder.Configuration;
 // Add services to the container.
 var services = builder.Services;
 
-services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly);
+services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 services.AddEndpointsApiExplorer();
 services.AddHttpContextAccessor();
 services.AddSwaggerGen();

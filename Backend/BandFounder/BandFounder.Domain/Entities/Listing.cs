@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
 
 namespace BandFounder.Domain.Entities;
 
@@ -29,6 +30,6 @@ public class Listing : Entity
 
 public enum ListingType
 {
-    Band,
-    CollaborativeSong
+    [EnumMember(Value = "Active")] Band,
+    [EnumMember(Value = "Active")] CollaborativeSong
 }
