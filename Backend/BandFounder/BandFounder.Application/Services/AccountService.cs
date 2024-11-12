@@ -18,8 +18,9 @@ public interface IAccountService
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
     Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
-    Task DeleteAccountAsync(Guid? accountId = null);
+    Task<IEnumerable<MusicianRole>> GetUserMusicianRoles(Guid? accountId = null);
     Task AddMusicianRole(string role, Guid? accountId = null);
+    Task DeleteAccountAsync(Guid? accountId = null);
     Task RemoveMusicianRole(string role, Guid? accountId = null);
     Task ClearUserMusicProfile(Guid? accountId = null);
     Task AddArtist(Guid accountId, string artistName);
@@ -202,15 +203,6 @@ public class AccountService : IAccountService
 
         return dto;
     }
-    
-    public async Task DeleteAccountAsync(Guid? accountId = null)
-    {
-        accountId ??= _authenticationService.GetUserId();
-        
-        await _accountRepository.DeleteOneAsync(accountId);
-
-        await _accountRepository.SaveChangesAsync();
-    }
 
     public async Task AddMusicianRole(string role, Guid? accountId = null)
     {
@@ -227,6 +219,25 @@ public class AccountService : IAccountService
         
         account.MusicianRoles.Add(musicianRole);
         
+        await _accountRepository.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<MusicianRole>> GetUserMusicianRoles(Guid? accountId = null)
+    {
+        accountId ??= _authenticationService.GetUserId();
+
+        var account = await _accountRepository.GetOneRequiredAsync(
+            key: accountId, keyPropertyName:nameof(Account.Id), includeProperties: nameof(Account.MusicianRoles));
+        
+        return account.MusicianRoles;
+    }
+
+    public async Task DeleteAccountAsync(Guid? accountId = null)
+    {
+        accountId ??= _authenticationService.GetUserId();
+        
+        await _accountRepository.DeleteOneAsync(accountId);
+
         await _accountRepository.SaveChangesAsync();
     }
     
