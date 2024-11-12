@@ -49,3 +49,16 @@ export async function getArtists(): Promise<ArtistDto[]> {
 
     return response.json();
 }
+
+export async function getMusicianRoles(): Promise<string[]> {
+    const response = await fetch(`${API_URL}/roles`, {
+        method: 'GET',
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to fetch musician roles');
+        throw new Error('Failed to fetch musician roles');
+    }
+
+    return response.json();
+}

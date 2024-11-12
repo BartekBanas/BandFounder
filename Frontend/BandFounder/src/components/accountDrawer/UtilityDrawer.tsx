@@ -5,6 +5,7 @@ import {DeleteAccountButton} from "./DeleteAccountButton";
 import {UpdateAccountButton} from "./UpdateAccountButton";
 import {SpotifyConnectionButton} from "./spotifyConnection/SpotifyConnectionButton";
 import {AddArtistModal} from "./AddArtistModal";
+import {AddMusicianRoleModal} from "./AddMusicianRoleModal";
 
 interface UtilityDrawerProps {
 }
@@ -24,8 +25,8 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                     '& .MuiDrawer-paper': {
                         width: 250,
                         boxSizing: 'border-box',
-                        backgroundColor: 'background.default', // Kolor tła szuflady z motywu
-                        color: 'text.primary', // Kolor tekstu w szufladzie
+                        backgroundColor: 'background.default',
+                        color: 'text.primary',
                     },
                 }}
             >
@@ -44,6 +45,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                         }}
                     >
                         <UpdateAccountButton/>
+                        <AddMusicianRoleModal/>
                         <DeleteAccountButton/>
                         <SpotifyConnectionButton/>
                         <AddArtistModal/>
