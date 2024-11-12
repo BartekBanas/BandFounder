@@ -104,6 +104,7 @@ export const AddArtistModal: FC = () => {
                     <Stack spacing={3} alignItems="center">
                         <Autocomplete
                             options={filteredAccounts}
+                            freeSolo
                             onInputChange={(event, value) => setSelectedArtistName(value)}
                             renderInput={(params) => (
                                 <TextField {...params} label="Artist's name" variant="outlined" fullWidth />
