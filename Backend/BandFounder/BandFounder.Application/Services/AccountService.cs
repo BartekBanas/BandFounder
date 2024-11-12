@@ -208,13 +208,14 @@ public class AccountService : IAccountService
     {
         accountId ??= _authenticationService.GetUserId();
         
-        var account = await GetDetailedAccount(accountId);
+        var account = await _accountRepository.GetOneRequiredAsync(
+            key: accountId, keyPropertyName:nameof(Account.Id), includeProperties: nameof(Account.MusicianRoles));
         
         var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
         
         if (account.MusicianRoles.Any(currentRole => currentRole.Name == musicianRole.Name))
         {
-            return;
+            throw new RedundantRequestException("Role is already added to the account");
         }
         
         account.MusicianRoles.Add(musicianRole);

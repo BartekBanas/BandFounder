@@ -4,8 +4,12 @@ import {authorizedHeaders} from "../../hooks/utils";
 import {useDisclosure} from "@mantine/hooks";
 import {getAuthToken, getUserId} from "../../hooks/authentication";
 import {getMusicianRoles} from "./api";
-import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
-import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
+import {
+    mantineErrorNotification,
+    mantineInformationNotification,
+    mantineSuccessNotification
+} from "../common/mantineNotification";
+import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography} from '@mui/material';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
 export const AddMusicianRoleModal: FC = () => {
@@ -67,7 +71,13 @@ export const AddMusicianRoleModal: FC = () => {
                 throw new Error(`Failed to add ${selectedRole} role to your account`);
             }
 
-            mantineSuccessNotification(`Role ${selectedRole} was added to your account`);
+            if (response.status === 204) {
+                mantineInformationNotification(`Your account already has role ${selectedRole} assigned`);
+            } else {
+                mantineSuccessNotification(`Role ${selectedRole} was added to your account`);
+            }
+
+
         } catch (error) {
             mantineErrorNotification(`Failed to add ${selectedRole} role to your account`);
         }
@@ -100,7 +110,7 @@ export const AddMusicianRoleModal: FC = () => {
                         outline: 'none',
                     }}
                 >
-                    <Typography variant="h6" align="center" sx={{ mb: 3}}>
+                    <Typography variant="h6" align="center" sx={{mb: 3}}>
                         Add a new role
                     </Typography>
 
@@ -110,9 +120,9 @@ export const AddMusicianRoleModal: FC = () => {
                             freeSolo
                             onInputChange={(event, value) => setSelectedRole(value)}
                             renderInput={(params) => (
-                                <TextField {...params} label="Musician Role" variant="outlined" fullWidth />
+                                <TextField {...params} label="Musician Role" variant="outlined" fullWidth/>
                             )}
-                            sx={{ width: '90%' }}
+                            sx={{width: '90%'}}
                         />
 
                         <Button color="success" variant="contained" onClick={handleAddMusicianRole}>
