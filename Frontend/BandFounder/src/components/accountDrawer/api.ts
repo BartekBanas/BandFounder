@@ -1,5 +1,5 @@
 import {API_URL} from "../../config";
-import {removeAuthToken, removeUserId} from "../../hooks/authentication";
+import {getUserId, removeAuthToken, removeUserId} from "../../hooks/authentication";
 import {ArtistDto} from "../common/Dto";
 import {mantineErrorNotification} from "../common/mantineNotification";
 import {authorizedHeaders} from "../../hooks/utils";
@@ -61,4 +61,31 @@ export async function getMusicianRoles(): Promise<string[]> {
     }
 
     return response.json();
+}
+
+export async function getMyMusicianRoles(): Promise<string[]> {
+    const response = await fetch(`${API_URL}/accounts/${getUserId()}/roles`, {
+        method: 'GET',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to fetch own roles');
+        throw new Error('Failed to fetch own roles');
+    }
+
+    return response.json();
+}
+
+export async function deleteMyMusicianRole(role: string): Promise<void> {
+    const response = await fetch(`${API_URL}/accounts/roles`, {
+        method: 'DELETE',
+        headers: authorizedHeaders(),
+        body: JSON.stringify(role)
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification(`Failed to delete role ${role}`);
+        throw new Error(`Failed to delete role ${role}`);
+    }
 }

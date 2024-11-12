@@ -1,9 +1,8 @@
 import React, {FC, useEffect, useState} from 'react';
 import {API_URL} from '../../config';
-import {authorizedHeaders} from "../../hooks/utils";
 import {useDisclosure} from "@mantine/hooks";
-import {getAuthToken, getUserId} from "../../hooks/authentication";
-import {getMusicianRoles} from "./api";
+import {getAuthToken} from "../../hooks/authentication";
+import {getMusicianRoles, getMyMusicianRoles} from "./api";
 import {
     mantineErrorNotification,
     mantineInformationNotification,
@@ -12,7 +11,11 @@ import {
 import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography} from '@mui/material';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
-export const AddMusicianRoleModal: FC = () => {
+interface AddMusicianRoleModalProps {
+    onRoleAdded: () => void;
+}
+
+export const AddMusicianRoleModal: FC<AddMusicianRoleModalProps> = ({onRoleAdded}) => {
     const [opened, {close, open}] = useDisclosure(false);
     const [roles, setRoles] = useState<string[]>([]);
     const [myRoles, setMyRoles] = useState<string[]>([]);
@@ -34,17 +37,7 @@ export const AddMusicianRoleModal: FC = () => {
 
     const fetchMyMusicianRoles = async (): Promise<void> => {
         try {
-            const response = await fetch(`${API_URL}/accounts/${getUserId()}/roles`, {
-                method: 'GET',
-                headers: authorizedHeaders()
-            });
-
-            if (!response.ok) {
-                mantineErrorNotification('Failed to fetch own roles');
-                throw new Error('Failed to fetch own roles');
-            }
-
-            const myRoles: string[] = await response.json();
+            const myRoles: string[] = await getMyMusicianRoles();
             setMyRoles(myRoles);
         } catch (error) {
             console.error('Error fetching own roles:', error);
@@ -77,12 +70,11 @@ export const AddMusicianRoleModal: FC = () => {
                 mantineSuccessNotification(`Role ${selectedRole} was added to your account`);
             }
 
+            onRoleAdded();
 
         } catch (error) {
             mantineErrorNotification(`Failed to add ${selectedRole} role to your account`);
         }
-
-        fetchMyMusicianRoles();
 
         close();
     };
@@ -92,7 +84,7 @@ export const AddMusicianRoleModal: FC = () => {
     return (
         <>
             <Button variant="contained" color="success" size="large" onClick={open}>
-                Add an musician role
+                Add a musician role
             </Button>
 
             <Modal open={opened} onClose={close}>
@@ -132,6 +124,5 @@ export const AddMusicianRoleModal: FC = () => {
                 </Box>
             </Modal>
         </>
-
     );
 };

@@ -5,7 +5,7 @@ import {DeleteAccountButton} from "./DeleteAccountButton";
 import {UpdateAccountButton} from "./UpdateAccountButton";
 import {SpotifyConnectionButton} from "./spotifyConnection/SpotifyConnectionButton";
 import {AddArtistModal} from "./AddArtistModal";
-import {AddMusicianRoleModal} from "./AddMusicianRoleModal";
+import MusicianRolesManager from "./MusicianRolesManager";
 
 interface UtilityDrawerProps {
 }
@@ -45,10 +45,10 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                         }}
                     >
                         <UpdateAccountButton/>
-                        <AddMusicianRoleModal/>
                         <DeleteAccountButton/>
                         <SpotifyConnectionButton/>
                         <AddArtistModal/>
+                        <MusicianRolesManager/>
                     </Box>
                 </Box>
             </Drawer>
