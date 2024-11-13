@@ -71,6 +71,8 @@ export const AddArtistModal: FC = () => {
             mantineErrorNotification(`Failed to add ${selectedArtistName} to your account`);
         }
 
+        fetchMyArtists();
+
         close();
     };
 

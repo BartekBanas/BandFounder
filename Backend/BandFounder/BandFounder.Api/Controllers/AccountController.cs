@@ -93,8 +93,8 @@ public class AccountController : Controller
     }
 
     [Authorize]
-    [HttpPut("role")]
-    public async Task<IActionResult> AddMusicianRole([FromQuery] string role)
+    [HttpPut("roles")]
+    public async Task<IActionResult> AddMusicianRole([FromBody] string role)
     {
         await _accountService.AddMusicianRole(role);
         
@@ -102,8 +102,17 @@ public class AccountController : Controller
     }
 
     [Authorize]
-    [HttpDelete("role")]
-    public async Task<IActionResult> RemoveMusicianRole([FromQuery] string role)
+    [HttpGet("{accountId:guid}/roles")]
+    public async Task<IActionResult> AddMusicianRole(Guid? accountId)
+    {
+        var roles = await _accountService.GetUserMusicianRoles(accountId);
+
+        return Ok(roles.Select(musicianRole => musicianRole.Name));
+    }
+    
+    [Authorize]
+    [HttpDelete("roles")]
+    public async Task<IActionResult> RemoveMusicianRole([FromBody] string role)
     {
         await _accountService.RemoveMusicianRole(role);
         

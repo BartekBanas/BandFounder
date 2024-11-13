@@ -45,6 +45,10 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await HandleErrorAsync(context, StatusCodes.Status409Conflict, ex.Message);
         }
+        catch (Exception ex) when (ex is RedundantRequestException)
+        {
+            await HandleErrorAsync(context, StatusCodes.Status204NoContent, ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);

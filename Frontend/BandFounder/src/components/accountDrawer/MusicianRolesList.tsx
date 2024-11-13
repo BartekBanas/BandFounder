@@ -1,0 +1,58 @@
+import React, {useState} from 'react';
+import {List, ListItem, ListItemText, IconButton, Typography, CircularProgress, Box} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import {deleteMyMusicianRole} from './api';
+
+interface MusicianRolesListProps {
+    roles: string[];
+    onRoleDeleted: () => void;
+}
+
+const MusicianRolesList: React.FC<MusicianRolesListProps> = ({roles, onRoleDeleted}) => {
+    const [deleting, setDeleting] = useState<string | null>(null);
+
+    const handleDeleteRole = async (role: string) => {
+        setDeleting(role);
+        try {
+            await deleteMyMusicianRole(role);
+            onRoleDeleted();
+        } catch (error) {
+            console.error(`Error deleting role ${role}:`, error);
+        } finally {
+            setDeleting(null);
+        }
+    };
+
+    return (
+        <Box>
+            <Typography variant="h6" gutterBottom>
+                My Musician Roles
+            </Typography>
+            <List>
+                {roles.map((role) => (
+                    <ListItem
+                        key={role}
+                        secondaryAction={
+                            <IconButton
+                                edge="end"
+                                color="error"
+                                onClick={() => handleDeleteRole(role)}
+                                disabled={deleting === role}
+                            >
+                                {deleting === role ? (
+                                    <CircularProgress size={24}/>
+                                ) : (
+                                    <DeleteIcon/>
+                                )}
+                            </IconButton>
+                        }
+                    >
+                        <ListItemText primary={role}/>
+                    </ListItem>
+                ))}
+            </List>
+        </Box>
+    );
+};
+
+export default MusicianRolesList;
