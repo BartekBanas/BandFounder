@@ -22,7 +22,7 @@ public class Listing : Entity
 
     public virtual List<MusicianSlot> MusicianSlots { get; set; } = [];
 
-    [MaxLength(100)]
+    [MaxLength(220)]
     public string? Description { get; set; }
     
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
