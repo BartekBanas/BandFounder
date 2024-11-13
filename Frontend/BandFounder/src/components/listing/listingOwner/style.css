@@ -1,0 +1,168 @@
+.editButton {
+    position: absolute;
+    top: 92%; /* Adjust as needed to position it right under the .listing */
+    right: 50%;
+    transform: translateX(50%);
+    z-index: 10; /* Ensure it appears above other elements */
+    font-size: 24px;
+}
+
+
+/* General container for the listing */
+.listing {
+    position:relative;
+    width: 800px;
+    border: 1px solid #ccc;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    color: black;
+    margin-bottom: 40px;
+    margin-top: 20px;
+}
+
+/* Header styling with image and basic details */
+.listingHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    /*padding: 10px;*/
+    font-size: 15px;
+    /*margin-bottom: 10px;*/
+    height: 55px;
+    padding-bottom: 0;
+}
+
+.ownerListingElements {
+    display: block;
+    /*flex-direction: column;*/
+    justify-content: center;
+    align-items: center;
+    /*gap: 5px; !* This will not apply with block display, but you can use margin instead *!*/
+
+    margin-right: 20px;
+}
+
+.ownerListingElements p {
+    margin-top: 0px;
+    margin-bottom: 0;
+}
+
+.ownerListingElements img {
+    width: 40px; /* size of the profile image */
+    height: 40px;
+    border-radius: 50%; /* circular profile image */
+}
+
+.listingTitle{
+    position: relative;
+    /*top: 12px; !* space between header and title *!*/
+    flex-grow: 2;
+}
+
+.listingTitle p {
+    margin: 0;
+    font-weight: bold;
+    font-size: 25px;
+}
+
+.listingType {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: right; /* aligns to the far right */
+}
+
+.listingType  .listingType-Band{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #9a1a1a;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 80px;
+    font-size: 12px;
+}
+
+.listingType  .listingType-CollaborativeSong{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #2860dc;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 80px;
+    font-size: 12px;
+}
+
+.listingType  .listingType-Band p {
+    margin: 0;
+    padding: 0;
+}
+
+.listingType p {
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Body section for the description */
+.listingBody {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Footer section for musician slots */
+.listingFooter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.listingFooter img {
+    width: 40px; /* size of the profile image */
+    height: 40px;
+    border-radius: 50%; /* circular profile image */
+}
+
+/* Individual musician slot styling */
+.listingFooter .listingRole {
+    width: calc(20% - 8px);
+    padding: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+}
+
+.listingFooter p {
+    margin: 0;
+}
+
+/* Available slot status */
+.listingFooter .status-available {
+    background-color: #ccc;
+}
+
+.listingFooter .status-available:hover {
+    background-color: #bdbdbd;
+}
+
+.listingFooter .status-filled {
+    background-color: #4caf50;
+    color: white;
+}
+
+.listingFooter .status-filled:hover {
+    background-color: #357a38;
+    color: white;
+}

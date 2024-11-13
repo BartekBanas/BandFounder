@@ -1,0 +1,126 @@
+.listing-editor {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.editorHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.editorUnderHeader{
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: end;
+    width: 100%;
+}
+
+.editorBody {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    width: 100%;
+}
+
+.editorFooter {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    margin-top: 15px;
+    max-height: 300px;
+    overflow-x: auto;
+}
+
+.listingRoleEdited{
+    width: 222px;
+    padding: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 15px;
+    color: #333;
+    margin: 8px;
+    margin-bottom: 0;
+}
+
+.listingRoleEdited img {
+    width: 40px; /* size of the profile image */
+    height: 40px;
+    border-radius: 50%; /* circular profile image */
+}
+
+.editorFooter {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.editorFooter p {
+    margin: 0;
+    font-size: 12px !important;
+}
+
+/* Available slot status */
+.editorFooter .status-available {
+    background-color: #ccc;
+}
+
+.editorFooter .status-available:hover {
+    background-color: #bdbdbd;
+}
+
+.editorFooter .status-filled {
+    background-color: #4caf50;
+    color: white;
+}
+
+.editorFooter .status-filled:hover {
+    background-color: #357a38;
+    color: white;
+}
+
+.editorFooter .underEditorFooter{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.editorFooter .underEditorFooter Select {
+    margin-left: 5px;
+}
+.editorFooter #addRolesButton{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 222px;
+    padding: 8px;
+    /*background-color: #e0e0e0;*/
+    border-radius: 4px;
+    text-align: center;
+    font-size: 15px;
+    /*color: #333;*/
+    margin: 8px;
+    margin-bottom: 0;
+}
+
+.kindaHeader{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.kindaHeader div{
+    flex-grow: 1;
+}

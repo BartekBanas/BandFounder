@@ -4,7 +4,9 @@ import "../components/SpotifyDrawer/SpotifyLogoButton.css";
 import UseSpotifyConnected from "../hooks/useSpotifyAccountLinked";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../components/common/RingLoader";
-import ListingsListPublic from "../components/listing/listingsListPublic";
+import ListingsListPublic from "../components/listing/listingPublic/listingsListPublic";
+import ListingTemplate from "../components/listing/listingTemplate/listingTemplate";
+import './styles/mainContainer.css'
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -49,7 +51,8 @@ export function MainPage() {
     }
 
     return (
-        <div className="App-header">
+        <div id={'mainContainer'}>
+            <ListingTemplate/>
             <ListingsListPublic/>
         </div>
     );
