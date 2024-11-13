@@ -30,11 +30,3 @@
     clip: rect(0, 0, 0, 0);
     border: 0;
 }
-.MuiDrawer-paper {
-    width: 350px !important; /* Set constant width for the drawer */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: #797979 !important; /* Dark background */
-}
