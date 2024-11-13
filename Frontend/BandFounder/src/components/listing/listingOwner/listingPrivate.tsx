@@ -97,8 +97,13 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
     const handleEditMusicianRole = (slotId: string, role: string) => {
         const newSlots = listingMusicianSlots.map((slot: any) => {
             if (slot.id === slotId) {
-                console.log('role', role);
-                return { ...slot, role };
+                // console.log('role', role);
+                if(role) {
+                    return {...slot, role};
+                }
+                else{
+                    return {...slot, role: 'Any'};
+                }
             }
             return slot;
         });
@@ -108,7 +113,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
     const handleAddNewRole = () => {
         const newSlot = {
             id: Math.random().toString(36).substr(2, 9),
-            role: '',
+            role: 'Any',
             status: 'Available',
         };
         setListingMusicianSlots([...listingMusicianSlots, newSlot]);
@@ -269,7 +274,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                                         <Select
                                             labelId="roleSelectLabel"
                                             id="roleSelectLabel"
-                                            value={slot.role}
+                                            value={slot.role ? slot.role : 'Any'}
                                             label="Role"
                                             onChange={(event) => handleEditMusicianRole(slot.id, event.target.value)}
                                             style={{ fontSize: '12px', maxHeight: '35px' }}

@@ -39,6 +39,12 @@
     overflow-x: auto;
 }
 
+@media (max-height: 750px) {
+    .editorFooter {
+        max-height: 220px;
+    }
+}
+
 .listingRoleEdited{
     width: 222px;
     padding: 8px;
