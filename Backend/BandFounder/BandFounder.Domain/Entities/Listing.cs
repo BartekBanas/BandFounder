@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
 
 namespace BandFounder.Domain.Entities;
 
@@ -21,7 +22,7 @@ public class Listing : Entity
 
     public virtual List<MusicianSlot> MusicianSlots { get; set; } = [];
 
-    [MaxLength(100)]
+    [MaxLength(220)]
     public string? Description { get; set; }
     
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
@@ -29,6 +30,6 @@ public class Listing : Entity
 
 public enum ListingType
 {
-    Band,
-    CollaborativeSong
+    [EnumMember(Value = "Active")] Band,
+    [EnumMember(Value = "Active")] CollaborativeSong
 }

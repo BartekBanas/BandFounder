@@ -1,0 +1,26 @@
+.profileMain{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 300px;
+}
+
+.profileMain #profileImage{
+    width: 200px;
+    height: 200px;
+    border-radius: 25%;
+}
+
+.profileMain .topArtists{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.profileMain .topGenres{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

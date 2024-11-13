@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {getAccount, getGUID, getTopArtists, getTopGenres} from './api';
 import { Account } from "../../types/Account";
+import './profile.css';
 
 interface ProfileShowProps {
     username: string;
@@ -49,24 +50,20 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username }) => {
     }, [guid]);
 
     return (
-        <div>
-            <h1>Profile</h1>
-            <img src={require('../../assets/defaultProfileImage.jpg')} alt="Default Profile"
-                 style={{width: '100px', height: '100px', borderRadius: '25%'}}/>
+        <div className={'profileMain'}>
+            <div className={'profileLeftPart'}>
+                <img id='profileImage' src={require('../../assets/defaultProfileImage.jpg')} alt="Default Profile"/>
 
-            <div style={{display: 'flex', alignItems: 'center'}}>
-                <p>Username: </p>
-                <p style={{marginLeft: '8px'}}>{account?.name}</p>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <p>Username: </p>
+                    <p style={{marginLeft: '8px'}}>{account?.name}</p>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <p>Guid: </p>
+                    <p style={{marginLeft: '8px'}}><i>{guid}</i></p>
+                </div>
             </div>
-            <div style={{display: 'flex', alignItems: 'center'}}>
-                <p>Guid: </p>
-                <p style={{marginLeft: '8px'}}><i>{guid}</i></p>
-            </div>
-            <div style={{display: 'flex', alignItems: 'center'}}>
-                <p>Email: </p>
-                <p style={{marginLeft: '8px'}}>{account?.email}</p>
-            </div>
-            <div style={{display: 'flex'}}>
+            <div className={'topArtists'}>
                 <p>Top Artists: </p>
                 <ul>
                     {topArtists?.map((artist, index) => (
@@ -74,7 +71,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username }) => {
                     ))}
                 </ul>
             </div>
-            <div style={{display: 'flex'}}>
+            <div className={'topGenres'} style={{display: 'flex'}}>
                 <p>Genres: </p>
                 <ul>
                     {genres?.map((genre, index) => (
@@ -82,6 +79,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username }) => {
                     ))}
                 </ul>
             </div>
+            <div className={'musicRoles'}></div>
         </div>
     );
 };

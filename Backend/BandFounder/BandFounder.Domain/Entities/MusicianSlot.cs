@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
 
 namespace BandFounder.Domain.Entities;
 
@@ -19,6 +20,6 @@ public class MusicianSlot : Entity
 
 public enum SlotStatus
 {
-    Available,
-    Filled
+    [EnumMember(Value = "Active")] Available,
+    [EnumMember(Value = "Active")] Filled
 }
