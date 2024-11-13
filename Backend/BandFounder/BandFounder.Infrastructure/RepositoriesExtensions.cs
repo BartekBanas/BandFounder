@@ -37,7 +37,7 @@ public static class RepositoriesExtensions
     {
         if (string.IsNullOrWhiteSpace(roleName))
         {
-            throw new ArgumentException("Role name cannot be empty or whitespace.");
+            throw new ArgumentException("Role name cannot be empty or whitespace");
         }
 
         var normalizedRoleName = NormalizeName(roleName);
@@ -59,6 +59,11 @@ public static class RepositoriesExtensions
     public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> accountRepository, IRepository<Genre> genreRepository,
         string artistName, List<string>? genres = null, int popularity = 0, string? id = null)
     {
+        if (string.IsNullOrWhiteSpace(artistName))
+        {
+            throw new ArgumentException("Artist name cannot be empty or whitespace");
+        }
+        
         var artistEntity = await accountRepository.GetOneAsync(artist => artist.Name == artistName,
             includeProperties: nameof(Artist.Genres));
 
@@ -104,6 +109,11 @@ public static class RepositoriesExtensions
 
     public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> accountRepository, string artistName)
     {
+        if (string.IsNullOrWhiteSpace(artistName))
+        {
+            throw new ArgumentException("Artist name cannot be empty or whitespace");
+        }
+        
         var artistEntity = await accountRepository.GetOneAsync(artist => artist.Name == artistName,
             includeProperties: nameof(Artist.Genres));
 
