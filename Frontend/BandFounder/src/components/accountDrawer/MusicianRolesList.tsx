@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {List, ListItem, ListItemText, IconButton, Typography, CircularProgress, Box} from '@mui/material';
+import {List, ListItem, ListItemText, IconButton, Typography, CircularProgress, Box, Chip} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {deleteMyMusicianRole} from './api';
 
@@ -30,24 +30,14 @@ const MusicianRolesList: React.FC<MusicianRolesListProps> = ({roles, onRoleDelet
             </Typography>
             <List>
                 {roles.map((role) => (
-                    <ListItem
-                        key={role}
-                        secondaryAction={
-                            <IconButton
-                                edge="end"
-                                color="error"
-                                onClick={() => handleDeleteRole(role)}
-                                disabled={deleting === role}
-                            >
-                                {deleting === role ? (
-                                    <CircularProgress size={24}/>
-                                ) : (
-                                    <DeleteIcon/>
-                                )}
-                            </IconButton>
-                        }
-                    >
-                        <ListItemText primary={role}/>
+                    <ListItem key={role}>
+                        <Chip
+                            label={role}
+                            onDelete={() => handleDeleteRole(role)}
+                            deleteIcon={deleting === role ? <CircularProgress size={24}/> : <DeleteIcon/>}
+                            disabled={deleting === role}
+                            color="primary"
+                        />
                     </ListItem>
                 ))}
             </List>
