@@ -142,6 +142,23 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
         setListingMusicianSlots(newSlots);
     }
 
+    const lengthOfGenre = (number: number) => {
+        if (number < 5) {
+            return 15;
+        } else if(number < 10){
+            return 15;
+        }
+        else if(number < 15){
+            return 20;
+        }
+        else if(number < 20){
+            return 25;
+        }
+        else {
+            return 28;
+        }
+    }
+
     if (!listing) {
         const theme = createTheme({
             components: {
@@ -225,17 +242,23 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                             </div>
                         </div>
                         <div className={'editorUnderHeader'}>
-                            <div>
-                                <Autocomplete
-                                    options={genres}
-                                    freeSolo
-                                    onInputChange={(event, value) => setListingGenre(value)}
-                                    renderInput={(params) => (
-                                        <TextField {...params} label="Genre" variant="outlined" fullWidth/>
-                                    )}
-                                    sx={{width: '200%'}}
-                                />
-                            </div>
+                            <Autocomplete
+                                options={genres}
+                                freeSolo
+                                id={'genreSelectLabel'}
+                                onInputChange={(event, value) => setListingGenre(value)}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Genre" variant="outlined" fullWidth
+                                               sx={{fontSize: '20px !important'}}/>
+                                )}
+                                sx={{
+                                    minWidth: `${lengthOfGenre(listingGenre.length)}%`,
+                                    maxWidth: '30%',
+                                    marginTop: '5px',
+                                    fontSize: '12px !important',
+                                    transition: 'width 1s ease-in-out',
+                                }}
+                            />
                         </div>
                         <div className={'editorBody'}>
                             <TextField
@@ -244,7 +267,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                                 onChange={(event) => setListingDescription(event.target.value)}
                                 variant="filled"
                                 color="success"
-                                style={{ minWidth: '70%' }}
+                                style={{minWidth: '70%'}}
                                 multiline
                                 rows={2}  // Adjust the number of rows as needed
                             />
@@ -314,7 +337,7 @@ const modalStyle = {
     left: '50%',
     maxHeight: '80%',
     transform: 'translate(-50%, -50%)',
-    width: 800,
+    width: 1000,
     bgcolor: 'background.paper',
     borderRadius: 8,
     boxShadow: 24,
