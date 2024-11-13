@@ -21,10 +21,10 @@ export const ProfilePageOwner = () => {
 
     return (
         <div id='main'>
-            <ListingsListPrivate/>
-            <hr/> {/* Horizontal line */}
-            <ProfileShow username={username}/>
 
+            <ProfileShow username={username}/>
+            <hr/>
+            <ListingsListPrivate/>
 
         </div>
     );

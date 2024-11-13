@@ -69,16 +69,9 @@ export const getMusicianRoles = async () => {
     }
 }
 
-export const updateListing = async (listing: any, id:string) => {
-    try{
+export const updateListing = async (listing: any, id: string) => {
+    try {
         const jwt = new Cookies().get('auth_token');
-        if(listing.type === 'Band'){
-            listing.type = '0';
-        }
-        else {
-            listing.type = '1';
-        }
-        console.log('listing:', listing);
         const response = await fetch(`${API_URL}/listings/${id}`, {
             method: 'PUT',
             headers: {
@@ -87,9 +80,14 @@ export const updateListing = async (listing: any, id:string) => {
             },
             body: JSON.stringify(listing)
         });
-        return await response.json();
-    }
-    catch (e) {
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseText = await response.text();
+        return responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
         console.error('Error updating listing:', e);
     }
 }

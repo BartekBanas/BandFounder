@@ -1,35 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import {getGenres, getListing, getMusicianRoles, updateListing} from './api';
+import { getListing, postListing } from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import getUser from '../../common/frequentlyUsed';
 import './style.css';
-import './listingCreator.css';
-import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
-import { RingLoader } from "../../common/RingLoader";
+import './listingCreator.css'
 import {
-    Button,
     Modal,
     Box,
+    Button,
     TextField,
-    Select,
     InputLabel,
+    Select,
     MenuItem,
-    SelectChangeEvent,
-    IconButton
-} from "@mui/material";
-import {API_URL} from "../../../config";
-import {ListingUpdated} from "../../../types/ListingUpdated";
+    IconButton,
+    SelectChangeEvent
+} from '@mui/material';
+import getUser from "../../common/frequentlyUsed";
+import Cookies from "universal-cookie";
 import CloseIcon from "@mui/icons-material/Close";
+import { getGenres, getMusicianRoles, updateListing } from "../listingOwner/api";
+import { ListingUpdated } from "../../../types/ListingUpdated";
 
-interface ListingPrivateProps {
-    listingId: string;
-}
+interface ListingTemplateProps {}
 
-const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
-    const [listing, setListing] = useState<any>(null);
+const ListingTemplate: React.FC<ListingTemplateProps> = () => {
+    const [user, setUser] = useState<any>(null);
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [open, setOpen] = useState(false);
-    const [listingType, setListingType] = useState<string>('');
-    const [listingGenre, setListingGenre] = useState<string>('');
+    const [listingType, setListingType] = useState<string>('CollaborativeSong');
+    const [listingGenre, setListingGenre] = useState<string>('Metalcore');
     const [listingDescription, setListingDescription] = useState<string>('');
     const [listingMusicianSlots, setListingMusicianSlots] = useState<any>([]);
     const [listingName, setListingName] = useState<string>('');
@@ -37,19 +35,16 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
     const [roles, setRoles] = useState<string[]>([]);
 
     useEffect(() => {
-        const fetchListing = async () => {
-            const data = await getListing(listingId);
-            if (data) {
-                const owner = await getUser(data.ownerId);
-                setListing({ ...data, owner });
-                setListingType(data.type);
-                setListingGenre(data.genre);
-                setListingDescription(data.description);
-                setListingMusicianSlots(data.musicianSlots);
-                setListingName(data.name);
-            }
+        const fetchData = async () => {
+            const userId = new Cookies().get('user_id');
+            const userData = await getUser(userId);
+            setUser(userData);
         };
 
+        fetchData();
+    }, []);
+
+    useEffect(() => {
         const fetchGenres = async () => {
             const genres = await getGenres();
             if (genres) {
@@ -64,10 +59,17 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
             }
         }
 
-        fetchListing();
         fetchGenres();
         fetchRoles();
-    }, [listingId]);
+    }, []);
+
+    if (!user) {
+        return <div>Loading...</div>;
+    }
+
+    const handleListingClick = () => {
+        setModalOpen(true);
+    };
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
@@ -108,91 +110,63 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
     const handleAddNewRole = () => {
         const newSlot = {
             id: Math.random().toString(36).substr(2, 9),
-            role: '',
+            role: 'Any',
             status: 'Available',
         };
         setListingMusicianSlots([...listingMusicianSlots, newSlot]);
     }
 
-    const handleUpdateListing = async () => {
-        try{
-            const updatedListing:ListingUpdated = {
+    const handleDeleteRole = (slotId: string) => {
+        setListingMusicianSlots((prevSlots: any[]) => prevSlots.filter((slot: any) => slot.id !== slotId));
+    };
+
+    const handlePostListing = async () => {
+        try {
+            const updatedListing: ListingUpdated = {
                 name: listingName,
                 type: listingType,
                 genre: listingGenre,
                 description: listingDescription,
                 musicianSlots: listingMusicianSlots,
             }
-            await updateListing(updatedListing,listingId);
+            await postListing(updatedListing);
+            // reload the page
             window.location.reload();
-        }
-        catch (e) {
+        } catch (e) {
             console.log(e);
         }
     }
 
-    const handleDeleteRole = (slotId: string) => {
-        const newSlots = listingMusicianSlots.filter((slot: any) => slot.id !== slotId);
-        setListingMusicianSlots(newSlots);
-    }
-
-    if (!listing) {
-        const theme = createTheme({
-            components: {
-                Loader: Loader.extend({
-                    defaultProps: {
-                        loaders: { ...Loader.defaultLoaders, ring: RingLoader },
-                        type: 'ring',
-                    },
-                }),
-            },
-        });
-        return (
-            <div className="App-header">
-                <MantineThemeProvider theme={theme}>
-                    <Loader size={200} />
-                </MantineThemeProvider>
-            </div>
-        );
-    }
-
     return (
-        <div className={'listing'}>
-            <div className={'editButton'}>
-                <Button variant={'contained'} color={'error'} onClick={handleOpen}>Edit</Button>
-            </div>
-            <div className={'listingHeader'}>
-                <div className={'ownerListingElements'}>
-                    <img src={defaultProfileImage} alt="Default Profile" />
-                    <p>{listing?.owner?.name}</p>
-                </div>
-                <div className={'listingTitle'}>
-                    <p>{listing?.name}</p>
-                </div>
-                <div className={'listingType'}>
-                    <div className={`listingType-${listing.type}`} onClick={handleEditType}>
-                        <p>{listing.type === 'CollaborativeSong' ? 'Song' : listing.type}</p>
-                    </div>
-                    <p>{listing?.genre}</p>
-                </div>
-            </div>
-            <div className={'listingBody'}>
-                <p>{listing?.description}</p>
-            </div>
-            <div className={'listingFooter'}>
-                {listing?.musicianSlots.map((slot: any) => (
-                    <div key={slot.id} className={`listingRole ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
+        <div className="listingContainer">
+            <div className="listingOverlay">Create your own listing!</div>
+            <div className="listingTemplate" onClick={handleListingClick}>
+                <div className="listingHeader">
+                    <div className="ownerListingElements">
                         <img src={defaultProfileImage} alt="Default Profile" />
-                        <p>Role: {slot.role}</p>
-                        <p>Status: {slot.status}</p>
+                        <p>{user?.name}</p>
                     </div>
-                ))}
+                    <div className="listingTitle">
+                        <p>Title</p>
+                    </div>
+                    <div className="listingType">
+                        <div className="listingType-Band">
+                            <p>Band</p>
+                        </div>
+                        <p>Genre</p>
+                    </div>
+                </div>
+                <div className="listingBody">
+                    <p>Description</p>
+                </div>
             </div>
-
-            <Modal open={open} onClose={handleClose}>
+            <Modal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}  // Close modal when clicked outside
+            >
                 <Box sx={{ ...modalStyle }} onClick={(e) => e.stopPropagation()}>
                     <div id={'saveButtonEditListing'}>
-                        <Button variant={'contained'} color={'success'} onClick={handleUpdateListing}>Post</Button>
+                        <Button variant={'contained'} color={'success'} onClick={handlePostListing}>Post</Button>
                     </div>
                     <div className={'listing-editor'}>
                         <div className={'editorHeader'}>
@@ -307,7 +281,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
             </Modal>
         </div>
     );
-};
+}
 
 const modalStyle = {
     position: 'absolute',
@@ -321,6 +295,8 @@ const modalStyle = {
     borderRadius: 8,
     boxShadow: 24,
     padding: 4,
+    // overflow:'scroll',
+    // overflowX:'hidden',
 };
 
-export default ListingPrivate;
+export default ListingTemplate;
