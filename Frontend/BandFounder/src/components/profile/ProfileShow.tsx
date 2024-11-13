@@ -79,7 +79,10 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username }) => {
                     ))}
                 </ul>
             </div>
-            <div className={'musicRoles'}></div>
+            <div className={'musicRoles'}>
+                <p>Music Roles: </p>
+
+            </div>
         </div>
     );
 };
