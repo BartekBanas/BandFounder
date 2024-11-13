@@ -15,7 +15,8 @@ import {
     InputLabel,
     MenuItem,
     SelectChangeEvent,
-    IconButton
+    IconButton,
+    Autocomplete
 } from "@mui/material";
 import {API_URL} from "../../../config";
 import {ListingUpdated} from "../../../types/ListingUpdated";
@@ -225,18 +226,15 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                         </div>
                         <div className={'editorUnderHeader'}>
                             <div>
-                                <InputLabel id="genreSelectLabel">Genre</InputLabel>
-                                <Select
-                                    labelId="genreSelectLabel"
-                                    id="genreSelectLabel"
-                                    value={listingGenre}
-                                    label="Genre"
-                                    onChange={handleGenreSelectChange}
-                                >
-                                    {genres.map((genre, index) => (
-                                        <MenuItem key={index} value={genre}>{genre}</MenuItem>
-                                    ))}
-                                </Select>
+                                <Autocomplete
+                                    options={genres}
+                                    freeSolo
+                                    onInputChange={(event, value) => setListingGenre(value)}
+                                    renderInput={(params) => (
+                                        <TextField {...params} label="Genre" variant="outlined" fullWidth/>
+                                    )}
+                                    sx={{width: '200%'}}
+                                />
                             </div>
                         </div>
                         <div className={'editorBody'}>
@@ -269,20 +267,15 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                                         </IconButton>
                                     </div>
                                     <div className={'underEditorFooter'}>
-                                        <InputLabel id="roleSelectLabel"
-                                                    style={{ fontSize: '12px', maxHeight: '35px' }}>Role</InputLabel>
-                                        <Select
-                                            labelId="roleSelectLabel"
-                                            id="roleSelectLabel"
-                                            value={slot.role ? slot.role : 'Any'}
-                                            label="Role"
-                                            onChange={(event) => handleEditMusicianRole(slot.id, event.target.value)}
-                                            style={{ fontSize: '12px', maxHeight: '35px' }}
-                                        >
-                                            {roles.map((role, index) => (
-                                                <MenuItem key={index} value={role}>{role}</MenuItem>
-                                            ))}
-                                        </Select>
+                                        <Autocomplete
+                                            options={roles}
+                                            freeSolo
+                                            onInputChange={(event, value) => handleEditMusicianRole(slot.id, value)}
+                                            renderInput={(params) => (
+                                                <TextField {...params} label="Role" variant="outlined" fullWidth/>
+                                            )}
+                                            sx={{width: '200%'}}
+                                        />
                                     </div>
                                     <div className={'underEditorFooter'}>
                                         <InputLabel id="statusSelectLabel"
