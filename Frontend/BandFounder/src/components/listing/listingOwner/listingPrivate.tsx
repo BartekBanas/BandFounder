@@ -252,6 +252,8 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                 style={{minWidth: '70%'}}
                                 multiline
                                 rows={2}  // Adjust the number of rows as needed
+                                helperText={`${listingDescription.length}/220`}
+                                inputProps={{maxLength: 220}}
                             />
                         </div>
                         <div className={'editorFooter'}>
