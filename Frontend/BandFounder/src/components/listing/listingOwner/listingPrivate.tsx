@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {getGenres, getListing, getMusicianRoles, updateListing} from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import getUser from '../../common/frequentlyUsed';
 import './style.css';
 import './listingCreator.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
-import { RingLoader } from "../../common/RingLoader";
+import {RingLoader} from "../../common/RingLoader";
 import {
     Button,
     Modal,
@@ -15,17 +14,19 @@ import {
     InputLabel,
     MenuItem,
     SelectChangeEvent,
-    IconButton
+    IconButton,
+    Autocomplete
 } from "@mui/material";
-import {API_URL} from "../../../config";
 import {ListingUpdated} from "../../../types/ListingUpdated";
 import CloseIcon from "@mui/icons-material/Close";
+import {lengthOfGenre} from "../listingTemplate/listingTemplate";
+import {getUser} from "../../../api/account";
 
 interface ListingPrivateProps {
     listingId: string;
 }
 
-const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
+const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     const [listing, setListing] = useState<any>(null);
     const [open, setOpen] = useState(false);
     const [listingType, setListingType] = useState<string>('');
@@ -41,7 +42,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
             const data = await getListing(listingId);
             if (data) {
                 const owner = await getUser(data.ownerId);
-                setListing({ ...data, owner });
+                setListing({...data, owner});
                 setListingType(data.type);
                 setListingGenre(data.genre);
                 setListingDescription(data.description);
@@ -87,7 +88,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
     const handleEditSlot = (slotId: string) => {
         const newSlots = listingMusicianSlots.map((slot: any) => {
             if (slot.id === slotId) {
-                return { ...slot, status: slot.status === 'Available' ? 'Filled' : 'Available' };
+                return {...slot, status: slot.status === 'Available' ? 'Filled' : 'Available'};
             }
             return slot;
         });
@@ -98,10 +99,9 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
         const newSlots = listingMusicianSlots.map((slot: any) => {
             if (slot.id === slotId) {
                 // console.log('role', role);
-                if(role) {
+                if (role) {
                     return {...slot, role};
-                }
-                else{
+                } else {
                     return {...slot, role: 'Any'};
                 }
             }
@@ -120,18 +120,17 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
     }
 
     const handleUpdateListing = async () => {
-        try{
-            const updatedListing:ListingUpdated = {
+        try {
+            const updatedListing: ListingUpdated = {
                 name: listingName,
                 type: listingType,
                 genre: listingGenre,
                 description: listingDescription,
                 musicianSlots: listingMusicianSlots,
             }
-            await updateListing(updatedListing,listingId);
+            await updateListing(updatedListing, listingId);
             window.location.reload();
-        }
-        catch (e) {
+        } catch (e) {
             console.log(e);
         }
     }
@@ -146,7 +145,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
             components: {
                 Loader: Loader.extend({
                     defaultProps: {
-                        loaders: { ...Loader.defaultLoaders, ring: RingLoader },
+                        loaders: {...Loader.defaultLoaders, ring: RingLoader},
                         type: 'ring',
                     },
                 }),
@@ -155,7 +154,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
         return (
             <div className="App-header">
                 <MantineThemeProvider theme={theme}>
-                    <Loader size={200} />
+                    <Loader size={200}/>
                 </MantineThemeProvider>
             </div>
         );
@@ -168,7 +167,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
             </div>
             <div className={'listingHeader'}>
                 <div className={'ownerListingElements'}>
-                    <img src={defaultProfileImage} alt="Default Profile" />
+                    <img src={defaultProfileImage} alt="Default Profile"/>
                     <p>{listing?.owner?.name}</p>
                 </div>
                 <div className={'listingTitle'}>
@@ -186,8 +185,9 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
             </div>
             <div className={'listingFooter'}>
                 {listing?.musicianSlots.map((slot: any) => (
-                    <div key={slot.id} className={`listingRole ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
-                        <img src={defaultProfileImage} alt="Default Profile" />
+                    <div key={slot.id}
+                         className={`listingRole ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
+                        <img src={defaultProfileImage} alt="Default Profile"/>
                         <p>Role: {slot.role}</p>
                         <p>Status: {slot.status}</p>
                     </div>
@@ -195,7 +195,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
             </div>
 
             <Modal open={open} onClose={handleClose}>
-                <Box sx={{ ...modalStyle }} onClick={(e) => e.stopPropagation()}>
+                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()}>
                     <div id={'saveButtonEditListing'}>
                         <Button variant={'contained'} color={'success'} onClick={handleUpdateListing}>Post</Button>
                     </div>
@@ -207,7 +207,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                                 onChange={handleNameChange}
                                 variant="filled"
                                 color={'success'}
-                                style={{ minWidth: '50%' }}
+                                style={{minWidth: '50%'}}
                             />
                             <div>
                                 <InputLabel id="typeSelectLabel">Type</InputLabel>
@@ -224,20 +224,23 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                             </div>
                         </div>
                         <div className={'editorUnderHeader'}>
-                            <div>
-                                <InputLabel id="genreSelectLabel">Genre</InputLabel>
-                                <Select
-                                    labelId="genreSelectLabel"
-                                    id="genreSelectLabel"
-                                    value={listingGenre}
-                                    label="Genre"
-                                    onChange={handleGenreSelectChange}
-                                >
-                                    {genres.map((genre, index) => (
-                                        <MenuItem key={index} value={genre}>{genre}</MenuItem>
-                                    ))}
-                                </Select>
-                            </div>
+                            <Autocomplete
+                                options={genres}
+                                freeSolo
+                                id={'genreSelectLabel'}
+                                onInputChange={(event, value) => setListingGenre(value)}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Genre" variant="outlined" fullWidth
+                                               sx={{fontSize: '20px !important'}}/>
+                                )}
+                                sx={{
+                                    minWidth: `${lengthOfGenre(listingGenre.length)}%`,
+                                    maxWidth: '30%',
+                                    marginTop: '5px',
+                                    fontSize: '12px !important',
+                                    transition: 'width 1s ease-in-out',
+                                }}
+                            />
                         </div>
                         <div className={'editorBody'}>
                             <TextField
@@ -246,9 +249,11 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                                 onChange={(event) => setListingDescription(event.target.value)}
                                 variant="filled"
                                 color="success"
-                                style={{ minWidth: '70%' }}
+                                style={{minWidth: '70%'}}
                                 multiline
                                 rows={2}  // Adjust the number of rows as needed
+                                helperText={`${listingDescription.length}/220`}
+                                inputProps={{maxLength: 220}}
                             />
                         </div>
                         <div className={'editorFooter'}>
@@ -257,7 +262,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                                      className={`listingRoleEdited ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
                                     <div className={'kindaHeader'}>
                                         <div>
-                                            <img src={defaultProfileImage} alt="Default Profile" />
+                                            <img src={defaultProfileImage} alt="Default Profile"/>
                                         </div>
                                         <IconButton
                                             aria-label="delete"
@@ -265,35 +270,30 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({ listingId }) => {
                                             onClick={() => handleDeleteRole(slot.id)}
                                             style={{}}
                                         >
-                                            <CloseIcon fontSize="small" />
+                                            <CloseIcon fontSize="small"/>
                                         </IconButton>
                                     </div>
                                     <div className={'underEditorFooter'}>
-                                        <InputLabel id="roleSelectLabel"
-                                                    style={{ fontSize: '12px', maxHeight: '35px' }}>Role</InputLabel>
-                                        <Select
-                                            labelId="roleSelectLabel"
-                                            id="roleSelectLabel"
-                                            value={slot.role ? slot.role : 'Any'}
-                                            label="Role"
-                                            onChange={(event) => handleEditMusicianRole(slot.id, event.target.value)}
-                                            style={{ fontSize: '12px', maxHeight: '35px' }}
-                                        >
-                                            {roles.map((role, index) => (
-                                                <MenuItem key={index} value={role}>{role}</MenuItem>
-                                            ))}
-                                        </Select>
+                                        <Autocomplete
+                                            options={roles}
+                                            freeSolo
+                                            onInputChange={(event, value) => handleEditMusicianRole(slot.id, value)}
+                                            renderInput={(params) => (
+                                                <TextField {...params} label="Role" variant="outlined" fullWidth/>
+                                            )}
+                                            sx={{width: '200%'}}
+                                        />
                                     </div>
                                     <div className={'underEditorFooter'}>
                                         <InputLabel id="statusSelectLabel"
-                                                    style={{ fontSize: '12px', maxHeight: '35px' }}>Status</InputLabel>
+                                                    style={{fontSize: '12px', maxHeight: '35px'}}>Status</InputLabel>
                                         <Select
                                             labelId="statusSelectLabel"
                                             id="statusSelectLabel"
                                             value={slot.status}
                                             label="Status"
                                             onChange={() => handleEditSlot(slot.id)}
-                                            style={{ fontSize: '12px', maxHeight: '35px' }}
+                                            style={{fontSize: '12px', maxHeight: '35px'}}
                                         >
                                             <MenuItem value={'Available'}>Available</MenuItem>
                                             <MenuItem value={'Filled'}>Filled</MenuItem>
@@ -321,7 +321,7 @@ const modalStyle = {
     left: '50%',
     maxHeight: '80%',
     transform: 'translate(-50%, -50%)',
-    width: 800,
+    width: 1000,
     bgcolor: 'background.paper',
     borderRadius: 8,
     boxShadow: 24,
