@@ -119,7 +119,15 @@ public class ListingService : IListingService
     {
         var userId = accountId ?? UserId;
         
-        var listing = await _listingRepository.GetOneRequiredAsync(listingId);
+        Listing listing;
+        try
+        {
+            listing = await _listingRepository.GetOneRequiredAsync(listingId);
+        }
+        catch (Exception e)
+        {
+            throw new NotFoundError("Could not find listing");
+        }
         
         var commonArtists = await _musicTasteService.GetCommonArtists(userId, listing.OwnerId);
         var commonGenres = await _musicTasteService.GetCommonGenres(userId, listing.OwnerId);
