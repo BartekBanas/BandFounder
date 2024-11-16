@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import { Menu, MenuItem, IconButton, Avatar, Box, Typography } from '@mui/material';
+import {Menu, MenuItem, IconButton, Avatar, Box, Typography} from '@mui/material';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import {mantineInformationNotification, mantineSuccessNotification} from "../../common/mantineNotification";
+import {mantineInformationNotification} from "../../common/mantineNotification";
 import {commonTaste} from "../../../types/CommonTaste";
 import {Listing} from "../../../types/Listing";
-import {getCommonTaste} from "../../../api/listing";
+import {contactListingOwner, getCommonTaste} from "../../../api/listing";
 
-const OwnerListingElement = ({ listing }: { listing: Listing }) => {
+const OwnerListingElement = ({listing}: { listing: Listing }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [commonTaste, setCommonTaste] = useState<commonTaste | null>(null);
 
@@ -31,7 +31,7 @@ const OwnerListingElement = ({ listing }: { listing: Listing }) => {
     const handleAction = () => {
         mantineInformationNotification('Action performed');
         if (listing?.ownerId) {
-            mantineSuccessNotification(`Action performed on ${listing.owner.id}`);
+            contactListingOwner(listing.id);
         }
         handleClose();
     };
@@ -39,7 +39,7 @@ const OwnerListingElement = ({ listing }: { listing: Listing }) => {
     return (
         <div className={'ownerListingElements'}>
             <IconButton onClick={handleClick}>
-                <Avatar alt="Owner Profile" src={defaultProfileImage} />
+                <Avatar alt="Owner Profile" src={defaultProfileImage}/>
             </IconButton>
             <p>{listing?.owner?.name}</p>
 
@@ -47,26 +47,45 @@ const OwnerListingElement = ({ listing }: { listing: Listing }) => {
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
+                PaperProps={{
+                    sx: {
+                        width: '320px',
+                        padding: '10px',
+                    },
+                }}
             >
-                <MenuItem onClick={handleAction}>Perform Action</MenuItem>
+                <MenuItem onClick={handleAction}>Message owner</MenuItem>
 
                 {commonTaste && (
-                    <Box sx={{ display: 'flex', flexDirection: 'row', padding: '10px' }}>
-                        <Box sx={{ flex: 1, marginRight: '10px' }}>
+                    <Box sx={{display: 'flex', flexDirection: 'row', padding: '10px'}}>
+                        {/* Artists column */}
+                        <Box sx={{flex: 1, marginRight: '10px'}}>
                             <Typography variant="subtitle1" gutterBottom>Artists</Typography>
                             <ul>
                                 {commonTaste.commonArtists.slice(0, 5).map((artist, index) => (
                                     <li key={index}>{artist}</li>
                                 ))}
                             </ul>
+                            {commonTaste.commonArtists.length > 5 && (
+                                <Typography variant="body2" color="textSecondary">
+                                    and {commonTaste.commonArtists.length - 5} more
+                                </Typography>
+                            )}
                         </Box>
-                        <Box sx={{ flex: 1 }}>
+
+                        {/* Genres column */}
+                        <Box sx={{flex: 1}}>
                             <Typography variant="subtitle1" gutterBottom>Genres</Typography>
                             <ul>
                                 {commonTaste.commonGenres.slice(0, 5).map((genre, index) => (
                                     <li key={index}>{genre}</li>
                                 ))}
                             </ul>
+                            {commonTaste.commonGenres.length > 5 && (
+                                <Typography variant="body2" color="textSecondary">
+                                    and {commonTaste.commonGenres.length - 5} more
+                                </Typography>
+                            )}
                         </Box>
                     </Box>
                 )}
