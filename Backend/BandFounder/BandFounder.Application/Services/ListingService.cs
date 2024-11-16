@@ -16,7 +16,7 @@ public interface IListingService
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
     Task<Listing> CreateListingAsync(ListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
-    Task ContactOwner(Guid listingId);
+    Task<ChatRoomDto> ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
     Task UpdateListing(Guid listingId, ListingCreateDto dto);
 }
@@ -195,7 +195,7 @@ public class ListingService : IListingService
         await _musicianSlotRepository.SaveChangesAsync();
     }
 
-    public async Task ContactOwner(Guid listingId)
+    public async Task<ChatRoomDto> ContactOwner(Guid listingId)
     {
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
         
@@ -205,7 +205,7 @@ public class ListingService : IListingService
             InvitedAccountId = listing.OwnerId
         };
 
-        await _chatroomService.CreateChatroom(chatroomCreateDto);
+        return await _chatroomService.CreateChatroom(chatroomCreateDto);
     }
 
     public async Task DeleteListing(Guid listingId)
