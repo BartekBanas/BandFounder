@@ -1,10 +1,9 @@
 import { FC, useState, useEffect } from "react";
 import { ChatRoom } from "../../../types/ChatRoom";
-import {getAllConversations, getAllUsers, createNewChatroom, leaveChatroom} from "./api"; // Assuming this function exists in your API
-import {Autocomplete, IconButton, TextField} from "@mui/material";
+import { getAllConversations, getAllUsers, createNewChatroom } from "./api"; // Assuming this function exists in your API
+import { Autocomplete, TextField } from "@mui/material";
 import Cookies from "universal-cookie";
 import { getUserById } from "../../common/frequentlyUsed";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 interface AllConversationsProps {}
 
@@ -29,13 +28,6 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
         fetchUsers();
     }, []);
 
-    const fetchConversations = async () => {
-        const conversations = await getAllConversations();
-        if (conversations) {
-            setChatRooms(conversations);
-        }
-    };
-
     useEffect(() => {
         // console.log(chatRooms);
     }, [chatRooms]);
@@ -44,19 +36,9 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
         if (!userName) return;
         try {
             const newChatRoom = await createNewChatroom(userName);
-            fetchConversations();
+            setChatRooms((prev) => [...prev, newChatRoom]); // Add the new chatroom to the list
         } catch (error) {
             console.error("Error creating chatroom:", error);
-        }
-    };
-
-    const handleLeaveChatroom = async (chatRoomId: string) => {
-        try {
-            console.log(`Leaving chatroom with id: ${chatRoomId}`);
-            await leaveChatroom(chatRoomId);
-            fetchConversations();
-        } catch (error) {
-            console.error("Error leaving chatroom:", error);
         }
     };
 
@@ -76,12 +58,7 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
 
             <ul>
                 {chatRooms.map((chatRoom) => (
-                    <li key={chatRoom.id}>
-                        {chatRoom.name}
-                        <IconButton onClick={() => handleLeaveChatroom(chatRoom.id)}>
-                            <DeleteIcon/>
-                        </IconButton>
-                    </li>
+                    <li key={chatRoom.id}>{chatRoom.name}</li>
                 ))}
             </ul>
         </div>
