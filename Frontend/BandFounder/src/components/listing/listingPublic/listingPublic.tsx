@@ -5,6 +5,7 @@ import './style.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
 import {getUser} from "../../../api/account";
+import OwnerListingElement from "./OwnerListingElement";
 
 interface ListingPublicProps {
     listingId: string;
@@ -48,8 +49,7 @@ const ListingPublic: React.FC<ListingPublicProps> = ({ listingId }) => {
         <div className={'listing'}>
             <div className={'listingHeader'}>
                 <div className={'ownerListingElements'}>
-                    <img src={defaultProfileImage} alt="Default Profile"/>
-                    <p>{listing?.owner?.name}</p>
+                    <OwnerListingElement listing={listing}/>
                 </div>
                 <div className={'listingTitle'}>
                     <p>{listing?.name}</p>
