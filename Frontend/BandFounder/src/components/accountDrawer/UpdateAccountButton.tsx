@@ -2,14 +2,14 @@ import {useDisclosure} from '@mantine/hooks';
 import {Modal, Box, TextField, Button, Stack, Typography, Divider} from '@mui/material';
 import React from "react";
 import {useForm} from "@mantine/form";
-import {updateAccountRequest} from "./api";
-import {RegisterFormType} from "../register/api";
+import {updateMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {RegisterAccountDto} from "../register/registerForm";
 
 export function UpdateAccountButton() {
     const [opened, {close, open}] = useDisclosure(false);
-    const form = useForm<RegisterFormType>({
+    const form = useForm<RegisterAccountDto>({
         initialValues: {
             Name: '',
             Password: '',
@@ -19,7 +19,7 @@ export function UpdateAccountButton() {
 
     const handleUpdateAccount = async () => {
         try {
-            await updateAccountRequest(
+            await updateMyAccount(
                 form.values.Name || null,
                 form.values.Password || null,
                 form.values.Email || null

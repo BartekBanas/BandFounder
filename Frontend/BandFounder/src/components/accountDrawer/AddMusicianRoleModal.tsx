@@ -2,7 +2,7 @@ import React, {FC, useEffect, useState} from 'react';
 import {API_URL} from '../../config';
 import {useDisclosure} from "@mantine/hooks";
 import {getAuthToken} from "../../hooks/authentication";
-import {getMusicianRoles, getMyMusicianRoles} from "./api";
+import {getMyMusicianRoles} from "../../api/account";
 import {
     mantineErrorNotification,
     mantineInformationNotification,
@@ -10,6 +10,7 @@ import {
 } from "../common/mantineNotification";
 import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography} from '@mui/material';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {getMusicianRoles} from "../../api/metadata";
 
 interface AddMusicianRoleModalProps {
     onRoleAdded: () => void;

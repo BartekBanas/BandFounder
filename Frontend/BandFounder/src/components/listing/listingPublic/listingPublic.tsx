@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { getListing } from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import getUser from '../../common/frequentlyUsed';
 import './style.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
+import {getUser} from "../../../api/account";
 
 interface ListingPublicProps {
     listingId: string;

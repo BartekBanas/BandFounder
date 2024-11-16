@@ -30,3 +30,17 @@ export function setUserId (id: string) {
 export function removeUserId () {
     return Cookies.remove('user_id');
 }
+
+export function authorizedHeaders(): HeadersInit {
+    const token = getAuthToken();
+
+    if (!token) {
+        window.location.href = '/login/expiredSession';
+        throw new Error('Authentication token not found');
+    }
+
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+    };
+}
