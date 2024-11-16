@@ -68,7 +68,8 @@ public class ChatroomService : IChatroomService
         
         var account = await _accountService.GetDetailedAccount(userId);
         
-        var usersChatrooms = account.Chatrooms;
+        var usersChatrooms = await _chatRoomRepository.GetAsync(chatRoom => chatRoom.Members.Contains(account),
+            includeProperties: nameof(Chatroom.Members));
         
         return usersChatrooms.ToDto();
     }
