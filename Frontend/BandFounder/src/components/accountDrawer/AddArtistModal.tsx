@@ -1,12 +1,11 @@
 import React, {FC, useEffect, useState} from 'react';
 import {API_URL} from '../../config';
-import {authorizedHeaders} from "../../hooks/utils";
 import {useDisclosure} from "@mantine/hooks";
-import {getUserId} from "../../hooks/authentication";
-import {getArtists} from "./api";
+import {authorizedHeaders, getUserId} from "../../hooks/authentication";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
-import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography } from '@mui/material';
+import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography} from '@mui/material';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {getArtists} from "../../api/metadata";
 
 export const AddArtistModal: FC = () => {
     const [opened, {close, open}] = useDisclosure(false);
@@ -99,7 +98,7 @@ export const AddArtistModal: FC = () => {
                         outline: 'none',
                     }}
                 >
-                    <Typography variant="h6" align="center" sx={{ mb: 3}}>
+                    <Typography variant="h6" align="center" sx={{mb: 3}}>
                         Add a new artist
                     </Typography>
 
@@ -109,9 +108,9 @@ export const AddArtistModal: FC = () => {
                             freeSolo
                             onInputChange={(event, value) => setSelectedArtistName(value)}
                             renderInput={(params) => (
-                                <TextField {...params} label="Artist's name" variant="outlined" fullWidth />
+                                <TextField {...params} label="Artist's name" variant="outlined" fullWidth/>
                             )}
-                            sx={{ width: '90%' }}
+                            sx={{width: '90%'}}
                         />
 
                         <Button color="success" variant="contained" onClick={handleAddArtist}>
@@ -121,6 +120,5 @@ export const AddArtistModal: FC = () => {
                 </Box>
             </Modal>
         </>
-
     );
 };

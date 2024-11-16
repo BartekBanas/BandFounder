@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getListings } from './api';
-import {ListingsFeedDto, ListingWithScore} from "../../../types/ListingFeed";
-import getUser from "../../common/frequentlyUsed";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
 import ListingPrivate from "./listingPrivate";

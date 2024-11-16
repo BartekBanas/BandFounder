@@ -73,9 +73,9 @@ public class ListingController : Controller
     [HttpPost("{listingId:guid}/contact")]
     public async Task<IActionResult> ContactListingOwner(Guid listingId)
     {
-        await _listingService.ContactOwner(listingId);
+        var createdChatroomDto = await _listingService.ContactOwner(listingId);
         
-        return Ok();
+        return Ok(createdChatroomDto);
     }
 
     [Authorize]

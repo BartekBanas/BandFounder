@@ -68,7 +68,8 @@ public class ChatroomService : IChatroomService
         
         var account = await _accountService.GetDetailedAccount(userId);
         
-        var usersChatrooms = account.Chatrooms;
+        var usersChatrooms = await _chatRoomRepository.GetAsync(chatRoom => chatRoom.Members.Contains(account),
+            includeProperties: nameof(Chatroom.Members));
         
         return usersChatrooms.ToDto();
     }
@@ -202,6 +203,16 @@ public class ChatroomService : IChatroomService
         catch (Exception e)
         {
             throw new BadRequestError("Invited account is invalid");
+        }
+
+        var existingChatrooms = await _chatRoomRepository.GetOneAsync(
+            chatRoom => chatRoom.ChatRoomType == ChatRoomType.Direct &
+                        chatRoom.Members.Contains(issuer) & chatRoom.Members.Contains(recipient),
+            includeProperties: nameof(Chatroom.Members));
+
+        if (existingChatrooms is not null)
+        {
+            throw new ConflictError("You already have an existing conversation with this user");
         }
 
         var chatroom = new Chatroom

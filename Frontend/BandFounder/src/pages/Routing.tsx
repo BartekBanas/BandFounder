@@ -8,6 +8,8 @@ import {ProfilePage} from "./ProfilePage";
 import {Main} from "./layout/Main";
 import {useIsAuthenticated} from "../hooks/authentication";
 import {ProfilePageOwner} from "./ProfilePageOwner";
+import {MessagesPage} from "./MessagesPage";
+import {RediractionPage} from "./RediractionPage";
 
 const publicRoutes = [
     {
@@ -54,9 +56,13 @@ const privateRoutes = [{
             element: <SpotifyConnectionPage/>
         },
         {
+            path: '/messages',
+            element: <MessagesPage/>
+        },
+        {
             path: '*',
-            element: <MainPage/>
-        }
+            element: <RediractionPage/>
+        },
     ]
 }]
 

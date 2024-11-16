@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getListings } from './api';
 import ListingPublic from './listingPublic';
-import { Listing } from '../../../types/Listing';
-import {log} from "node:util";
-import {ListingsFeedDto, ListingWithScore} from "../../../types/ListingFeed";
-import getUser from "../../common/frequentlyUsed";
+import {ListingWithScore} from "../../../types/ListingFeed";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
 
