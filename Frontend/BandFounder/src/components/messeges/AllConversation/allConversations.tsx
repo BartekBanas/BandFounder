@@ -1,14 +1,16 @@
+// src/components/messeges/AllConversation/allConversations.tsx
 import { FC, useState, useEffect } from "react";
 import { ChatRoom } from "../../../types/ChatRoom";
-import {getAllConversations, getAllUsers, createNewChatroom, leaveChatroom} from "./api"; // Assuming this function exists in your API
-import {Autocomplete, IconButton, TextField} from "@mui/material";
-import Cookies from "universal-cookie";
-import { getUserById } from "../../common/frequentlyUsed";
+import { getAllConversations, getAllUsers, createNewChatroom, leaveChatroom } from "./api";
+import { Autocomplete, IconButton, TextField } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import {useNavigate} from "react-router-dom";
 
-interface AllConversationsProps {}
+interface AllConversationsProps {
+    onSelectConversation: (id: string) => void;
+}
 
-export const AllConversations: FC<AllConversationsProps> = ({}) => {
+export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversation }) => {
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [users, setUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
         };
         const fetchUsers = async () => {
             const users = await getAllUsers();
-            setUsers(users.map((user: any) => user.name)); // Assuming user object has a 'name' property
+            setUsers(users.map((user: any) => user.name));
         };
 
         fetchConversations();
@@ -35,10 +37,6 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
             setChatRooms(conversations);
         }
     };
-
-    useEffect(() => {
-        // console.log(chatRooms);
-    }, [chatRooms]);
 
     const handleCreateChatroom = async (userName: string | null) => {
         if (!userName) return;
@@ -60,6 +58,11 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
         }
     };
 
+    const navigate = useNavigate();
+    const handleSelectConversation = (id: string) => {
+        navigate(`/messages/${id}`);
+    };
+
     return (
         <div id="main">
             <Autocomplete
@@ -67,7 +70,7 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
                 value={selectedUser}
                 onChange={(event, newValue) => {
                     setSelectedUser(newValue);
-                    handleCreateChatroom(newValue); // Trigger chatroom creation
+                    handleCreateChatroom(newValue);
                 }}
                 renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined" />}
                 style={{ margin: "20px", maxWidth: "300px" }}
@@ -76,10 +79,10 @@ export const AllConversations: FC<AllConversationsProps> = ({}) => {
 
             <ul>
                 {chatRooms.map((chatRoom) => (
-                    <li key={chatRoom.id}>
+                    <li key={chatRoom.id} onClick={() => handleSelectConversation(chatRoom.id)}>
                         {chatRoom.name}
                         <IconButton onClick={() => handleLeaveChatroom(chatRoom.id)}>
-                            <DeleteIcon/>
+                            <DeleteIcon />
                         </IconButton>
                     </li>
                 ))}

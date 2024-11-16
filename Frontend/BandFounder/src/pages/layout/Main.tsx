@@ -4,15 +4,19 @@ import {Content} from "../Content";
 import {Header} from "./Header";
 import {Menu} from "@mantine/core";
 import classes = Menu.classes;
+import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {ThemeProvider} from "@mui/material";
 
 export const Main: FC = ({}) => {
 
     return (
+        <ThemeProvider theme={muiDarkTheme}>
         <div className={classes.rootContainer}>
             <Header/>
             <Content>
                 <Outlet/>
             </Content>
         </div>
+        </ThemeProvider>
     );
 };
