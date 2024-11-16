@@ -3,3 +3,9 @@ export interface Account {
     name: string;
     email: string;
 }
+
+export interface CreateAccountDto {
+    Name: string;
+    Password: string;
+    Email: string;
+}
