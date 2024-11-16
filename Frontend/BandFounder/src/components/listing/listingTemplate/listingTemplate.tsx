@@ -12,13 +12,13 @@ import {
     Select,
     MenuItem,
     IconButton,
-    SelectChangeEvent, Autocomplete
+    Autocomplete
 } from '@mui/material';
-import getUser from "../../common/frequentlyUsed";
 import Cookies from "universal-cookie";
 import CloseIcon from "@mui/icons-material/Close";
 import {getGenres, getMusicianRoles} from "../listingOwner/api";
 import {ListingUpdated} from "../../../types/ListingUpdated";
+import {getUser} from "../../../api/account";
 
 interface ListingTemplateProps {
 }

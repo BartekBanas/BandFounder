@@ -1,46 +1,60 @@
 import {FC, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {useLoginApi} from "./api";
 import './styles.css';
+import {getMyAccount, login} from "../../api/account";
+import {setAuthToken, setUserId} from "../../hooks/authentication";
+import {mantineInformationNotification} from "../common/mantineNotification";
 
-interface LoginFormProps{
+interface LoginFormProps {
+};
 
+export const useLoginApi = () => {
+    return async (usernameOrEmail: string, password: string) => {
+        const authorizationToken = await login(usernameOrEmail, password);
+        setAuthToken(authorizationToken);
+
+        const account = await getMyAccount(authorizationToken);
+        setUserId(account.id);
+
+        mantineInformationNotification(`Welcome ${account.name}`);
+    };
 };
 
 export const LoginForm: FC<LoginFormProps> = ({}) => {
-    const[email, changeEmail] = useState('');
-    const[password, changePassword] = useState('');
+    const [email, changeEmail] = useState('');
+    const [password, changePassword] = useState('');
 
     const navigate = useNavigate();
 
     const login = useLoginApi();
 
-    async function handleSubmit(e : any){
+    async function handleSubmit(e: any) {
         e.preventDefault();
-        try{
+        try {
             await login(email, password);
 
-            await navigate('/home');
-        }
-        catch(e){
+            navigate('/home');
+        } catch (e) {
             console.log(e);
         }
     }
 
-    async function handleRegisterClick(e : any){
+    async function handleRegisterClick(e: any) {
         e.preventDefault();
-        await navigate('/register');
+        navigate('/register');
     }
 
-    return(
+    return (
         <form id={'loginForm'} onSubmit={handleSubmit}>
             <div id="email-LoginForm">
                 <label>Email</label>
-                <input type="text" value={email} onChange={(e) => changeEmail(e.target.value)} required={true} placeholder={'email'}/>
+                <input type="text" value={email} onChange={(e) => changeEmail(e.target.value)} required={true}
+                       placeholder={'email'}/>
             </div>
             <div id="password-LoginForm">
                 <label>Password</label>
-                <input type="password" value={password} onChange={(e) => changePassword(e.target.value)} required placeholder={'password'}/>
+                <input type="password" value={password} onChange={(e) => changePassword(e.target.value)} required
+                       placeholder={'password'}/>
             </div>
             <div id='LoginButtonContainer'>
                 <button>Login</button>

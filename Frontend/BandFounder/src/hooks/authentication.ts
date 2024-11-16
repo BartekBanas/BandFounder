@@ -30,3 +30,11 @@ export function setUserId (id: string) {
 export function removeUserId () {
     return Cookies.remove('user_id');
 }
+
+export function authorizedHeaders(): HeadersInit {
+    const token = getAuthToken();
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+    };
+}

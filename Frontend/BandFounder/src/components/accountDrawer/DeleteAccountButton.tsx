@@ -1,5 +1,5 @@
 import {useDisclosure} from '@mantine/hooks';
-import {deleteAccountRequest} from "./api";
+import {deleteMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {Box, Button, Modal, Stack, Typography} from '@mui/material';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
@@ -9,7 +9,7 @@ export function DeleteAccountButton() {
 
     const handleDeleteAccount = async () => {
         try {
-            await deleteAccountRequest();
+            await deleteMyAccount();
             mantineSuccessNotification("Account deleted successfully");
         } catch (error) {
             mantineErrorNotification("Failed to delete account");

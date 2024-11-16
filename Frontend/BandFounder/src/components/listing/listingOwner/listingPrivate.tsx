@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {getGenres, getListing, getMusicianRoles, updateListing} from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import getUser from '../../common/frequentlyUsed';
 import './style.css';
 import './listingCreator.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
@@ -21,6 +20,7 @@ import {
 import {ListingUpdated} from "../../../types/ListingUpdated";
 import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
+import {getUser} from "../../../api/account";
 
 interface ListingPrivateProps {
     listingId: string;
