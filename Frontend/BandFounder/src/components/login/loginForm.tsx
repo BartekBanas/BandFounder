@@ -1,9 +1,9 @@
-import {FC, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import './styles.css';
 import {getMyAccount, login} from "../../api/account";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
-import {mantineInformationNotification} from "../common/mantineNotification";
+import {mantineErrorNotification, mantineInformationNotification} from "../common/mantineNotification";
 
 interface LoginFormProps {
 };
@@ -25,8 +25,13 @@ export const LoginForm: FC<LoginFormProps> = ({}) => {
     const [password, changePassword] = useState('');
 
     const navigate = useNavigate();
-
     const login = useLoginApi();
+
+    useEffect(() => {
+        if (window.location.pathname === '/login/expiredSession') {
+            mantineErrorNotification('Your session has expired. Please log in again.');
+        }
+    }, []);
 
     async function handleSubmit(e: any) {
         e.preventDefault();

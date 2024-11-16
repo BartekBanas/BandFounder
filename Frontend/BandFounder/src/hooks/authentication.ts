@@ -33,6 +33,12 @@ export function removeUserId () {
 
 export function authorizedHeaders(): HeadersInit {
     const token = getAuthToken();
+
+    if (!token) {
+        window.location.href = '/login/expiredSession';
+        throw new Error('Authentication token not found');
+    }
+
     return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,

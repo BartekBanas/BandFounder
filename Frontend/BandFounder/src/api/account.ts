@@ -7,8 +7,7 @@ export async function registerAccount(name: string, email: string, password: str
     const response = await fetch(`${API_URL}/accounts/`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             name: name,
@@ -31,8 +30,7 @@ export async function login(usernameOrEmail: string, password: string): Promise<
     const response = await fetch(`${API_URL}/accounts/authenticate`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             usernameOrEmail: usernameOrEmail,
