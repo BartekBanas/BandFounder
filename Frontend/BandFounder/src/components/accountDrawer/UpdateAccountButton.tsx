@@ -5,11 +5,11 @@ import {useForm} from "@mantine/form";
 import {updateMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
-import {RegisterAccountDto} from "../register/registerForm";
+import {CreateAccountDto} from "../../types/Account";
 
 export function UpdateAccountButton() {
     const [opened, {close, open}] = useDisclosure(false);
-    const form = useForm<RegisterAccountDto>({
+    const form = useForm<CreateAccountDto>({
         initialValues: {
             Name: '',
             Password: '',
