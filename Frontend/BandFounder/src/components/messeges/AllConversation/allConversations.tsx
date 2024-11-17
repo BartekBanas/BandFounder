@@ -1,13 +1,12 @@
-// src/components/messeges/AllConversation/allConversations.tsx
 import { FC, useState, useEffect } from "react";
 import { ChatRoom } from "../../../types/ChatRoom";
 import { getAllConversations, getAllUsers, createNewChatroom, leaveChatroom } from "./api";
-import { Autocomplete, IconButton, TextField } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import {useNavigate} from "react-router-dom";
+import {Autocomplete, CircularProgress, IconButton, TextField} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import './styles.css'
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css'
+import CancelPresentationIcon from '@mui/icons-material/CancelPresentation';
 
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
@@ -17,6 +16,7 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [users, setUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchConversations = async () => {
@@ -41,8 +41,8 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
         }
     };
 
-    const checkIdOfChatroom = (userName: string) : string => {
-        let id:string = '';
+    const checkIdOfChatroom = (userName: string): string => {
+        let id: string = '';
 
         chatRooms.forEach((chatRoom) => {
             if (chatRoom.name.toLowerCase() == userName.toLowerCase()) {
@@ -59,7 +59,6 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
             const newChatRoom = await createNewChatroom(userName);
             fetchConversations();
         } catch (error: any) {
-
             if (error.status === 409) {
                 const chatroomId = await checkIdOfChatroom(userName);
                 window.location.href = `/messages/${chatroomId}`;
@@ -73,13 +72,12 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
         try {
             console.log(`Leaving chatroom with id: ${chatRoomId}`);
             await leaveChatroom(chatRoomId);
-            fetchConversations();
+            window.location.href = '/messages';
         } catch (error) {
             console.error("Error leaving chatroom:", error);
         }
     };
 
-    const navigate = useNavigate();
     const handleSelectConversation = (id: string) => {
         navigate(`/messages/${id}`);
     };
@@ -96,15 +94,18 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
                 renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined" />}
                 style={{ margin: "20px", maxWidth: "100%" }}
             />
-            <h1>All open conversations</h1>
-
+            <div style={{display: 'flex', justifyContent: 'center', alignItems:'center'}}>
+                {
+                    chatRooms.length > 0 ? <h2>Open Conversations</h2> : <CircularProgress size={30} sx={{marginBottom:'20px'}}/>
+                }
+            </div>
             <ul id={'openConversationsList'} className={'custom-scrollbar'}>
                 {chatRooms.map((chatRoom) => (
                     <li className={'singleConversationShrotcut'} key={chatRoom.id} onClick={() => handleSelectConversation(chatRoom.id)}>
-                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
+                        <img src={defaultProfileImage} alt="defaultProfileImage" />
                         {chatRoom.name}
                         <IconButton onClick={() => handleLeaveChatroom(chatRoom.id)}>
-                            <DeleteIcon />
+                            <CancelPresentationIcon />
                         </IconButton>
                     </li>
                 ))}
