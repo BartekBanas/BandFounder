@@ -10,7 +10,7 @@ export const ProfilePage: FC<ProfilePageProps> = () => {
 
     return (
         <div id='main' className={'custom-scrollbar'}>
-            <ProfileShow username={username ?? ""} />
+            <ProfileShow username={username ?? ""} isMyProfile={false}/>
         </div>
     );
 };
