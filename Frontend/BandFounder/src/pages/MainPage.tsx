@@ -7,6 +7,7 @@ import {RingLoader} from "../components/common/RingLoader";
 import ListingsListPublic from "../components/listing/listingPublic/listingsListPublic";
 import ListingTemplate from "../components/listing/listingTemplate/listingTemplate";
 import './styles/mainContainer.css'
+import '../assets/CustomScrollbar.css'
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -51,7 +52,7 @@ export function MainPage() {
     }
 
     return (
-        <div id={'mainContainer'}>
+        <div id={'mainContainer'} className={'custom-scrollbar'}>
             <ListingTemplate/>
             <ListingsListPublic/>
         </div>

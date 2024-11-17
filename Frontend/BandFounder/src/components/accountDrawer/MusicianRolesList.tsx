@@ -25,9 +25,6 @@ const MusicianRolesList: React.FC<MusicianRolesListProps> = ({roles, onRoleDelet
 
     return (
         <Box>
-            <Typography variant="h6" gutterBottom>
-                My Musician Roles
-            </Typography>
             <List>
                 {roles.map((role) => (
                     <ListItem key={role}>

@@ -48,7 +48,7 @@ export async function login(usernameOrEmail: string, password: string): Promise<
     return responseContent; // Authentication JWT
 }
 
-export async function getMyAccount(token: string): Promise<Account> {
+export async function getMyAccount(): Promise<Account> {
     const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'GET',
         headers: authorizedHeaders()
@@ -61,6 +61,21 @@ export async function getMyAccount(token: string): Promise<Account> {
 
     const account: Account = await response.json();
     return account;
+}
+
+export async function getAccounts(): Promise<Account[]> {
+    const response = await fetch(`${API_URL}/accounts`, {
+        method: 'GET',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to fetch accounts');
+        throw new Error('Failed to fetch accounts');
+    }
+
+    const accounts: Account[] = await response.json();
+    return accounts;
 }
 
 export async function updateMyAccount(name: string | null, password: string | null, email: string | null) {

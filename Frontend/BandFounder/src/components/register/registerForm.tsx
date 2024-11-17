@@ -20,16 +20,16 @@ export function LoginForm ()  {
         e.preventDefault();
         try {
             const authorizationToken = await registerAccount(name, email, password);
-            const account = await getMyAccount(authorizationToken);
-
             setAuthToken(authorizationToken);
+
+            const account = await getMyAccount();
             setUserId(account.id);
 
             mantineSuccessNotification('Account created successfully');
 
             navigate('/home');
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
     }
 

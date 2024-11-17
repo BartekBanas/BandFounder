@@ -14,13 +14,61 @@
 .profileMain .topArtists{
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    justify-content: start;
+    align-items: start;
+}
+.profileMain .topArtists ul {
+    border: 1px solid white;
+    padding: 5px;
+    border-radius: 10px;
 }
 
 .profileMain .topGenres{
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: start;
+    align-items: start;
+}
+
+.profileMain .topGenres ul{
+    border: 1px solid white;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.musicRoles{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: start;
+    height: 100%;
+}
+
+.musicRoles .musicRolesList{
+    display: flex;
+    flex-direction: row;
+    overflow-y: auto;
+    height: 70%;
+    min-width: 180px;
+    border: 1px solid white;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.profileMain{
+    display: flex;
+    justify-content: space-around;
     align-items: center;
+    height: 300px;
+    padding: 10px;
+    border-bottom: 1px solid white;
+}
+
+.css-cfd5wn-MuiListItem-root{
+    padding: 0 !important;
+    padding-top: 4px !important;
+}
+
+.MuiList-root.MuiList-padding.css-b7dj7n-MuiList-root{
+    padding-top: 0 !important;
 }

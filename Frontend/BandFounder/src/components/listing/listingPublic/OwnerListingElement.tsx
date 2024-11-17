@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {Menu, MenuItem, IconButton, Avatar, Box, Typography} from '@mui/material';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import {mantineInformationNotification} from "../../common/mantineNotification";
 import {commonTaste} from "../../../types/CommonTaste";
 import {Listing} from "../../../types/Listing";
 import {contactListingOwner, getCommonTaste} from "../../../api/listing";
+import {getMyChatrooms} from "../../../api/chatroom";
+import {mantineErrorNotification} from "../../common/mantineNotification";
 
 const OwnerListingElement = ({listing}: { listing: Listing }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -28,12 +29,42 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
         setAnchorEl(null);
     };
 
-    const handleAction = () => {
-        mantineInformationNotification('Action performed');
-        if (listing?.ownerId) {
-            contactListingOwner(listing.id);
+    const getChatroomWithUser = async (userId: string): Promise<string | undefined> => {
+        try {
+            let chatRooms = await getMyChatrooms();
+
+            for (const chatroom of chatRooms) {
+                if (chatroom.type === 'Direct' && chatroom.membersIds.includes(userId)) {
+                    return chatroom.id;
+                }
+            }
+
+            throw new Error('Chatroom not found');
+        } catch (e) {
+            throw new Error('Failed to find chatroom with user ' + userId);
         }
-        handleClose();
+    }
+
+    const handleAction = async () => {
+        try {
+            if (listing?.ownerId) {
+                const response = await contactListingOwner(listing.id);
+                console.log(response);
+                handleClose();
+                if (response) {
+                    window.location.href = '/messages/' + response.id;
+                } else {
+                    const chatRoomId = await getChatroomWithUser(listing.ownerId);
+                    if (chatRoomId) {
+                        window.location.href = '/messages/' + chatRoomId;
+                    } else {
+                        throw new Error('Failed to find chatroom with user ' + listing.ownerId);
+                    }
+                }
+            }
+        } catch (error) {
+            mantineErrorNotification("Failed to contact the listing's owner");
+        }
     };
 
     return (
