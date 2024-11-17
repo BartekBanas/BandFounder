@@ -12,7 +12,7 @@ public interface IListingService
     Task<Listing?> GetListingAsync(Guid listingId);
     Task<IEnumerable<Listing>> GetListingsAsync();
     Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions);
-    Task<IEnumerable<ListingDto>> GetMyListingAsync();
+    Task<IEnumerable<ListingDto>> GetUserListingsAsync(Guid? accountId = null);
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
     Task<Listing> CreateListingAsync(ListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
@@ -106,10 +106,12 @@ public class ListingService : IListingService
         };
     }
     
-    public async Task<IEnumerable<ListingDto>> GetMyListingAsync()
+    public async Task<IEnumerable<ListingDto>> GetUserListingsAsync(Guid? accountId = null)
     {
+        accountId ??= UserId;
+        
         var myListings = await _listingRepository.GetAsync(
-            filter: listing => listing.OwnerId == UserId,
+            filter: listing => listing.OwnerId == accountId,
             includeProperties: [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
 
         return myListings.ToDto();
