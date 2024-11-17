@@ -195,9 +195,22 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
             </div>
 
             <Modal open={open} onClose={handleClose}>
-                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()}>
+                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()} className={'wholeEditBody'}>
                     <div id={'saveButtonEditListing'}>
                         <Button variant={'contained'} color={'success'} onClick={handleUpdateListing}>Post</Button>
+                        <div>
+                            <InputLabel id="typeSelectLabel" sx={{fontSize: '12px'}}>Type</InputLabel>
+                            <Select
+                                labelId="typeSelectLabel"
+                                id="typeSelectLabel"
+                                value={listingType}
+                                label="Type"
+                                onChange={handleEditType}
+                            >
+                                <MenuItem value={'CollaborativeSong'}>Song</MenuItem>
+                                <MenuItem value={'Band'}>Band</MenuItem>
+                            </Select>
+                        </div>
                     </div>
                     <div className={'listing-editor'}>
                         <div className={'editorHeader'}>
@@ -208,22 +221,9 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                 variant="filled"
                                 color={'success'}
                                 style={{minWidth: '50%'}}
+                                helperText={`${listingName.length}/35`}
+                                inputProps={{maxLength: 35}}
                             />
-                            <div>
-                                <InputLabel id="typeSelectLabel">Type</InputLabel>
-                                <Select
-                                    labelId="typeSelectLabel"
-                                    id="typeSelectLabel"
-                                    value={listingType}
-                                    label="Type"
-                                    onChange={handleEditType}
-                                >
-                                    <MenuItem value={'CollaborativeSong'}>Song</MenuItem>
-                                    <MenuItem value={'Band'}>Band</MenuItem>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className={'editorUnderHeader'}>
                             <Autocomplete
                                 options={genres}
                                 freeSolo
@@ -234,12 +234,14 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                                sx={{fontSize: '20px !important'}}/>
                                 )}
                                 sx={{
-                                    minWidth: `${lengthOfGenre(listingGenre.length)}%`,
-                                    maxWidth: '30%',
+                                    minWidth: `${lengthOfGenre(listingGenre.length) + 10}%`,
+                                    maxWidth: '40%',
                                     marginTop: '5px',
                                     fontSize: '12px !important',
                                     transition: 'width 1s ease-in-out',
+                                    // flexGrow: 1
                                 }}
+                                value={listingGenre}
                             />
                         </div>
                         <div className={'editorBody'}>
@@ -249,7 +251,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                 onChange={(event) => setListingDescription(event.target.value)}
                                 variant="filled"
                                 color="success"
-                                style={{minWidth: '70%'}}
+                                style={{minWidth: '60%'}}
                                 multiline
                                 rows={2}  // Adjust the number of rows as needed
                                 helperText={`${listingDescription.length}/220`}
@@ -281,6 +283,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                             renderInput={(params) => (
                                                 <TextField {...params} label="Role" variant="outlined" fullWidth/>
                                             )}
+                                            value={slot.role}
                                             sx={{width: '200%'}}
                                         />
                                     </div>
@@ -321,7 +324,7 @@ const modalStyle = {
     left: '50%',
     maxHeight: '80%',
     transform: 'translate(-50%, -50%)',
-    width: 1000,
+    width: 800,
     bgcolor: 'background.paper',
     borderRadius: 8,
     boxShadow: 24,
