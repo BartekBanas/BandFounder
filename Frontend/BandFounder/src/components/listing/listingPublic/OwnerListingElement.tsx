@@ -49,7 +49,6 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
         try {
             if (listing?.ownerId) {
                 const response = await contactListingOwner(listing.id);
-                console.log(response);
                 handleClose();
                 if (response) {
                     window.location.href = '/messages/' + response.id;

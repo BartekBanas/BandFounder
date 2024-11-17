@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {getAccount, getGUID, getTopArtists, getTopGenres} from './api';
+import {contactProfileOwner, getAccount, getGUID, getTopArtists, getTopGenres} from './api';
 import { Account } from "../../types/Account";
 import './profile.css';
 import {
@@ -27,6 +27,8 @@ import {getAuthToken} from "../../hooks/authentication";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {deleteMyMusicianRole, getMyMusicianRoles} from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
+import {getMyChatrooms} from "../../api/chatroom";
+import {getUserByName} from "../common/frequentlyUsed";
 
 interface ProfileShowProps {
     username: string;
@@ -149,19 +151,55 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username,isMyProfile}) => {
         }
     };
 
+    const getChatroomWithUser = async (userId: string): Promise<string | undefined> => {
+        try {
+            let chatRooms = await getMyChatrooms();
+
+            for (const chatroom of chatRooms) {
+                if (chatroom.type === 'Direct' && chatroom.membersIds.includes(userId)) {
+                    return chatroom.id;
+                }
+            }
+
+            throw new Error('Chatroom not found');
+        } catch (e) {
+            throw new Error('Failed to find chatroom with user ' + userId);
+        }
+    }
+
+    const handleMessage = async() => {
+        try{
+            const user = await getUserByName(username);
+            const targetId = user?.id;
+            const response = await contactProfileOwner(targetId);
+            if (response) {
+                window.location.href = '/messages/' + response.id;
+            } else {
+                const chatRoomId = await getChatroomWithUser(targetId);
+                if (chatRoomId) {
+                    window.location.href = '/messages/' + chatRoomId;
+                } else {
+                    throw new Error('Failed to find chatroom with user ' + targetId);
+                }
+            }
+        }
+        catch (e){
+            console.error('Error contacting profile owner:', e);
+        }
+    }
+
     return (
         <div className={'profileMain'}>
-            <div className={'profileLeftPart'}>
+            <div className={'profileLeftPart'} style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
                 <img id='profileImage' src={require('../../assets/defaultProfileImage.jpg')} alt="Default Profile"/>
 
-                <div style={{display: 'flex', alignItems: 'center'}}>
+                <div style={{display: 'flex', alignItems: 'center', margin: '5px'}}>
                     <p>Username: </p>
                     <p style={{marginLeft: '8px'}}>{account?.name}</p>
                 </div>
-                <div style={{display: 'flex', alignItems: 'center'}}>
-                    <p>Guid: </p>
-                    <p style={{marginLeft: '8px'}}><i>{guid}</i></p>
-                </div>
+                {!isMyProfile ? <div style={{display: 'flex', alignItems: 'center'}}>
+                    <Button variant="outlined" color={"info"} onClick={handleMessage}>Message</Button>
+                </div> : <div></div>}
             </div>
             <div className={'topArtists'}>
                 <p>Top Artists: </p>
