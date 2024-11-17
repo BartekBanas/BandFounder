@@ -1,12 +1,16 @@
 import {FC, useState, useEffect} from "react";
 import {ChatRoom} from "../../../types/ChatRoom";
-import {getAllConversations, getAllUsers, createNewChatroom, leaveChatroom} from "./api";
+import {getMyChatrooms, createDirectChatroom, leaveChatroom} from "../../../api/chatroom";
 import {Autocomplete, CircularProgress, IconButton, TextField} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import './styles.css'
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css'
 import LogoutIcon from '@mui/icons-material/Logout';
+import {getUserId} from "../../../hooks/authentication";
+import {getAccounts, getUser} from "../../../api/account";
+import {Account} from "../../../types/Account";
+import {mantineErrorNotification} from "../../common/mantineNotification";
 
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
@@ -14,25 +18,40 @@ interface AllConversationsProps {
 
 export const AllConversations: FC<AllConversationsProps> = ({onSelectConversation}) => {
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
-    const [users, setUsers] = useState<string[]>([]);
+    const [otherUsers, setOtherUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchConversations();
-        fetchUsers();
+        fetchOtherUsers();
     }, []);
 
     const fetchConversations = async () => {
-        const conversations = await getAllConversations();
-        if (conversations) {
-            setChatRooms(conversations);
+        const chatrooms = await getMyChatrooms();
+
+        for (const chatroom of chatrooms) {
+            if (chatroom.type === 'Direct') {
+                const otherUserId = chatroom.membersIds.find((id) => id !== getUserId());
+                if (otherUserId) {
+                    const user = await getUser(otherUserId);
+                    chatroom.name = user.name;
+                } else {
+                    chatroom.name = 'Unknown';
+                }
+            }
+        }
+
+        if (chatrooms) {
+            setChatRooms(chatrooms);
         }
     };
 
-    const fetchUsers = async () => {
-        const users = await getAllUsers();
-        setUsers(users.map((user: any) => user.name));
+    const fetchOtherUsers = async () => {
+        const myId = getUserId();
+        const accounts = await getAccounts();
+        accounts.filter((account: Account) => account.id !== myId);
+        setOtherUsers(accounts.map((user: any) => user.name));
     };
 
     const checkIdOfChatroom = (userName: string): string => {
@@ -50,13 +69,14 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
         if (!userName) return;
 
         try {
-            const newChatRoom = await createNewChatroom(userName);
+            const newChatRoom = await createDirectChatroom(userName);
             fetchConversations();
         } catch (error: any) {
             if (error.status === 409) {
                 const chatroomId = await checkIdOfChatroom(userName);
                 window.location.href = `/messages/${chatroomId}`;
             } else {
+                mantineErrorNotification('Failed to create chatroom with ' + userName);
                 console.error("Error creating chatroom:", error);
             }
         }
@@ -79,7 +99,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
     return (
         <div id="mainChatroomsList">
             <Autocomplete
-                options={users}
+                options={otherUsers}
                 value={selectedUser}
                 onChange={(event, newValue) => {
                     setSelectedUser(newValue);
@@ -96,7 +116,8 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
             </div>
             <ul id={'openConversationsList'} className={'custom-scrollbar'}>
                 {chatRooms.map((chatRoom) => (
-                    <li className={'singleConversationShortcut'} key={chatRoom.id} onClick={() => handleSelectConversation(chatRoom.id)}>
+                    <li className={'singleConversationShortcut'} key={chatRoom.id}
+                        onClick={() => handleSelectConversation(chatRoom.id)}>
                         <img src={defaultProfileImage} alt="defaultProfileImage"/>
                         {chatRoom.name}
                         <IconButton onClick={() => handleLeaveChatroom(chatRoom.id)}>
