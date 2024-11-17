@@ -141,7 +141,7 @@ public class RepositoriesExtensionsTests
         // Act & Assert
         var ex = Assert.ThrowsAsync<ArgumentException>(
             () => _musicianRoleRepository.GetOrCreateAsync(emptyRoleName));
-        Assert.That(ex.Message, Is.EqualTo("Role name cannot be empty or whitespace."));
+        Assert.That(ex.Message, Is.EqualTo("Role name cannot be empty or whitespace"));
     }
 
     [Test]

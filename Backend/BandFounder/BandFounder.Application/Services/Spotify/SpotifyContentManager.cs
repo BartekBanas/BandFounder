@@ -39,8 +39,8 @@ public class SpotifyContentManager : ISpotifyContentManager
     {
         var targetUserId = userId ?? _authenticationService.GetUserId();
 
-        var account = await _accountRepository.GetOneRequiredAsync(
-            targetUserId, nameof(Artist.Id), "Artists", "Artists.Genres");
+        var account = await _accountRepository.GetOneRequiredAsync(key: targetUserId,
+            keyPropertyName: nameof(Artist.Id), includeProperties: ["Artists", "Artists.Genres"]);
         
         var wagedGenres = new Dictionary<string, int>();
 

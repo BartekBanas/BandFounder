@@ -38,11 +38,9 @@ public class ChatroomService : IChatroomService
     public async Task<ChatroomDto> CreateChatroom(ChatroomCreateDto request)
     {
         var userId = _authenticationService.GetUserId();
-
         await _accountService.GetAccountAsync(userId);
 
         var newChatRoom = await CreateChatroomEntity(userId, request);
-
         await _chatRoomRepository.CreateAsync(newChatRoom);
 
         await _chatRoomRepository.SaveChangesAsync();
@@ -68,8 +66,8 @@ public class ChatroomService : IChatroomService
         
         var account = await _accountService.GetDetailedAccount(userId);
         
-        var usersChatrooms = await _chatRoomRepository.GetAsync(chatRoom => chatRoom.Members.Contains(account),
-            includeProperties: nameof(Chatroom.Members));
+        var usersChatrooms = await _chatRoomRepository.GetAsync(
+            chatRoom => chatRoom.Members.Contains(account), includeProperties: nameof(Chatroom.Members));
         
         return usersChatrooms.ToDto();
     }

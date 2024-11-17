@@ -5,7 +5,7 @@ namespace BandFounder.Domain.Entities;
 public class Account : Entity
 {
     [Key] 
-    public required Guid Id { get; set; }
+    public Guid Id { get; set; }
     
     [MinLength(3), MaxLength(32)]
     public required string Name { get; set; }
@@ -15,7 +15,7 @@ public class Account : Entity
     [EmailAddress]
     public required string Email { get; set; }
     
-    public required DateTime DateCreated { get; set; } = DateTime.UtcNow;
+    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
     
     public virtual SpotifyTokens? SpotifyTokens { get; set; }
     
