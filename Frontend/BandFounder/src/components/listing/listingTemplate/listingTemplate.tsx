@@ -154,13 +154,24 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                     <p>Description</p>
                 </div>
             </div>
-            <Modal
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}  // Close modal when clicked outside
-            >
-                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()}>
+            <Modal open={modalOpen}
+                   onClose={() => setModalOpen(false)}>
+                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()} className={'wholeEditBody'}>
                     <div id={'saveButtonEditListing'}>
                         <Button variant={'contained'} color={'success'} onClick={handlePostListing}>Post</Button>
+                        <div>
+                            <InputLabel id="typeSelectLabel" sx={{fontSize: '12px'}}>Type</InputLabel>
+                            <Select
+                                labelId="typeSelectLabel"
+                                id="typeSelectLabel"
+                                value={listingType}
+                                label="Type"
+                                onChange={handleEditType}
+                            >
+                                <MenuItem value={'CollaborativeSong'}>Song</MenuItem>
+                                <MenuItem value={'Band'}>Band</MenuItem>
+                            </Select>
+                        </div>
                     </div>
                     <div className={'listing-editor'}>
                         <div className={'editorHeader'}>
@@ -169,24 +180,11 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                 value={listingName}
                                 onChange={handleNameChange}
                                 variant="filled"
-                                color={'success'}
+                                color={'info'}
                                 style={{minWidth: '50%'}}
+                                helperText={`${listingName.length}/35`}
+                                inputProps={{maxLength: 35}}
                             />
-                            <div>
-                                <InputLabel id="typeSelectLabel">Type</InputLabel>
-                                <Select
-                                    labelId="typeSelectLabel"
-                                    id="typeSelectLabel"
-                                    value={listingType}
-                                    label="Type"
-                                    onChange={handleEditType}
-                                >
-                                    <MenuItem value={'CollaborativeSong'}>Song</MenuItem>
-                                    <MenuItem value={'Band'}>Band</MenuItem>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className={'editorUnderHeader'}>
                             <Autocomplete
                                 options={genres}
                                 freeSolo
@@ -197,12 +195,13 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                                sx={{fontSize: '20px !important'}}/>
                                 )}
                                 sx={{
-                                    minWidth: `${lengthOfGenre(listingGenre.length)}%`,
-                                    maxWidth: '30%',
+                                    minWidth: `${lengthOfGenre(listingGenre.length) + 10}%`,
+                                    maxWidth: '40%',
                                     marginTop: '5px',
                                     fontSize: '12px !important',
                                     transition: 'width 1s ease-in-out',
                                 }}
+                                value={listingGenre}
                             />
                         </div>
                         <div className={'editorBody'}>
@@ -211,10 +210,10 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                 value={listingDescription}
                                 onChange={(event) => setListingDescription(event.target.value)}
                                 variant="filled"
-                                color="success"
-                                style={{minWidth: '70%'}}
+                                color="info"
+                                style={{minWidth: '60%'}}
                                 multiline
-                                rows={2}  // Adjust the number of rows as needed
+                                rows={2}
                                 helperText={`${listingDescription.length}/220`}
                                 inputProps={{maxLength: 220}}
                             />
@@ -244,6 +243,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                             renderInput={(params) => (
                                                 <TextField {...params} label="Role" variant="outlined" fullWidth/>
                                             )}
+                                            value={slot.role}
                                             sx={{width: '200%'}}
                                         />
                                     </div>
@@ -266,7 +266,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                             ))}
 
                             <div id={'addRolesButton'}>
-                                <Button variant={'contained'} color={'success'} onClick={handleAddNewRole}>Add new
+                                <Button variant={'contained'} color={'info'} onClick={handleAddNewRole}>Add new
                                     role</Button>
                             </div>
                         </div>

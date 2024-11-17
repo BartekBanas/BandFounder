@@ -180,7 +180,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username,isMyProfile}) => {
                 </ul>
             </div>
             {isMyProfile ?
-                <div className={'musicRoles'}>
+                <div className={'musicRoles custom-scrollbar'}>
                     <p>Music Roles: </p>
                     <Box className={'musicRolesList'}>
                         <List>

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {getGenres, getListing, getMusicianRoles, updateListing} from './api';
+import {deleteListing, getGenres, getListing, getMusicianRoles, updateListing} from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './style.css';
 import './listingCreator.css';
@@ -21,6 +21,8 @@ import {ListingUpdated} from "../../../types/ListingUpdated";
 import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
 import {getUser} from "../../../api/account";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 
 interface ListingPrivateProps {
     listingId: string;
@@ -135,6 +137,15 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
         }
     }
 
+    const handleDeleteListing = async (listingId:string) => {
+        try {
+            await deleteListing(listingId);
+            window.location.reload();
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
     const handleDeleteRole = (slotId: string) => {
         const newSlots = listingMusicianSlots.filter((slot: any) => slot.id !== slotId);
         setListingMusicianSlots(newSlots);
@@ -161,9 +172,16 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     }
 
     return (
-        <div className={'listing'}>
+        <div className={'listing custom-scrollbar'}>
             <div className={'editButton'}>
-                <Button variant={'contained'} color={'error'} onClick={handleOpen}>Edit</Button>
+                <Button variant={'contained'} color={'info'} onClick={handleOpen}>
+                    <span>Edit</span> <EditIcon />
+                </Button>
+            </div>
+            <div className={'deleteButton'}>
+                <Button variant={'contained'} color={'warning'} onClick={() => handleDeleteListing(listingId)}>
+                    <span>Delete</span> <DeleteIcon />
+                </Button>
             </div>
             <div className={'listingHeader'}>
                 <div className={'ownerListingElements'}>
@@ -219,7 +237,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                 value={listingName}
                                 onChange={handleNameChange}
                                 variant="filled"
-                                color={'success'}
+                                color={'info'}
                                 style={{minWidth: '50%'}}
                                 helperText={`${listingName.length}/35`}
                                 inputProps={{maxLength: 35}}
@@ -250,10 +268,10 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                 value={listingDescription}
                                 onChange={(event) => setListingDescription(event.target.value)}
                                 variant="filled"
-                                color="success"
+                                color="info"
                                 style={{minWidth: '60%'}}
                                 multiline
-                                rows={2}  // Adjust the number of rows as needed
+                                rows={3}  // Adjust the number of rows as needed
                                 helperText={`${listingDescription.length}/220`}
                                 inputProps={{maxLength: 220}}
                             />
@@ -306,7 +324,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                             ))}
 
                             <div id={'addRolesButton'}>
-                                <Button variant={'contained'} color={'success'} onClick={handleAddNewRole}>Add new
+                                <Button variant={'contained'} color={'info'} onClick={handleAddNewRole}>Add new
                                     role</Button>
                             </div>
                         </div>
