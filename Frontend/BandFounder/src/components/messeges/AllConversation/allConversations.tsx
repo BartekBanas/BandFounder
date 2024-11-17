@@ -1,16 +1,16 @@
 import {FC, useState, useEffect} from "react";
 import {ChatRoom} from "../../../types/ChatRoom";
 import {getMyChatrooms, createDirectChatroom, leaveChatroom} from "../../../api/chatroom";
-import {Autocomplete, CircularProgress, IconButton, TextField} from "@mui/material";
+import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import './styles.css'
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css'
-import LogoutIcon from '@mui/icons-material/Logout';
 import {getUserId} from "../../../hooks/authentication";
 import {getAccounts, getUser} from "../../../api/account";
 import {Account} from "../../../types/Account";
 import {mantineErrorNotification} from "../../common/mantineNotification";
+import {LeaveChatroomModal} from "./LeaveChatroomModal";
 
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
@@ -20,12 +20,13 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [otherUsers, setOtherUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
+    const [refreshConversations, setRefreshConversations] = useState<boolean>(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchConversations();
         fetchOtherUsers();
-    }, []);
+    }, [refreshConversations]);
 
     const fetchConversations = async () => {
         const chatrooms = await getMyChatrooms();
@@ -120,9 +121,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
                         onClick={() => handleSelectConversation(chatRoom.id)}>
                         <img src={defaultProfileImage} alt="defaultProfileImage"/>
                         {chatRoom.name}
-                        <IconButton onClick={() => handleLeaveChatroom(chatRoom.id)}>
-                            <LogoutIcon/>
-                        </IconButton>
+                        <LeaveChatroomModal chatroom={chatRoom} setRefreshConversations={setRefreshConversations}/>
                     </li>
                 ))}
             </ul>
