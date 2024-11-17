@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import ProfileShow from "../components/profile/ProfileShow";
 import { getCurrentUser } from "../components/common/frequentlyUsed";
 import ListingsListPrivate from "../components/listing/listingOwner/listingsListPrivate";
+import './../assets/CustomScrollbar.css'
 import './styles/profilePage.css';
 
 export const ProfilePageOwner = () => {

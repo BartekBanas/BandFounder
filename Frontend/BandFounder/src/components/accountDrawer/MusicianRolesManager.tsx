@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {getMyMusicianRoles} from './api';
+import {getMyMusicianRoles} from '../../api/account';
 import MusicianRolesList from './MusicianRolesList';
 import {AddMusicianRoleModal} from './AddMusicianRoleModal';
 import {Typography} from "@mui/material";

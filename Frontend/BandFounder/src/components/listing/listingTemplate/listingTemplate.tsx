@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { getListing, postListing } from './api';
+import React, {useEffect, useState} from 'react';
+import {postListing} from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './style.css';
 import './listingCreator.css'
@@ -12,15 +12,16 @@ import {
     Select,
     MenuItem,
     IconButton,
-    SelectChangeEvent
+    Autocomplete
 } from '@mui/material';
-import getUser from "../../common/frequentlyUsed";
 import Cookies from "universal-cookie";
 import CloseIcon from "@mui/icons-material/Close";
-import { getGenres, getMusicianRoles, updateListing } from "../listingOwner/api";
-import { ListingUpdated } from "../../../types/ListingUpdated";
+import {getGenres, getMusicianRoles} from "../listingOwner/api";
+import {ListingUpdated} from "../../../types/ListingUpdated";
+import {getUser} from "../../../api/account";
 
-interface ListingTemplateProps {}
+interface ListingTemplateProps {
+}
 
 const ListingTemplate: React.FC<ListingTemplateProps> = () => {
     const [user, setUser] = useState<any>(null);
@@ -71,9 +72,6 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
         setModalOpen(true);
     };
 
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-
     const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setListingName(event.target.value);
     }
@@ -82,14 +80,10 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
         setListingType(prevType => prevType === 'CollaborativeSong' ? 'Band' : 'CollaborativeSong');
     };
 
-    const handleGenreSelectChange = (event: SelectChangeEvent<string>) => {
-        setListingGenre(event.target.value);
-    };
-
     const handleEditSlot = (slotId: string) => {
         const newSlots = listingMusicianSlots.map((slot: any) => {
             if (slot.id === slotId) {
-                return { ...slot, status: slot.status === 'Available' ? 'Filled' : 'Available' };
+                return {...slot, status: slot.status === 'Available' ? 'Filled' : 'Available'};
             }
             return slot;
         });
@@ -100,7 +94,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
         const newSlots = listingMusicianSlots.map((slot: any) => {
             if (slot.id === slotId) {
                 console.log('role', role);
-                return { ...slot, role };
+                return {...slot, role};
             }
             return slot;
         });
@@ -143,7 +137,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
             <div className="listingTemplate" onClick={handleListingClick}>
                 <div className="listingHeader">
                     <div className="ownerListingElements">
-                        <img src={defaultProfileImage} alt="Default Profile" />
+                        <img src={defaultProfileImage} alt="Default Profile"/>
                         <p>{user?.name}</p>
                     </div>
                     <div className="listingTitle">
@@ -164,7 +158,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                 open={modalOpen}
                 onClose={() => setModalOpen(false)}  // Close modal when clicked outside
             >
-                <Box sx={{ ...modalStyle }} onClick={(e) => e.stopPropagation()}>
+                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()}>
                     <div id={'saveButtonEditListing'}>
                         <Button variant={'contained'} color={'success'} onClick={handlePostListing}>Post</Button>
                     </div>
@@ -176,7 +170,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                 onChange={handleNameChange}
                                 variant="filled"
                                 color={'success'}
-                                style={{ minWidth: '50%' }}
+                                style={{minWidth: '50%'}}
                             />
                             <div>
                                 <InputLabel id="typeSelectLabel">Type</InputLabel>
@@ -193,20 +187,23 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                             </div>
                         </div>
                         <div className={'editorUnderHeader'}>
-                            <div>
-                                <InputLabel id="genreSelectLabel">Genre</InputLabel>
-                                <Select
-                                    labelId="genreSelectLabel"
-                                    id="genreSelectLabel"
-                                    value={listingGenre}
-                                    label="Genre"
-                                    onChange={handleGenreSelectChange}
-                                >
-                                    {genres.map((genre, index) => (
-                                        <MenuItem key={index} value={genre}>{genre}</MenuItem>
-                                    ))}
-                                </Select>
-                            </div>
+                            <Autocomplete
+                                options={genres}
+                                freeSolo
+                                id={'genreSelectLabel'}
+                                onInputChange={(event, value) => setListingGenre(value)}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Genre" variant="outlined" fullWidth
+                                               sx={{fontSize: '20px !important'}}/>
+                                )}
+                                sx={{
+                                    minWidth: `${lengthOfGenre(listingGenre.length)}%`,
+                                    maxWidth: '30%',
+                                    marginTop: '5px',
+                                    fontSize: '12px !important',
+                                    transition: 'width 1s ease-in-out',
+                                }}
+                            />
                         </div>
                         <div className={'editorBody'}>
                             <TextField
@@ -215,9 +212,11 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                 onChange={(event) => setListingDescription(event.target.value)}
                                 variant="filled"
                                 color="success"
-                                style={{ minWidth: '70%' }}
+                                style={{minWidth: '70%'}}
                                 multiline
                                 rows={2}  // Adjust the number of rows as needed
+                                helperText={`${listingDescription.length}/220`}
+                                inputProps={{maxLength: 220}}
                             />
                         </div>
                         <div className={'editorFooter'}>
@@ -226,7 +225,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                      className={`listingRoleEdited ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
                                     <div className={'kindaHeader'}>
                                         <div>
-                                            <img src={defaultProfileImage} alt="Default Profile" />
+                                            <img src={defaultProfileImage} alt="Default Profile"/>
                                         </div>
                                         <IconButton
                                             aria-label="delete"
@@ -234,35 +233,30 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                                             onClick={() => handleDeleteRole(slot.id)}
                                             style={{}}
                                         >
-                                            <CloseIcon fontSize="small" />
+                                            <CloseIcon fontSize="small"/>
                                         </IconButton>
                                     </div>
                                     <div className={'underEditorFooter'}>
-                                        <InputLabel id="roleSelectLabel"
-                                                    style={{ fontSize: '12px', maxHeight: '35px' }}>Role</InputLabel>
-                                        <Select
-                                            labelId="roleSelectLabel"
-                                            id="roleSelectLabel"
-                                            value={slot.role}
-                                            label="Role"
-                                            onChange={(event) => handleEditMusicianRole(slot.id, event.target.value)}
-                                            style={{ fontSize: '12px', maxHeight: '35px' }}
-                                        >
-                                            {roles.map((role, index) => (
-                                                <MenuItem key={index} value={role}>{role}</MenuItem>
-                                            ))}
-                                        </Select>
+                                        <Autocomplete
+                                            options={roles}
+                                            freeSolo
+                                            onInputChange={(event, value) => handleEditMusicianRole(slot.id, value)}
+                                            renderInput={(params) => (
+                                                <TextField {...params} label="Role" variant="outlined" fullWidth/>
+                                            )}
+                                            sx={{width: '200%'}}
+                                        />
                                     </div>
                                     <div className={'underEditorFooter'}>
                                         <InputLabel id="statusSelectLabel"
-                                                    style={{ fontSize: '12px', maxHeight: '35px' }}>Status</InputLabel>
+                                                    style={{fontSize: '12px', maxHeight: '35px'}}>Status</InputLabel>
                                         <Select
                                             labelId="statusSelectLabel"
                                             id="statusSelectLabel"
                                             value={slot.status}
                                             label="Status"
                                             onChange={() => handleEditSlot(slot.id)}
-                                            style={{ fontSize: '12px', maxHeight: '35px' }}
+                                            style={{fontSize: '12px', maxHeight: '35px'}}
                                         >
                                             <MenuItem value={'Available'}>Available</MenuItem>
                                             <MenuItem value={'Filled'}>Filled</MenuItem>
@@ -300,3 +294,17 @@ const modalStyle = {
 };
 
 export default ListingTemplate;
+
+export const lengthOfGenre = (number: number) => {
+    if (number < 5) {
+        return 15;
+    } else if (number < 10) {
+        return 15;
+    } else if (number < 15) {
+        return 20;
+    } else if (number < 20) {
+        return 25;
+    } else {
+        return 28;
+    }
+}

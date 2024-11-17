@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
-import {List, ListItem, ListItemText, IconButton, Typography, CircularProgress, Box, Chip} from '@mui/material';
+import {List, ListItem, Typography, CircularProgress, Box, Chip} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {deleteMyMusicianRole} from './api';
+import {deleteMyMusicianRole} from '../../api/account';
 
 interface MusicianRolesListProps {
     roles: string[];

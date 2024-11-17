@@ -2,9 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {getAccount, getGUID, getTopArtists, getTopGenres} from './api';
 import { Account } from "../../types/Account";
 import './profile.css';
-import {getMyMusicianRoles, deleteMyMusicianRole, getMusicianRoles} from '../accountDrawer/api';
-import MusicianRolesList from "../accountDrawer/MusicianRolesList";
-import {AddMusicianRoleModal} from "../accountDrawer/AddMusicianRoleModal";
 import {
     Autocomplete,
     Box,
@@ -28,6 +25,8 @@ import {
 import {API_URL} from "../../config";
 import {getAuthToken} from "../../hooks/authentication";
 import DeleteIcon from "@mui/icons-material/Delete";
+import {deleteMyMusicianRole, getMyMusicianRoles} from "../../api/account";
+import {getMusicianRoles} from "../../api/metadata";
 
 interface ProfileShowProps {
     username: string;

@@ -16,7 +16,7 @@ public interface IListingService
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
     Task<Listing> CreateListingAsync(ListingCreateDto dto);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
-    Task ContactOwner(Guid listingId);
+    Task<ChatRoomDto> ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
     Task UpdateListing(Guid listingId, ListingCreateDto dto);
 }
@@ -119,7 +119,15 @@ public class ListingService : IListingService
     {
         var userId = accountId ?? UserId;
         
-        var listing = await _listingRepository.GetOneRequiredAsync(listingId);
+        Listing listing;
+        try
+        {
+            listing = await _listingRepository.GetOneRequiredAsync(listingId);
+        }
+        catch (Exception e)
+        {
+            throw new NotFoundError("Could not find listing");
+        }
         
         var commonArtists = await _musicTasteService.GetCommonArtists(userId, listing.OwnerId);
         var commonGenres = await _musicTasteService.GetCommonGenres(userId, listing.OwnerId);
@@ -132,11 +140,7 @@ public class ListingService : IListingService
         var userId = _authenticationService.GetUserId();
         await _accountService.GetAccountAsync(userId);
 
-        Genre? projectGenre = null;
-        if (dto.Genre is not null)
-        {
-            projectGenre = await _genreRepository.GetOrCreateAsync(dto.Genre);
-        }
+        var projectGenre = string.IsNullOrWhiteSpace(dto.Genre) ? null : await _genreRepository.GetOrCreateAsync(dto.Genre);
 
         var listing = new Listing
         {
@@ -144,12 +148,20 @@ public class ListingService : IListingService
             Name = dto.Name,
             Genre = projectGenre,
             Type = dto.Type,
-            Description = dto.Description
+            Description = dto.Description ?? ""
         };
 
         foreach (var slotDto in dto.MusicianSlots)
         {
-            var role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.Role);
+            MusicianRole role;
+            try
+            {
+                role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.Role);
+            }
+            catch (Exception e)
+            {
+                throw new BadRequestError(e.Message);
+            }
 
             var musicianSlot = new MusicianSlot
             {
@@ -183,7 +195,7 @@ public class ListingService : IListingService
         await _musicianSlotRepository.SaveChangesAsync();
     }
 
-    public async Task ContactOwner(Guid listingId)
+    public async Task<ChatRoomDto> ContactOwner(Guid listingId)
     {
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
         
@@ -193,7 +205,7 @@ public class ListingService : IListingService
             InvitedAccountId = listing.OwnerId
         };
 
-        await _chatroomService.CreateChatroom(chatroomCreateDto);
+        return await _chatroomService.CreateChatroom(chatroomCreateDto);
     }
 
     public async Task DeleteListing(Guid listingId)
@@ -224,10 +236,10 @@ public class ListingService : IListingService
 
         // Update basic listing details
         listing.Name = dto.Name;
-        listing.Genre = await _genreRepository.GetOrCreateAsync(dto.Genre);
+        listing.Genre = string.IsNullOrWhiteSpace(dto.Genre) ? null : await _genreRepository.GetOrCreateAsync(dto.Genre);
         listing.GenreName = dto.Genre;
         listing.Type = dto.Type;
-        listing.Description = dto.Description;
+        listing.Description = dto.Description ?? "";
 
         // Process MusicianSlots
         var existingSlots = listing.MusicianSlots.ToList();
@@ -270,7 +282,6 @@ public class ListingService : IListingService
         await _listingRepository.UpdateAsync(listing, listing.Id);
         await _listingRepository.SaveChangesAsync();
     }
-
 
     private void FilterListings(Account account, List<Listing> listings, FeedFilterOptions filterOptions)
     {

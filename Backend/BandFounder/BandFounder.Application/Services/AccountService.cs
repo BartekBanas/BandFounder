@@ -210,8 +210,16 @@ public class AccountService : IAccountService
         
         var account = await _accountRepository.GetOneRequiredAsync(
             key: accountId, keyPropertyName:nameof(Account.Id), includeProperties: nameof(Account.MusicianRoles));
-        
-        var musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
+
+        MusicianRole musicianRole;
+        try
+        {
+            musicianRole = await _musicianRoleRepository.GetOrCreateAsync(role);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new BadRequestError(exception.Message);
+        }
         
         if (account.MusicianRoles.Any(currentRole => currentRole.Name == musicianRole.Name))
         {
@@ -289,7 +297,16 @@ public class AccountService : IAccountService
             throw new BadRequestError($"Artist {artistName} is already linked to this account");
         }
         
-        var artist = await _artistRepository.GetOrCreateAsync(artistName);
+        Artist artist;
+        try
+        {
+            artist = await _artistRepository.GetOrCreateAsync(artistName);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new BadRequestError(exception.Message);
+        }
+        
         account.Artists.Add(artist);
 
         await _accountRepository.SaveChangesAsync();

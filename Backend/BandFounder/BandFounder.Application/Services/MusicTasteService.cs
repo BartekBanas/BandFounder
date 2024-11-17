@@ -23,8 +23,8 @@ public class MusicTasteService : IMusicTasteService
         var user1 = await _accountService.GetDetailedAccount(requesterId);
         var user2 = await _accountService.GetDetailedAccount(targetUserId);
         
-        var user1ArtistIds = user1.Artists.Select(artist => artist.Id).ToHashSet();
-        var user2ArtistIds = user2.Artists.Select(artist => artist.Id).ToHashSet();
+        var user1ArtistIds = user1.Artists.Select(artist => artist.Name).ToHashSet();
+        var user2ArtistIds = user2.Artists.Select(artist => artist.Name).ToHashSet();
 
         var commonArtists = user1ArtistIds.Intersect(user2ArtistIds);
 
