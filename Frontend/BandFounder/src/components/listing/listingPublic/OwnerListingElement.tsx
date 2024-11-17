@@ -5,6 +5,7 @@ import {mantineInformationNotification} from "../../common/mantineNotification";
 import {commonTaste} from "../../../types/CommonTaste";
 import {Listing} from "../../../types/Listing";
 import {contactListingOwner, getCommonTaste} from "../../../api/listing";
+import {getChatroomByOtherUserId} from "../../messeges/AllConversation/api";
 
 const OwnerListingElement = ({listing}: { listing: Listing }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -28,12 +29,21 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
         setAnchorEl(null);
     };
 
-    const handleAction = () => {
+    const handleAction = async () => {
         mantineInformationNotification('Action performed');
+
         if (listing?.ownerId) {
-            contactListingOwner(listing.id);
+            const response = await contactListingOwner(listing.id);
+            console.log(response);
+            handleClose();
+            if (response) {
+                window.location.href = '/messages/' + response.id;
+            } else {
+                const contactId = listing.ownerId;
+                const chatRoomId = await getChatroomByOtherUserId(contactId);
+                window.location.href = '/messages/' + chatRoomId;
+            }
         }
-        handleClose();
     };
 
     return (
