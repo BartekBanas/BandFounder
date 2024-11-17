@@ -18,7 +18,7 @@ export const LeaveChatroomModal: FC<LeaveChatroomModalProps> = ({chatroom, setRe
     const handleLeaveChatroom = async () => {
         try {
             await leaveChatroom(chatroom.id);
-            setRefreshConversations(prev => !prev);
+            window.location.href = '/messages';
         } catch (error) {
             mantineErrorNotification("Failed to leave chatroom");
         }

@@ -51,8 +51,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
     const fetchOtherUsers = async () => {
         const myId = getUserId();
         const accounts = await getAccounts();
-        accounts.filter((account: Account) => account.id !== myId);
-        setOtherUsers(accounts.map((user: any) => user.name));
+        setOtherUsers(accounts.filter((account: Account) => account.id !== myId).map((user: any) => user.name));
     };
 
     const checkIdOfChatroom = (userName: string): string => {
