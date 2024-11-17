@@ -10,9 +10,9 @@ namespace BandFounder.Application.Services;
 
 public interface IChatroomService
 {
-    Task<ChatRoomDto> CreateChatroom(ChatroomCreateDto request);
-    Task<ChatRoomDto> GetChatroom(Guid chatroomId);
-    Task<IEnumerable<ChatRoomDto>> GetUserChatrooms();
+    Task<ChatroomDto> CreateChatroom(ChatroomCreateDto request);
+    Task<ChatroomDto> GetChatroom(Guid chatroomId);
+    Task<IEnumerable<ChatroomDto>> GetUserChatrooms();
     Task DeleteChatroom(Guid chatroomId);
     Task InviteToChatroom(Guid chatroomId, Guid invitedUserId);
     Task LeaveChatroom(Guid chatroomId);
@@ -35,7 +35,7 @@ public class ChatroomService : IChatroomService
         _accountService = accountService;
     }
 
-    public async Task<ChatRoomDto> CreateChatroom(ChatroomCreateDto request)
+    public async Task<ChatroomDto> CreateChatroom(ChatroomCreateDto request)
     {
         var userId = _authenticationService.GetUserId();
 
@@ -50,7 +50,7 @@ public class ChatroomService : IChatroomService
         return newChatRoom.ToDto();
     }
 
-    public async Task<ChatRoomDto> GetChatroom(Guid chatroomId)
+    public async Task<ChatroomDto> GetChatroom(Guid chatroomId)
     {
         var userClaims = _authenticationService.GetUserClaims();
 
@@ -62,7 +62,7 @@ public class ChatroomService : IChatroomService
         return chatroom.ToDto();
     }
 
-    public async Task<IEnumerable<ChatRoomDto>> GetUserChatrooms()
+    public async Task<IEnumerable<ChatroomDto>> GetUserChatrooms()
     {
         var userId = _authenticationService.GetUserId();
         

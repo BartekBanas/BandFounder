@@ -88,16 +88,17 @@ public static class DtoMapper
         };
     }
     
-    public static IEnumerable<ChatRoomDto> ToDto(this IEnumerable<Chatroom> chatrooms)
+    public static IEnumerable<ChatroomDto> ToDto(this IEnumerable<Chatroom> chatrooms)
     {
         return chatrooms.Select(chatroom => chatroom.ToDto());
     }
 
-    public static ChatRoomDto ToDto(this Chatroom chatroom)
+    public static ChatroomDto ToDto(this Chatroom chatroom)
     {
-        return new ChatRoomDto()
+        return new ChatroomDto()
         {
             Id = chatroom.Id,
+            Type = chatroom.ChatRoomType,
             Name = chatroom.Name,
             MembersIds = chatroom.Members.Select(member => member.Id).ToList()
         };
