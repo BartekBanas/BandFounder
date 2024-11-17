@@ -20,7 +20,13 @@ export function removeAuthToken () {
 }
 
 export function getUserId () {
-    return Cookies.get('user_id');
+    const userId = Cookies.get('user_id');
+    if (!userId) {
+        window.location.href = '/login/expiredSession';
+        throw new Error('User ID not found');
+    }
+
+    return userId;
 }
 
 export function setUserId (id: string) {

@@ -19,7 +19,7 @@
     margin:0;
 }
 
-.singleConversationShrotcut{
+.singleConversationShortcut{
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -27,11 +27,11 @@
     padding: 5px;
 }
 
-.singleConversationShrotcut:last-of-type{
+.singleConversationShortcut:last-of-type{
     border-bottom: none;
 }
 
-.singleConversationShrotcut:hover{
+.singleConversationShortcut:hover{
     background-color: #3f3f3f;
     cursor: pointer;
 }

@@ -20,21 +20,19 @@ export async function getCommonTaste(listingId: string): Promise<commonTaste> {
 }
 
 export async function contactListingOwner(listingId: string): Promise<ChatroomDto | undefined> {
-    try{
+    try {
         const response = await fetch(`${API_URL}/listings/${listingId}/contact`, {
             method: 'POST',
             headers: authorizedHeaders()
         });
 
         if (!response.ok) {
-            mantineErrorNotification('Failed to contact the listing owner');
             throw new Error('Failed to contact the listing owner');
         }
 
         const chatroom: ChatroomDto = await response.json();
         return chatroom;
-    }
-    catch(error){
+    } catch (error) {
         console.error(error);
     }
 }
