@@ -25,7 +25,7 @@ public class ErrorHandlingMiddleware : IMiddleware
             var validationFailure = ex.Errors.FirstOrDefault();
             await HandleErrorAsync(context, StatusCodes.Status400BadRequest, validationFailure!.ErrorMessage);
         }
-        catch (Exception ex) when (ex is BadRequestError)
+        catch (Exception ex) when (ex is BadRequestError or CustomValidationException)
         {
             await HandleErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
