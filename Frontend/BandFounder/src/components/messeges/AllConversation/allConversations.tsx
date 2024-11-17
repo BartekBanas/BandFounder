@@ -1,35 +1,24 @@
-import { FC, useState, useEffect } from "react";
-import { ChatRoom } from "../../../types/ChatRoom";
-import { getAllConversations, getAllUsers, createNewChatroom, leaveChatroom } from "./api";
+import {FC, useState, useEffect} from "react";
+import {ChatRoom} from "../../../types/ChatRoom";
+import {getAllConversations, getAllUsers, createNewChatroom, leaveChatroom} from "./api";
 import {Autocomplete, CircularProgress, IconButton, TextField} from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import './styles.css'
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css'
-import CancelPresentationIcon from '@mui/icons-material/CancelPresentation';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
 }
 
-export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversation }) => {
+export const AllConversations: FC<AllConversationsProps> = ({onSelectConversation}) => {
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [users, setUsers] = useState<string[]>([]);
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchConversations = async () => {
-            const conversations = await getAllConversations();
-            if (conversations) {
-                setChatRooms(conversations);
-            }
-        };
-        const fetchUsers = async () => {
-            const users = await getAllUsers();
-            setUsers(users.map((user: any) => user.name));
-        };
-
         fetchConversations();
         fetchUsers();
     }, []);
@@ -39,6 +28,11 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
         if (conversations) {
             setChatRooms(conversations);
         }
+    };
+
+    const fetchUsers = async () => {
+        const users = await getAllUsers();
+        setUsers(users.map((user: any) => user.name));
     };
 
     const checkIdOfChatroom = (userName: string): string => {
@@ -91,21 +85,22 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
                     setSelectedUser(newValue);
                     handleCreateChatroom(newValue);
                 }}
-                renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined" />}
-                style={{ margin: "20px", maxWidth: "100%" }}
+                renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined"/>}
+                style={{margin: "20px", maxWidth: "100%"}}
             />
-            <div style={{display: 'flex', justifyContent: 'center', alignItems:'center'}}>
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                 {
-                    chatRooms.length > 0 ? <h2>Open Conversations</h2> : <CircularProgress size={30} sx={{marginBottom:'20px'}}/>
+                    chatRooms.length > 0 ? <h2>Open Conversations</h2> :
+                        <CircularProgress size={30} sx={{marginBottom: '20px'}}/>
                 }
             </div>
             <ul id={'openConversationsList'} className={'custom-scrollbar'}>
                 {chatRooms.map((chatRoom) => (
-                    <li className={'singleConversationShrotcut'} key={chatRoom.id} onClick={() => handleSelectConversation(chatRoom.id)}>
-                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                    <li className={'singleConversationShortcut'} key={chatRoom.id} onClick={() => handleSelectConversation(chatRoom.id)}>
+                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
                         {chatRoom.name}
                         <IconButton onClick={() => handleLeaveChatroom(chatRoom.id)}>
-                            <CancelPresentationIcon />
+                            <LogoutIcon/>
                         </IconButton>
                     </li>
                 ))}
