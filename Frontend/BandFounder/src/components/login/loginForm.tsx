@@ -12,7 +12,7 @@ export const useLoginApi = () => {
         const authorizationToken = await login(usernameOrEmail, password);
         setAuthToken(authorizationToken);
 
-        const account = await getMyAccount(authorizationToken);
+        const account = await getMyAccount();
         setUserId(account.id);
 
         mantineInformationNotification(`Welcome ${account.name}`);

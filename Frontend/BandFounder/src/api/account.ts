@@ -48,7 +48,7 @@ export async function login(usernameOrEmail: string, password: string): Promise<
     return responseContent; // Authentication JWT
 }
 
-export async function getMyAccount(token: string): Promise<Account> {
+export async function getMyAccount(): Promise<Account> {
     const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'GET',
         headers: authorizedHeaders()
