@@ -6,12 +6,13 @@ import {Menu} from "@mantine/core";
 import classes = Menu.classes;
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 import {ThemeProvider} from "@mui/material";
+import '../../assets/CustomScrollbar.css'
 
 export const Main: FC = ({}) => {
 
     return (
         <ThemeProvider theme={muiDarkTheme}>
-        <div className={classes.rootContainer}>
+        <div>
             <Header/>
             <Content>
                 <Outlet/>

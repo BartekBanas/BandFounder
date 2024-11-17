@@ -2,9 +2,8 @@
 import { FC, useEffect, useState } from "react";
 import { AllConversations } from "../components/messeges/AllConversation/allConversations";
 import { SelectedConversation } from "../components/messeges/SelectedConversation/selectedConversation";
-import { muiDarkTheme } from "../assets/muiDarkTheme";
-import { ThemeProvider } from "@mui/material";
 import {useParams} from "react-router-dom";
+import './styles/MessagesPage.css'
 
 interface MessagesPageProps {
 }
@@ -18,7 +17,7 @@ export const MessagesPage: FC<MessagesPageProps> = ({}) => {
     }, [paramId]);
 
     return (
-        <div id="main">
+        <div id="mainMessagingPage">
             <AllConversations onSelectConversation={setSelectedConversationId}/>
             <SelectedConversation id={selectedConversationId || ''}/>
         </div>

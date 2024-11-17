@@ -1,9 +1,12 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { Message } from "../../../types/Message";
-import {getSelectedChatroom, getSelectedConversation, sendMessage} from "./api";
-import {getCurrentUser, getUserById} from "../../common/frequentlyUsed";
-import {TextField, IconButton, ThemeProvider} from "@mui/material";
+import { getSelectedChatroom, getSelectedConversation, sendMessage } from "./api";
+import { getCurrentUser, getUserById } from "../../common/frequentlyUsed";
+import { TextField, IconButton, Tooltip } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import "./styles.css";
+import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
+import './../../../assets/CustomScrollbar.css'
 
 interface SelectedConversationProps {
     id: string;
@@ -11,38 +14,51 @@ interface SelectedConversationProps {
 
 interface MessageWithSenderName extends Message {
     senderName: string;
+    timeSinceSent: string;
 }
 
 export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
-    const [receiverName, setReceiverName] = useState<string>("");
+    const [receiverName, setReceiverName] = useState<string>("Unknown User");
     const [reload, setReload] = useState(0);
-
-
+    const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchConversation = async () => {
             if (id) {
                 try {
                     const conversation: Message[] = await getSelectedConversation(id);
+                    const currentUser = await getCurrentUser();
 
                     const conversationWithNames = await Promise.all(
                         conversation.map(async (message) => {
                             const user = await getUserById(message.senderId);
-                            const currentUser = await getCurrentUser();
-                            if(currentUser.id === message.senderId) {
-                                return {
-                                    ...message,
-                                    senderName: "You",
-                                };
+                            const senderName = currentUser.id === message.senderId ? "You" : user?.name || "Unknown User";
+
+                            // Calculate time since the message was sent
+                            const messageTime = new Date(message.sentDate);
+                            const currentTime = new Date();
+                            const timeDifference = Math.floor((currentTime.getTime() - messageTime.getTime()) / 1000); // in seconds
+
+                            let timeSinceSent;
+                            if (timeDifference < 60) {
+                                timeSinceSent = `${timeDifference} ${timeDifference === 1 ? 'second' : 'seconds'} ago`;
+                            } else if (timeDifference < 3600) {
+                                const minutes = Math.floor(timeDifference / 60);
+                                timeSinceSent = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+                            } else if (timeDifference < 86400) {
+                                const hours = Math.floor(timeDifference / 3600);
+                                timeSinceSent = `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+                            } else {
+                                const days = Math.floor(timeDifference / 86400);
+                                timeSinceSent = `${days} ${days === 1 ? 'day' : 'days'} ago`;
                             }
-                            else {
-                                setReceiverName(user?.name || "Unknown User");
-                            }
+
                             return {
                                 ...message,
-                                senderName: user?.name || "Unknown User",
+                                senderName,
+                                timeSinceSent,
                             };
                         })
                     );
@@ -53,41 +69,41 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                 }
             }
         };
-        const fetchCurrentChatroom = async () => {
+
+        const fetchReceiverName = async () => {
             try {
                 if (id) {
-
                     const chatroom = await getSelectedChatroom(id);
-                    if (chatroom && chatroom.membersIds && chatroom.membersIds.length > 0) {
-                        const user = await getUserById(chatroom.membersIds[0]);
-                        const currentUser = await getCurrentUser();
-                        let reciverId:string;
-                        if (currentUser.id === chatroom.membersIds[0]) {
-                            reciverId = chatroom.membersIds[1];
-                        }
-                        else{
-                            reciverId = chatroom.membersIds[0];
-                        }
-                        const receiver = await getUserById(reciverId);
-                        if (receiver) {
-                            setReceiverName(receiver.name);
-                        }
+                    const currentUser = await getCurrentUser();
+                    const receiverId = chatroom.membersIds.find((memberId: string) => memberId !== currentUser.id);
+
+                    if (receiverId) {
+                        const receiver = await getUserById(receiverId);
+                        setReceiverName(receiver?.name || "Unknown User");
                     }
                 }
-            } catch (e) {
-                console.error('Error getting selected chatroom:', e);
+            } catch (error) {
+                console.error("Error fetching receiver name:", error);
             }
         };
 
         fetchConversation();
-        fetchCurrentChatroom();
-    }, [id, receiverName,reload]);
+        fetchReceiverName();
+    }, [id, reload]);
+
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [currentConversation]);
 
     const handleSendMessage = async () => {
         if (newMessage.trim()) {
-            await sendMessage(id, newMessage.trim());
-            setNewMessage("");
-            setReload(reload+1);
+            try {
+                await sendMessage(id, newMessage.trim());
+                setNewMessage("");
+                setReload((prev) => prev + 1);
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
         }
     };
 
@@ -99,30 +115,66 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     };
 
     return (
-            <div id="main">
-                <h1>Conversation with {receiverName}</h1>
-                <ul>
-                    {currentConversation.map((message, index) => (
-                        <li key={index}>
-                            {message.senderName} : {message.content}
-                        </li>
-                    ))}
-                </ul>
-
-                <div style={{display: "flex", alignItems: "center", marginTop: "1rem"}}>
-                    <TextField
-                        fullWidth
-                        variant="outlined"
-                        label="Type a message"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        sx={{"width": "30%"}}
-                    />
-                    <IconButton color="primary" onClick={handleSendMessage}>
-                        <SendIcon/>
-                    </IconButton>
-                </div>
+        <div id="mainSelectedConversation">
+            <h1 id="selectedConversationTitle">Conversation with {receiverName}</h1>
+            <ul id="fullConversation" className={'custom-scrollbar'} style={{ listStyleType: "none", padding: 0 }}>
+                {currentConversation.map((message, index) => (
+                    <li
+                        key={index}
+                        style={{
+                            textAlign: message.senderName === "You" ? "right" : "left",
+                            margin: "10px 0",
+                        }}
+                    >
+                        {message.senderName === "You" ? (
+                            <div className={'singleMessageYou'}>
+                                <Tooltip title={`${message.senderName}`}>
+                                    <div className={'messageProfilePresentation'}>
+                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                    </div>
+                                </Tooltip>
+                                <Tooltip title={`Sent ${message.timeSinceSent}`}>
+                                    <div className={'messageContent'}>
+                                        {message.content}
+                                    </div>
+                                </Tooltip>
+                            </div>
+                        ) : (
+                            <div className={'singleMessageThey'}>
+                                <Tooltip title={`${message.senderName}`}>
+                                    <div className={'messageProfilePresentation'}>
+                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                    </div>
+                                </Tooltip>
+                                <Tooltip title={`Sent ${message.timeSinceSent}`}>
+                                    <div className={'messageContent'}>
+                                        {message.content}
+                                    </div>
+                                </Tooltip>
+                            </div>
+                        )}
+                    </li>
+                ))}
+                <div ref={bottomRef} />
+            </ul>
+            <div id="sendBox" style={{ display: "flex", alignItems: "center", marginTop: "1rem" }}>
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    label="Type a message"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    inputProps={{ "aria-label": "Type a message" }}
+                />
+                <IconButton
+                    color="primary"
+                    onClick={handleSendMessage}
+                    aria-label="Send message"
+                >
+                    <SendIcon />
+                </IconButton>
             </div>
+        </div>
     );
 };

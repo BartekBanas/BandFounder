@@ -42,11 +42,11 @@ export const Header: FC = () => {
         <ThemeProvider theme={muiDarkTheme}>
             <CssBaseline/>
             <Box id={'mainHeader'}>
-                <AppBar position="static" color="transparent">
+                <AppBar position="static" color="transparent" sx={{display: 'flex', height: '80px'}}>
                     <Toolbar>
                         <Box
                             component="div"
-                            sx={{ display: 'flex', alignItems: 'center', mr: 2 }}
+                            sx={{ display: 'flex', alignItems: 'center', mr: 2}}
                         >
                             <UtilityDrawer />
                         </Box>

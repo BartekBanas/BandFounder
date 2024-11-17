@@ -19,17 +19,22 @@ export async function getCommonTaste(listingId: string): Promise<commonTaste> {
     return artistsAndGenres;
 }
 
-export async function contactListingOwner(listingId: string): Promise<ChatroomDto> {
-    const response = await fetch(`${API_URL}/listings/${listingId}/contact`, {
-        method: 'POST',
-        headers: authorizedHeaders()
-    });
+export async function contactListingOwner(listingId: string): Promise<ChatroomDto | undefined> {
+    try{
+        const response = await fetch(`${API_URL}/listings/${listingId}/contact`, {
+            method: 'POST',
+            headers: authorizedHeaders()
+        });
 
-    if (!response.ok) {
-        mantineErrorNotification('Failed to contact the listing owner');
-        throw new Error('Failed to contact the listing owner');
+        if (!response.ok) {
+            mantineErrorNotification('Failed to contact the listing owner');
+            throw new Error('Failed to contact the listing owner');
+        }
+
+        const chatroom: ChatroomDto = await response.json();
+        return chatroom;
     }
-
-    const chatroom: Promise<ChatroomDto> = response.json();
-    return chatroom;
+    catch(error){
+        console.error(error);
+    }
 }

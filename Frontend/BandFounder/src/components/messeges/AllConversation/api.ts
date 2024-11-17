@@ -18,10 +18,10 @@ export const getAllConversations = async (): Promise<ChatRoom[] | undefined> => 
         for(let i = 0; i < chatRooms.length; i++){
             if(chatRooms[i].membersIds.length === 2) {
                 const user = await getUserById(chatRooms[i].membersIds[0] === new Cookies().get('user_id') ? chatRooms[i].membersIds[1] : chatRooms[i].membersIds[0]);
-                chatRooms[i].name = chatRooms[i].name + " with " + user.name;
+                chatRooms[i].name = user.name;
             }
             else{
-                chatRooms[i].name = chatRooms[i].name + " with Unknown";
+                chatRooms[i].name = "Unknown";
             }
         }
         return chatRooms;
@@ -67,9 +67,14 @@ export const createNewChatroom = async (userName: string): Promise<any> => {
             },
             body: JSON.stringify(chatRoom)
         });
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw { status: response.status, message: errorData };
+        }
         return await response.json();
     } catch (e) {
         console.error('Error creating chatroom:', e);
+        throw e;
     }
 };
 
@@ -86,5 +91,27 @@ export const leaveChatroom = async (chatRoomId: string): Promise<any> => {
         return await response.text();
     } catch (e) {
         console.error('Error leaving chatroom:', e);
+    }
+}
+
+export const getChatroomByOtherUserId = async (userId: string): Promise<string | undefined> => {
+    try {
+        const jwt = new Cookies().get('auth_token');
+        const response = await fetch(`${API_URL}/chatrooms`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+        let chatRooms: ChatRoom[] = await response.json();
+        for(let i = 0; i < chatRooms.length; i++){
+            if(chatRooms[i].membersIds.length === 2 && chatRooms[i].membersIds.includes(userId)) {
+                return chatRooms[i].id;
+            }
+        }
+        return await response.json();
+    } catch (e) {
+        console.error('Error getting chatroom:', e);
     }
 }

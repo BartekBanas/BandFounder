@@ -5,6 +5,9 @@ import { getAllConversations, getAllUsers, createNewChatroom, leaveChatroom } fr
 import { Autocomplete, IconButton, TextField } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {useNavigate} from "react-router-dom";
+import './styles.css'
+import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
+import './../../../assets/CustomScrollbar.css'
 
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
@@ -38,13 +41,31 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
         }
     };
 
+    const checkIdOfChatroom = (userName: string) : string => {
+        let id:string = '';
+
+        chatRooms.forEach((chatRoom) => {
+            if (chatRoom.name.toLowerCase() == userName.toLowerCase()) {
+                id = chatRoom.id;
+            }
+        });
+        return id;
+    }
+
     const handleCreateChatroom = async (userName: string | null) => {
         if (!userName) return;
+
         try {
             const newChatRoom = await createNewChatroom(userName);
             fetchConversations();
-        } catch (error) {
-            console.error("Error creating chatroom:", error);
+        } catch (error: any) {
+
+            if (error.status === 409) {
+                const chatroomId = await checkIdOfChatroom(userName);
+                window.location.href = `/messages/${chatroomId}`;
+            } else {
+                console.error("Error creating chatroom:", error);
+            }
         }
     };
 
@@ -64,7 +85,7 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
     };
 
     return (
-        <div id="main">
+        <div id="mainChatroomsList">
             <Autocomplete
                 options={users}
                 value={selectedUser}
@@ -73,13 +94,14 @@ export const AllConversations: FC<AllConversationsProps> = ({ onSelectConversati
                     handleCreateChatroom(newValue);
                 }}
                 renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined" />}
-                style={{ margin: "20px", maxWidth: "300px" }}
+                style={{ margin: "20px", maxWidth: "100%" }}
             />
             <h1>All open conversations</h1>
 
-            <ul>
+            <ul id={'openConversationsList'} className={'custom-scrollbar'}>
                 {chatRooms.map((chatRoom) => (
-                    <li key={chatRoom.id} onClick={() => handleSelectConversation(chatRoom.id)}>
+                    <li className={'singleConversationShrotcut'} key={chatRoom.id} onClick={() => handleSelectConversation(chatRoom.id)}>
+                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
                         {chatRoom.name}
                         <IconButton onClick={() => handleLeaveChatroom(chatRoom.id)}>
                             <DeleteIcon />
