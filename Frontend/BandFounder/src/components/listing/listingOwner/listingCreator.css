@@ -1,3 +1,10 @@
+
+.wholeEditBody{
+    padding-top: 10px !important;
+    background-color: #2a2a2a !important;
+    /*border-radius: 8px !important;*/
+}
+
 .listing-editor {
     display: flex;
     flex-direction: column;
@@ -10,7 +17,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: start;
     width: 100%;
 }
 
@@ -24,17 +31,19 @@
 
 .editorBody {
     display: flex;
-    flex-direction: column;
-    justify-content: start;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: start;
     width: 100%;
+    max-height: 150px;
+    overflow-y: auto;
 }
 
 .editorFooter {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    margin-top: 15px;
+    margin-top: 0 !important;
     max-height: 300px;
     overflow-x: auto;
 }
@@ -46,9 +55,9 @@
 }
 
 .listingRoleEdited{
-    width: 222px;
+    width: 220px;
     padding: 8px;
-    background-color: #e0e0e0;
+    background-color: #424242;
     border-radius: 4px;
     text-align: center;
     font-size: 15px;
@@ -67,6 +76,9 @@
     display: flex;
     flex-wrap: wrap;
     margin-top: 15px;
+    justify-content: start;
+    align-items: center;
+    width: 100%;
 }
 
 .editorFooter p {
@@ -76,20 +88,24 @@
 
 /* Available slot status */
 .editorFooter .status-available {
-    background-color: #ccc;
+    background-color: #424242;
+    transition: background-color 0.2s;
 }
 
 .editorFooter .status-available:hover {
-    background-color: #bdbdbd;
+    background-color: #3a3a3a;
+    transition: background-color 0.2s;
 }
 
 .editorFooter .status-filled {
-    background-color: #4caf50;
+    background-color: #2a642c;
+    transition: background-color 0.2s;
     color: white;
 }
 
 .editorFooter .status-filled:hover {
-    background-color: #357a38;
+    background-color: #1f4b21;
+    transition: background-color 0.2s;
     color: white;
 }
 
@@ -129,4 +145,15 @@
 
 .kindaHeader div{
     flex-grow: 1;
+}
+
+#saveButtonEditListing{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#saveButtonEditListing button{
+    height: 40px;
 }

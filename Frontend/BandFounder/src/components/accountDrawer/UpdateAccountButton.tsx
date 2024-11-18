@@ -34,7 +34,7 @@ export function UpdateAccountButton() {
 
     return (
         <>
-            <Button variant="text" color="primary" size="large" onClick={open}>
+            <Button variant="contained" color="info" size="large" onClick={open}>
                 Update Account
             </Button>
 

@@ -20,7 +20,7 @@
     /*padding: 10px;*/
     font-size: 15px;
     /*margin-bottom: 10px;*/
-    height: 55px;
+    min-height: 55px;
     padding-bottom: 0;
 }
 
@@ -103,7 +103,7 @@
 .listingBody {
     display: flex;
     align-items: center;
-    justify-content: right;
+    justify-content: left;
     margin-top: 0;
     margin-bottom: 12px;
     font-size: 14px;

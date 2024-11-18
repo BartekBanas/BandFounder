@@ -1,5 +1,7 @@
 import Cookies from "universal-cookie";
 import {API_URL} from "../../../config";
+import {getUserById, getUserByName} from "../../common/frequentlyUsed";
+import {Listing} from "../../../types/Listing";
 
 export const getListing = async (listingId: string) => {
     try{
@@ -18,33 +20,17 @@ export const getListing = async (listingId: string) => {
     }
 }
 
-export const getListings = async (excludeOwn:boolean|undefined, matchMusicRole:boolean|undefined, sortFromLatest:boolean|undefined, showOnlyType:'CollaborativeSong'|'Band'|undefined, genre:string|undefined) => {
+export const getListings = async (username:string) => {
     try{
         const jwt = new Cookies().get('auth_token');
-        let url = `${API_URL}/listings?`;
-        if(excludeOwn !== undefined){
-            url += `ExcludeOwn=${excludeOwn}&`;
-        }
-        if(matchMusicRole !== undefined){
-            url += `MatchRole=${matchMusicRole}&`;
-        }
-        if(sortFromLatest !== undefined){
-            url += `FromLatest=${sortFromLatest}&`;
-        }
-        if(showOnlyType !== undefined){
-            url += `ListingType=${showOnlyType}&`;
-        }
-        if(genre !== undefined){
-            url += `Genre=${genre}&`;
-        }
-        const response = await fetch(url, {
+        const targetUser = await getUserByName(username);
+        const response = await fetch(`${API_URL}/accounts/${targetUser.id}/listings`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${jwt}`
             }
         });
-        console.log(response);
         return await response.json();
     }
     catch (e) {

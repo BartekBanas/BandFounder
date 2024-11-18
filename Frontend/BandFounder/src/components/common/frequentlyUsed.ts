@@ -1,5 +1,6 @@
 import { API_URL } from "../../config";
 import Cookies from "universal-cookie";
+import {Account} from "../../types/Account";
 
 export const getCurrentUser = async () => {
     try {

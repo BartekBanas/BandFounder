@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Menu, IconButton, Avatar, Box, Typography, Button} from '@mui/material';
+import {Menu, MenuItem, IconButton, Avatar, Box, Typography} from '@mui/material';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import {commonTaste} from "../../../types/CommonTaste";
 import {Listing} from "../../../types/Listing";
@@ -45,10 +45,11 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
         }
     }
 
-    const handleMessageListingOwner = async () => {
+    const handleAction = async () => {
         try {
             if (listing?.ownerId) {
                 const response = await contactListingOwner(listing.id);
+                console.log(response);
                 handleClose();
                 if (response) {
                     window.location.href = '/messages/' + response.id;
@@ -65,10 +66,6 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
             mantineErrorNotification("Failed to contact the listing's owner");
         }
     };
-
-    async function handleViewOwnerProfile() {
-        window.location.href = '/profile/' + listing?.owner.name;
-    }
 
     return (
         <div className={'ownerListingElements'}>
@@ -88,65 +85,38 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
                     },
                 }}
             >
-                <Box sx={{display: 'flex', justifyContent: 'space-between', padding: '5px', gap: '10px'}}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleViewOwnerProfile}
-                        sx={{flex: 1}}
-                    >
-                        Visit Profile
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleMessageListingOwner}
-                        sx={{flex: 1}}
-                    >
-                        Message Owner
-                    </Button>
-                </Box>
+                <MenuItem onClick={handleAction}>Message owner</MenuItem>
 
                 {commonTaste && (
-                    <Box sx={{padding: '10px 0'}}>
-                        <Typography
-                            variant="h6"
-                            gutterBottom
-                            sx={{textAlign: 'center', fontWeight: 'bold', marginBottom: '10px'}}
-                        >
-                            Common Artists and Genres
-                        </Typography>
+                    <Box sx={{display: 'flex', flexDirection: 'row', padding: '10px'}}>
+                        {/* Artists column */}
+                        <Box sx={{flex: 1, marginRight: '10px'}}>
+                            <Typography variant="subtitle1" gutterBottom>Artists</Typography>
+                            <ul>
+                                {commonTaste.commonArtists.slice(0, 5).map((artist, index) => (
+                                    <li key={index}>{artist}</li>
+                                ))}
+                            </ul>
+                            {commonTaste.commonArtists.length > 5 && (
+                                <Typography variant="body2" color="textSecondary">
+                                    and {commonTaste.commonArtists.length - 5} more
+                                </Typography>
+                            )}
+                        </Box>
 
-                        <Box sx={{display: 'flex', flexDirection: 'row', gap: '20px'}}>
-                            {/* Artists column */}
-                            <Box sx={{flex: 1}}>
-                                <Typography variant="subtitle1" gutterBottom>Artists</Typography>
-                                <ul>
-                                    {commonTaste.commonArtists.slice(0, 5).map((artist, index) => (
-                                        <li key={index}>{artist}</li>
-                                    ))}
-                                </ul>
-                                {commonTaste.commonArtists.length > 5 && (
-                                    <Typography variant="body2" color="textSecondary">
-                                        and {commonTaste.commonArtists.length - 5} more
-                                    </Typography>
-                                )}
-                            </Box>
-
-                            {/* Genres column */}
-                            <Box sx={{flex: 1}}>
-                                <Typography variant="subtitle1" gutterBottom>Genres</Typography>
-                                <ul>
-                                    {commonTaste.commonGenres.slice(0, 5).map((genre, index) => (
-                                        <li key={index}>{genre}</li>
-                                    ))}
-                                </ul>
-                                {commonTaste.commonGenres.length > 5 && (
-                                    <Typography variant="body2" color="textSecondary">
-                                        and {commonTaste.commonGenres.length - 5} more
-                                    </Typography>
-                                )}
-                            </Box>
+                        {/* Genres column */}
+                        <Box sx={{flex: 1}}>
+                            <Typography variant="subtitle1" gutterBottom>Genres</Typography>
+                            <ul>
+                                {commonTaste.commonGenres.slice(0, 5).map((genre, index) => (
+                                    <li key={index}>{genre}</li>
+                                ))}
+                            </ul>
+                            {commonTaste.commonGenres.length > 5 && (
+                                <Typography variant="body2" color="textSecondary">
+                                    and {commonTaste.commonGenres.length - 5} more
+                                </Typography>
+                            )}
                         </Box>
                     </Box>
                 )}
