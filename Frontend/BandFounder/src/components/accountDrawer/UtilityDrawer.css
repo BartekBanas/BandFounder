@@ -63,6 +63,7 @@
     height: 100px;
     border-radius: 50%;
     margin: 10px;
+    box-shadow: #61dafb 0px 0px 15px;
 }
 
 .profileShowDrawer p{
@@ -110,12 +111,13 @@
     align-items: start;
     width: 100%;
     padding: 10px;
-    font-size: clamp(12px, 1.3vw, 15px); /* Adjusts font size based on viewport */
+    font-size: clamp(12px, 0.5vw, 15px); /* Adjusts font size based on viewport */
 }
 
 .musicTasteDrawer > *{
     margin: 5px;
-    border: #61dafb 1px solid;
+    border: #61dafb 2px solid;
+    box-shadow: #61dafb 0px 0px 15px;
     border-radius: 5px;
     padding: 5px;
 }
