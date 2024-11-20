@@ -1,4 +1,6 @@
-﻿using BandFounder.Domain.Entities;
+﻿using System.Text.RegularExpressions;
+using BandFounder.Application.Error;
+using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Errors;
 using FluentValidation;
@@ -17,6 +19,7 @@ public class AccountValidator : AbstractValidator<Account>
         RuleFor(account => account.Name).Length(3, 32).NotEmpty();
         RuleFor(account => account.PasswordHash).NotEmpty();
         RuleFor(account => account).CustomAsync(ValidateUniqueName);
+        RuleFor(account => account).CustomAsync(ValidateUsername);
         RuleFor(account => account).CustomAsync(ValidateUniqueEmail);
     }
     
@@ -28,6 +31,25 @@ public class AccountValidator : AbstractValidator<Account>
         if (matchingAccounts.Any())
         {
             throw new ItemDuplicatedErrorException("Account with that username already exists");
+        }
+    }
+    
+    private async Task ValidateUsername(Account account, ValidationContext<Account> context, CancellationToken token)
+    {
+        var regex = new Regex("^[a-zA-Z0-9_-]+$");
+        if (!regex.IsMatch(account.Name))
+        {
+            throw new CustomValidationException("Username can only contain letters, numbers, hyphens, and underscores");
+        }
+
+        if (account.Name.StartsWith('-') || account.Name.StartsWith('_'))
+        {
+            throw new CustomValidationException("Username cannot start with a hyphen or an underscore");
+        }
+
+        if (account.Name.EndsWith('-') || account.Name.EndsWith('_'))
+        {
+            throw new CustomValidationException("Username cannot end with a hyphen or an underscore");
         }
     }
     

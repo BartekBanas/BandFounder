@@ -1,57 +1,139 @@
-.drawer {
-    position: fixed;
-    top: 0;
-    margin-left: 0;
-    left: -100%;
-    height: 100%;
-    width: 300px;
-    background-color: #413636;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-    transition: left 0.3s ease;
-    z-index: 1000;
+.css-1jde8n2-MuiPaper-root-MuiDrawer-paper{
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: start;
+    align-items: start;
 }
 
-.drawer-open {
-    left: 0%;
-}
-
-.drawer-content {
-    padding: 20px;
+.drawerHeader {
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: 20px;
+    padding: 0 8px;
+    width: 100%;
+    height: 64px;
+    font-size: 30px;
+    font-weight: bold;
+    color: #61dafb;
 }
 
-.drawer-buttons {
+
+.drawerBody{
     display: flex;
     flex-direction: column;
-    gap: 10px;
-}
-
-.drawer-close {
-    margin-top: 20px;
-    padding: 8px 16px;
-    background-color: #ff4d4f;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-/* Overlay to cover the rest of the screen */
-.drawer-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999; /* Below the drawer */
+    padding: 10px;
 }
 
-.action-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
+.accountButtonsDrawer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+}
+
+.accountButtonsDrawer button{
+    margin: 5px;
+    padding: 0;
+    width: 100%;
+    height: 50px;
+    font-size: 12px;
+}
+
+#accountActionsMenu button{
+    width: 230px;
+    height: 50px;
+}
+
+.profileShowDrawer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+}
+
+.profileShowDrawer img{
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 10px;
+    box-shadow: #61dafb 0px 0px 15px;
+}
+
+.profileShowDrawer p{
+    font-size: 20px;
+    font-weight: bold;
+}
+.smallerButtonsDrawer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.smallerButtonsDrawer button{
+    margin: 0;
+    width: 50%;
+    height: 50px;
+    font-size: 12px;
+}
+
+.smallerButtonsDrawer button:nth-child(1){
+    margin-right: 5px;
+}
+
+.smallerButtonsDrawer button:nth-child(2){
+    margin-left: 5px;
+}
+
+.drawerFooter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 8px;
+    width: 100%;
+    height: 64px;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.musicTasteDrawer{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: start;
+    width: 100%;
+    padding: 10px;
+    font-size: clamp(12px, 0.5vw, 15px); /* Adjusts font size based on viewport */
+}
+
+.musicTasteDrawer > *{
+    margin: 5px;
+    border: #61dafb 2px solid;
+    box-shadow: #61dafb 0px 0px 15px;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+#topArtistsDrawer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+}
+
+#topGenresDrawer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
 }

@@ -1,4 +1,5 @@
-﻿using BandFounder.Application.Dtos.Accounts;
+﻿using BandFounder.Application.Dtos;
+using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +41,7 @@ public class AccountController : Controller
 
         if (username is not null)
         {
-            var accountDto = await _accountService.GetAccountAsync(username);
+            var accountDto = (await _accountService.GetAccountAsync(username)).ToDto();
             return Ok(accountDto);
         }
 
@@ -60,7 +61,7 @@ public class AccountController : Controller
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
-        var accountDto = await _accountService.GetAccountAsync();
+        var accountDto = (await _accountService.GetAccountAsync()).ToDto();
         
         return Ok(accountDto);
     }
@@ -69,7 +70,7 @@ public class AccountController : Controller
     [HttpGet("{accountGuid:guid}")]
     public async Task<IActionResult> GetAccount([FromRoute] Guid accountGuid)
     {
-        var accountDto = await _accountService.GetAccountAsync(accountGuid);
+        var accountDto = (await _accountService.GetAccountAsync(accountGuid)).ToDto();
 
         return Ok(accountDto);
     }

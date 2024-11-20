@@ -1,11 +1,21 @@
 .editButton {
     position: absolute;
-    top: 92%; /* Adjust as needed to position it right under the .listing */
-    right: 50%;
+    top: 0; /* Adjust as needed to position it right under the .listing */
+    right: 57%;
     transform: translateX(50%);
     z-index: 10; /* Ensure it appears above other elements */
     font-size: 24px;
 }
+
+.deleteButton {
+    position: absolute;
+    top: 0; /* Adjust as needed to position it right under the .listing */
+    right: 43%;
+    transform: translateX(50%);
+    z-index: 10; /* Ensure it appears above other elements */
+    font-size: 24px;
+}
+
 
 
 /* General container for the listing */
@@ -30,7 +40,7 @@
     /*padding: 10px;*/
     font-size: 15px;
     /*margin-bottom: 10px;*/
-    height: 55px;
+    min-height: 55px;
     padding-bottom: 0;
 }
 
@@ -71,7 +81,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
+    align-items: end;
     text-align: right; /* aligns to the far right */
 }
 
@@ -113,10 +123,13 @@
 .listingBody {
     display: flex;
     align-items: center;
-    justify-content: right;
+    justify-content: left;
     margin-top: 0;
     margin-bottom: 12px;
     font-size: 14px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
     color: #555;
 }
 
@@ -125,6 +138,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    max-height: 210px;
+    overflow-y: auto;
 }
 
 .listingFooter img {

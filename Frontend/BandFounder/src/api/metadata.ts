@@ -17,6 +17,20 @@ export async function getArtists(): Promise<ArtistDto[]> {
     return response.json();
 }
 
+export async function getGenres(): Promise<string[]> {
+    const response = await fetch(`${API_URL}/genres`, {
+        method: 'GET',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to fetch artists');
+        throw new Error('Failed to fetch artists');
+    }
+
+    return response.json();
+}
+
 export async function getMusicianRoles(): Promise<string[]> {
     const response = await fetch(`${API_URL}/roles`, {
         method: 'GET',

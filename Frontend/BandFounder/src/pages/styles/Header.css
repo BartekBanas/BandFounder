@@ -22,3 +22,37 @@
 #appNameHeader:hover{
     cursor: pointer;
 }
+
+#searchBarMain{
+    width: 50px;
+    transition: width 0.5s;
+}
+
+#searchBarMain:hover{
+    width:200px;
+}
+
+#searchBarMain:focus{
+    width:200px;
+}
+
+#rightSideOfMainHeader{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 15px;
+}
+
+#rightSideOfMainHeader > * {
+    margin-left: 10px;
+}
+
+#leftSideOfMainHeader{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 15px;
+    flex-grow: 1;
+}

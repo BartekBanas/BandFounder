@@ -58,7 +58,8 @@ public class SpotifyContentManagerTests
 
         // Mock dependencies
         _authenticationService.GetUserId().Returns(userId);
-        _accountRepository.GetOneRequiredAsync(userId).Returns(Task.FromResult(account));
+        _accountRepository.GetOneRequiredAsync(
+            Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
         _artistRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Artist>(null!)); // Artist doesn't exist
         _genreRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Genre>(null!)); // Genre doesn't exist
 
@@ -92,11 +93,11 @@ public class SpotifyContentManagerTests
         };
         var topArtists = new List<SpotifyArtistDto>
         {
-            new() { Id = "artist1", Name = "Artist 1", Popularity = 90, Genres = ["rock"] },
+            new() { Id = "artist1", Name = "Artist 1", Popularity = 90, Genres = ["rock"] }
         };
         var followedArtists = new List<SpotifyArtistDto>
         {
-            new() { Id = "artist2", Name = "Artist 2", Popularity = 80, Genres = ["pop"] },
+            new() { Id = "artist2", Name = "Artist 2", Popularity = 80, Genres = ["pop"] }
         };
 
         var account = new Account
@@ -107,7 +108,8 @@ public class SpotifyContentManagerTests
 
         // Mock dependencies
         _authenticationService.GetUserId().Returns(userId);
-        _accountRepository.GetOneRequiredAsync(userId).Returns(Task.FromResult(account));
+        _accountRepository.GetOneRequiredAsync(
+            Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
         _artistRepository.GetOneAsync("artist1")!.Returns(Task.FromResult(existingArtist)); // Artist already exists
         _artistRepository.GetOneAsync("artist2")!.Returns(Task.FromResult<Artist>(null!)); // Second artist does not exist
 
@@ -119,7 +121,7 @@ public class SpotifyContentManagerTests
 
         // Assert
         Assert.That(savedArtists, Has.Count.EqualTo(1)); // Both artists should be returned
-        await _artistRepository.Received(1).CreateAsync(Arg.Any<Artist>()); // Only one new artist should be created
+        await _artistRepository.Received(2).CreateAsync(Arg.Any<Artist>()); // Only one new artist should be created
         await _accountRepository.Received(1).SaveChangesAsync(); // Ensure changes are saved
     }
 }

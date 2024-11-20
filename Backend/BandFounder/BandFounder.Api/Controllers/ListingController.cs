@@ -42,11 +42,10 @@ public class ListingController : Controller
         return Ok(musicProjects);
     }
 
-    [Authorize]
-    [HttpGet("me")]
+    [Obsolete, Authorize, HttpGet("me")]
     public async Task<IActionResult> GetMyMusicProjectListings()
     {
-        var myProjects = await _listingService.GetMyListingAsync();
+        var myProjects = await _listingService.GetUserListingsAsync();
         
         return Ok(myProjects);
     }

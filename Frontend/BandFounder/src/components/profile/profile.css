@@ -42,6 +42,7 @@
     justify-content: space-between;
     align-items: start;
     height: 100%;
+    overflow-y: auto;
 }
 
 .musicRoles .musicRolesList{

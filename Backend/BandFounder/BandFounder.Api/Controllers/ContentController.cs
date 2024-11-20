@@ -13,7 +13,8 @@ public class ContentController(
     IAccountService accountService,
     ISpotifyContentRetriever spotifyContentRetriever,
     IAuthenticationService authenticationService,
-    ISpotifyContentManager spotifyContentManager)
+    ISpotifyContentManager spotifyContentManager,
+    IListingService listingService)
     : Controller
 {
     [HttpGet("artists")]
@@ -40,6 +41,7 @@ public class ContentController(
         return Ok(musicianRoles);
     }
     
+    [Obsolete]
     [Authorize]
     [HttpGet("accounts/me/artists")]
     public async Task<IActionResult> GetMyArtists()
@@ -108,5 +110,14 @@ public class ContentController(
         var genres = wagedGenres.Select(artist => artist.Key).ToList();
 
         return Ok(genres);
+    }
+    
+    [Authorize]
+    [HttpGet("accounts/{accountId:guid}/listings")]
+    public async Task<IActionResult> GetUsersListings([FromRoute] Guid accountId)
+    {
+        var listings = await listingService.GetUserListingsAsync(accountId);
+        
+        return Ok(listings);
     }
 }

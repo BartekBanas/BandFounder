@@ -1,10 +1,11 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import UseSpotifyConnected from "../../../hooks/useSpotifyAccountLinked";
-import {useNavigate} from "react-router-dom";
-import DisconnectSpotifyAccountButton from "./DisconnectSpotifyAccountButton";
-import SpotifyAuthorizationButton from "./SpotifyAuthorizationButton";
-import {deleteSpotifyCredential} from "./spotifyConnection";
-import {sleep} from "../../../hooks/utils";
+import { useNavigate } from "react-router-dom";
+import { deleteSpotifyCredential, redirectToSpotifyAuthorizationPage } from "./spotifyConnection";
+import { sleep } from "../../../hooks/utils";
+import { muiDarkTheme } from "../../../assets/muiDarkTheme";
+import { SpotifyIcon } from "./SpotifyIcon";
+import { Button } from "@mui/material";
 
 export function SpotifyConnectionButton() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -30,16 +31,38 @@ export function SpotifyConnectionButton() {
     };
 
     return (
-        <div>
+        <>
             {isConnectedToSpotify ? (
-                <>
-                    <DisconnectSpotifyAccountButton onDelete={handleDelete}/>
-                </>
+                <Button
+                    variant="contained"
+                    sx={{
+                        backgroundColor: muiDarkTheme.palette.error.main,
+                        color: muiDarkTheme.palette.error.contrastText,
+                        '&:hover': {
+                            backgroundColor: muiDarkTheme.palette.error.dark,
+                        },
+                    }}
+                    startIcon={<SpotifyIcon />}
+                    onClick={handleDelete}
+                >
+                    Disconnect with Spotify
+                </Button>
             ) : (
-                <>
-                    <SpotifyAuthorizationButton/>
-                </>
+                <Button
+                    variant="contained"
+                    sx={{
+                        backgroundColor: muiDarkTheme.palette.success.dark,
+                        color: muiDarkTheme.palette.success.contrastText,
+                        '&:hover': {
+                            backgroundColor: muiDarkTheme.palette.success.dark,
+                        },
+                    }}
+                    onClick={redirectToSpotifyAuthorizationPage}
+                    startIcon={<SpotifyIcon />}
+                >
+                    Link Spotify Account
+                </Button>
             )}
-        </div>
+        </>
     );
 }

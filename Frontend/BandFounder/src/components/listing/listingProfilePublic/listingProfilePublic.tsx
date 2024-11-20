@@ -6,12 +6,13 @@ import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
 import {getUser} from "../../../api/account";
 import OwnerListingElement from "./OwnerListingElement";
+import { Public } from '@mui/icons-material';
 
-interface ListingPublicProps {
+interface listingProfilePublicProps {
     listingId: string;
 }
 
-const ListingPublic: React.FC<ListingPublicProps> = ({ listingId }) => {
+export const ListingProfilePublic: React.FC<listingProfilePublicProps> = ({ listingId }) => {
     const [listing, setListing] = useState<any>(null);
 
     useEffect(() => {
@@ -74,5 +75,3 @@ const ListingPublic: React.FC<ListingPublicProps> = ({ listingId }) => {
         </div>
     );
 };
-
-export default ListingPublic;

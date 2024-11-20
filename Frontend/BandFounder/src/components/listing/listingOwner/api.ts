@@ -21,7 +21,7 @@ export const getListing = async (listingId: string) => {
 export const getListings = async () => {
     try{
         const jwt = new Cookies().get('auth_token');
-        const response = await fetch(`${API_URL}/listings/me`, {
+        const response = await fetch(`${API_URL}/accounts/${new Cookies().get('user_id')}/listings`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -89,5 +89,26 @@ export const updateListing = async (listing: any, id: string) => {
         return responseText ? JSON.parse(responseText) : {};
     } catch (e) {
         console.error('Error updating listing:', e);
+    }
+}
+
+export const deleteListing = async (id: string) => {
+    try {
+        const jwt = new Cookies().get('auth_token');
+        const response = await fetch(`${API_URL}/listings/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.text();
+    } catch (e) {
+        console.error('Error deleting listing:', e);
     }
 }
