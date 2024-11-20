@@ -8,14 +8,15 @@ namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyTokenService
 {
-    Task CreateSpotifyTokens(SpotifyConnectionDto dto, Guid userId);
+    Task<SpotifyTokensResponse> RequestSpotifyTokens(SpotifyConnectionDto dto);
+    Task CreateSpotifyTokens(SpotifyTokensDto spotifyTokens, Guid userId);
     Task<SpotifyTokensDto> GetSpotifyTokens(Guid userId);
     Task<string> GetAccessTokenAsync(Guid userId);
 }
 
 public class SpotifyTokenService : ISpotifyTokenService
 {
-    private const string SpotifyRefreshTokenUrl = "https://accounts.spotify.com/api/token";
+    private const string SpotifyAccessTokenUrl = "https://accounts.spotify.com/api/token";
     
     private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
     private readonly IRepository<Account> _accountRepository;
@@ -28,7 +29,37 @@ public class SpotifyTokenService : ISpotifyTokenService
         _accountRepository = accountRepository;
     }
 
-    public async Task CreateSpotifyTokens(SpotifyConnectionDto dto, Guid userId)
+    public async Task<SpotifyTokensResponse> RequestSpotifyTokens(SpotifyConnectionDto dto)
+    {
+        var client = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Post, SpotifyAccessTokenUrl);
+        
+        request.Headers.Add("Authorization", $"Basic {await GetAuthenticationHeader()}");
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "grant_type", "authorization_code" },
+            { "code", dto.AuthorizationCode },
+            { "redirect_uri", dto.BaseFrontendAppUrl }
+        });
+        request.Content = content;
+
+        var response = await client.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var spotifyTokens = JsonSerializer.Deserialize<SpotifyTokensResponse>(responseContent);
+
+        if (spotifyTokens is null)
+        {
+            throw new FailedToFetchSpotifyTokenException("Failed to fetch Spotify token");
+        }
+
+        return spotifyTokens;
+    }
+
+    public async Task CreateSpotifyTokens(SpotifyTokensDto spotifyTokens, Guid userId)
     {
         var account = await _accountRepository.GetOneRequiredAsync(userId);
         
@@ -37,18 +68,16 @@ public class SpotifyTokenService : ISpotifyTokenService
         {
             throw new SpotifyAccountAlreadyConnectedException();
         }
-
-        var tokenExpirationDate = DateTime.UtcNow.AddSeconds(dto.Duration - 60);
-
+        
         var newSpotifyTokens = new SpotifyTokens
         {
             AccountId = account.Id,
-            AccessToken = dto.AccessToken,
-            RefreshToken = dto.RefreshToken,
-            ExpirationDate = tokenExpirationDate,
+            AccessToken = spotifyTokens.AccessToken,
+            RefreshToken = spotifyTokens.RefreshToken,
+            ExpirationDate = spotifyTokens.ExpirationDate,
             Account = account
         };
-
+        
         await _spotifyTokensRepository.CreateAsync(newSpotifyTokens);
         await _spotifyTokensRepository.SaveChangesAsync();
     }
@@ -86,10 +115,9 @@ public class SpotifyTokenService : ISpotifyTokenService
     private async Task<string> RefreshTokenAsync(Guid userId, string refreshToken)
     {
         using var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, SpotifyRefreshTokenUrl);
+        var request = new HttpRequestMessage(HttpMethod.Post, SpotifyAccessTokenUrl);
 
-        var authenticationHeaderValue = await GetAuthenticationHeader();
-        request.Headers.Add("Authorization", $"Basic {authenticationHeaderValue}");
+        request.Headers.Add("Authorization", $"Basic {await GetAuthenticationHeader()}");
 
         var content = new FormUrlEncodedContent(new[]
         {
@@ -108,7 +136,7 @@ public class SpotifyTokenService : ISpotifyTokenService
 
         if (spotifyAccessCredentials is null)
         {
-            throw new Exception(); // TODO get more creative
+            throw new FailedToFetchSpotifyTokenException("Failed to fetch refreshed Spotify token");
         }
 
         await UpdateRefreshedAccessTokenAsync(userId, spotifyAccessCredentials.AccessToken, spotifyAccessCredentials.Duration);

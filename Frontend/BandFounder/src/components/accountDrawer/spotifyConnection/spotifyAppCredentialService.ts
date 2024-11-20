@@ -1,13 +1,7 @@
 import {API_URL} from "../../../config";
 
-export interface Credentials {
-    clientId: string;
-    clientSecret: string;
-}
-
 export class SpotifyAppCredentialService {
     private _clientId: string | null = null;
-    private _clientSecret: string | null = null;
 
     constructor() {
         this.fetchCredentials();
@@ -20,15 +14,8 @@ export class SpotifyAppCredentialService {
         return this._clientId;
     }
 
-    get clientSecret(): string {
-        if (!this._clientSecret) {
-            throw new Error("Client Secret is not loaded");
-        }
-        return this._clientSecret;
-    }
-
     async fetchCredentials(): Promise<void> {
-        const response = await fetch(`${API_URL}/spotifyBroker/credentials`, {
+        const response = await fetch(`${API_URL}/spotifyBroker/clientId`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -42,10 +29,7 @@ export class SpotifyAppCredentialService {
             throw new Error(responseText);
         }
 
-        const credentials: Credentials = JSON.parse(responseText);
-        localStorage.setItem('client_id', credentials.clientId);
-        localStorage.setItem('client_secret', credentials.clientSecret);
-        this._clientId = credentials.clientId;
-        this._clientSecret = credentials.clientSecret;
+        localStorage.setItem('client_id', responseText);
+        this._clientId = responseText;
     }
 }

@@ -1,8 +1,6 @@
 using BandFounder.Application.Services;
-using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
-using BandFounder.Infrastructure.Spotify.Services;
 using NSubstitute;
 
 namespace Services.Tests;
@@ -13,9 +11,9 @@ public class GetWagedGenresTests
     private IRepository<Account> _accountRepositoryMock;
     private IRepository<Artist> _artistRepository;
     private IRepository<Genre> _genreRepository;
-    private ISpotifyContentRetriever _spotifyContentRetriever;
+    
+    private IContentService _contentServiceMock;
     private IAuthenticationService _authenticationServiceMock;
-    private ISpotifyContentManager _spotifyContentManager;
 
     [SetUp]
     public void SetUp()
@@ -24,9 +22,8 @@ public class GetWagedGenresTests
         _artistRepository = Substitute.For<IRepository<Artist>>();
         _genreRepository = Substitute.For<IRepository<Genre>>();
         _authenticationServiceMock = Substitute.For<IAuthenticationService>();
-        _spotifyContentRetriever = Substitute.For<ISpotifyContentRetriever>();
-        _spotifyContentManager = new SpotifyContentManager(_spotifyContentRetriever, 
-            _authenticationServiceMock, _artistRepository, _accountRepositoryMock, _genreRepository);
+        _contentServiceMock = new ContentService(
+            _accountRepositoryMock, _genreRepository, _artistRepository, null);
     }
     
     [Test]
@@ -82,7 +79,7 @@ public class GetWagedGenresTests
             Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
 
         // Act
-        var result = await _spotifyContentManager.GetWagedGenres();
+        var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
         Assert.That(result.Count, Is.EqualTo(3));  // Expecting 3 genres: Rock, Pop, Jazz
@@ -110,7 +107,7 @@ public class GetWagedGenresTests
             Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
 
         // Act
-        var result = await _spotifyContentManager.GetWagedGenres();
+        var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
         Assert.That(result.Count, Is.EqualTo(0));  // No genres
@@ -165,7 +162,7 @@ public class GetWagedGenresTests
             userId, Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
 
         // Act
-        var result = await _spotifyContentManager.GetWagedGenres();
+        var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
         Assert.That(result.Count, Is.EqualTo(2));  // Rock and Pop
@@ -207,7 +204,7 @@ public class GetWagedGenresTests
         _authenticationServiceMock.GetUserId().Returns(userId);  // This userId should be ignored in this case
 
         // Act
-        var result = await _spotifyContentManager.GetWagedGenres(userId);
+        var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
         Assert.AreEqual(1, result.Count);
@@ -267,7 +264,7 @@ public class GetWagedGenresTests
             userId, Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
 
         // Act
-        var result = await _spotifyContentManager.GetWagedGenres();
+        var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
         var genreNames = result.Keys.ToList();

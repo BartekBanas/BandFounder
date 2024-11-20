@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import "../components/SpotifyDrawer/SpotifyLogoButton.css";
 import UseSpotifyConnected from "../hooks/useSpotifyAccountLinked";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../components/common/RingLoader";

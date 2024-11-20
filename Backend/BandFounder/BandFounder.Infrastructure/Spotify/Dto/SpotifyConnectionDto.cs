@@ -1,8 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace BandFounder.Infrastructure.Spotify.Dto;
 
 public class SpotifyConnectionDto
 {
-    public required string AccessToken { get; set; }
-    public required string RefreshToken { get; set; }
-    public required int Duration { get; set; }
+    [JsonPropertyName("code")]
+    public required string AuthorizationCode { get; set; }
+    
+    [JsonPropertyName("base_app_url")]
+    public required string BaseFrontendAppUrl { get; set; }
 }
