@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using BandFounder.Domain.Entities;
@@ -8,7 +9,7 @@ namespace BandFounder.Infrastructure.Spotify.Services;
 
 public interface ISpotifyTokenService
 {
-    Task CreateSpotifyTokens(SpotifyConnectionDto dto, Guid userId);
+    Task RequestSpotifyTokens(SpotifyConnectionDto dto, Guid userId);
     Task<SpotifyTokensDto> GetSpotifyTokens(Guid userId);
     Task<string> GetAccessTokenAsync(Guid userId);
 }
@@ -28,7 +29,47 @@ public class SpotifyTokenService : ISpotifyTokenService
         _accountRepository = accountRepository;
     }
 
-    public async Task CreateSpotifyTokens(SpotifyConnectionDto dto, Guid userId)
+    public async Task RequestSpotifyTokens(SpotifyConnectionDto dto, Guid userId)
+    {
+        var spotifyAppCredentials = await new SpotifyAppCredentialsService().LoadCredentials();
+        
+        if (string.IsNullOrWhiteSpace(dto.AuthorizationCode))
+        {
+            // return BadRequest("Authorization code is required.");
+        }
+
+        var client = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
+
+        var credentials = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
+        
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "grant_type", "authorization_code" },
+            { "code", dto.AuthorizationCode },
+            { "redirect_uri", dto.BaseFrontendAppUrl }
+        });
+        request.Content = content;
+
+        var response = await client.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var spotifyTokens = JsonSerializer.Deserialize<SpotifyTokensResponse>(responseContent);
+
+        if (spotifyTokens is null)
+        {
+            throw new Exception(); // TODO get more creative
+        }
+
+        await CreateSpotifyTokens(spotifyTokens, userId);
+    }
+
+    public async Task CreateSpotifyTokens(SpotifyTokensResponse spotifyTokens, Guid userId)
     {
         var account = await _accountRepository.GetOneRequiredAsync(userId);
         
@@ -37,18 +78,18 @@ public class SpotifyTokenService : ISpotifyTokenService
         {
             throw new SpotifyAccountAlreadyConnectedException();
         }
-
-        var tokenExpirationDate = DateTime.UtcNow.AddSeconds(dto.Duration - 60);
-
+        
+        var tokenExpirationDate = DateTime.UtcNow.AddSeconds(spotifyTokens.ExpiresIn - 60);
+        
         var newSpotifyTokens = new SpotifyTokens
         {
             AccountId = account.Id,
-            AccessToken = dto.AccessToken,
-            RefreshToken = dto.RefreshToken,
+            AccessToken = spotifyTokens.AccessToken,
+            RefreshToken = spotifyTokens.RefreshToken,
             ExpirationDate = tokenExpirationDate,
             Account = account
         };
-
+        
         await _spotifyTokensRepository.CreateAsync(newSpotifyTokens);
         await _spotifyTokensRepository.SaveChangesAsync();
     }

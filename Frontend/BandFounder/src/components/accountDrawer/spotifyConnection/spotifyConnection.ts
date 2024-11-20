@@ -6,12 +6,12 @@ import {
     mantineInformationNotification,
     mantineSuccessNotification
 } from "../../common/mantineNotification";
+import {authorizedHeaders} from "../../../hooks/authentication";
 
 let configLoader = new SpotifyAppCredentialService();
 const BaseAppUrl = "http://localhost:3000/";
 const SpotifyConnectionPageUrl = BaseAppUrl + "spotifyConnection/callback/";
 const SpotifyAuthorizeUrl = "https://accounts.spotify.com/authorize";
-const SpotifyFetchTokenUrl = "https://accounts.spotify.com/api/token";
 
 export type spotifyTokens = {
     access_token: string
@@ -32,44 +32,33 @@ export function redirectToSpotifyAuthorizationPage() {
 export async function linkAccountWithSpotifyFromCode(): Promise<void> {
     const code = new URLSearchParams(window.location.search).get('code');
     if (code) {
-        let body = "grant_type=authorization_code";
-
-        body += "&code=" + code;
-        body += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
-
-        body += "&client_id=" + localStorage.getItem('client_id');
-        body += "&client_secret=" + localStorage.getItem('client_secret');
-
         try {
-            const spotifyTokens = await getSpotifyTokens(body);
-            await authorizeSpotifyAccountInBandfounder(spotifyTokens);
-            await linkAccountWithSpotifyArtists();
+            await sendCodeToBackend(code);
+            mantineSuccessNotification('Linking your Spotify account was successful');
         } catch (error: any) {
+            mantineErrorNotification('Failed to link Spotify account');
             throw new Error(error.message);
         }
-        mantineSuccessNotification('Linking your Spotify account was successful');
     }
 }
 
-async function getSpotifyTokens(body: string): Promise<spotifyTokens> {
-    const headers = new Headers();
-    headers.append('Content-Type', 'application/x-www-form-urlencoded');
-    headers.append('Authorization', 'Basic ' + btoa(localStorage.getItem('client_id') + ":" + localStorage.getItem('client_secret')));
-
-    const response = await fetch(SpotifyFetchTokenUrl, {
+async function sendCodeToBackend(code: string): Promise<void> {
+    const response = await fetch(`${API_URL}/spotifyBroker/connect`, {
         method: 'POST',
-        headers: headers,
-        body: body,
+        headers: authorizedHeaders(),
+        body: JSON.stringify({
+            code: code,
+            base_app_url: encodeURI(SpotifyConnectionPageUrl)
+        }),
     });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        mantineErrorNotification('Failed to request tokens from Spotify');
-        throw new Error(errorText);
+    if (response.status === 409) {
+        mantineInformationNotification('Your account is already connected to a Spotify account');
+        throw new Error(await response.text());
+    } else if (!response.ok) {
+        mantineErrorNotification('An error occurred while linking your Spotify account');
+        throw new Error(await response.text());
     }
-
-    const responseContent = await response.json();
-    return responseContent as spotifyTokens;
 }
 
 async function authorizeSpotifyAccountInBandfounder(tokens: spotifyTokens) {

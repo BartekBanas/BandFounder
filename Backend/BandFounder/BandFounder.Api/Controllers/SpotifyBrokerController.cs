@@ -43,7 +43,8 @@ public class SpotifyBrokerController : ControllerBase
     {
         var userId = _authenticationService.GetUserId();
         
-        await _spotifyTokenService.CreateSpotifyTokens(dto, userId);
+        await _spotifyTokenService.RequestSpotifyTokens(dto, userId);
+        await _spotifyContentManager.SaveRelevantArtists();
 
         return Ok();
     }
