@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using BandFounder.Domain.Entities;
@@ -16,7 +15,7 @@ public interface ISpotifyTokenService
 
 public class SpotifyTokenService : ISpotifyTokenService
 {
-    private const string SpotifyRefreshTokenUrl = "https://accounts.spotify.com/api/token";
+    private const string SpotifyAccessTokenUrl = "https://accounts.spotify.com/api/token";
     
     private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
     private readonly IRepository<Account> _accountRepository;
@@ -31,20 +30,10 @@ public class SpotifyTokenService : ISpotifyTokenService
 
     public async Task RequestSpotifyTokens(SpotifyConnectionDto dto, Guid userId)
     {
-        var spotifyAppCredentials = await new SpotifyAppCredentialsService().LoadCredentials();
-        
-        if (string.IsNullOrWhiteSpace(dto.AuthorizationCode))
-        {
-            // return BadRequest("Authorization code is required.");
-        }
-
         var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
-
-        var credentials = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
+        var request = new HttpRequestMessage(HttpMethod.Post, SpotifyAccessTokenUrl);
         
-        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+        request.Headers.Add("Authorization", $"Basic {await GetAuthenticationHeader()}");
 
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -63,7 +52,7 @@ public class SpotifyTokenService : ISpotifyTokenService
 
         if (spotifyTokens is null)
         {
-            throw new Exception(); // TODO get more creative
+            throw new FailedToFetchSpotifyTokenException("Failed to fetch Spotify token");
         }
 
         await CreateSpotifyTokens(spotifyTokens, userId);
@@ -127,10 +116,9 @@ public class SpotifyTokenService : ISpotifyTokenService
     private async Task<string> RefreshTokenAsync(Guid userId, string refreshToken)
     {
         using var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, SpotifyRefreshTokenUrl);
+        var request = new HttpRequestMessage(HttpMethod.Post, SpotifyAccessTokenUrl);
 
-        var authenticationHeaderValue = await GetAuthenticationHeader();
-        request.Headers.Add("Authorization", $"Basic {authenticationHeaderValue}");
+        request.Headers.Add("Authorization", $"Basic {await GetAuthenticationHeader()}");
 
         var content = new FormUrlEncodedContent(new[]
         {
@@ -149,7 +137,7 @@ public class SpotifyTokenService : ISpotifyTokenService
 
         if (spotifyAccessCredentials is null)
         {
-            throw new Exception(); // TODO get more creative
+            throw new FailedToFetchSpotifyTokenException("Failed to fetch refreshed Spotify token");
         }
 
         await UpdateRefreshedAccessTokenAsync(userId, spotifyAccessCredentials.AccessToken, spotifyAccessCredentials.Duration);
