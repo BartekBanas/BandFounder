@@ -3,60 +3,55 @@ using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Services;
 
-namespace BandFounder.Application.Services.Spotify;
+namespace BandFounder.Application.Services;
 
-public interface ISpotifyContentManager
+public interface ISpotifyConnectionService
 {
-    Task<Dictionary<string, int>> GetWagedGenres(Guid? userId = null);
+    Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid? accountId = null);
     Task<List<SpotifyArtistDto>> SaveRelevantArtists();
     Task<List<SpotifyArtistDto>> RetrieveSpotifyUsersArtistsAsync();
 }
 
-public class SpotifyContentManager : ISpotifyContentManager
+public class SpotifyConnectionService : ISpotifyConnectionService
 {
     private readonly ISpotifyContentRetriever _spotifyContentRetriever;
+    private readonly ISpotifyTokenService _spotifyTokenService;
     private readonly IAuthenticationService _authenticationService;
 
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<Account> _accountRepository;
     private readonly IRepository<Genre> _genreRepository;
 
-    public SpotifyContentManager(
+    public SpotifyConnectionService(
         ISpotifyContentRetriever spotifyContentRetriever,
+        ISpotifyTokenService spotifyTokenService,
         IAuthenticationService authenticationService,
         IRepository<Artist> artistRepository,
         IRepository<Account> accountRepository,
         IRepository<Genre> genreRepository)
     {
         _spotifyContentRetriever = spotifyContentRetriever;
+        _spotifyTokenService = spotifyTokenService;
         _authenticationService = authenticationService;
         _artistRepository = artistRepository;
         _accountRepository = accountRepository;
         _genreRepository = genreRepository;
     }
-    
-    public async Task<Dictionary<string, int>> GetWagedGenres(Guid? userId = null)
+
+    public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid? accountId = null)
     {
-        var targetUserId = userId ?? _authenticationService.GetUserId();
-
-        var account = await _accountRepository.GetOneRequiredAsync(key: targetUserId,
-            keyPropertyName: nameof(Artist.Id), includeProperties: ["Artists", "Artists.Genres"]);
+        accountId ??= _authenticationService.GetUserId();
+        var tokensResponse = await _spotifyTokenService.RequestSpotifyTokens(dto);
         
-        var wagedGenres = new Dictionary<string, int>();
-
-        foreach (var genre in account.Artists.SelectMany(artist => artist.Genres))
+        var tokensDto = new SpotifyTokensDto
         {
-            if (!wagedGenres.TryAdd(genre.Name, 1))
-            {
-                wagedGenres[genre.Name]++;
-            }
-        }
-
-        var sortedWagedGenres = wagedGenres
-            .OrderByDescending(genre => genre.Value)
-            .ToDictionary(genre => genre.Key, genre => genre.Value);
-
-        return sortedWagedGenres;
+            AccessToken = tokensResponse.AccessToken,
+            RefreshToken = tokensResponse.RefreshToken,
+            ExpirationDate = DateTime.UtcNow.AddSeconds(tokensResponse.ExpiresIn - 60)
+        };
+        
+        await _spotifyTokenService.CreateSpotifyTokens(tokensDto, (Guid)accountId);
+        await SaveRelevantArtists();
     }
 
     public async Task<List<SpotifyArtistDto>> SaveRelevantArtists()

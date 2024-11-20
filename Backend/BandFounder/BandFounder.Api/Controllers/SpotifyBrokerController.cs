@@ -1,5 +1,4 @@
 ﻿using BandFounder.Application.Services;
-using BandFounder.Application.Services.Spotify;
 using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,19 +10,19 @@ namespace BandFounder.Api.Controllers;
 public class SpotifyBrokerController : ControllerBase
 {
     private readonly ISpotifyContentRetriever _spotifyContentRetriever;
-    private readonly ISpotifyContentManager _spotifyContentManager;
+    private readonly ISpotifyConnectionService _spotifyConnectionService;
     private readonly ISpotifyTokenService _spotifyTokenService;
     
     private readonly IAuthenticationService _authenticationService;
     
     public SpotifyBrokerController(
         ISpotifyContentRetriever spotifyContentRetriever,
-        ISpotifyContentManager spotifyContentManager,
+        ISpotifyConnectionService spotifyConnectionService,
         ISpotifyTokenService spotifyTokenService, 
         IAuthenticationService authenticationService)
     {
         _spotifyContentRetriever = spotifyContentRetriever;
-        _spotifyContentManager = spotifyContentManager;
+        _spotifyConnectionService = spotifyConnectionService;
         _spotifyTokenService = spotifyTokenService;
         _authenticationService = authenticationService;
     }
@@ -41,10 +40,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpPost("connect")]
     public async Task<IActionResult> ConnectToSpotify([FromBody] SpotifyConnectionDto dto)
     {
-        var userId = _authenticationService.GetUserId();
-        
-        await _spotifyTokenService.RequestSpotifyTokens(dto, userId);
-        await _spotifyContentManager.SaveRelevantArtists();
+        await _spotifyConnectionService.LinkAccountToSpotify(dto);
 
         return Ok();
     }
@@ -80,23 +76,5 @@ public class SpotifyBrokerController : ControllerBase
         var artists = await _spotifyContentRetriever.GetFollowedArtistsAsync(userId);
 
         return Ok(artists);
-    }
-    
-    [Authorize]
-    [HttpPost("artists")]
-    public async Task<IActionResult> DownloadSpotifyArtists()
-    {
-        var artists = await _spotifyContentManager.SaveRelevantArtists();
-
-        return Ok(artists);
-    }
-    
-    [Authorize]
-    [HttpGet("genres/waged")]
-    public async Task<IActionResult> GetWagedGenres()
-    {
-        var wagedGenres = await _spotifyContentManager.GetWagedGenres();
-
-        return Ok(wagedGenres);
     }
 }

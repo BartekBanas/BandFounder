@@ -1,5 +1,4 @@
 using BandFounder.Application.Services;
-using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Dto;
@@ -9,11 +8,12 @@ using NSubstitute;
 namespace Services.Tests;
 
 [TestFixture]
-public class SpotifyContentManagerTests
+public class SpotifyConnectionServiceTests
 {
-    private SpotifyContentManager _spotifyContentManager;
+    private SpotifyConnectionService _spotifyConnectionService;
     
     private ISpotifyContentRetriever _spotifyContentRetriever;
+    private ISpotifyTokenService _spotifyTokenService;
     private IAuthenticationService _authenticationService;
     private IRepository<Artist> _artistRepository;
     private IRepository<Account> _accountRepository;
@@ -27,9 +27,11 @@ public class SpotifyContentManagerTests
         _accountRepository = Substitute.For<IRepository<Account>>();
         _genreRepository = Substitute.For<IRepository<Genre>>();
         _spotifyContentRetriever = Substitute.For<ISpotifyContentRetriever>();
+        _spotifyTokenService = Substitute.For<ISpotifyTokenService>();
 
-        _spotifyContentManager = new SpotifyContentManager(
+        _spotifyConnectionService = new SpotifyConnectionService(
             _spotifyContentRetriever,
+            _spotifyTokenService,
             _authenticationService,
             _artistRepository,
             _accountRepository,
@@ -67,7 +69,7 @@ public class SpotifyContentManagerTests
         _spotifyContentRetriever.GetFollowedArtistsAsync(userId).Returns(Task.FromResult(followedArtists));
 
         // Act
-        var savedArtists = await _spotifyContentManager.SaveRelevantArtists();
+        var savedArtists = await _spotifyConnectionService.SaveRelevantArtists();
 
         // Assert
         Assert.That(savedArtists, Has.Count.EqualTo(2));
@@ -117,7 +119,7 @@ public class SpotifyContentManagerTests
         _spotifyContentRetriever.GetFollowedArtistsAsync(userId).Returns(Task.FromResult(followedArtists));
 
         // Act
-        var savedArtists = await _spotifyContentManager.SaveRelevantArtists();
+        var savedArtists = await _spotifyConnectionService.SaveRelevantArtists();
 
         // Assert
         Assert.That(savedArtists, Has.Count.EqualTo(1)); // Both artists should be returned
