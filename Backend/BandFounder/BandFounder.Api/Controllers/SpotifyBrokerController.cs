@@ -28,13 +28,13 @@ public class SpotifyBrokerController : ControllerBase
         _authenticationService = authenticationService;
     }
     
-    [HttpGet("credentials")]
+    [HttpGet("clientId")]
     public async Task<IActionResult> GetSpotifyAppCredentials()
     {
         var appCredentialsService = new SpotifyAppCredentialsService();
         var credentials = await appCredentialsService.LoadCredentials();
 
-        return Ok(credentials);
+        return Ok(credentials.ClientId);
     }
     
     [Authorize]
