@@ -28,7 +28,7 @@ import {
     getMyMusicianRoles, getTopGenres
 } from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
-import {createDirectChatroom, getMyChatrooms} from "../../api/chatroom";
+import {createDirectChatroom, getDirectChatroomWithUser} from "../../api/chatroom";
 import {getUserByName} from "../common/frequentlyUsed";
 import {getTopArtists} from "../../api/spotify";
 
@@ -130,22 +130,6 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         }
     };
 
-    const getChatroomWithUser = async (userId: string): Promise<string | undefined> => {
-        try {
-            let chatRooms = await getMyChatrooms();
-
-            for (const chatroom of chatRooms) {
-                if (chatroom.type === 'Direct' && chatroom.membersIds.includes(userId)) {
-                    return chatroom.id;
-                }
-            }
-
-            throw new Error('Chatroom not found');
-        } catch (e) {
-            throw new Error('Failed to find chatroom with user ' + userId);
-        }
-    }
-
     const handleMessage = async () => {
         try {
             const user = await getUserByName(username);
@@ -155,7 +139,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                 const response = await createDirectChatroom(targetId);
                     window.location.href = '/messages/' + response.id;
             } catch (e) {
-                const chatRoomId = await getChatroomWithUser(targetId);
+                const chatRoomId = await getDirectChatroomWithUser(targetId);
                 if (chatRoomId) {
                     window.location.href = '/messages/' + chatRoomId;
                 } else {

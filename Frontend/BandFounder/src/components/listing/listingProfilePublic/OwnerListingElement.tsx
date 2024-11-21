@@ -4,7 +4,7 @@ import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import {commonTaste} from "../../../types/CommonTaste";
 import {Listing} from "../../../types/Listing";
 import {contactListingOwner, getCommonTaste} from "../../../api/listing";
-import {getMyChatrooms} from "../../../api/chatroom";
+import {getDirectChatroomWithUser} from "../../../api/chatroom";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 
 const OwnerListingElement = ({listing}: { listing: Listing }) => {
@@ -29,22 +29,6 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
         setAnchorEl(null);
     };
 
-    const getChatroomWithUser = async (userId: string): Promise<string | undefined> => {
-        try {
-            let chatRooms = await getMyChatrooms();
-
-            for (const chatroom of chatRooms) {
-                if (chatroom.type === 'Direct' && chatroom.membersIds.includes(userId)) {
-                    return chatroom.id;
-                }
-            }
-
-            throw new Error('Chatroom not found');
-        } catch (e) {
-            throw new Error('Failed to find chatroom with user ' + userId);
-        }
-    }
-
     const handleAction = async () => {
         try {
             if (listing?.ownerId) {
@@ -54,7 +38,7 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
                 if (response) {
                     window.location.href = '/messages/' + response.id;
                 } else {
-                    const chatRoomId = await getChatroomWithUser(listing.ownerId);
+                    const chatRoomId = await getDirectChatroomWithUser(listing.ownerId);
                     if (chatRoomId) {
                         window.location.href = '/messages/' + chatRoomId;
                     } else {

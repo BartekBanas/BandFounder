@@ -12,7 +12,7 @@ public interface IChatroomService
 {
     Task<ChatroomDto> CreateChatroom(ChatroomCreateDto request);
     Task<ChatroomDto> GetChatroom(Guid chatroomId);
-    Task<IEnumerable<ChatroomDto>> GetUserChatrooms();
+    Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(ChatroomFilters? filters = null);
     Task DeleteChatroom(Guid chatroomId);
     Task InviteToChatroom(Guid chatroomId, Guid invitedUserId);
     Task LeaveChatroom(Guid chatroomId);
@@ -60,7 +60,7 @@ public class ChatroomService : IChatroomService
         return chatroom.ToDto();
     }
 
-    public async Task<IEnumerable<ChatroomDto>> GetUserChatrooms()
+    public async Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(ChatroomFilters? filters = null)
     {
         var userId = _authenticationService.GetUserId();
         
@@ -68,6 +68,17 @@ public class ChatroomService : IChatroomService
         
         var usersChatrooms = await _chatRoomRepository.GetAsync(
             chatRoom => chatRoom.Members.Contains(account), includeProperties: nameof(Chatroom.Members));
+        
+        if (filters is { ChatRoomType: not null })
+        {
+            usersChatrooms = usersChatrooms.Where(chatroom => chatroom.ChatRoomType == filters.ChatRoomType);
+        }
+        
+        if (filters is { WithUser: not null })
+        {
+            var selectedUser = await _accountService.GetAccountAsync(filters.WithUser);
+            usersChatrooms = usersChatrooms.Where(chatroom => chatroom.Members.Contains(selectedUser));
+        }
         
         return usersChatrooms.ToDto();
     }

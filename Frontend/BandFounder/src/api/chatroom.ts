@@ -1,5 +1,5 @@
 import {API_URL} from "../config";
-import {ChatRoom} from "../types/ChatRoom";
+import {ChatRoom, ChatRoomType} from "../types/ChatRoom";
 import {ChatRoomCreateDto} from "../types/ChatroomCreateDto";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {authorizedHeaders} from "../hooks/authentication";
@@ -21,18 +21,23 @@ export async function getMyChatrooms(): Promise<ChatRoom[]> {
 
 export async function getDirectChatroomWithUser(accountId: string): Promise<ChatRoom | null> {
     try {
-        const response = await fetch(`${API_URL}/chatrooms/direct/${accountId}`, {
+        const queryParams = new URLSearchParams();
+        queryParams.append('ChatRoomType', ChatRoomType.Direct);
+        queryParams.append('WithUser', accountId);
+
+        const response = await fetch(`${API_URL}/chatrooms?${queryParams.toString()}`, {
             method: 'GET',
             headers: authorizedHeaders()
         });
 
-        if (response.status === 404) {
-            return null;
+        if (!response.ok) {
+            throw new Error(await response.text());
         }
 
-        return await response.json();
+        return await response.json() as ChatRoom;
+
     } catch (e) {
-        mantineErrorNotification('Failed to fetch conversation');
+        mantineErrorNotification('Failed to fetch direct conversation');
         throw e;
     }
 }
