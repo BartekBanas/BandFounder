@@ -325,6 +325,8 @@ public class AccountService : IAccountService
         await file.CopyToAsync(memoryStream);
         var pictureBytes = memoryStream.ToArray();
         
+        var mimeType = file.ContentType;
+        
         if (account.ProfilePicture is not null)
         {
             account.ProfilePicture.ImageData = pictureBytes;
@@ -334,7 +336,8 @@ public class AccountService : IAccountService
             account.ProfilePicture = new ProfilePicture()
             {
                 AccountId = accountId,
-                ImageData = pictureBytes
+                ImageData = pictureBytes,
+                MimeType = mimeType
             };
         }
         

@@ -134,14 +134,12 @@ public class AccountController : Controller
         return NoContent();
     }
     
-    [HttpGet("{accountId}/profile-picture")]
+    [HttpGet("{accountId:guid}/profile-picture")]
     public async Task<IActionResult> GetProfilePicture(Guid accountId)
     {
         var profilePicture = await _accountService.GetProfilePictureAsync(accountId);
 
-        const string mimeType = "image/jpeg";
-
-        return File(profilePicture.ImageData, mimeType);
+        return File(profilePicture.ImageData, profilePicture.MimeType);
     }
 
     [Authorize]

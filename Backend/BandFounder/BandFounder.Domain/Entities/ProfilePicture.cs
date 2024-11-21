@@ -13,5 +13,7 @@ public class ProfilePicture : Entity
     [ForeignKey(nameof(AccountId))]
     public virtual Account Account { get; set; }
     
+    public required string MimeType { get; set; }
+    
     public required byte[] ImageData { get; set; }
 }
