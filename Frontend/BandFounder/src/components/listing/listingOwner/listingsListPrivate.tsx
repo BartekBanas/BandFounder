@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { getListings } from './api';
+import React, {useEffect, useState} from 'react';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
 import ListingPrivate from "./listingPrivate";
 import {Listing} from "../../../types/Listing";
+import {getUsersListings} from "../../../api/listing";
+import {getUserId} from "../../../hooks/authentication";
 
 const ListingsListPrivate: React.FC = () => {
     const [listings, setListings] = useState<Listing[]>([]);
@@ -12,9 +13,7 @@ const ListingsListPrivate: React.FC = () => {
     useEffect(() => {
         const fetchListings = async () => {
             try {
-                const data = await getListings();
-                setListings(data);
-                console.log(data);
+                setListings(await getUsersListings(getUserId()));
             } catch (error) {
                 console.error('Error getting listings:', error);
             }
@@ -29,7 +28,7 @@ const ListingsListPrivate: React.FC = () => {
             components: {
                 Loader: Loader.extend({
                     defaultProps: {
-                        loaders: { ...Loader.defaultLoaders, ring: RingLoader },
+                        loaders: {...Loader.defaultLoaders, ring: RingLoader},
                         type: 'ring',
                     },
                 }),
@@ -38,7 +37,7 @@ const ListingsListPrivate: React.FC = () => {
 
         return <div className="App-header">
             <MantineThemeProvider theme={theme}>
-                <Loader size={200} />
+                <Loader size={200}/>
             </MantineThemeProvider>
         </div>;
     }
@@ -47,7 +46,7 @@ const ListingsListPrivate: React.FC = () => {
         <div className={'listingsList'}>
             {listings && listings.length > 0 ? (
                 listings.map((listing) => (
-                    <ListingPrivate key={listing.id} listingId={listing.id} />
+                    <ListingPrivate key={listing.id} listingId={listing.id}/>
                 ))
             ) : (
                 <p>No listings available</p>

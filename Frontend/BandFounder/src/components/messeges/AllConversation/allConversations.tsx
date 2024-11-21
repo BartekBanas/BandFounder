@@ -1,6 +1,6 @@
 import {FC, useState, useEffect} from "react";
 import {ChatRoom} from "../../../types/ChatRoom";
-import {getMyChatrooms, createDirectChatroom, leaveChatroom} from "../../../api/chatroom";
+import {getMyChatrooms, createDirectChatroom} from "../../../api/chatroom";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import './styles.css'
@@ -18,8 +18,7 @@ interface AllConversationsProps {
 
 export const AllConversations: FC<AllConversationsProps> = ({onSelectConversation}) => {
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
-    const [otherUsers, setOtherUsers] = useState<string[]>([]);
-    const [selectedUser, setSelectedUser] = useState<string | null>(null);
+    const [otherUsers, setOtherUsers] = useState<Account[]>([]);
     const [refreshConversations, setRefreshConversations] = useState<boolean>(false);
     const navigate = useNavigate();
 
@@ -51,14 +50,14 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
     const fetchOtherUsers = async () => {
         const myId = getUserId();
         const accounts = await getAccounts();
-        setOtherUsers(accounts.filter((account: Account) => account.id !== myId).map((user: any) => user.name));
+        setOtherUsers(accounts.filter((account: Account) => account.id !== myId));
     };
 
     const checkIdOfChatroom = (userName: string): string => {
         let id: string = '';
 
         chatRooms.forEach((chatRoom) => {
-            if (chatRoom.name.toLowerCase() == userName.toLowerCase()) {
+            if (chatRoom.name.toLowerCase() === userName.toLowerCase()) {
                 id = chatRoom.id;
             }
         });
@@ -69,26 +68,22 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
         if (!userName) return;
 
         try {
-            const newChatRoom = await createDirectChatroom(userName);
-            fetchConversations();
+            const userId = otherUsers.find((user) => user.name === userName)?.id;
+            if (typeof userId === "string") {
+                const newChatRoom = await createDirectChatroom(userId);
+                window.location.href = `/messages/${newChatRoom.id}`;
+                await fetchConversations();
+            } else {
+                throw new Error('User not found');
+            }
         } catch (error: any) {
             if (error.status === 409) {
-                const chatroomId = await checkIdOfChatroom(userName);
+                const chatroomId = checkIdOfChatroom(userName);
                 window.location.href = `/messages/${chatroomId}`;
             } else {
                 mantineErrorNotification('Failed to create chatroom with ' + userName);
                 console.error("Error creating chatroom:", error);
             }
-        }
-    };
-
-    const handleLeaveChatroom = async (chatRoomId: string) => {
-        try {
-            console.log(`Leaving chatroom with id: ${chatRoomId}`);
-            await leaveChatroom(chatRoomId);
-            window.location.href = '/messages';
-        } catch (error) {
-            console.error("Error leaving chatroom:", error);
         }
     };
 
@@ -99,10 +94,8 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
     return (
         <div id="mainChatroomsList">
             <Autocomplete
-                options={otherUsers}
-                value={selectedUser}
+                options={otherUsers.map((user) => user.name)}
                 onChange={(event, newValue) => {
-                    setSelectedUser(newValue);
                     handleCreateChatroom(newValue);
                 }}
                 renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined"/>}

@@ -1,20 +1,14 @@
-import Cookies from "universal-cookie";
 import {API_URL} from "../config";
-import {getUserByName} from "../components/common/frequentlyUsed";
-import {ChatRoom} from "../types/ChatRoom";
+import {ChatRoom, ChatRoomType} from "../types/ChatRoom";
 import {ChatRoomCreateDto} from "../types/ChatroomCreateDto";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {authorizedHeaders} from "../hooks/authentication";
 
 export async function getMyChatrooms(): Promise<ChatRoom[]> {
     try {
-        const jwt = new Cookies().get('auth_token');
         const response = await fetch(`${API_URL}/chatrooms`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwt}`
-            }
+            headers: authorizedHeaders()
         });
 
         let chatrooms: ChatRoom[] = await response.json();
@@ -25,16 +19,48 @@ export async function getMyChatrooms(): Promise<ChatRoom[]> {
     }
 }
 
-export const createDirectChatroom = async (userName: string): Promise<any> => {
+export async function getChatroom (chatroomId: string): Promise<ChatRoom> {
     try {
-        const user = await getUserByName(userName);
-        if (!user) {
-            throw new Error('User not found');
+        const response = await fetch(`${API_URL}/chatrooms/${chatroomId}`, {
+            method: 'GET',
+            headers: authorizedHeaders()
+        });
+
+        return await response.json() as ChatRoom;
+    } catch (e) {
+        mantineErrorNotification('Failed to fetch chatroom');
+        throw e;
+    }
+}
+
+export async function getDirectChatroomWithUser(accountId: string): Promise<ChatRoom | null> {
+    try {
+        const queryParams = new URLSearchParams();
+        queryParams.append('ChatRoomType', ChatRoomType.Direct);
+        queryParams.append('WithUser', accountId);
+
+        const response = await fetch(`${API_URL}/chatrooms?${queryParams.toString()}`, {
+            method: 'GET',
+            headers: authorizedHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
         }
 
+        return await response.json() as ChatRoom;
+
+    } catch (e) {
+        mantineErrorNotification('Failed to fetch direct conversation');
+        throw e;
+    }
+}
+
+export async function createDirectChatroom(accountId: string): Promise<ChatRoom> {
+    try {
         const chatRoom: ChatRoomCreateDto = {
             chatRoomType: 'Direct',
-            invitedAccountId: user.id
+            invitedAccountId: accountId
         };
 
         const response = await fetch(`${API_URL}/chatrooms`, {
@@ -53,17 +79,13 @@ export const createDirectChatroom = async (userName: string): Promise<any> => {
         console.error('Error creating chatroom:', e);
         throw e;
     }
-};
+}
 
 export const leaveChatroom = async (chatRoomId: string): Promise<any> => {
     try {
-        const jwt = new Cookies().get('auth_token');
         const response = await fetch(`${API_URL}/chatrooms/${chatRoomId}/leave`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwt}`
-            }
+            headers: authorizedHeaders()
         });
         return await response.text();
     } catch (e) {

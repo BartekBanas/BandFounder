@@ -109,7 +109,7 @@ public class ChatroomServiceTests
             .Returns(Task.FromResult<IEnumerable<Chatroom>>(account.Chatrooms));
 
         // Act
-        var result = await _chatroomService.GetUserChatrooms();
+        var result = await _chatroomService.GetUsersChatrooms();
 
         // Assert
         Assert.That(result.Count(), Is.EqualTo(2));

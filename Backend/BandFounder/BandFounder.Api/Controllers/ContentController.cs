@@ -1,5 +1,4 @@
 using BandFounder.Application.Services;
-using BandFounder.Infrastructure.Spotify.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +9,6 @@ namespace BandFounder.Api.Controllers;
 public class ContentController(
     IContentService contentService,
     IAccountService accountService,
-    ISpotifyContentRetriever spotifyContentRetriever,
-    IAuthenticationService authenticationService,
     IListingService listingService)
     : Controller
 {
@@ -39,17 +36,6 @@ public class ContentController(
         return Ok(musicianRoles);
     }
     
-    [Obsolete]
-    [Authorize]
-    [HttpGet("accounts/me/artists")]
-    public async Task<IActionResult> GetMyArtists()
-    {
-        var accountDto = await accountService.GetDetailedAccount();
-        var artists = accountDto.Artists.Select(artist => artist.Name).ToList();
-
-        return Ok(artists);
-    }
-    
     [Authorize]
     [HttpGet("accounts/{accountId:guid}/artists")]
     public async Task<IActionResult> GetUsersArtists([FromRoute] Guid accountId)
@@ -67,27 +53,6 @@ public class ContentController(
         await accountService.AddArtist(accountId, artistName);
 
         return Ok();
-    }
-    
-    [Authorize]
-    [HttpGet("accounts/me/artists/top")]
-    public async Task<IActionResult> GetMyTopArtists()
-    {
-        var userId = authenticationService.GetUserId();
-        var artistDtoList = await spotifyContentRetriever.GetTopArtistsAsync(userId, 10);
-        var artists = artistDtoList.Select(artist => artist.Name).ToList();
-
-        return Ok(artists);
-    }
-    
-    [Authorize]
-    [HttpGet("accounts/{accountId:guid}/artists/top")]
-    public async Task<IActionResult> GetUsersTopArtists([FromRoute] Guid accountId)
-    {
-        var artistDtoList = await spotifyContentRetriever.GetTopArtistsAsync(accountId, 10);
-        var artists = artistDtoList.Select(artist => artist.Name).ToList();
-
-        return Ok(artists);
     }
     
     [Authorize]

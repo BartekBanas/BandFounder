@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import {deleteListing, getGenres, getListing, getMusicianRoles, updateListing} from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './style.css';
 import './listingCreator.css';
@@ -17,12 +16,14 @@ import {
     IconButton,
     Autocomplete
 } from "@mui/material";
-import {ListingUpdated} from "../../../types/ListingUpdated";
+import {ListingCreateDto} from "../../../types/ListingCreateDto";
 import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
 import {getUser} from "../../../api/account";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import {deleteListing, getListing, updateListing} from "../../../api/listing";
+import {getGenres, getMusicianRoles} from "../../../api/metadata";
 
 interface ListingPrivateProps {
     listingId: string;
@@ -123,7 +124,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
 
     const handleUpdateListing = async () => {
         try {
-            const updatedListing: ListingUpdated = {
+            const updatedListing: ListingCreateDto = {
                 name: listingName,
                 type: listingType,
                 genre: listingGenre,

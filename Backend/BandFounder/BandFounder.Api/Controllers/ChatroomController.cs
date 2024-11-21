@@ -18,9 +18,9 @@ public class ChatroomController : Controller
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetUserChatrooms()
+    public async Task<IActionResult> GetUserChatrooms([FromQuery] ChatroomFilters filters)
     {
-        var chatRoomDtos = await _chatroomService.GetUserChatrooms();
+        var chatRoomDtos = await _chatroomService.GetUsersChatrooms(filters);
 
         return Ok(chatRoomDtos);
     }

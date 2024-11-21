@@ -16,7 +16,7 @@ public class MessageController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> SendMessage([FromRoute]Guid chatRoomId, string message)
+    public async Task<IActionResult> SendMessage([FromRoute] Guid chatRoomId, [FromBody] string message)
     {
         await _messageService.SendMessage(new SendMessageDto(chatRoomId, message));
 
@@ -25,7 +25,7 @@ public class MessageController : Controller
     
     [HttpGet]
     public async Task<IActionResult> GetChatroomMessages([FromRoute] Guid chatRoomId,
-        [FromQuery]int? pageSize, [FromQuery]int? pageNumber)
+        [FromQuery] int? pageSize, [FromQuery] int? pageNumber)
     {
         object messagesDto;
 

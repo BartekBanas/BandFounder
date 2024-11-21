@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;
 
-[Route("api/spotifyBroker")]
+[Route("api")]
 public class SpotifyBrokerController : ControllerBase
 {
     private readonly ISpotifyContentRetriever _spotifyContentRetriever;
@@ -27,7 +27,7 @@ public class SpotifyBrokerController : ControllerBase
         _authenticationService = authenticationService;
     }
     
-    [HttpGet("clientId")]
+    [HttpGet("spotify/app/clientId")]
     public async Task<IActionResult> GetSpotifyAppCredentials()
     {
         var appCredentialsService = new SpotifyAppCredentialsService();
@@ -37,7 +37,7 @@ public class SpotifyBrokerController : ControllerBase
     }
     
     [Authorize]
-    [HttpPost("connect")]
+    [HttpPost("spotify/tokens")]
     public async Task<IActionResult> ConnectToSpotify([FromBody] SpotifyConnectionDto dto)
     {
         await _spotifyConnectionService.LinkAccountToSpotify(dto);
@@ -46,7 +46,7 @@ public class SpotifyBrokerController : ControllerBase
     }
     
     [Authorize]
-    [HttpGet("tokens")]
+    [HttpGet("spotify/tokens")]
     public async Task<IActionResult> GetSpotifyTokens()
     {
         var userId = _authenticationService.GetUserId();
@@ -57,23 +57,21 @@ public class SpotifyBrokerController : ControllerBase
     }
     
     [Authorize]
-    [HttpGet("artists/top")]
-    public async Task<IActionResult> GetSpotifyUsersTopArtists()
+    [HttpGet("accounts/{accountId:guid}/artists/spotify/top")]
+    public async Task<IActionResult> GetUsersSpotifyTopArtists([FromRoute] Guid accountId)
     {
-        var userId = _authenticationService.GetUserId();
-
-        var artists = await _spotifyContentRetriever.GetTopArtistsAsync(userId);
+        var artistDtoList = await _spotifyContentRetriever.GetTopArtistsAsync(accountId, 10);
+        var artists = artistDtoList.Select(artist => artist.Name).ToList();
 
         return Ok(artists);
     }
     
     [Authorize]
-    [HttpGet("artists/followed")]
-    public async Task<IActionResult> GetSpotifyUsersFollowedArtists()
+    [HttpGet("accounts/{accountId:guid}/artists/spotify/followed")]
+    public async Task<IActionResult> GetUsersSpotifyFollowedArtists([FromRoute] Guid accountId)
     {
-        var userId = _authenticationService.GetUserId();
-
-        var artists = await _spotifyContentRetriever.GetFollowedArtistsAsync(userId);
+        var artistDtoList = await _spotifyContentRetriever.GetFollowedArtistsAsync(accountId);
+        var artists = artistDtoList.Select(artist => artist.Name).ToList();
 
         return Ok(artists);
     }

@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import {contactProfileOwner, getAccount, getGUID, getTopArtists, getTopGenres} from './api';
-import { Account } from "../../types/Account";
+import React, {useEffect, useState} from 'react';
+import {Account} from "../../types/Account";
 import './profile.css';
 import {
     Autocomplete,
@@ -19,23 +18,25 @@ import {muiDarkTheme} from "../../assets/muiDarkTheme";
 import {useDisclosure} from "@mantine/hooks";
 import {
     mantineErrorNotification,
-    mantineInformationNotification,
-    mantineSuccessNotification
 } from "../common/mantineNotification";
-import {API_URL} from "../../config";
-import {getAuthToken} from "../../hooks/authentication";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {deleteMyMusicianRole, getMyMusicianRoles} from "../../api/account";
+import {
+    addMyMusicianRole,
+    deleteMyMusicianRole,
+    getAccount,
+    getAccountByUsername,
+    getMyMusicianRoles, getTopGenres
+} from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
-import {getMyChatrooms} from "../../api/chatroom";
-import {getUserByName} from "../common/frequentlyUsed";
+import {createDirectChatroom, getDirectChatroomWithUser} from "../../api/chatroom";
+import {getTopArtists} from "../../api/spotify";
 
 interface ProfileShowProps {
     username: string;
     isMyProfile: boolean;
 }
 
-const ProfileShow: React.FC<ProfileShowProps> = ({ username,isMyProfile}) => {
+const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
     const [guid, setGuid] = useState<string | undefined>(undefined);
     const [account, setAccount] = useState<Account | undefined>(undefined);
     const [topArtists, setTopArtists] = useState<string[] | undefined>([]);
@@ -48,12 +49,11 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username,isMyProfile}) => {
     const [deleting, setDeleting] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchGUID = async () => {
-            const result = await getGUID(username);
-            setGuid(result);
+        const fetchAccountId = async () => {
+            setGuid((await getAccountByUsername(username)).id);
         };
 
-        fetchGUID();
+        fetchAccountId();
     }, [username]);
 
     useEffect(() => {
@@ -109,31 +109,9 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username,isMyProfile}) => {
             return;
         }
 
-        try {
-            const response = await fetch(`${API_URL}/accounts/roles`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getAuthToken()}`,
-                },
-                body: JSON.stringify(selectedRole)
-            });
+        await addMyMusicianRole(selectedRole);
 
-            if (!response.ok) {
-                throw new Error(`Failed to add ${selectedRole} role to your account`);
-            }
-
-            if (response.status === 204) {
-                mantineInformationNotification(`Your account already has role ${selectedRole} assigned`);
-            } else {
-                mantineSuccessNotification(`Role ${selectedRole} was added to your account`);
-            }
-
-            fetchMyMusicianRoles();
-
-        } catch (error) {
-            mantineErrorNotification(`Failed to add ${selectedRole} role to your account`);
-        }
+        fetchMyMusicianRoles();
 
         close();
     };
@@ -151,46 +129,32 @@ const ProfileShow: React.FC<ProfileShowProps> = ({ username,isMyProfile}) => {
         }
     };
 
-    const getChatroomWithUser = async (userId: string): Promise<string | undefined> => {
+    const handleMessage = async () => {
         try {
-            let chatRooms = await getMyChatrooms();
-
-            for (const chatroom of chatRooms) {
-                if (chatroom.type === 'Direct' && chatroom.membersIds.includes(userId)) {
-                    return chatroom.id;
-                }
-            }
-
-            throw new Error('Chatroom not found');
-        } catch (e) {
-            throw new Error('Failed to find chatroom with user ' + userId);
-        }
-    }
-
-    const handleMessage = async() => {
-        try{
-            const user = await getUserByName(username);
+            const user = await getAccountByUsername(username);
             const targetId = user?.id;
-            const response = await contactProfileOwner(targetId);
-            if (response) {
-                window.location.href = '/messages/' + response.id;
-            } else {
-                const chatRoomId = await getChatroomWithUser(targetId);
+
+            try {
+                const response = await createDirectChatroom(targetId);
+                    window.location.href = '/messages/' + response.id;
+            } catch (e) {
+                const chatRoomId = await getDirectChatroomWithUser(targetId);
                 if (chatRoomId) {
                     window.location.href = '/messages/' + chatRoomId;
                 } else {
+                    mantineErrorNotification('An error occurred when trying to message ' + username);
                     throw new Error('Failed to find chatroom with user ' + targetId);
                 }
             }
-        }
-        catch (e){
+        } catch (e) {
             console.error('Error contacting profile owner:', e);
         }
     }
 
     return (
         <div className={'profileMain'}>
-            <div className={'profileLeftPart'} style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+            <div className={'profileLeftPart'}
+                 style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
                 <img id='profileImage' src={require('../../assets/defaultProfileImage.jpg')} alt="Default Profile"/>
 
                 <div style={{display: 'flex', alignItems: 'center', margin: '5px'}}>

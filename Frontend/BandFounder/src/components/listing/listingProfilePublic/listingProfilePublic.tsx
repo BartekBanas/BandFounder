@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { getListing } from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './style.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
 import {getUser} from "../../../api/account";
 import OwnerListingElement from "./OwnerListingElement";
-import { Public } from '@mui/icons-material';
+import {getListing} from "../../../api/listing";
 
 interface listingProfilePublicProps {
     listingId: string;

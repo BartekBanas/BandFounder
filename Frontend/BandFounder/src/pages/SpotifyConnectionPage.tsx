@@ -19,15 +19,6 @@ export function SpotifyConnectionPage() {
         connectAccountWithSpotify();
     }, [navigate]);
 
-    const handleConnect = async () => {
-        try {
-            await linkAccountWithSpotifyFromCode();
-            navigate("/home");
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
     return (
         <div className="App">
             <Center style={{minHeight: '100vh'}}>
