@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import {postListing} from './api';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './style.css';
 import './listingCreator.css'
@@ -16,9 +15,10 @@ import {
 } from '@mui/material';
 import Cookies from "universal-cookie";
 import CloseIcon from "@mui/icons-material/Close";
-import {getGenres, getMusicianRoles} from "../listingOwner/api";
-import {ListingUpdated} from "../../../types/ListingUpdated";
+import {ListingCreateDto} from "../../../types/ListingCreateDto";
 import {getUser} from "../../../api/account";
+import {postListing} from "../../../api/listing";
+import {getGenres, getMusicianRoles} from "../../../api/metadata";
 
 interface ListingTemplateProps {
 }
@@ -26,7 +26,6 @@ interface ListingTemplateProps {
 const ListingTemplate: React.FC<ListingTemplateProps> = () => {
     const [user, setUser] = useState<any>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const [open, setOpen] = useState(false);
     const [listingType, setListingType] = useState<string>('CollaborativeSong');
     const [listingGenre, setListingGenre] = useState<string>('Metalcore');
     const [listingDescription, setListingDescription] = useState<string>('');
@@ -116,7 +115,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
 
     const handlePostListing = async () => {
         try {
-            const updatedListing: ListingUpdated = {
+            const updatedListing: ListingCreateDto = {
                 name: listingName,
                 type: listingType,
                 genre: listingGenre,

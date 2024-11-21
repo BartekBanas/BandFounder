@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { getListings } from './api';
+import React, {useEffect, useState} from 'react';
 import ListingPublic from './listingPublic';
-import {ListingWithScore} from "../../../types/ListingFeed";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
-import {Autocomplete, InputLabel, MenuItem, Select, TextField} from "@mui/material";
+import {Autocomplete, MenuItem, TextField} from "@mui/material";
 import {getGenres} from "../../../api/metadata";
+import {getListingFeed} from "../../../api/listing";
+import {ListingFeedFilters, ListingType, ListingWithScore} from "../../../types/Listing";
 
 const ListingsListPublic: React.FC = () => {
     const [listings, setListings] = useState<ListingWithScore[]>([]);
@@ -14,15 +14,22 @@ const ListingsListPublic: React.FC = () => {
     const [excludeOwnListings, setExcludeOwnListings] = useState<boolean | undefined>(true);
     const [matchMusicRole, setMatchMusicRole] = useState<boolean | undefined>(undefined);
     const [fromLatest, setFromLatest] = useState<boolean | undefined>(undefined);
-    const [listingType, setListingType] = useState< 'Band' | 'CollaborativeSong' | undefined>(undefined);
+    const [listingType, setListingType] = useState<ListingType | undefined>(undefined);
     const [genreFilter, setGenreFilter] = useState<string | undefined>(undefined);
     const [genreOptions, setGenreOptions] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchListings = async () => {
             try {
-                const data = await getListings(excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter);
-                setListings(data.listings);
+                const filters: ListingFeedFilters = {
+                    excludeOwn: excludeOwnListings,
+                    matchMusicRole: matchMusicRole,
+                    fromLatest: fromLatest,
+                    listingType: listingType,
+                    genre: genreFilter
+                };
+                const listingsFeed = await getListingFeed(filters);
+                setListings(listingsFeed.listings);
             } catch (error) {
                 console.error('Error getting listings:', error);
             } finally {
@@ -43,7 +50,7 @@ const ListingsListPublic: React.FC = () => {
         components: {
             Loader: Loader.extend({
                 defaultProps: {
-                    loaders: { ...Loader.defaultLoaders, ring: RingLoader },
+                    loaders: {...Loader.defaultLoaders, ring: RingLoader},
                     type: 'ring',
                 },
             }),
@@ -53,7 +60,7 @@ const ListingsListPublic: React.FC = () => {
     if (loading) {
         return <div className="App-header">
             <MantineThemeProvider theme={theme}>
-                <Loader size={200} />
+                <Loader size={200}/>
             </MantineThemeProvider>
         </div>;
     }
@@ -95,8 +102,8 @@ const ListingsListPublic: React.FC = () => {
                         select
                         label="Listing type"
                         value={listingType}
-                        onChange={(e) => setListingType(e.target.value as 'CollaborativeSong' | 'Band')}
-                        sx={{ width: '100%' }}
+                        onChange={(e) => setListingType(e.target.value as ListingType)}
+                        sx={{width: '100%'}}
                         id="listingType"
                     >
                         <MenuItem value={undefined}>All</MenuItem>

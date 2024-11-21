@@ -1,8 +1,6 @@
-import {MusicianSlotDto} from "./MusicianSlotsDto";
-import {Account} from "./Account";
 import {MusicianSlotsDtoUpdatedListing} from "./MusicianSlotsDtoUpdatedListing";
 
-export interface ListingUpdated {
+export interface ListingCreateDto {
     name: string;
     genre?: string;
     type: string;
