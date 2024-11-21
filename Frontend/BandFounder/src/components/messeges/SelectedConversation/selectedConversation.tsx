@@ -1,12 +1,13 @@
-import { FC, useEffect, useRef, useState } from "react";
-import { Message } from "../../../types/Message";
-import { getSelectedChatroom, getSelectedConversation, sendMessage } from "./api";
-import { getCurrentUser, getUserById } from "../../common/frequentlyUsed";
-import { TextField, IconButton, Tooltip } from "@mui/material";
+import {FC, useEffect, useRef, useState} from "react";
+import {Message} from "../../../types/Message";
+import {getCurrentUser, getUserById} from "../../common/frequentlyUsed";
+import {TextField, IconButton, Tooltip} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css'
+import {getChatroom} from "../../../api/chatroom";
+import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
 
 interface SelectedConversationProps {
     id: string;
@@ -17,7 +18,7 @@ interface MessageWithSenderName extends Message {
     timeSinceSent: string;
 }
 
-export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
+export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
     const [receiverName, setReceiverName] = useState<string>("Unknown User");
@@ -28,7 +29,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
         const fetchConversation = async () => {
             if (id) {
                 try {
-                    const conversation: Message[] = await getSelectedConversation(id);
+                    const conversation: Message[] = await getMessagesFromChatroom(id);
                     const currentUser = await getCurrentUser();
 
                     const conversationWithNames = await Promise.all(
@@ -73,7 +74,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
         const fetchReceiverName = async () => {
             try {
                 if (id) {
-                    const chatroom = await getSelectedChatroom(id);
+                    const chatroom = await getChatroom(id);
                     const currentUser = await getCurrentUser();
                     const receiverId = chatroom.membersIds.find((memberId: string) => memberId !== currentUser.id);
 
@@ -92,7 +93,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     }, [id, reload]);
 
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        bottomRef.current?.scrollIntoView({behavior: "smooth"});
     }, [currentConversation]);
 
     const handleSendMessage = async () => {
@@ -117,7 +118,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     return (
         <div id="mainSelectedConversation">
             <h1 id="selectedConversationTitle">Conversation with {receiverName}</h1>
-            <ul id="fullConversation" className={'custom-scrollbar'} style={{ listStyleType: "none", padding: 0 }}>
+            <ul id="fullConversation" className={'custom-scrollbar'} style={{listStyleType: "none", padding: 0}}>
                 {currentConversation.map((message, index) => (
                     <li
                         key={index}
@@ -130,7 +131,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                             <div className={'singleMessageYou'}>
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className={'messageProfilePresentation'}>
-                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -143,7 +144,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                             <div className={'singleMessageThey'}>
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className={'messageProfilePresentation'}>
-                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -155,9 +156,9 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                         )}
                     </li>
                 ))}
-                <div ref={bottomRef} />
+                <div ref={bottomRef}/>
             </ul>
-            <div id="sendBox" style={{ display: "flex", alignItems: "center", marginTop: "1rem" }}>
+            <div id="sendBox" style={{display: "flex", alignItems: "center", marginTop: "1rem"}}>
                 <TextField
                     fullWidth
                     variant="outlined"
@@ -165,14 +166,14 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    inputProps={{ "aria-label": "Type a message" }}
+                    inputProps={{"aria-label": "Type a message"}}
                 />
                 <IconButton
                     color="primary"
                     onClick={handleSendMessage}
                     aria-label="Send message"
                 >
-                    <SendIcon />
+                    <SendIcon/>
                 </IconButton>
             </div>
         </div>

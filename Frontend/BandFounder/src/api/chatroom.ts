@@ -19,6 +19,20 @@ export async function getMyChatrooms(): Promise<ChatRoom[]> {
     }
 }
 
+export async function getChatroom (chatroomId: string): Promise<ChatRoom> {
+    try {
+        const response = await fetch(`${API_URL}/chatrooms/${chatroomId}`, {
+            method: 'GET',
+            headers: authorizedHeaders()
+        });
+
+        return await response.json() as ChatRoom;
+    } catch (e) {
+        mantineErrorNotification('Failed to fetch chatroom');
+        throw e;
+    }
+}
+
 export async function getDirectChatroomWithUser(accountId: string): Promise<ChatRoom | null> {
     try {
         const queryParams = new URLSearchParams();

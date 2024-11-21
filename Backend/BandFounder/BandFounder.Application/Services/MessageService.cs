@@ -62,12 +62,12 @@ public class MessageService : IMessageService
             nameof(Chatroom.Members));
 
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsMemberOf);
-
-    var messages = await _messageRepository
-        .GetAsync(
-            message => message.ChatRoomId == chatRoomId,
-            query => query.OrderBy(message => message.SentDate) // Sent Date ascending
-        );
+        
+        var messages = await _messageRepository
+            .GetAsync(
+                message => message.ChatRoomId == chatRoomId,
+                query => query.OrderBy(message => message.SentDate) // Sent Date ascending
+            );
 
         return messages.ToDto();
     }
