@@ -12,6 +12,7 @@ import {Account} from "../../types/Account";
 import {getTopArtists} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
 import {getAccount} from "../../api/account";
+import ProfilePictureUpload from "./ProfilePictureUpload";
 
 interface UtilityDrawerProps {
 }
@@ -132,6 +133,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                     <Button variant={"outlined"} onClick={handleLogout} color={"warning"}>
                         Logout
                     </Button>
+                    <ProfilePictureUpload/>
                 </div>
             </Drawer>
 

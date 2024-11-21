@@ -1,5 +1,12 @@
 import {API_URL} from "../config";
-import {authorizedHeaders, getAuthToken, getUserId, removeAuthToken, removeUserId} from "../hooks/authentication";
+import {
+    authorizedHeader,
+    authorizedHeaders,
+    getAuthToken,
+    getUserId,
+    removeAuthToken,
+    removeUserId
+} from "../hooks/authentication";
 import {
     mantineErrorNotification,
     mantineInformationNotification,
@@ -239,5 +246,21 @@ export async function getTopGenres(guid: string, genresToReturn: number = 10): P
     } catch (error) {
         console.error('Error getting top genres:', error);
         return [];
+    }
+}
+
+export async function uploadProfilePicture(file: File): Promise<void> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_URL}/accounts/${getUserId()}/profile-picture`, {
+        method: 'PUT',
+        headers: authorizedHeader(),
+        body: formData,
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to upload profile picture');
+        throw new Error(await response.text());
     }
 }

@@ -50,3 +50,16 @@ export function authorizedHeaders(): HeadersInit {
         'Authorization': `Bearer ${token}`,
     };
 }
+
+export function authorizedHeader(): HeadersInit {
+    const token = getAuthToken();
+
+    if (!token) {
+        window.location.href = '/login/expiredSession';
+        throw new Error('Authentication token not found');
+    }
+
+    return {
+        'Authorization': `Bearer ${token}`,
+    };
+}
