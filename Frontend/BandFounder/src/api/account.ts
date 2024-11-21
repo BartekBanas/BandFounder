@@ -1,6 +1,10 @@
 import {API_URL} from "../config";
-import {authorizedHeaders, getUserId, removeAuthToken, removeUserId} from "../hooks/authentication";
-import {mantineErrorNotification} from "../components/common/mantineNotification";
+import {authorizedHeaders, getAuthToken, getUserId, removeAuthToken, removeUserId} from "../hooks/authentication";
+import {
+    mantineErrorNotification,
+    mantineInformationNotification,
+    mantineSuccessNotification
+} from "../components/common/mantineNotification";
 import {Account} from "../types/Account";
 
 export async function registerAccount(name: string, email: string, password: string) {
@@ -61,6 +65,20 @@ export async function getMyAccount(): Promise<Account> {
 
     const account: Account = await response.json();
     return account;
+}
+
+export async function getAccount(accountId: string): Promise<Account> {
+    const response = await fetch(`${API_URL}/accounts/${accountId}`, {
+        method: 'GET',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to fetch user');
+        throw new Error('Failed to fetch user');
+    }
+
+    return await response.json();
 }
 
 export async function getAccounts(): Promise<Account[]> {
@@ -137,6 +155,32 @@ export async function deleteMyMusicianRole(role: string): Promise<void> {
     }
 }
 
+export async function addMyMusicianRole(role: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/accounts/roles`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`,
+            },
+            body: JSON.stringify(role), // Ensure the role field is correctly formatted
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to add ${role} role to your account`);
+        }
+
+        if (response.status === 204) {
+            mantineInformationNotification(`Your account already has role ${role} assigned`);
+        } else {
+            mantineSuccessNotification(`Role ${role} was added to your account`);
+        }
+
+    } catch (error) {
+        mantineErrorNotification(`Failed to add ${role} role to your account`);
+    }
+}
+
 export async function getUser(guid: string): Promise<Account> {
     try {
         const response = await fetch(`${API_URL}/accounts/${guid}`, {
@@ -162,5 +206,39 @@ export async function getUser(guid: string): Promise<Account> {
     } catch (error) {
         console.error(error);
         throw error;
+    }
+}
+
+export const getAccountIdByUsername = async (username: string) => {
+    const response = await fetch(`${API_URL}/accounts?username=${username}`, {
+        method: 'GET',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification(`Failed to fetch user ${username}`);
+        console.error(await response.text());
+    }
+
+    const account: Account = await response.json();
+    return account.id;
+};
+
+export async function getTopGenres(guid: string, genresToReturn: number = 10): Promise<string[]> {
+    try {
+        const response = await fetch(`${API_URL}/accounts/${guid}/genres`, {
+            method: 'GET',
+            headers: authorizedHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const genres: string[] = await response.json();
+        return genres.slice(0, genresToReturn);
+    } catch (error) {
+        console.error('Error getting top genres:', error);
+        return [];
     }
 }

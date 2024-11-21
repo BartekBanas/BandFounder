@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {getMyMusicianRoles} from '../../api/account';
 import MusicianRolesList from './MusicianRolesList';
-import {AddMusicianRoleModal} from './AddMusicianRoleModal';
 import {Typography} from "@mui/material";
 import {getMusicianRoles} from "../../api/metadata";
 
@@ -29,7 +28,7 @@ const MusicianRolesManager = () => {
             <Typography variant="h6" gutterBottom>
                 My Musician Roles
             </Typography>
-            <MusicianRolesList roles={roles} onRoleDeleted={fetchMyMusicianRoles} onRoleAdded={fetchMyMusicianRoles} allRoles={allRoles}/>
+            <MusicianRolesList roles={roles} onRoleAdded={fetchMyMusicianRoles} allRoles={allRoles}/>
         </div>
     );
 };
