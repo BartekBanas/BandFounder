@@ -29,7 +29,7 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await HandleErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or SpotifyAccountNotLinkedError)
+        catch (Exception ex) when (ex is UnauthorizedAccessException)
         {
             await HandleErrorAsync(context, StatusCodes.Status401Unauthorized, ex.Message);
         }
@@ -37,7 +37,7 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await HandleErrorAsync(context, StatusCodes.Status403Forbidden, ex.Message);
         }
-        catch (Exception ex) when (ex is ItemNotFoundErrorException or NotFoundError)
+        catch (Exception ex) when (ex is ItemNotFoundErrorException or NotFoundError or SpotifyAccountNotLinkedError)
         {
             await HandleErrorAsync(context, StatusCodes.Status404NotFound, ex.Message);
         }

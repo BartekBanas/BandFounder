@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {contactProfileOwner, getAccount, getGUID, getTopArtists, getTopGenres} from './api';
+import {contactProfileOwner, getAccount, getGUID, getTopGenres} from './api';
 import { Account } from "../../types/Account";
 import './profile.css';
 import {
@@ -29,6 +29,7 @@ import {deleteMyMusicianRole, getMyMusicianRoles} from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
 import {getMyChatrooms} from "../../api/chatroom";
 import {getUserByName} from "../common/frequentlyUsed";
+import {getTopArtists} from "../../api/spotify";
 
 interface ProfileShowProps {
     username: string;
