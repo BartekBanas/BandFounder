@@ -133,6 +133,16 @@ public class AccountController : Controller
 
         return NoContent();
     }
+    
+    [HttpGet("{accountId}/profile-picture")]
+    public async Task<IActionResult> GetProfilePicture(Guid accountId)
+    {
+        var profilePicture = await _accountService.GetProfilePictureAsync(accountId);
+
+        const string mimeType = "image/jpeg";
+
+        return File(profilePicture.ImageData, mimeType);
+    }
 
     [Authorize]
     [HttpPost("clearProfile")]

@@ -26,6 +26,7 @@ public interface IAccountService
     Task ClearUserMusicProfile(Guid? accountId = null);
     Task AddArtist(Guid accountId, string artistName);
     Task UpdateProfilePicture(Guid accountId, IFormFile file);
+    Task<ProfilePicture> GetProfilePictureAsync(Guid accountId);
 }
 
 public class AccountService : IAccountService
@@ -338,5 +339,18 @@ public class AccountService : IAccountService
         }
         
         await _accountRepository.SaveChangesAsync();
+    }
+    
+    public async Task<ProfilePicture> GetProfilePictureAsync(Guid accountId)
+    {
+        var account = await _accountRepository.GetOneRequiredAsync(
+            key: accountId, includeProperties: nameof(Account.ProfilePicture));
+        
+        if (account.ProfilePicture == null || account.ProfilePicture.ImageData.Length == 0)
+        {
+            throw new NotFoundError("Profile picture not found");
+        }
+
+        return account.ProfilePicture;
     }
 }
