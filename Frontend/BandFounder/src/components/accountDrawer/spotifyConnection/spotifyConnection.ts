@@ -11,15 +11,19 @@ const SpotifyConnectionPageUrl = BaseAppUrl + "spotifyConnection/callback/";
 const SpotifyAuthorizeUrl = "https://accounts.spotify.com/authorize";
 
 export async function redirectToSpotifyAuthorizationPage() {
-    const spotifyClientId = await fetchSpotifyAppClientId();
+    try {
+        const spotifyClientId = await fetchSpotifyAppClientId();
 
-    let url = SpotifyAuthorizeUrl;
-    url += "?client_id=" + spotifyClientId;
-    url += "&response_type=code";
-    url += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
-    url += "&show_dialog=true";
-    url += "&scope=user-top-read user-follow-read";
-    window.location.href = url; // Show Spotify's authorization screen
+        let url = SpotifyAuthorizeUrl;
+        url += "?client_id=" + spotifyClientId;
+        url += "&response_type=code";
+        url += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
+        url += "&show_dialog=true";
+        url += "&scope=user-top-read user-follow-read";
+        window.location.href = url; // Show Spotify's authorization screen
+    } catch (error) {
+        console.error('Error fetching Spotify app client ID:', error);
+    }
 }
 
 export async function linkAccountWithSpotifyFromCode(): Promise<void> {
@@ -36,7 +40,7 @@ export async function linkAccountWithSpotifyFromCode(): Promise<void> {
 }
 
 async function requestSpotifyAccountLinkFromCode(code: string): Promise<void> {
-    const response = await fetch(`${API_URL}/spotifyBroker/connect`, {
+    const response = await fetch(`${API_URL}/spotify/tokens`, {
         method: 'POST',
         headers: authorizedHeaders(),
         body: JSON.stringify({
@@ -55,7 +59,7 @@ async function requestSpotifyAccountLinkFromCode(code: string): Promise<void> {
 }
 
 export async function fetchSpotifyAppClientId(): Promise<string> {
-    const response = await fetch(`${API_URL}/spotifyBroker/clientId`, {
+    const response = await fetch(`${API_URL}/spotify/app/clientId`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -66,6 +70,7 @@ export async function fetchSpotifyAppClientId(): Promise<string> {
     const responseText = await response.text();
 
     if (!response.ok) {
+        mantineErrorNotification('Failed to fetch Spotify app client ID');
         throw new Error(responseText);
     }
 

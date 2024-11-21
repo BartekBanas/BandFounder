@@ -4,15 +4,13 @@ import './styles.css';
 import {getMyAccount, registerAccount} from "../../api/account";
 import {mantineSuccessNotification} from "../common/mantineNotification";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
-import {Alert, Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
+import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
 export function LoginForm ()  {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-
-    const [error, setError] = useState<string | null>(null);
 
     const navigate = useNavigate();
 
@@ -65,12 +63,6 @@ export function LoginForm ()  {
                     <Typography variant="h4" align="center" gutterBottom>
                         Register
                     </Typography>
-
-                    {error && (
-                        <Alert severity="error" sx={{ marginBottom: '16px' }}>
-                            {error}
-                        </Alert>
-                    )}
 
                     <TextField
                         fullWidth

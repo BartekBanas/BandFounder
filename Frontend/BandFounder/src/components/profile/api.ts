@@ -48,7 +48,7 @@ export const getAccount = async (guid: string) => {
 
 export const getTopArtists = async (guid: string) => {
     try{
-        const response = await fetch(`${API_URL}/accounts/${guid}/artists/top`, {
+        const response = await fetch(`${API_URL}/accounts/${guid}/artists/spotify/top`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
