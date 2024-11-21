@@ -1,10 +1,9 @@
 import Cookies from "universal-cookie";
 import {API_URL} from "../../../config";
-import {getUserById, getUserByName} from "../../common/frequentlyUsed";
-import {Listing} from "../../../types/Listing";
+import {getAccountByUsername} from "../../../api/account";
 
 export const getListing = async (listingId: string) => {
-    try{
+    try {
         const jwt = new Cookies().get('auth_token');
         const response = await fetch(`${API_URL}/listings/${listingId}`, {
             method: 'GET',
@@ -14,16 +13,15 @@ export const getListing = async (listingId: string) => {
             }
         });
         return await response.json();
-    }
-    catch (e) {
+    } catch (e) {
         console.error('Error getting listing:', e);
     }
 }
 
-export const getListings = async (username:string) => {
-    try{
+export const getListings = async (username: string) => {
+    try {
         const jwt = new Cookies().get('auth_token');
-        const targetUser = await getUserByName(username);
+        const targetUser = await getAccountByUsername(username);
         const response = await fetch(`${API_URL}/accounts/${targetUser.id}/listings`, {
             method: 'GET',
             headers: {
@@ -32,8 +30,7 @@ export const getListings = async (username:string) => {
             }
         });
         return await response.json();
-    }
-    catch (e) {
+    } catch (e) {
         console.error('Error getting listings:', e);
     }
 }

@@ -1,6 +1,5 @@
 import {FC, useEffect, useRef, useState} from "react";
 import {Message} from "../../../types/Message";
-import {getCurrentUser, getUserById} from "../../common/frequentlyUsed";
 import {TextField, IconButton, Tooltip} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
@@ -8,6 +7,8 @@ import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css'
 import {getChatroom} from "../../../api/chatroom";
 import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
+import {getAccount} from "../../../api/account";
+import {getUserId} from "../../../hooks/authentication";
 
 interface SelectedConversationProps {
     id: string;
@@ -30,12 +31,12 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             if (id) {
                 try {
                     const conversation: Message[] = await getMessagesFromChatroom(id);
-                    const currentUser = await getCurrentUser();
+                    const userId = getUserId();
 
                     const conversationWithNames = await Promise.all(
                         conversation.map(async (message) => {
-                            const user = await getUserById(message.senderId);
-                            const senderName = currentUser.id === message.senderId ? "You" : user?.name || "Unknown User";
+                            const user = await getAccount(message.senderId);
+                            const senderName = userId === message.senderId ? "You" : user.name || "Unknown User";
 
                             // Calculate time since the message was sent
                             const messageTime = new Date(message.sentDate);
@@ -75,11 +76,10 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             try {
                 if (id) {
                     const chatroom = await getChatroom(id);
-                    const currentUser = await getCurrentUser();
-                    const receiverId = chatroom.membersIds.find((memberId: string) => memberId !== currentUser.id);
+                    const receiverId = chatroom.membersIds.find((memberId: string) => memberId !== getUserId());
 
                     if (receiverId) {
-                        const receiver = await getUserById(receiverId);
+                        const receiver = await getAccount(receiverId);
                         setReceiverName(receiver?.name || "Unknown User");
                     }
                 }

@@ -24,12 +24,11 @@ import {
     addMyMusicianRole,
     deleteMyMusicianRole,
     getAccount,
-    getAccountIdByUsername,
+    getAccountByUsername,
     getMyMusicianRoles, getTopGenres
 } from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
 import {createDirectChatroom, getDirectChatroomWithUser} from "../../api/chatroom";
-import {getUserByName} from "../common/frequentlyUsed";
 import {getTopArtists} from "../../api/spotify";
 
 interface ProfileShowProps {
@@ -51,7 +50,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
 
     useEffect(() => {
         const fetchAccountId = async () => {
-            setGuid(await getAccountIdByUsername(username));
+            setGuid((await getAccountByUsername(username)).id);
         };
 
         fetchAccountId();
@@ -132,7 +131,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
 
     const handleMessage = async () => {
         try {
-            const user = await getUserByName(username);
+            const user = await getAccountByUsername(username);
             const targetId = user?.id;
 
             try {

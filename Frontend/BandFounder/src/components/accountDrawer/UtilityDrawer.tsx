@@ -9,9 +9,9 @@ import {getUserId, removeAuthToken, removeUserId} from "../../hooks/authenticati
 import './UtilityDrawer.css';
 import defaultProfileImage from './../../assets/defaultProfileImage.jpg';
 import {Account} from "../../types/Account";
-import {getCurrentUser} from "../common/frequentlyUsed";
 import {getTopArtists} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
+import {getAccount} from "../../api/account";
 
 interface UtilityDrawerProps {
 }
@@ -39,7 +39,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
 
     useEffect(() => {
         const getUser = async () => {
-            const user = await getCurrentUser();
+            const user = await getAccount(getUserId());
             setUser(user);
         }
 

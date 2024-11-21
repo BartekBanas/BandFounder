@@ -1,17 +1,17 @@
-import React, { FC, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, {useEffect, useState} from "react";
 import ProfileShow from "../components/profile/ProfileShow";
-import { getCurrentUser } from "../components/common/frequentlyUsed";
 import ListingsListPrivate from "../components/listing/listingOwner/listingsListPrivate";
 import './../assets/CustomScrollbar.css'
 import './styles/profilePage.css';
+import {getAccount} from "../api/account";
+import {getUserId} from "../hooks/authentication";
 
 export const ProfilePageOwner = () => {
     const [username, setUsername] = useState<string>("");
 
     useEffect(() => {
         const fetchUser = async () => {
-            const user = await getCurrentUser();
+            const user = await getAccount(getUserId());
             if (user) {
                 setUsername(user.name ?? "");
             }

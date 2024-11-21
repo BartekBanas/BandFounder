@@ -1,10 +1,8 @@
 import React, {FC, useEffect} from 'react';
 import '../styles/Header.css';
-import {removeAuthToken, removeUserId} from "../../hooks/authentication";
 import {
     AppBar, Autocomplete,
     Box,
-    Button,
     CssBaseline,
     IconButton,
     TextField,
@@ -14,7 +12,7 @@ import {
     InputAdornment
 } from '@mui/material';
 import defaultProfileImage from '../../assets/defaultProfileImage.jpg';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import ChatIcon from '@mui/icons-material/Chat';
 import SearchIcon from '@mui/icons-material/Search';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
@@ -22,18 +20,12 @@ import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
 import {Account} from "../../types/Account";
 import {API_URL} from "../../config";
 import Cookies from "universal-cookie";
-import {getUserByName} from "../../components/common/frequentlyUsed";
+import {getAccountByUsername} from "../../api/account";
 
 export const Header: FC = () => {
     const [users, setUsers] = React.useState<Account[]>([]);
     const [usernames, setUsernames] = React.useState<string[]>([]);
     const navigate = useNavigate();
-
-    const handleLogout = () => {
-        removeAuthToken();
-        removeUserId();
-        window.location.reload();
-    }
 
     const handleProfileClick = () => {
         navigate('/profile');
@@ -47,15 +39,14 @@ export const Header: FC = () => {
         navigate('/messages');
     }
 
-    const handleSearch = async(event: React.ChangeEvent<{}>, value: string | null) => {
+    const handleSearch = async (event: React.ChangeEvent<{}>, value: string | null) => {
         if (value) {
-            try{
-                const user = await getUserByName(value);
-                if (await user) {
+            try {
+                const user = await getAccountByUsername(value);
+                if (user) {
                     navigate(`/profile/${user.name}`);
                 }
-            }
-            catch (e) {
+            } catch (e) {
                 console.error('Error searching for user:', e);
             }
         }
@@ -91,9 +82,9 @@ export const Header: FC = () => {
                         <div id={'leftSideOfMainHeader'}>
                             <Box
                                 component="div"
-                                sx={{ display: 'flex', alignItems: 'center', mr: 2}}
+                                sx={{display: 'flex', alignItems: 'center', mr: 2}}
                             >
-                                <UtilityDrawer />
+                                <UtilityDrawer/>
                             </Box>
                             <Typography variant="h6" component="div" onClick={handleHomeClick} id={'appNameHeader'}>
                                 Bandfounder
@@ -117,7 +108,7 @@ export const Header: FC = () => {
                                             ...params.InputProps,
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <SearchIcon />
+                                                    <SearchIcon/>
                                                 </InputAdornment>
                                             ),
                                         }}
@@ -130,9 +121,14 @@ export const Header: FC = () => {
                             />
 
                             <IconButton color="inherit" onClick={handleMessagesClick}>
-                                <ChatIcon />
+                                <ChatIcon/>
                             </IconButton>
-                            <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                            }}>
                                 <div onClick={handleProfileClick} style={{cursor: 'pointer'}}>
                                     <img src={defaultProfileImage} alt="profile" className="profile-image"/>
                                 </div>

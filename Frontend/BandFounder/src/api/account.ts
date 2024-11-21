@@ -209,20 +209,19 @@ export async function getUser(guid: string): Promise<Account> {
     }
 }
 
-export const getAccountIdByUsername = async (username: string) => {
+export async function getAccountByUsername(username: string): Promise<Account> {
     const response = await fetch(`${API_URL}/accounts?username=${username}`, {
         method: 'GET',
         headers: authorizedHeaders()
     });
 
     if (!response.ok) {
-        mantineErrorNotification(`Failed to fetch user ${username}`);
+        mantineErrorNotification(`Couldn't find user ${username}`);
         console.error(await response.text());
     }
 
-    const account: Account = await response.json();
-    return account.id;
-};
+    return await response.json() as Account;
+}
 
 export async function getTopGenres(guid: string, genresToReturn: number = 10): Promise<string[]> {
     try {
