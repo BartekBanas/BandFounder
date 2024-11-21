@@ -119,6 +119,20 @@ public class AccountController : Controller
         
         return Ok();
     }
+    
+    [HttpPut("{accountId:guid}/profile-picture")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfilePicture(Guid accountId, IFormFile file)
+    {
+        if (file.Length == 0)
+        {
+            return BadRequest("Provide valid file");
+        }
+
+        await _accountService.UpdateProfilePicture(accountId, file);
+
+        return NoContent();
+    }
 
     [Authorize]
     [HttpPost("clearProfile")]
