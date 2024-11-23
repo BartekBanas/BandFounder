@@ -132,7 +132,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         <div className={'profileMain'}>
             <div className={'profileLeftPart'}
                  style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                <ProfilePicture isMyProfile={isMyProfile} account={account}/>
+                {account && <ProfilePicture isMyProfile={isMyProfile} account={account}/>}
             </div>
             <div className={'topArtists'}>
                 <p>Top Artists: </p>
