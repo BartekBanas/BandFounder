@@ -1,4 +1,5 @@
-﻿using BandFounder.Application.Dtos;
+﻿using System.Linq.Expressions;
+using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services.Jwt;
@@ -11,10 +12,9 @@ namespace BandFounder.Application.Services;
 public interface IAccountService
 {
     Task<Account> GetAccountAsync(Guid? accountId = null);
-    Task<Account> GetAccountAsync(string username);
     Task<Account> GetDetailedAccount(Guid? accountId = null);
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
-    Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber);
+    Task<IEnumerable<Account>> GetAccountsAsync(AccountFilters filters);
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
     Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
@@ -66,13 +66,6 @@ public class AccountService : IAccountService
         return account;
     }
 
-    public async Task<Account> GetAccountAsync(string username)
-    {
-        var account = await _accountRepository.GetOneRequiredAsync(account => account.Name.ToLower() == username.ToLower());
-
-        return account;
-    }
-
     public async Task<Account> GetDetailedAccount(Guid? accountId = null)
     {
         accountId ??= _authenticationService.GetUserId();
@@ -94,12 +87,29 @@ public class AccountService : IAccountService
         return dtos;
     }
 
-    public async Task<IEnumerable<AccountDto>> GetAccountsAsync(int pageSize, int pageNumber)
+    public async Task<IEnumerable<Account>> GetAccountsAsync(AccountFilters filters)
     {
-        var pagedAccounts = await _accountRepository.GetAsync(pageSize, pageNumber);
-        var dtos = pagedAccounts.ToDto();
+        Expression<Func<Account, bool>>? filter = null;
         
-        return dtos;
+        if (!string.IsNullOrEmpty(filters.Username))
+        {
+            var account = await _accountRepository.GetOneAsync
+                (account => account.Name.ToLower() == filters.Username.ToLower());
+            
+            return account is not null ? new[] { account } : [];
+        }
+        
+        if (!string.IsNullOrEmpty(filters.UsernameFragment))
+        {
+            filter = account => account.Name.Contains(filters.UsernameFragment);
+        }
+        
+        if (filters is { PageSize: not null, PageNumber: not null })
+        {
+            return await _accountRepository.GetAsync(filters.PageSize.Value, filters.PageNumber.Value, filter);
+        }
+        
+        return await _accountRepository.GetAsync(filter);
     }
 
     public async Task<string> RegisterAccountAsync(RegisterAccountDto registerDto)
