@@ -20,10 +20,10 @@ import {ListingCreateDto} from "../../../types/ListingCreateDto";
 import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
 import {getUser} from "../../../api/account";
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {deleteListing, getListing, updateListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
+import {DeleteListingButton} from "./DeleteListingButton";
 
 interface ListingPrivateProps {
     listingId: string;
@@ -176,13 +176,11 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
         <div className={'listing custom-scrollbar'}>
             <div className={'editButton'}>
                 <Button variant={'contained'} color={'info'} onClick={handleOpen}>
-                    <span>Edit</span> <EditIcon />
+                    <span>Edit</span> <EditIcon/>
                 </Button>
             </div>
             <div className={'deleteButton'}>
-                <Button variant={'contained'} color={'warning'} onClick={() => handleDeleteListing(listingId)}>
-                    <span>Delete</span> <DeleteIcon />
-                </Button>
+                <DeleteListingButton listingId={listingId}/>
             </div>
             <div className={'listingHeader'}>
                 <div className={'ownerListingElements'}>
