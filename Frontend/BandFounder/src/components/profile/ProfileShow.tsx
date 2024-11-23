@@ -16,20 +16,19 @@ import {
 } from "@mui/material";
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 import {useDisclosure} from "@mantine/hooks";
-import {
-    mantineErrorNotification,
-} from "../common/mantineNotification";
+import {mantineErrorNotification,} from "../common/mantineNotification";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
     addMyMusicianRole,
     deleteMyMusicianRole,
     getAccount,
     getAccountByUsername,
-    getMyMusicianRoles, getTopGenres
+    getMyMusicianRoles,
+    getTopGenres
 } from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
-import {createDirectChatroom, getDirectChatroomWithUser} from "../../api/chatroom";
 import {getTopArtists} from "../../api/spotify";
+import ProfilePicture from "./ProfilePicture";
 
 interface ProfileShowProps {
     username: string;
@@ -129,41 +128,11 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         }
     };
 
-    const handleMessage = async () => {
-        try {
-            const user = await getAccountByUsername(username);
-            const targetId = user?.id;
-
-            try {
-                const response = await createDirectChatroom(targetId);
-                    window.location.href = '/messages/' + response.id;
-            } catch (e) {
-                const chatRoomId = await getDirectChatroomWithUser(targetId);
-                if (chatRoomId) {
-                    window.location.href = '/messages/' + chatRoomId;
-                } else {
-                    mantineErrorNotification('An error occurred when trying to message ' + username);
-                    throw new Error('Failed to find chatroom with user ' + targetId);
-                }
-            }
-        } catch (e) {
-            console.error('Error contacting profile owner:', e);
-        }
-    }
-
     return (
         <div className={'profileMain'}>
             <div className={'profileLeftPart'}
                  style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                <img id='profileImage' src={require('../../assets/defaultProfileImage.jpg')} alt="Default Profile"/>
-
-                <div style={{display: 'flex', alignItems: 'center', margin: '5px'}}>
-                    <p>Username: </p>
-                    <p style={{marginLeft: '8px'}}>{account?.name}</p>
-                </div>
-                {!isMyProfile ? <div style={{display: 'flex', alignItems: 'center'}}>
-                    <Button variant="outlined" color={"info"} onClick={handleMessage}>Message</Button>
-                </div> : <div></div>}
+                <ProfilePicture isMyProfile={isMyProfile} account={account}/>
             </div>
             <div className={'topArtists'}>
                 <p>Top Artists: </p>
