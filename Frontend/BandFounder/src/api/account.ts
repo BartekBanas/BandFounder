@@ -264,3 +264,22 @@ export async function uploadProfilePicture(file: File): Promise<void> {
         throw new Error(await response.text());
     }
 }
+
+export async function getProfilePicture(accountId: string): Promise<string | null> {
+    const response = await fetch(`${API_URL}/accounts/${accountId}/profile-picture`, {
+        method: 'GET',
+        headers: authorizedHeaders(),
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) {
+            return null;
+        }
+
+        mantineErrorNotification('Failed to fetch profile picture');
+        throw new Error('Failed to fetch profile picture');
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+}
