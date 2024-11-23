@@ -11,7 +11,7 @@ import {Account} from "../../types/Account";
 import {getTopArtists} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
 import {getAccount} from "../../api/account";
-import UserAvatar from '../common/UserAvatar';
+import ProfilePicture from "../profile/ProfilePicture";
 
 interface UtilityDrawerProps {
 }
@@ -78,7 +78,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                     <h1 id={'mainDrawerTitle'}>Account Utilities</h1>
                 </div>
                 <div className={'profileShowDrawer'}>
-                    <UserAvatar userId={user?.id!} size={120}/>
+                    <ProfilePicture accountId={user?.id!} isMyProfile={true} size={120}/>
                     <p>{user?.name}</p>
                 </div>
                 <div className={'musicTasteDrawer'}>

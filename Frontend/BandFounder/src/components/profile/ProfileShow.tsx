@@ -29,6 +29,7 @@ import {
 import {getMusicianRoles} from "../../api/metadata";
 import {getTopArtists} from "../../api/spotify";
 import ProfilePicture from "./ProfilePicture";
+import {createDirectChatroom, getDirectChatroomWithUser} from "../../api/chatroom";
 
 interface ProfileShowProps {
     username: string;
@@ -84,6 +85,31 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         fetchMusicianRoles();
     }, [guid]);
 
+    const handleMessage = async () => {
+        try {
+            if (!account) {
+                setAccount(await getAccountByUsername(username));
+            }
+
+            const targetId = account!.id;
+
+            try {
+                const response = await createDirectChatroom(targetId);
+                window.location.href = "/messages/" + response.id;
+            } catch (e) {
+                const chatRoomId = await getDirectChatroomWithUser(targetId);
+                if (chatRoomId) {
+                    window.location.href = "/messages/" + chatRoomId;
+                } else {
+                    mantineErrorNotification("An error occurred when trying to message " + account!.name);
+                    throw new Error("Failed to find chatroom with user " + targetId);
+                }
+            }
+        } catch (e) {
+            console.error("Error contacting profile owner:", e);
+        }
+    };
+
     const fetchMyMusicianRoles = async () => {
         try {
             const rolesData = await getMyMusicianRoles();
@@ -132,7 +158,26 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         <div className={'profileMain'}>
             <div className={'profileLeftPart'}
                  style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                {account && <ProfilePicture isMyProfile={isMyProfile} account={account}/>}
+                {account && <ProfilePicture isMyProfile={isMyProfile} accountId={account.id} size={200}/>}
+
+                <div style={{display: "flex", alignItems: "center", margin: "5px"}}>
+                    <Typography variant="body1">Username:</Typography>
+                    <Typography variant="body1" sx={{marginLeft: 1}}>
+                        {account?.name}
+                    </Typography>
+                </div>
+
+                {!isMyProfile && (
+                    <div style={{display: "flex", alignItems: "center"}}>
+                        <Typography
+                            color="info"
+                            onClick={handleMessage}
+                            sx={{cursor: "pointer", textDecoration: "underline"}}
+                        >
+                            Message
+                        </Typography>
+                    </div>
+                )}
             </div>
             <div className={'topArtists'}>
                 <p>Top Artists: </p>

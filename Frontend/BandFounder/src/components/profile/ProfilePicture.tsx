@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Box, Avatar, Typography, styled } from "@mui/material";
-import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
-import { getProfilePicture, uploadProfilePicture } from "../../api/account";
-import { mantineErrorNotification, mantineSuccessNotification } from "../common/mantineNotification";
-import { Account } from "../../types/Account";
-import { createDirectChatroom, getDirectChatroomWithUser } from "../../api/chatroom";
+import React, {useState, useEffect} from "react";
+import {Box, Typography, styled} from "@mui/material";
+import {Dropzone, MIME_TYPES} from "@mantine/dropzone";
+import {getProfilePicture, uploadProfilePicture} from "../../api/account";
+import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
+import UserAvatar from "../common/UserAvatar";
 
 interface ProfilePictureProps {
-    account: Account;
+    accountId: string;
     isMyProfile: boolean;
+    size: number;
 }
 
 const HoverBox = styled(Box)({
@@ -21,9 +21,10 @@ const HoverBox = styled(Box)({
 
 const HoverText = styled(Typography)({
     position: "absolute",
-    top: "50%",
+    top: "100%",
     left: "50%",
-    transform: "translate(-50%, -50%)",
+    transform: "translateX(-50%)",
+    marginTop: "5px",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     color: "white",
     padding: "5px 10px",
@@ -33,22 +34,23 @@ const HoverText = styled(Typography)({
     pointerEvents: "none",
 });
 
-const ProfilePicture: React.FC<ProfilePictureProps> = ({ account, isMyProfile }) => {
-    const [preview, setPreview] = useState<string>(require("../../assets/defaultProfileImage.jpg"));
+const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile, size = 50}) => {
+    const [preview, setPreview] = useState<string>("");
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const loadProfilePicture = async () => {
             try {
-                const imageUrl = await getProfilePicture(account.id);
-                setPreview(imageUrl || require("../../assets/defaultProfileImage.jpg"));
+                const imageUrl = await getProfilePicture(accountId);
+                if (imageUrl) {
+                    setPreview(imageUrl);
+                }
             } catch (error) {
                 console.error("Error fetching profile picture:", error);
-                setPreview(require("../../assets/defaultProfileImage.jpg"));
             }
         };
         loadProfilePicture();
-    }, [account.id]);
+    }, [accountId]);
 
     const handleDrop = async (files: File[]) => {
         const uploadedFile = files[0];
@@ -65,27 +67,6 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ account, isMyProfile })
             mantineErrorNotification("Failed to upload the profile picture.");
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleMessage = async () => {
-        try {
-            const targetId = account.id;
-
-            try {
-                const response = await createDirectChatroom(targetId);
-                window.location.href = "/messages/" + response.id;
-            } catch (e) {
-                const chatRoomId = await getDirectChatroomWithUser(targetId);
-                if (chatRoomId) {
-                    window.location.href = "/messages/" + chatRoomId;
-                } else {
-                    mantineErrorNotification("An error occurred when trying to message " + account.name);
-                    throw new Error("Failed to find chatroom with user " + targetId);
-                }
-            }
-        } catch (e) {
-            console.error("Error contacting profile owner:", e);
         }
     };
 
@@ -112,35 +93,12 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ account, isMyProfile })
                     }}
                 >
                     <HoverBox>
-                        <Avatar
-                            src={preview}
-                            sx={{ width: 100, height: 100, cursor: "pointer" }}
-                            alt="Profile"
-                        />
+                        <UserAvatar userId={accountId} size={size}/>
                         <HoverText className="hover-text">Update your profile picture</HoverText>
                     </HoverBox>
                 </Dropzone>
             ) : (
-                <Avatar src={preview} sx={{ width: 100, height: 100 }} alt="Profile" />
-            )}
-
-            <div style={{ display: "flex", alignItems: "center", margin: "5px" }}>
-                <Typography variant="body1">Username:</Typography>
-                <Typography variant="body1" sx={{ marginLeft: 1 }}>
-                    {account?.name}
-                </Typography>
-            </div>
-
-            {!isMyProfile && (
-                <div style={{ display: "flex", alignItems: "center" }}>
-                    <Typography
-                        color="info"
-                        onClick={handleMessage}
-                        sx={{ cursor: "pointer", textDecoration: "underline" }}
-                    >
-                        Message
-                    </Typography>
-                </div>
+                <UserAvatar userId={accountId} size={size}/>
             )}
         </Box>
     );
