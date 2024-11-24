@@ -3,6 +3,7 @@ using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
+using FluentValidation;
 using NSubstitute;
 
 namespace Services.Tests;
@@ -13,6 +14,7 @@ public class ListingServiceTests
     private readonly IRepository<Genre> _genreRepositoryMock = Substitute.For<IRepository<Genre>>();
     private readonly IRepository<MusicianRole> _musicianRoleRepositoryMock = Substitute.For<IRepository<MusicianRole>>();
     private readonly IRepository<MusicianSlot> _musicianSlotRepositoryMock = Substitute.For<IRepository<MusicianSlot>>();
+    private readonly IValidator<Listing> _validator = Substitute.For<IValidator<Listing>>();
 
     [Test]
     public async Task GetListingsFeedAsync_WithRoleFilter_FiltersListingsCorrectly()
@@ -95,6 +97,7 @@ public class ListingServiceTests
             authenticationServiceMock,
             musicTasteServiceMock,
             _chatroomServiceMock,
+            _validator,
             _genreRepositoryMock,
             _musicianRoleRepositoryMock,
             _musicianSlotRepositoryMock,
@@ -177,6 +180,7 @@ public class ListingServiceTests
             authenticationServiceMock,
             musicTasteServiceMock,
             _chatroomServiceMock,
+            _validator,
             _genreRepositoryMock,
             _musicianRoleRepositoryMock,
             _musicianSlotRepositoryMock,
