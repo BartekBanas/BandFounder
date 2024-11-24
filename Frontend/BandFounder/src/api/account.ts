@@ -45,7 +45,6 @@ export async function login(usernameOrEmail: string, password: string): Promise<
     const responseContent = await response.text();
 
     if (!response.ok) {
-        mantineErrorNotification("Login failed");
         throw new Error(responseContent);
     }
 
