@@ -99,7 +99,7 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
     }
 }
 
-export async function postListing(listing: ListingCreateDto) {
+export async function postListing(listing: ListingCreateDto): Promise<void> {
     try {
         const response = await fetch(`${API_URL}/listings`, {
             method: 'POST',
@@ -107,7 +107,10 @@ export async function postListing(listing: ListingCreateDto) {
             body: JSON.stringify(listing)
         });
 
-        return await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
     } catch (e: any) {
         mantineErrorNotification('Failed to create listing');
         throw new Error(e.message);
