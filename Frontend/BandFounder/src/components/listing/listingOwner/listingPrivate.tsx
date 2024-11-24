@@ -21,7 +21,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
 import {getUser} from "../../../api/account";
 import EditIcon from '@mui/icons-material/Edit';
-import {deleteListing, getListing, updateListing} from "../../../api/listing";
+import {getListing, updateListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import {DeleteListingButton} from "./DeleteListingButton";
 
@@ -101,11 +101,10 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     const handleEditMusicianRole = (slotId: string, role: string) => {
         const newSlots = listingMusicianSlots.map((slot: any) => {
             if (slot.id === slotId) {
-                // console.log('role', role);
                 if (role) {
                     return {...slot, role};
                 } else {
-                    return {...slot, role: 'Any'};
+                    return {...slot, role: ''};
                 }
             }
             return slot;
@@ -116,7 +115,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     const handleAddNewRole = () => {
         const newSlot = {
             id: Math.random().toString(36).substr(2, 9),
-            role: 'Any',
+            role: '',
             status: 'Available',
         };
         setListingMusicianSlots([...listingMusicianSlots, newSlot]);
@@ -132,15 +131,6 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                 musicianSlots: listingMusicianSlots,
             }
             await updateListing(updatedListing, listingId);
-            window.location.reload();
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
-    const handleDeleteListing = async (listingId:string) => {
-        try {
-            await deleteListing(listingId);
             window.location.reload();
         } catch (e) {
             console.log(e);
@@ -255,8 +245,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                     maxWidth: '40%',
                                     marginTop: '5px',
                                     fontSize: '12px !important',
-                                    transition: 'width 1s ease-in-out',
-                                    // flexGrow: 1
+                                    transition: 'width 1s ease-in-out'
                                 }}
                                 value={listingGenre}
                             />
