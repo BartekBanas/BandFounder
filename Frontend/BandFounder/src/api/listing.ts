@@ -85,6 +85,13 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
         if (ListingFeedFilters.genre !== undefined) {
             params.append('Genre', ListingFeedFilters.genre.toString());
         }
+        if (ListingFeedFilters.pageSize !== undefined) {
+            params.append('PageSize', ListingFeedFilters.pageSize.toString());
+        }
+        if (ListingFeedFilters.pageNumber !== undefined) {
+            params.append('PageNumber', ListingFeedFilters.pageNumber.toString());
+        }
+
 
         const url = `${API_URL}/listings?${params.toString()}`;
         const response = await fetch(url, {

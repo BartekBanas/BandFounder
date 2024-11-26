@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import ListingPublic from './listingPublic';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
@@ -13,6 +13,9 @@ const ListingsListPublic: React.FC = () => {
     const location = useLocation();
     const [listings, setListings] = useState<ListingWithScore[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [pageNumber, setPageNumber] = useState<number>(1);
+    const [pageSize] = useState<number>(2);
+    const [hasMore, setHasMore] = useState<boolean>(true);
 
     // Main filters
     const [excludeOwnListings, setExcludeOwnListings] = useState<boolean | undefined>(undefined);
@@ -28,6 +31,18 @@ const ListingsListPublic: React.FC = () => {
     const [tempFromLatest, setTempFromLatest] = useState<boolean | undefined>(undefined);
     const [tempListingType, setTempListingType] = useState<ListingType | undefined>(undefined);
     const [tempGenreFilter, setTempGenreFilter] = useState<string | undefined>(undefined);
+
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastListingElementRef = useCallback((node: any) => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPageNumber((prevPageNumber) => prevPageNumber + 1);
+            }
+        });
+        if (node) observer.current.observe(node);
+    }, [loading, hasMore]);
 
     useEffect(() => {
         // Fetch genres for the dropdown
@@ -69,7 +84,7 @@ const ListingsListPublic: React.FC = () => {
     }, [location.search]);
 
     useEffect(() => {
-        // Fetch listings based on filters
+        // Fetch listings based on filters and pagination
         const fetchListings = async () => {
             setLoading(true);
             try {
@@ -78,10 +93,13 @@ const ListingsListPublic: React.FC = () => {
                     matchMusicRole: matchMusicRole,
                     fromLatest: fromLatest,
                     listingType: listingType,
-                    genre: genreFilter
+                    genre: genreFilter,
+                    pageNumber: pageNumber,
+                    pageSize: pageSize
                 };
                 const listingsFeed = await getListingFeed(filters);
-                setListings(listingsFeed.listings);
+                setListings((prevListings) => [...prevListings, ...listingsFeed.listings]);
+                setHasMore(listingsFeed.listings.length > 0);
             } catch (error) {
                 console.error('Error getting listings:', error);
             } finally {
@@ -90,7 +108,7 @@ const ListingsListPublic: React.FC = () => {
         };
 
         fetchListings();
-    }, [excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter]);
+    }, [excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter, pageNumber]);
 
     const applyFilters = () => {
         // Sync temporary filters with main filters
@@ -99,6 +117,10 @@ const ListingsListPublic: React.FC = () => {
         setFromLatest(tempFromLatest);
         setListingType(tempListingType);
         setGenreFilter(tempGenreFilter);
+
+        // Reset pagination
+        setPageNumber(1);
+        setListings([]);
 
         // Update URL parameters
         const params = new URLSearchParams();
@@ -131,16 +153,6 @@ const ListingsListPublic: React.FC = () => {
             }),
         },
     });
-
-    if (loading) {
-        return (
-            <div className="App-header">
-                <MantineThemeProvider theme={theme}>
-                    <Loader size={200}/>
-                </MantineThemeProvider>
-            </div>
-        );
-    }
 
     return (
         <>
@@ -203,12 +215,17 @@ const ListingsListPublic: React.FC = () => {
             </div>
 
             <div className="listingsList">
-                {listings.length > 0 ? (
-                    listings.map((listing) => (
-                        <ListingPublic key={listing.listing.id} listingId={listing.listing.id}/>
-                    ))
-                ) : (
-                    <p>No listings available</p>
+                {listings.map((listing, index) => (
+                    <div ref={listings.length === index + 1 ? lastListingElementRef : null} key={listing.listing.id}>
+                        <ListingPublic listingId={listing.listing.id}/>
+                    </div>
+                ))}
+                {loading && (
+                    <div className="App-header">
+                        <MantineThemeProvider theme={theme}>
+                            <Loader size={50}/>
+                        </MantineThemeProvider>
+                    </div>
                 )}
             </div>
         </>

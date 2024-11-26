@@ -32,4 +32,6 @@ export interface ListingFeedFilters {
     fromLatest: boolean | undefined,
     listingType: ListingType | undefined,
     genre: string | undefined
+    pageNumber: number | undefined;
+    pageSize: number | undefined;
 }
