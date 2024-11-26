@@ -25,15 +25,23 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     const [receiverName, setReceiverName] = useState<string>("Unknown User");
     const [loading, setLoading] = useState<boolean>(false);
     const [pageNumber, setPageNumber] = useState<number>(1);
-    const [pageSize] = useState<number>(10);
+    const [pageSize] = useState<number>(5);
     const [hasMore, setHasMore] = useState<boolean>(true);
     const bottomRef = useRef<HTMLDivElement>(null);
     const topRef = useRef<HTMLDivElement>(null);
     const [isScrollingUp, setIsScrollingUp] = useState<boolean>(false);
+    const [tempNumber, setTempNumber] = useState<number>(0);
 
     useEffect(() => {
         const fetchOlderMessages = async () => {
-            if (id && hasMore && pageNumber > 1) {
+            if (id && hasMore && pageNumber > 0) {
+                const container = topRef.current?.parentElement; // The scrollable container
+
+                if (!container) return;
+
+                const previousScrollHeight = container.scrollHeight; // Record scroll height before loading
+                const previousScrollTop = container.scrollTop; // Record the current scroll position
+
                 setLoading(true);
                 try {
                     const conversation: Message[] = await getMessagesFromChatroom(id, pageNumber, pageSize);
@@ -44,7 +52,6 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                             const user = await getAccount(message.senderId);
                             const senderName = userId === message.senderId ? "You" : user.name || "Unknown User";
 
-                            // Calculate time since the message was sent
                             const messageTime = new Date(message.sentDate);
                             const currentTime = new Date();
                             const timeDifference = Math.floor((currentTime.getTime() - messageTime.getTime()) / 1000);
@@ -71,11 +78,18 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                         })
                     );
 
-                    // Add fetched messages to the conversation
-                    setCurrentConversation((prev) => [...conversationWithNames, ...prev]);
+                    const sortedConversationWithNames = conversationWithNames.sort(
+                        (a, b) => new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime()
+                    );
 
-                    // Update `hasMore` to false if the last page is reached
+                    setCurrentConversation((prev) => [...sortedConversationWithNames, ...prev]);
                     setHasMore(conversation.length === pageSize);
+
+                    // Adjust scroll position to maintain user position
+                    setTimeout(() => {
+                        const newScrollHeight = container.scrollHeight; // Get the updated scroll height
+                        container.scrollTop = newScrollHeight - previousScrollHeight + previousScrollTop;
+                    }, 0); // Delay to allow DOM updates
                 } catch (error) {
                     console.error("Error fetching older messages:", error);
                 } finally {
@@ -87,13 +101,20 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
         fetchOlderMessages();
     }, [id, pageNumber]);
 
+
+
     useEffect(() => {
-        if (!isScrollingUp && bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        } else if (isScrollingUp && topRef.current) {
-            topRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+        const container = topRef.current?.parentElement; // Scrollable container
+        if (tempNumber === 0 && bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: 'smooth'});
+            setTempNumber(1);
+        } else if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: "auto" });
         }
     }, [currentConversation, isScrollingUp]);
+
+
+
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -117,15 +138,34 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     const handleSendMessage = async () => {
         if (newMessage.trim()) {
             try {
-                await sendMessage(id, newMessage.trim());
+                const trimmedMessage = newMessage.trim();
+                const userId = getUserId(); // Retrieve the sender's user ID
+                const messageTime = new Date(); // Timestamp for the sent message
+
+                // Create a new message object for local addition
+                const newMessageObject: MessageWithSenderName = {
+                    id: Math.random().toString(), // Temporary unique ID
+                    senderId: userId,
+                    content: trimmedMessage,
+                    sentDate: messageTime.toISOString(),
+                    senderName: "You", // Sender is always "You" for local messages
+                    timeSinceSent: "just now",
+                };
+
+                // Optimistically add the new message to the conversation
+                setCurrentConversation((prev) => [...prev, newMessageObject]);
+
+                // Send the message to the server
+                await sendMessage(id, trimmedMessage);
+
+                // Clear the input field
                 setNewMessage("");
-                setPageNumber(1);
-                setCurrentConversation([]);
             } catch (error) {
                 console.error("Error sending message:", error);
             }
         }
     };
+
 
     const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {

@@ -9,7 +9,6 @@ export async function getMessagesFromChatroom(chatroomId: string, pageNumber: nu
             method: 'GET',
             headers: authorizedHeaders(),
         });
-        console.log(response);
         return await response.json() as Message[];
     } catch (e) {
         mantineErrorNotification('Failed to fetch messages');
