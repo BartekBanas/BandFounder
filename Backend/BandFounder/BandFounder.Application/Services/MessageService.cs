@@ -84,7 +84,7 @@ public class MessageService : IMessageService
         var messages = await _messageRepository
             .GetAsync(
                 message => message.ChatRoomId == request.ChatRoomId,
-                query => query.OrderBy(message => message.SentDate)
+                query => query.OrderByDescending(message => message.SentDate)
             );
         
         var paginatedMessages = messages
