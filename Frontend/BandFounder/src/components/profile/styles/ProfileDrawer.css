@@ -1,0 +1,51 @@
+.user-avatar-container {
+    position: relative;
+    display: inline-block;
+    text-align: center;
+}
+
+.hover-avatar {
+    position: relative;
+    display: inline-block;
+}
+
+.avatar-hover-effect {
+    transition: filter 0.3s ease;
+}
+
+.hover-avatar:hover .avatar-hover-effect {
+    filter: grayscale(100%);
+}
+
+.hover-text {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px !important;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.user-avatar-container:hover .hover-text {
+    display: block;
+}
+
+.upload-icon {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 80px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hover-avatar:hover .upload-icon {
+    opacity: 1;
+}

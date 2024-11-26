@@ -9,6 +9,7 @@ import {getChatroom} from "../../../api/chatroom";
 import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
 import {getAccount} from "../../../api/account";
 import {getUserId} from "../../../hooks/authentication";
+import ProfilePicture from "../../profile/ProfilePicture";
 
 interface SelectedConversationProps {
     id: string;
@@ -131,7 +132,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                             <div className={'singleMessageYou'}>
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className={'messageProfilePresentation'}>
-                                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
+                                        <ProfilePicture accountId={message.senderId} isMyProfile={false} size={20}/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -144,7 +145,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                             <div className={'singleMessageThey'}>
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className={'messageProfilePresentation'}>
-                                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
+                                        <ProfilePicture accountId={message.senderId} isMyProfile={false} size={20}/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>

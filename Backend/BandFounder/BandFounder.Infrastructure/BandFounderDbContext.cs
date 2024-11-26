@@ -6,6 +6,7 @@ namespace BandFounder.Infrastructure;
 public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Account> Accounts { get; set; }
+    public DbSet<ProfilePicture> ProfilePictures { get; set; }
     public DbSet<Chatroom> Chatrooms { get; set; }
     public DbSet<Account> Messages { get; set; }
     public DbSet<Artist> Artists { get; set; }

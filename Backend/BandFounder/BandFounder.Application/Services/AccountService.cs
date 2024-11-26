@@ -6,6 +6,7 @@ using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 
 namespace BandFounder.Application.Services;
 
@@ -24,6 +25,8 @@ public interface IAccountService
     Task RemoveMusicianRole(string role, Guid? accountId = null);
     Task ClearUserMusicProfile(Guid? accountId = null);
     Task AddArtist(Guid accountId, string artistName);
+    Task UpdateProfilePicture(Guid accountId, IFormFile file);
+    Task<ProfilePicture> GetProfilePictureAsync(Guid accountId);
 }
 
 public class AccountService : IAccountService
@@ -316,5 +319,51 @@ public class AccountService : IAccountService
         account.Artists.Add(artist);
 
         await _accountRepository.SaveChangesAsync();
+    }
+    
+    public async Task UpdateProfilePicture(Guid accountId, IFormFile file)
+    {
+        if (accountId != _authenticationService.GetUserId())
+        {
+            throw new ForbiddenError("You cannot update profile picture of another user");
+        }
+        
+        var account = await _accountRepository.GetOneRequiredAsync(
+            key: accountId, includeProperties: nameof(Account.ProfilePicture));
+        
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream);
+        var pictureBytes = memoryStream.ToArray();
+        
+        var mimeType = file.ContentType;
+        
+        if (account.ProfilePicture is not null)
+        {
+            account.ProfilePicture.ImageData = pictureBytes;
+        }
+        else
+        {
+            account.ProfilePicture = new ProfilePicture()
+            {
+                AccountId = accountId,
+                ImageData = pictureBytes,
+                MimeType = mimeType
+            };
+        }
+        
+        await _accountRepository.SaveChangesAsync();
+    }
+    
+    public async Task<ProfilePicture> GetProfilePictureAsync(Guid accountId)
+    {
+        var account = await _accountRepository.GetOneRequiredAsync(
+            key: accountId, includeProperties: nameof(Account.ProfilePicture));
+        
+        if (account.ProfilePicture == null || account.ProfilePicture.ImageData.Length == 0)
+        {
+            throw new NotFoundError("Profile picture not found");
+        }
+
+        return account.ProfilePicture;
     }
 }
