@@ -6,9 +6,10 @@ import defaultProfileImage from '../../assets/defaultProfileImage.jpg';
 interface UserAvatarProps {
     userId: string;
     size?: number;
+    className?: string;
 }
 
-const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50}) => {
+const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50, className}) => {
     const [avatarUrl, setAvatarUrl] = useState<string>(defaultProfileImage);
     const [loading, setLoading] = useState(false);
 
@@ -30,7 +31,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50}) => {
     }, [userId]);
 
     return (
-        <>
+        <div className={className}>
             {loading ? (
                 <CircularProgress size={size / 2}/>
             ) : (
@@ -43,7 +44,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50}) => {
                     }}
                 />
             )}
-        </>
+        </div>
     );
 };
 

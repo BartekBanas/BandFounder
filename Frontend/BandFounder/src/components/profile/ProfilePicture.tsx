@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { getProfilePicture, uploadProfilePicture } from "../../api/account";
 import { mantineErrorNotification, mantineSuccessNotification } from "../common/mantineNotification";
 import UserAvatar from "../common/UserAvatar";
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import './styles/ProfileDrawer.css';
 
 interface ProfilePictureProps {
@@ -57,21 +58,24 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ accountId, isMyProfile,
         <>
             {isMyProfile ? (
                 <div className="user-avatar-container">
-                    <p className="hover-text">Update your profile picture</p>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        id="profile-picture-upload"
-                        onChange={handleFileChange}
-                    />
-                    <label htmlFor="profile-picture-upload" style={{ cursor: 'pointer' }}>
-                        <UserAvatar userId={accountId} size={size} />
-                    </label>
+                    <div className={'hover-avatar'}>
+                        <p className="hover-text">Update your profile picture</p>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            style={{display: 'none'}}
+                            id="profile-picture-upload"
+                            onChange={handleFileChange}
+                        />
+                        <label htmlFor="profile-picture-upload" style={{cursor: 'pointer', position: 'relative'}}>
+                            <UserAvatar userId={accountId} size={size} className={'avatar-hover-effect'}/>
+                            <UploadFileIcon className="upload-icon" />
+                        </label>
+                    </div>
                 </div>
             ) : (
                 <div className="user-avatar-container">
-                    <UserAvatar userId={accountId} size={size} />
+                    <UserAvatar userId={accountId} size={size}/>
                 </div>
             )}
         </>
