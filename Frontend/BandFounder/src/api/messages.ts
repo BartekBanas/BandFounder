@@ -3,19 +3,20 @@ import {authorizedHeaders} from "../hooks/authentication";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {Message} from "../types/Message";
 
-export async function getMessagesFromChatroom(chatroomId: string): Promise<Message[]> {
+export async function getMessagesFromChatroom(chatroomId: string, pageNumber: number, pageSize: number): Promise<Message[]> {
     try {
-        const response = await fetch(`${API_URL}/chatrooms/${chatroomId}/messages`, {
+        const response = await fetch(`${API_URL}/chatrooms/${chatroomId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`, {
             method: 'GET',
-            headers: authorizedHeaders()
+            headers: authorizedHeaders(),
         });
-
+        console.log(response);
         return await response.json() as Message[];
     } catch (e) {
         mantineErrorNotification('Failed to fetch messages');
         throw e;
     }
 }
+
 
 export async function sendMessage(chatroomId: string, message: string): Promise<void> {
     try {

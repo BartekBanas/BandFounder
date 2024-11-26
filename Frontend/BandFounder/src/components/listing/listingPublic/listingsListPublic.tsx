@@ -14,7 +14,7 @@ const ListingsListPublic: React.FC = () => {
     const [listings, setListings] = useState<ListingWithScore[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [pageNumber, setPageNumber] = useState<number>(1);
-    const [pageSize] = useState<number>(8);
+    const [pageSize] = useState<number>(2);
     const [hasMore, setHasMore] = useState<boolean>(true);
 
     // Main filters

@@ -94,7 +94,6 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
 
 
         const url = `${API_URL}/listings?${params.toString()}`;
-        console.log(url);
         const response = await fetch(url, {
             method: 'GET',
             headers: authorizedHeaders()
