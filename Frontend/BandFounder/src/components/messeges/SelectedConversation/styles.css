@@ -123,3 +123,10 @@
     align-items: end;
     font-size: 8px;
 }
+
+.singleMessageYou .user-avatar-container{
+    margin: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

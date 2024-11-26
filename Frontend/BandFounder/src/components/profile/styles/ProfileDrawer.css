@@ -1,0 +1,24 @@
+.user-avatar-container {
+    position: relative;
+    display: inline-block;
+    text-align: center; /* Align the text */
+}
+
+.hover-text {
+    display: none;
+    position: absolute;
+    top: 100%; /* Position the text just below the avatar */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8); /* Optional: background for better visibility */
+    color: #fff; /* Optional: text color */
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px !important;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.user-avatar-container:hover .hover-text {
+    display: block;
+}

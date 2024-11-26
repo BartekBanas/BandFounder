@@ -19,6 +19,7 @@ import {ListingCreateDto} from "../../../types/ListingCreateDto";
 import {getUser} from "../../../api/account";
 import {postListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
+import ProfilePicture from "../../profile/ProfilePicture";
 
 interface ListingTemplateProps {
 }
@@ -136,7 +137,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
             <div className="listingTemplate" onClick={handleListingClick}>
                 <div className="listingHeader">
                     <div className="ownerListingElements">
-                        <img src={defaultProfileImage} alt="Default Profile"/>
+                        <ProfilePicture isMyProfile={false} accountId={user.id} size={40}/>
                         <p>{user?.name}</p>
                     </div>
                     <div className="listingTitle">

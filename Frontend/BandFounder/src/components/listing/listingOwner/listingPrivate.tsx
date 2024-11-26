@@ -24,6 +24,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {deleteListing, getListing, updateListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
+import ProfilePicture from "../../profile/ProfilePicture";
 
 interface ListingPrivateProps {
     listingId: string;
@@ -186,7 +187,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
             </div>
             <div className={'listingHeader'}>
                 <div className={'ownerListingElements'}>
-                    <img src={defaultProfileImage} alt="Default Profile"/>
+                    <ProfilePicture isMyProfile={false} accountId={listing.ownerId} size={40}/>
                     <p>{listing?.owner?.name}</p>
                 </div>
                 <div className={'listingTitle'}>

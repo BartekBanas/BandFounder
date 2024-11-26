@@ -1,9 +1,9 @@
-import React, {useState, useEffect} from "react";
-import {Box, Typography, styled} from "@mui/material";
-import {Dropzone, MIME_TYPES} from "@mantine/dropzone";
-import {getProfilePicture, uploadProfilePicture} from "../../api/account";
-import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
+import React, { useState, useEffect } from "react";
+import { Box } from "@mui/material";
+import { getProfilePicture, uploadProfilePicture } from "../../api/account";
+import { mantineErrorNotification, mantineSuccessNotification } from "../common/mantineNotification";
 import UserAvatar from "../common/UserAvatar";
+import './styles/ProfileDrawer.css';
 
 interface ProfilePictureProps {
     accountId: string;
@@ -11,30 +11,7 @@ interface ProfilePictureProps {
     size: number;
 }
 
-const HoverBox = styled(Box)({
-    position: "relative",
-    display: "inline-block",
-    "&:hover .hover-text": {
-        opacity: 1,
-    },
-});
-
-const HoverText = styled(Typography)({
-    position: "absolute",
-    top: "100%",
-    left: "50%",
-    transform: "translateX(-50%)",
-    marginTop: "5px",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    color: "white",
-    padding: "5px 10px",
-    borderRadius: "4px",
-    opacity: 0,
-    transition: "opacity 0.3s ease",
-    pointerEvents: "none",
-});
-
-const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile, size = 50}) => {
+const ProfilePicture: React.FC<ProfilePictureProps> = ({ accountId, isMyProfile, size = 50 }) => {
     const [preview, setPreview] = useState<string>("");
     const [loading, setLoading] = useState(false);
 
@@ -70,37 +47,34 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile, 
         }
     };
 
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) {
+            handleDrop(Array.from(event.target.files));
+        }
+    };
+
     return (
-        <Box
-            className="profileLeftPart"
-            display="flex"
-            flexDirection="column"
-            justifyContent="center"
-            alignItems="center"
-            gap={2}
-        >
+        <>
             {isMyProfile ? (
-                <Dropzone
-                    onDrop={handleDrop}
-                    accept={[MIME_TYPES.jpeg, MIME_TYPES.png]}
-                    maxSize={3 * 1024 ** 2}
-                    styles={{
-                        root: {
-                            border: "none",
-                            textAlign: "center",
-                            cursor: "pointer",
-                        },
-                    }}
-                >
-                    <HoverBox>
-                        <UserAvatar userId={accountId} size={size}/>
-                        <HoverText className="hover-text">Update your profile picture</HoverText>
-                    </HoverBox>
-                </Dropzone>
+                <div className="user-avatar-container">
+                    <p className="hover-text">Update your profile picture</p>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        id="profile-picture-upload"
+                        onChange={handleFileChange}
+                    />
+                    <label htmlFor="profile-picture-upload" style={{ cursor: 'pointer' }}>
+                        <UserAvatar userId={accountId} size={size} />
+                    </label>
+                </div>
             ) : (
-                <UserAvatar userId={accountId} size={size}/>
+                <div className="user-avatar-container">
+                    <UserAvatar userId={accountId} size={size} />
+                </div>
             )}
-        </Box>
+        </>
     );
 };
 

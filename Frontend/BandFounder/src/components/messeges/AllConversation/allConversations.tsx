@@ -11,6 +11,7 @@ import {getAccounts, getUser} from "../../../api/account";
 import {Account} from "../../../types/Account";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 import {LeaveChatroomModal} from "./LeaveChatroomModal";
+import ProfilePicture from "../../profile/ProfilePicture";
 
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
@@ -36,6 +37,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
                 if (otherUserId) {
                     const user = await getUser(otherUserId);
                     chatroom.name = user.name;
+                    chatroom.membersIds = [otherUserId];
                 } else {
                     chatroom.name = 'Unknown';
                 }
@@ -111,7 +113,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
                 {chatRooms.map((chatRoom) => (
                     <li className={'singleConversationShortcut'} key={chatRoom.id}
                         onClick={() => handleSelectConversation(chatRoom.id)}>
-                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
+                        <ProfilePicture accountId={chatRoom.membersIds[0]} isMyProfile={false} size={40}/>
                         {chatRoom.name}
                         <LeaveChatroomModal chatroom={chatRoom} setRefreshConversations={setRefreshConversations}/>
                     </li>
