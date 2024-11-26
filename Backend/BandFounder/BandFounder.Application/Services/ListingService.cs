@@ -4,6 +4,7 @@ using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Error;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
+using FluentValidation;
 
 namespace BandFounder.Application.Services;
 
@@ -28,6 +29,8 @@ public class ListingService : IListingService
     private readonly IMusicTasteService _musicTasteService;
     private readonly IChatroomService _chatroomService;
     
+    private readonly IValidator<Listing> _listingValidator;
+    
     private readonly IRepository<Genre> _genreRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IRepository<MusicianSlot> _musicianSlotRepository;
@@ -40,6 +43,7 @@ public class ListingService : IListingService
         IAuthenticationService authenticationService,
         IMusicTasteService musicTasteService,
         IChatroomService chatroomService,
+        IValidator<Listing> listingValidator,
         IRepository<Genre> genreRepository,
         IRepository<MusicianRole> musicianRoleRepository,
         IRepository<MusicianSlot> musicianSlotRepository,
@@ -49,6 +53,7 @@ public class ListingService : IListingService
         _authenticationService = authenticationService;
         _musicTasteService = musicTasteService;
         _chatroomService = chatroomService;
+        _listingValidator = listingValidator;
         _genreRepository = genreRepository;
         _musicianRoleRepository = musicianRoleRepository;
         _musicianSlotRepository = musicianSlotRepository;
@@ -174,6 +179,12 @@ public class ListingService : IListingService
 
             listing.MusicianSlots.Add(musicianSlot);
         }
+        
+        var validationResult = await _listingValidator.ValidateAsync(listing);
+        if (validationResult.IsValid is false)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
 
         await _listingRepository.CreateAsync(listing);
         await _musicianRoleRepository.SaveChangesAsync();
@@ -279,6 +290,12 @@ public class ListingService : IListingService
 
         // Assign updated slots to the listing
         listing.MusicianSlots = updatedSlots;
+        
+        var validationResult = await _listingValidator.ValidateAsync(listing);
+        if (validationResult.IsValid is false)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
 
         // Save the changes
         await _listingRepository.UpdateAsync(listing, listing.Id);

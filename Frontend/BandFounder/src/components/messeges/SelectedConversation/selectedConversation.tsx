@@ -1,14 +1,13 @@
-import { FC, useEffect, useRef, useState, useCallback } from "react";
-import { Message } from "../../../types/Message";
-import { TextField, IconButton, Tooltip, CircularProgress } from "@mui/material";
+import {FC, useEffect, useRef, useState} from "react";
+import {Message} from "../../../types/Message";
+import {TextField, IconButton, Tooltip, CircularProgress} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css';
-import { getChatroom } from "../../../api/chatroom";
-import { getMessagesFromChatroom, sendMessage } from "../../../api/messages";
-import { getAccount } from "../../../api/account";
-import { getUserId } from "../../../hooks/authentication";
+import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
+import {getAccount} from "../../../api/account";
+import {getUserId} from "../../../hooks/authentication";
 
 interface SelectedConversationProps {
     id: string;
@@ -19,7 +18,7 @@ interface MessageWithSenderName extends Message {
     timeSinceSent: string;
 }
 
-export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
+export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
     const [receiverName, setReceiverName] = useState<string>("Unknown User");
@@ -99,21 +98,18 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
         };
 
         fetchOlderMessages();
-    }, [id, pageNumber]);
-
+    }, [hasMore, id, pageNumber, pageSize]);
 
 
     useEffect(() => {
         const container = topRef.current?.parentElement; // Scrollable container
         if (tempNumber === 0 && bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth'});
+            bottomRef.current.scrollIntoView({behavior: 'smooth'});
             setTempNumber(1);
         } else if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: "auto" });
+            bottomRef.current.scrollIntoView({behavior: "auto"});
         }
     }, [currentConversation, isScrollingUp]);
-
-
 
 
     useEffect(() => {
@@ -124,7 +120,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                     setPageNumber((prevPageNumber) => prevPageNumber + 1);
                 }
             },
-            { threshold: 1.0 }
+            {threshold: 1.0}
         );
 
         if (topRef.current) observer.observe(topRef.current);
@@ -177,9 +173,9 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     return (
         <div id="mainSelectedConversation">
             <h1 id="selectedConversationTitle">Conversation with {receiverName}</h1>
-            <ul id="fullConversation" className="custom-scrollbar" style={{ listStyleType: "none", padding: 0 }}>
-                {loading && <CircularProgress />}
-                <div ref={topRef} />
+            <ul id="fullConversation" className="custom-scrollbar" style={{listStyleType: "none", padding: 0}}>
+                {loading && <CircularProgress/>}
+                <div ref={topRef}/>
                 {currentConversation.map((message, index) => (
                     <li
                         key={index}
@@ -192,7 +188,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                             <div className="singleMessageYou">
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className="messageProfilePresentation">
-                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -203,7 +199,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                             <div className="singleMessageThey">
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className="messageProfilePresentation">
-                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                        <img src={defaultProfileImage} alt="defaultProfileImage"/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -213,9 +209,9 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                         )}
                     </li>
                 ))}
-                <div ref={bottomRef} />
+                <div ref={bottomRef}/>
             </ul>
-            <div id="sendBox" style={{ display: "flex", alignItems: "center", marginTop: "1rem" }}>
+            <div id="sendBox" style={{display: "flex", alignItems: "center", marginTop: "1rem"}}>
                 <TextField
                     fullWidth
                     variant="outlined"
@@ -223,10 +219,10 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    inputProps={{ "aria-label": "Type a message" }}
+                    inputProps={{"aria-label": "Type a message"}}
                 />
                 <IconButton color="primary" onClick={handleSendMessage} aria-label="Send message">
-                    <SendIcon />
+                    <SendIcon/>
                 </IconButton>
             </div>
         </div>

@@ -7,11 +7,11 @@ import {SpotifyConnectionButton} from "./spotifyConnection/SpotifyConnectionButt
 import {AddArtistModal} from "./AddArtistModal";
 import {getUserId, removeAuthToken, removeUserId} from "../../hooks/authentication";
 import './UtilityDrawer.css';
-import defaultProfileImage from './../../assets/defaultProfileImage.jpg';
 import {Account} from "../../types/Account";
 import {getTopArtists} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
 import {getAccount} from "../../api/account";
+import ProfilePicture from "../profile/ProfilePicture";
 
 interface UtilityDrawerProps {
 }
@@ -78,7 +78,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                     <h1 id={'mainDrawerTitle'}>Account Utilities</h1>
                 </div>
                 <div className={'profileShowDrawer'}>
-                    <img src={defaultProfileImage} alt=""/>
+                    <ProfilePicture accountId={user?.id!} isMyProfile={true} size={120}/>
                     <p>{user?.name}</p>
                 </div>
                 <div className={'musicTasteDrawer'}>

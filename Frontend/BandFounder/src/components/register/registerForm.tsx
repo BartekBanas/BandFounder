@@ -2,12 +2,12 @@ import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import './styles.css';
 import {getMyAccount, registerAccount} from "../../api/account";
-import {mantineSuccessNotification} from "../common/mantineNotification";
+import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 
-export function LoginForm ()  {
+export function LoginForm() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -26,7 +26,16 @@ export function LoginForm ()  {
             mantineSuccessNotification('Account created successfully');
 
             navigate('/home');
-        } catch (e) {
+        } catch (e: any) {
+            if (e instanceof Error) {
+                if (e.message === "Failed to fetch") {
+                    mantineErrorNotification('Failed to connect to the server');
+                } else {
+                    mantineErrorNotification(`${e.message}`);
+                }
+            } else {
+                mantineErrorNotification('Registration failed due to unexpected error');
+            }
             console.error(e);
         }
     }
@@ -91,13 +100,13 @@ export function LoginForm ()  {
                         margin="normal"
                     />
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+                    <Box sx={{display: 'flex', justifyContent: 'space-between', marginTop: '24px'}}>
                         <Button
                             type="submit"
                             variant="contained"
                             color="primary"
                             fullWidth
-                            sx={{ marginRight: '8px', padding: '10px 0' }}
+                            sx={{marginRight: '8px', padding: '10px 0'}}
                         >
                             Register
                         </Button>
@@ -106,7 +115,7 @@ export function LoginForm ()  {
                             variant="outlined"
                             color="info"
                             fullWidth
-                            sx={{ padding: '10px 0' }}
+                            sx={{padding: '10px 0'}}
                         >
                             Login
                         </Button>

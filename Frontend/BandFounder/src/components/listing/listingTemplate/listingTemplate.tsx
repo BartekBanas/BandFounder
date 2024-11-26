@@ -19,6 +19,7 @@ import {ListingCreateDto} from "../../../types/ListingCreateDto";
 import {getUser} from "../../../api/account";
 import {postListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
+import ProfilePicture from "../../profile/ProfilePicture";
 
 interface ListingTemplateProps {
 }
@@ -27,7 +28,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
     const [user, setUser] = useState<any>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [listingType, setListingType] = useState<string>('CollaborativeSong');
-    const [listingGenre, setListingGenre] = useState<string>('Metalcore');
+    const [listingGenre, setListingGenre] = useState<string>('');
     const [listingDescription, setListingDescription] = useState<string>('');
     const [listingMusicianSlots, setListingMusicianSlots] = useState<any>([]);
     const [listingName, setListingName] = useState<string>('');
@@ -103,7 +104,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
     const handleAddNewRole = () => {
         const newSlot = {
             id: Math.random().toString(36).substr(2, 9),
-            role: 'Any',
+            role: '',
             status: 'Available',
         };
         setListingMusicianSlots([...listingMusicianSlots, newSlot]);
@@ -123,7 +124,6 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
                 musicianSlots: listingMusicianSlots,
             }
             await postListing(updatedListing);
-            // reload the page
             window.location.reload();
         } catch (e) {
             console.log(e);
@@ -136,7 +136,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
             <div className="listingTemplate" onClick={handleListingClick}>
                 <div className="listingHeader">
                     <div className="ownerListingElements">
-                        <img src={defaultProfileImage} alt="Default Profile"/>
+                        <ProfilePicture isMyProfile={false} accountId={user.id} size={40}/>
                         <p>{user?.name}</p>
                     </div>
                     <div className="listingTitle">

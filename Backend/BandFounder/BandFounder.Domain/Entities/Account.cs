@@ -30,4 +30,6 @@ public class Account : Entity
     
     // Many-to-Many relationship with Chatroom
     public virtual List<Chatroom> Chatrooms { get; set; } = [];
+    
+    public virtual ProfilePicture? ProfilePicture { get; set; }
 }

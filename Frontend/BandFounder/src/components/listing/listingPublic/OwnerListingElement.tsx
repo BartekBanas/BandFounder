@@ -6,6 +6,7 @@ import {Listing} from "../../../types/Listing";
 import {contactListingOwner, getCommonTaste} from "../../../api/listing";
 import {getDirectChatroomWithUser} from "../../../api/chatroom";
 import {mantineErrorNotification} from "../../common/mantineNotification";
+import ProfilePicture from "../../profile/ProfilePicture";
 
 const OwnerListingElement = ({listing}: { listing: Listing }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -57,7 +58,7 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
     return (
         <div className={'ownerListingElements'}>
             <IconButton onClick={handleClick}>
-                <Avatar alt="Owner Profile" src={defaultProfileImage} sx={{padding:'0 !important'}}/>
+                <ProfilePicture isMyProfile={false} accountId={listing.ownerId} size={40}/>
             </IconButton>
             <p>{listing?.owner?.name}</p>
 

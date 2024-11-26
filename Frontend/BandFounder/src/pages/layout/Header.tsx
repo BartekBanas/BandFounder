@@ -11,16 +11,16 @@ import {
     Typography,
     InputAdornment
 } from '@mui/material';
-import defaultProfileImage from '../../assets/defaultProfileImage.jpg';
 import {useNavigate} from 'react-router-dom';
 import ChatIcon from '@mui/icons-material/Chat';
 import SearchIcon from '@mui/icons-material/Search';
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
 import {Account} from "../../types/Account";
-import {API_URL} from "../../config";
-import Cookies from "universal-cookie";
-import {getAccountByUsername} from "../../api/account";
+import {getAccount, getAccounts} from "../../api/account";
+import UserAvatar from "../../components/common/UserAvatar";
+import {getUserId} from "../../hooks/authentication";
+import {mantineErrorNotification} from "../../components/common/mantineNotification";
 
 export const Header: FC = () => {
     const [users, setUsers] = React.useState<Account[]>([]);
@@ -42,11 +42,13 @@ export const Header: FC = () => {
     const handleSearch = async (event: React.ChangeEvent<{}>, value: string | null) => {
         if (value) {
             try {
-                const user = await getAccountByUsername(value);
+                const userId = users.find((user: Account) => user.name === value)?.id;
+                const user = await getAccount(userId!);
                 if (user) {
                     navigate(`/profile/${user.name}`);
                 }
             } catch (e) {
+                mantineErrorNotification('User not found');
                 console.error('Error searching for user:', e);
             }
         }
@@ -55,16 +57,9 @@ export const Header: FC = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch(`${API_URL}/accounts`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${new Cookies().get('auth_token')}`
-                    }
-                });
-                const data = await response.json();
-                setUsers(data);
-                setUsernames(data.map((user: Account) => user.name));
+                const accounts = await getAccounts();
+                setUsers(accounts);
+                setUsernames(accounts.map((user: Account) => user.name));
             } catch (e) {
                 console.error('Error fetching users:', e);
             }
@@ -130,7 +125,7 @@ export const Header: FC = () => {
                                 alignItems: 'center'
                             }}>
                                 <div onClick={handleProfileClick} style={{cursor: 'pointer'}}>
-                                    <img src={defaultProfileImage} alt="profile" className="profile-image"/>
+                                    <UserAvatar userId={getUserId()}/>
                                 </div>
                             </div>
                         </div>
