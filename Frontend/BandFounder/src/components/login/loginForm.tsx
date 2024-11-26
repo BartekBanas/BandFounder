@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import './styles.css';
 import {getMyAccount, login} from "../../api/account";
@@ -38,7 +38,7 @@ export function LoginForm() {
             await login(email, password);
             navigate('/home');
         } catch (e: any) {
-            mantineErrorNotification(e.message);
+            mantineErrorNotification("Login failed");
             console.error(e);
         }
     };
@@ -119,5 +119,3 @@ export function LoginForm() {
         </ThemeProvider>
     );
 }
-
-export default LoginForm;

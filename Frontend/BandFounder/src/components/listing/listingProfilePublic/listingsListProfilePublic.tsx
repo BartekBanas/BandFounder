@@ -4,6 +4,7 @@ import {RingLoader} from "../../common/RingLoader";
 import {ListingProfilePublic} from "./listingProfilePublic";
 import {Listing} from "../../../types/Listing";
 import {getUsersListings} from "../../../api/listing";
+import {getAccountByUsername} from "../../../api/account";
 
 interface ListingsListProfilePublicProps {
     profileUsername: string;
@@ -16,7 +17,8 @@ const ListingsListProfilePublic: React.FC<ListingsListProfilePublicProps> = ({pr
     useEffect(() => {
         const fetchListings = async () => {
             try {
-                const data = await getUsersListings(profileUsername);
+                const user = await getAccountByUsername(profileUsername);
+                const data = await getUsersListings(user.id);
                 setListings(data);
             } catch (error) {
                 console.error('Error getting listings:', error);

@@ -35,23 +35,20 @@ public class AccountController : Controller
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetAllAccounts(string? username, int? pageSize, int? pageNumber)
+    public async Task<IActionResult> GetAccounts([FromQuery] AccountFilters filters)
     {
-        IEnumerable<AccountDto> accountDtos;
-
-        if (username is not null)
+        var accounts = await _accountService.GetAccountsAsync(filters);
+        
+        if (!accounts.Any())
         {
-            var accountDto = (await _accountService.GetAccountAsync(username)).ToDto();
-            return Ok(accountDto);
+            return NotFound();
         }
-
-        if (pageSize != null && pageNumber != null)
+        
+        var accountDtos = accounts.ToDto();
+        
+        if (filters.Username is not null)
         {
-            accountDtos = await _accountService.GetAccountsAsync((int)pageSize, (int)pageNumber);
-        }
-        else
-        {
-            accountDtos = await _accountService.GetAccountsAsync();
+            return Ok(accountDtos.First());
         }
 
         return Ok(accountDtos);

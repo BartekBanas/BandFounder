@@ -15,7 +15,7 @@ import {
 import {Account} from "../types/Account";
 
 export async function registerAccount(name: string, email: string, password: string) {
-    const response = await fetch(`${API_URL}/accounts/`, {
+    const response = await fetch(`${API_URL}/accounts`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -31,9 +31,10 @@ export async function registerAccount(name: string, email: string, password: str
 
     if (response.ok) {
         return responseContent; // Authentication JWT
-    } else {
-        mantineErrorNotification(responseContent);
+    } else if (response.status === 400 || response.status === 409) { // Relevant messages from the server
         throw new Error(responseContent);
+    } else {
+        throw new Error(`An error occurred during registration`);
     }
 }
 
@@ -52,7 +53,6 @@ export async function login(usernameOrEmail: string, password: string): Promise<
     const responseContent = await response.text();
 
     if (!response.ok) {
-        mantineErrorNotification("Login failed");
         throw new Error(responseContent);
     }
 
