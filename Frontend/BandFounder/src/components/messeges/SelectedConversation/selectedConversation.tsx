@@ -1,14 +1,18 @@
-import { FC, useEffect, useRef, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import { Message } from "../../../types/Message";
 import { TextField, IconButton, Tooltip, CircularProgress } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
-import defaultProfileImage from "../../../assets/defaultProfileImage.jpg";
 import "./../../../assets/CustomScrollbar.css";
 import { getMessagesFromChatroom, sendMessage } from "../../../api/messages";
-import {getAccount, getMyAccount} from "../../../api/account";
+import {getAccount, getMyAccount, getProfilePicture} from "../../../api/account";
 import { getUserId } from "../../../hooks/authentication";
 import {Account} from "../../../types/Account";
+import {useLocation} from "react-router-dom";
+import {ChatRoom} from "../../../types/ChatRoom";
+import {getChatroom} from "../../../api/chatroom";
+import {ImageAvatar} from "../../common/ImageAvatar";
+import UserAvatar from "../../common/UserAvatar";
 
 interface SelectedConversationProps {
     id: string;
@@ -20,6 +24,7 @@ interface MessageWithSenderName extends Message {
 }
 
 export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
+    const [chatroom, setChatroom] = useState<ChatRoom>();
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
     const [receiverName, setReceiverName] = useState<string>("Unknown User");
@@ -29,14 +34,60 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     const [hasMore, setHasMore] = useState<boolean>(true);
     const bottomRef = useRef<HTMLDivElement>(null);
     const topRef = useRef<HTMLDivElement>(null);
-    const [isScrollingUp, setIsScrollingUp] = useState<boolean>(false);
     const ws = useRef<WebSocket | null>(null);
     const userCache = useRef<Record<string, string>>({}); // Cache for sender names
     const [currentUser, setCurrentUser] = useState<Account | undefined>();
+    const [isLoadingAvatars, setIsLoadingAvatars] = useState(true);
+
+    const userAvatarsCache: Record<string, string> = {};
+    const addAvatarToCache = (userId: string, imageUrl: string) => {
+        userAvatarsCache[userId] = imageUrl
+    }
+    
+    const [participants, setParticipants] = useState<Account[]>([]);
+    const addParticipant = (account: Account) => {
+        setParticipants((prevParticipants) => [...prevParticipants, account]);
+    };
+
+    const location = useLocation();
+
+    useEffect(() => {
+        const fetchChatroom = async () => {
+            const chatroom = await getChatroom(id);
+            console.log(chatroom.membersIds);
+
+            if (chatroom.membersIds) {
+                setChatroom(chatroom);
+                for (const memberId of chatroom.membersIds) {
+                    const member = await getAccount(memberId);
+                    addParticipant(member);
+
+                    const imageUrl = await getProfilePicture(member.id);
+                    addAvatarToCache(member.id, imageUrl || "poop");
+                }
+            }
+
+            console.log(userAvatarsCache);
+
+            setIsLoadingAvatars(false);
+        };
+
+        const fetchParticipantAvatars = async () => {
+            console.log(`Fetching avatars for ${participants.length} participants ${participants}`);
+            // for (const participant of participants) {
+            //     if (!userAvatarsCache[participant.id]) {
+            //         const imageUrl = await getProfilePicture(participant.id);
+            //         addAvatarToCache(participant.id, imageUrl || defaultProfileImage);
+            //     }
+            // }
+        };
+
+        fetchChatroom().then(r => fetchParticipantAvatars());
+    }, [id, location.pathname]);
 
     useEffect(() => {
         if (!id) {
-            console.error("Chat room ID is not provided");
+            console.error("Chatroom ID is not provided");
             return;
         }
         const wsUrl = `wss://localhost:7095/api/chatrooms?chatRoomId=${id}`;
@@ -88,7 +139,6 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
             setLoading(true);
             try {
                 const conversation: Message[] = await getMessagesFromChatroom(id, pageNumber, pageSize);
-                const userId = getUserId();
 
                 const conversationWithNames = await Promise.all(
                     conversation.map(async (message) => {
@@ -136,12 +186,10 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
             }
         };
 
-
         fetchOlderMessages();
     }, [id, hasMore, pageNumber, pageSize]);
 
     useEffect(() => {
-        const container = topRef.current?.parentElement;
         if (bottomRef.current) {
             bottomRef.current.scrollIntoView({ behavior: "smooth" });
         }
@@ -210,11 +258,11 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                             margin: "10px 0",
                         }}
                     >
-                        {message.senderName === "You" || message.senderName === currentUser?.name ? (
+                        {message.senderId === getUserId() ? (
                             <div className="singleMessageYou">
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className="messageProfilePresentation">
-                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                        <UserAvatar userId={message.senderId}/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -225,7 +273,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                             <div className="singleMessageThey">
                                 <Tooltip title={`${message.senderName}`}>
                                     <div className="messageProfilePresentation">
-                                        <img src={defaultProfileImage} alt="defaultProfileImage" />
+                                        <ImageAvatar imageUrl={userAvatarsCache[message.senderId]} size={20} />
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
