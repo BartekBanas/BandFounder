@@ -57,6 +57,15 @@ public class SpotifyBrokerController : ControllerBase
     }
     
     [Authorize]
+    [HttpPost("spotify/update-artists")]
+    public async Task<IActionResult> UpdateArtistsFromSpotify()
+    {
+        var newlyAddedArtists = await _spotifyConnectionService.SaveRelevantArtists();
+
+        return Ok(newlyAddedArtists);
+    }
+    
+    [Authorize]
     [HttpGet("accounts/{accountId:guid}/artists/spotify/top")]
     public async Task<IActionResult> GetUsersSpotifyTopArtists([FromRoute] Guid accountId)
     {
