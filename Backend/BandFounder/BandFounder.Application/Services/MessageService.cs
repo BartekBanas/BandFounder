@@ -83,11 +83,14 @@ public class MessageService : IMessageService
 
         var messages = await _messageRepository
             .GetAsync(
-                request.PageSize, request.PageNumber,
                 message => message.ChatRoomId == request.ChatRoomId,
                 query => query.OrderBy(message => message.SentDate)
             );
         
-        return messages.ToDto();
+        var paginatedMessages = messages
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize);
+
+        return paginatedMessages.ToDto();
     }
 }
