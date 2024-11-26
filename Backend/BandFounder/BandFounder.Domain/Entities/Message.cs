@@ -17,5 +17,4 @@ public class Message : Entity
     public string Content { get; set; } = null!;
 
     public DateTime SentDate { get; set; }
-
 }

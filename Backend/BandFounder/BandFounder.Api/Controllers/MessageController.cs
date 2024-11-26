@@ -1,8 +1,9 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BandFounder.Api.WebSockets;
+using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Messages;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -73,18 +74,16 @@ public class MessageController : Controller
     public async Task<IActionResult> GetChatroomMessages([FromRoute] Guid chatRoomId,
         [FromQuery] int? pageSize, [FromQuery] int? pageNumber)
     {
-        object messagesDto;
-
-        if (pageSize != null && pageNumber != null)
+        var request = new GetMessagesRequest
         {
-            var request = new GetPagedMessagesDto(chatRoomId, (int)pageSize, (int)pageNumber);
-            messagesDto = await _messageService.GetChatroomPagedMessages(request);
-        }
-        else
-        {
-            messagesDto = await _messageService.GetChatroomMessages(chatRoomId);
-        }
+            ChatRoomId = chatRoomId,
+            PageSize = pageSize,
+            PageNumber = pageNumber
+        };
         
-        return Ok(messagesDto);
+        var messages = await _messageService.GetChatroomMessages(request);
+        var dtos = messages.ToDto();
+        
+        return Ok(dtos);
     }
 }
