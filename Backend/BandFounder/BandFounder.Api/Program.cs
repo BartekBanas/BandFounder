@@ -13,6 +13,10 @@ using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
+using BandFounder.Api.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -77,12 +81,67 @@ services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
 services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 services.AddScoped<IContentService, ContentService>();
+services.AddSingleton<WebSocketConnectionManager>();
+
 
 services.AddScoped<ErrorHandlingMiddleware>();
 
 var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseWebSockets();
+
+app.Use(async (context, next) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        var connectionManager = app.Services.GetRequiredService<WebSocketConnectionManager>();
+        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        await HandleWebSocketConnectionAsync(context, webSocket, connectionManager);
+    }
+    else
+    {
+        await next();
+    }
+});
+
+
+static async Task HandleWebSocketConnectionAsync(HttpContext context, WebSocket webSocket, WebSocketConnectionManager connectionManager)
+{
+    // Extract chat room ID from query string
+    var chatRoomId = Guid.Parse(context.Request.Query["chatRoomId"]);
+    connectionManager.AddConnection(chatRoomId, webSocket);
+
+    var buffer = new byte[1024 * 4];
+    WebSocketReceiveResult result;
+
+    while (webSocket.State == WebSocketState.Open)
+    {
+        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+        if (result.MessageType == WebSocketMessageType.Text)
+        {
+            var receivedMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            Console.WriteLine($"Received in chat room {chatRoomId}: {receivedMessage}");
+
+            // Broadcast message to all connections in the chat room
+            var messagePayload = Encoding.UTF8.GetBytes(receivedMessage);
+            foreach (var socket in connectionManager.GetConnections(chatRoomId))
+            {
+                if (socket.State == WebSocketState.Open)
+                {
+                    await socket.SendAsync(new ArraySegment<byte>(messagePayload), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+            }
+        }
+        else if (result.MessageType == WebSocketMessageType.Close)
+        {
+            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            connectionManager.RemoveConnection(chatRoomId, webSocket);
+        }
+    }
+}
+
 
 // app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();
