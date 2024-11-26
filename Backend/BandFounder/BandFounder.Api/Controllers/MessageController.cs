@@ -1,4 +1,9 @@
-﻿using BandFounder.Application.Dtos.Messages;
+﻿using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using BandFounder.Api.WebSockets;
+using BandFounder.Application.Dtos.Messages;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,18 +14,53 @@ namespace BandFounder.Api.Controllers;
 public class MessageController : Controller
 {
     private readonly IMessageService _messageService;
+    private readonly WebSocketConnectionManager _webSocketConnectionManager;
+    private readonly IAccountService _accountService;
 
-    public MessageController(IMessageService messageService)
+    public MessageController(IMessageService messageService, WebSocketConnectionManager webSocketConnectionManager, IAccountService accountService)
     {
         _messageService = messageService;
+        _webSocketConnectionManager = webSocketConnectionManager;
+        _accountService = accountService;
     }
 
     [HttpPost]
     public async Task<IActionResult> SendMessage([FromRoute] Guid chatRoomId, [FromBody] string message)
     {
-        await _messageService.SendMessage(new SendMessageDto(chatRoomId, message));
+        if (string.IsNullOrEmpty(message))
+        {
+            return BadRequest("Message content cannot be null or empty.");
+        }
 
-        return Ok();
+        try
+        {
+            // Send the message via the service
+            await _messageService.SendMessage(new SendMessageDto(chatRoomId, message));
+
+            // Create the message payload
+            var senderId = await _accountService.GetAccountAsync();
+            var simplifiedSenderId = new { Id = senderId.Id };
+            var options = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.Preserve
+            };
+            var messagePayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { senderId = simplifiedSenderId, content = message }, options));
+            // Broadcast the message to WebSocket clients in the chat room
+            foreach (var socket in _webSocketConnectionManager.GetConnections(chatRoomId))
+            {
+                if (socket.State == WebSocketState.Open)
+                {
+                    await socket.SendAsync(new ArraySegment<byte>(messagePayload), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+            }
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            // Log the exception (logging mechanism not shown here)
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
     }
     
     [HttpGet]
