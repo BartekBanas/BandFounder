@@ -8,7 +8,6 @@ import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
 import {getAccount, getProfilePicture} from "../../../api/account";
 import {getUserId} from "../../../hooks/authentication";
 import {Account} from "../../../types/Account";
-import {useLocation} from "react-router-dom";
 import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getChatroom} from "../../../api/chatroom";
 import {ImageAvatar} from "../../common/ImageAvatar";
@@ -53,48 +52,39 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         });
     };
 
-    const location = useLocation();
-
     useEffect(() => {
         const fetchChatroom = async () => {
             const chatroom = await getChatroom(id);
 
             if (chatroom.membersIds) {
-                setChatroom(chatroom);
+                const localParticipants: Account[] = [];
+
                 for (const memberId of chatroom.membersIds) {
                     const member = await getAccount(memberId);
+                    localParticipants.push(member);
                     addParticipant(member);
 
                     const imageUrl = await getProfilePicture(member.id);
                     addAvatarToCache(member.id, imageUrl || "poop");
                 }
+
+                if (chatroom.type === ChatRoomType.Direct) {
+                    const otherParticipant = localParticipants.find(
+                        (participant) => participant.id !== getUserId()
+                    );
+                    const otherParticipantName = otherParticipant ? otherParticipant.name : "Unknown User";
+                    setChatroomName(`Conversation with ${otherParticipantName}`);
+                } else {
+                    setChatroomName(chatroom.name || "Unknown Chatroom");
+                }
             }
 
-            if (chatroom.type === ChatRoomType.Direct) {
-                const otherParticipant = participants.find((participant) => participant.id !== getUserId());
-                const otherParticipantName = otherParticipant ? otherParticipant.name : "Unknown User";
-                setChatroomName(`Conversation with ${otherParticipantName}`)
-            } else {
-                setChatroomName(chatroom.name || "Unknown Chatroom");
-            }
-
-            console.log(userAvatarsCache);
-
+            setChatroom(chatroom);
             setIsLoadingAvatars(false);
         };
 
-        const fetchParticipantAvatars = async () => {
-            console.log(`Fetching avatars for ${participants.length} participants ${participants}`);
-            // for (const participant of participants) {
-            //     if (!userAvatarsCache[participant.id]) {
-            //         const imageUrl = await getProfilePicture(participant.id);
-            //         addAvatarToCache(participant.id, imageUrl || defaultProfileImage);
-            //     }
-            // }
-        };
-
-        fetchChatroom().then(r => fetchParticipantAvatars());
-    }, [id, location.pathname]);
+        fetchChatroom();
+    }, [id]);
 
     useEffect(() => {
         if (!id) {
