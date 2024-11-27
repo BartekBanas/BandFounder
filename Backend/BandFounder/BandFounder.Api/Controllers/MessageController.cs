@@ -47,9 +47,8 @@ public class MessageController : Controller
 
             // Create the message payload
             var senderAccount = await _accountService.GetAccountAsync();
-            var simplifiedSenderId = new { senderAccount.Id };
             var messagePayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(
-                new { senderId = simplifiedSenderId, content = message }, _serializationOptions));
+                new { senderId = senderAccount.Id, content = message }, _serializationOptions));
             
             // Broadcast the message to WebSocket clients in the chat room
             foreach (var socket in _webSocketConnectionManager.GetConnections(chatRoomId))

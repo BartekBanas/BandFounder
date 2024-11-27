@@ -106,10 +106,10 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     return;
                 }
 
-                let account = participants.find((participant) => participant.id === message.senderId.Id);
+                let account = participants.find((participant) => participant.id === message.senderId);
                 if (!account) {
                     console.log("Fetching new participant");
-                    account = await getAccount(message.senderId.Id);
+                    account = await getAccount(message.senderId);
                     addParticipant(account);
                 }
 
