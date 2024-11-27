@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useRef, useState} from "react";
 import {Message} from "../../../types/Message";
-import {TextField, IconButton, Tooltip, CircularProgress} from "@mui/material";
+import {CircularProgress, IconButton, TextField, Tooltip} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
 import "./../../../assets/CustomScrollbar.css";
@@ -9,7 +9,7 @@ import {getAccount, getProfilePicture} from "../../../api/account";
 import {getUserId} from "../../../hooks/authentication";
 import {Account} from "../../../types/Account";
 import {useLocation} from "react-router-dom";
-import {ChatRoom} from "../../../types/ChatRoom";
+import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getChatroom} from "../../../api/chatroom";
 import {ImageAvatar} from "../../common/ImageAvatar";
 import UserAvatar from "../../common/UserAvatar";
@@ -27,7 +27,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [chatroom, setChatroom] = useState<ChatRoom>();
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
-    const [receiverName, setReceiverName] = useState<string>("Unknown User");
+    const [chatroomName, setChatroomName] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [pageSize] = useState<number>(5);
@@ -58,7 +58,6 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     useEffect(() => {
         const fetchChatroom = async () => {
             const chatroom = await getChatroom(id);
-            console.log(chatroom.membersIds);
 
             if (chatroom.membersIds) {
                 setChatroom(chatroom);
@@ -69,6 +68,14 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     const imageUrl = await getProfilePicture(member.id);
                     addAvatarToCache(member.id, imageUrl || "poop");
                 }
+            }
+
+            if (chatroom.type === ChatRoomType.Direct) {
+                const otherParticipant = participants.find((participant) => participant.id !== getUserId());
+                const otherParticipantName = otherParticipant ? otherParticipant.name : "Unknown User";
+                setChatroomName(`Conversation with ${otherParticipantName}`)
+            } else {
+                setChatroomName(chatroom.name || "Unknown Chatroom");
             }
 
             console.log(userAvatarsCache);
@@ -252,7 +259,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
 
     return (
         <div id="mainSelectedConversation">
-            <h1 id="selectedConversationTitle">Conversation with {receiverName}</h1>
+            <h1 id="selectedConversationTitle">{chatroomName}</h1>
             <ul id="fullConversation" className="custom-scrollbar" style={{listStyleType: "none", padding: 0}}>
                 {loading && <CircularProgress/>}
                 <div ref={topRef}/>
