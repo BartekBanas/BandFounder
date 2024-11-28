@@ -93,7 +93,6 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
     const handleEditMusicianRole = (slotId: string, role: string) => {
         const newSlots = listingMusicianSlots.map((slot: any) => {
             if (slot.id === slotId) {
-                console.log('role', role);
                 return {...slot, role};
             }
             return slot;
@@ -116,14 +115,14 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
 
     const handlePostListing = async () => {
         try {
-            const updatedListing: ListingCreateDto = {
+            const createdListing: ListingCreateDto = {
                 name: listingName,
                 type: listingType,
                 genre: listingGenre,
                 description: listingDescription,
                 musicianSlots: listingMusicianSlots,
             }
-            await postListing(updatedListing);
+            await postListing(createdListing);
             window.location.reload();
         } catch (e) {
             console.log(e);

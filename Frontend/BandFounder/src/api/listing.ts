@@ -124,8 +124,6 @@ export async function postListing(listing: ListingCreateDto): Promise<void> {
             mantineErrorNotification(`Unexpected error: ${response.status}`);
             throw new Error(undefined);
         }
-
-        return await response.json();
     } catch (e: any) {
         if (e instanceof Error && e.message) {
             mantineErrorNotification("Failed to create listing");
