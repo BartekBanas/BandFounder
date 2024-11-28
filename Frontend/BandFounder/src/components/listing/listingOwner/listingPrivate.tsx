@@ -25,6 +25,7 @@ import {getListing, updateListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import ProfilePicture from "../../profile/ProfilePicture";
 import {DeleteListingButton} from "./DeleteListingButton";
+import {formatMessageWithLinks} from "../../common/utils";
 
 interface ListingPrivateProps {
     listingId: string;
@@ -189,7 +190,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                 </div>
             </div>
             <div className={'listingBody'}>
-                <p>{listing?.description}</p>
+                <p>{formatMessageWithLinks(listing?.description)}</p>
             </div>
             <div className={'listingFooter'}>
                 {listing?.musicianSlots.map((slot: any) => (

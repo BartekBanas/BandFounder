@@ -13,6 +13,7 @@ using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using BandFounder.Api.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -78,11 +79,28 @@ services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 services.AddScoped<IContentService, ContentService>();
 
+services.AddSingleton<WebSocketConnectionManager>();
+
 services.AddScoped<ErrorHandlingMiddleware>();
 
 var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+app.UseWebSockets();
+app.Use(async (context, next) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        var connectionManager = app.Services.GetRequiredService<WebSocketConnectionManager>();
+        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        await connectionManager.HandleWebSocketConnectionAsync(context, webSocket);
+    }
+    else
+    {
+        await next();
+    }
+});
 
 // app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureDeleted();
 app.Services.CreateScope().ServiceProvider.GetRequiredService<BandFounderDbContext>().Database.EnsureCreated();

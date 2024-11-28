@@ -4,7 +4,6 @@ import {getMyChatrooms, createDirectChatroom} from "../../../api/chatroom";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import './styles.css'
-import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './../../../assets/CustomScrollbar.css'
 import {getUserId} from "../../../hooks/authentication";
 import {getAccounts, getUser} from "../../../api/account";
@@ -90,7 +89,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
     };
 
     const handleSelectConversation = (id: string) => {
-        navigate(`/messages/${id}`);
+        window.location.href = `/messages/${id}`;
     };
 
     return (

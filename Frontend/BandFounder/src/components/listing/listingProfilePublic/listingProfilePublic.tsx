@@ -6,6 +6,7 @@ import {RingLoader} from "../../common/RingLoader";
 import {getUser} from "../../../api/account";
 import OwnerListingElement from "./OwnerListingElement";
 import {getListing} from "../../../api/listing";
+import {formatMessageWithLinks} from "../../common/utils";
 
 interface listingProfilePublicProps {
     listingId: string;
@@ -60,7 +61,7 @@ export const ListingProfilePublic: React.FC<listingProfilePublicProps> = ({ list
                 </div>
             </div>
             <div className={'listingBody'}>
-                <p>{listing?.description}</p>
+                <p>{formatMessageWithLinks(listing?.description)}</p>
             </div>
             <div className={'listingFooter'}>
                 {listing?.musicianSlots.map((slot: any) => (

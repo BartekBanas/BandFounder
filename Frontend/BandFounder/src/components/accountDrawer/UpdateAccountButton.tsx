@@ -1,51 +1,51 @@
-import {useDisclosure} from '@mantine/hooks';
-import {Modal, Box, TextField, Button, Stack, Typography, Divider} from '@mui/material';
-import React from "react";
-import {useForm} from "@mantine/form";
+import React, {useState} from "react";
+import {Modal, Box, TextField, Button, Stack, Typography, Divider} from "@mui/material";
+import {muiDarkTheme} from "../../assets/muiDarkTheme";
 import {updateMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
-import {CreateAccountDto} from "../../types/Account";
 
 export function UpdateAccountButton() {
-    const [opened, {close, open}] = useDisclosure(false);
-    const form = useForm<CreateAccountDto>({
-        initialValues: {
-            Name: '',
-            Password: '',
-            Email: '',
-        },
+    const [opened, setOpened] = useState(false);
+    const [formValues, setFormValues] = useState({
+        Name: "",
+        Password: "",
+        Email: "",
     });
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const {name, value} = e.target;
+        setFormValues((prev) => ({...prev, [name]: value}));
+    };
 
     const handleUpdateAccount = async () => {
         try {
             await updateMyAccount(
-                form.values.Name || null,
-                form.values.Password || null,
-                form.values.Email || null
+                formValues.Name || null,
+                formValues.Password || null,
+                formValues.Email || null
             );
             mantineSuccessNotification("Account updated successfully");
         } catch (error) {
             mantineErrorNotification("Failed to update account");
         }
 
-        close();
+        setOpened(false);
     };
 
     return (
         <>
-            <Button variant="contained" color="info" size="large" onClick={open}>
+            <Button variant="contained" color="info" size="large" onClick={() => setOpened(true)}>
                 Update Account
             </Button>
 
-            <Modal open={opened} onClose={close}>
+            <Modal open={opened} onClose={() => setOpened(false)}>
                 <Box
                     sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: 'auto',
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: "auto",
                         maxWidth: 400,
                         bgcolor: muiDarkTheme.palette.background.default,
                         borderRadius: 2,
@@ -56,15 +56,35 @@ export function UpdateAccountButton() {
                     <Typography variant="h5" align="center" sx={{mb: 3}}>
                         Update your account
                     </Typography>
-                    <form onSubmit={handleUpdateAccount}>
+                    <form>
                         <Stack spacing={3}>
-                            <TextField label="Username" variant="outlined"/>
-                            <TextField label="Password" variant="outlined" type="password"/>
-                            <TextField label="Email" variant="outlined" type="email"/>
+                            <TextField
+                                label="Username"
+                                variant="outlined"
+                                name="Name"
+                                value={formValues.Name}
+                                onChange={handleInputChange}
+                            />
+                            <TextField
+                                label="Password"
+                                variant="outlined"
+                                type="password"
+                                name="Password"
+                                value={formValues.Password}
+                                onChange={handleInputChange}
+                            />
+                            <TextField
+                                label="Email"
+                                variant="outlined"
+                                type="email"
+                                name="Email"
+                                value={formValues.Email}
+                                onChange={handleInputChange}
+                            />
 
                             <Divider sx={{my: 3}}/>
 
-                            <Button type="submit" variant="contained" fullWidth color="success">
+                            <Button variant="contained" fullWidth color="success" onClick={handleUpdateAccount}>
                                 Update Account
                             </Button>
                         </Stack>
