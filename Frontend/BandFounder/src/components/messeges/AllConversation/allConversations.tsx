@@ -113,8 +113,13 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
                     <li className={'singleConversationShortcut'} key={chatRoom.id}
                         onClick={() => handleSelectConversation(chatRoom.id)}>
                         <ProfilePicture accountId={chatRoom.membersIds[0]} isMyProfile={false} size={40}/>
-                        {chatRoom.name}
-                        <LeaveChatroomModal chatroom={chatRoom} setRefreshConversations={setRefreshConversations}/>
+                        <div>{chatRoom.name}</div>
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <LeaveChatroomModal
+                                chatroom={chatRoom}
+                                setRefreshConversations={setRefreshConversations}
+                            />
+                        </div>
                     </li>
                 ))}
             </ul>

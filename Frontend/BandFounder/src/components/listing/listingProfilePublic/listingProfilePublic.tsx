@@ -4,7 +4,7 @@ import './style.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
 import {getUser} from "../../../api/account";
-import OwnerListingElement from "./OwnerListingElement";
+import OwnerListingElement from "../listingPublic/OwnerListingElement";
 import {getListing} from "../../../api/listing";
 
 interface listingProfilePublicProps {
