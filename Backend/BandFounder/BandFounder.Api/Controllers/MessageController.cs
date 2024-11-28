@@ -14,14 +14,22 @@ namespace BandFounder.Api.Controllers;
 public class MessageController : Controller
 {
     private readonly IMessageService _messageService;
-    private readonly WebSocketConnectionManager _webSocketConnectionManager;
     private readonly IAccountService _accountService;
+    private readonly WebSocketConnectionManager _webSocketConnectionManager;
+    private readonly JsonSerializerOptions _serializationOptions;
 
-    public MessageController(IMessageService messageService, WebSocketConnectionManager webSocketConnectionManager, IAccountService accountService)
+    public MessageController(
+        IMessageService messageService,
+        IAccountService accountService,
+        WebSocketConnectionManager webSocketConnectionManager)
     {
         _messageService = messageService;
-        _webSocketConnectionManager = webSocketConnectionManager;
         _accountService = accountService;
+        _webSocketConnectionManager = webSocketConnectionManager;
+        _serializationOptions = new JsonSerializerOptions
+        {
+            ReferenceHandler = ReferenceHandler.Preserve
+        };
     }
 
     [HttpPost]
@@ -29,7 +37,7 @@ public class MessageController : Controller
     {
         if (string.IsNullOrEmpty(message))
         {
-            return BadRequest("Message content cannot be null or empty.");
+            return BadRequest("Message content cannot be empty");
         }
 
         try
@@ -38,19 +46,17 @@ public class MessageController : Controller
             await _messageService.SendMessage(new SendMessageDto(chatRoomId, message));
 
             // Create the message payload
-            var senderId = await _accountService.GetAccountAsync();
-            var simplifiedSenderId = new { Id = senderId.Id };
-            var options = new JsonSerializerOptions
-            {
-                ReferenceHandler = ReferenceHandler.Preserve
-            };
-            var messagePayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { senderId = simplifiedSenderId, content = message }, options));
+            var senderAccount = await _accountService.GetAccountAsync();
+            var messagePayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(
+                new { senderId = senderAccount.Id, content = message }, _serializationOptions));
+            
             // Broadcast the message to WebSocket clients in the chat room
             foreach (var socket in _webSocketConnectionManager.GetConnections(chatRoomId))
             {
                 if (socket.State == WebSocketState.Open)
                 {
-                    await socket.SendAsync(new ArraySegment<byte>(messagePayload), WebSocketMessageType.Text, true, CancellationToken.None);
+                    await socket.SendAsync(new ArraySegment<byte>(messagePayload), 
+                        WebSocketMessageType.Text, true, CancellationToken.None);
                 }
             }
 
