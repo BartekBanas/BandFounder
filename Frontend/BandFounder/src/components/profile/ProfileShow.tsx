@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import {muiDarkTheme} from "../../assets/muiDarkTheme";
 import {useDisclosure} from "@mantine/hooks";
-import {mantineErrorNotification,} from "../common/mantineNotification";
+import {mantineErrorNotification} from "../common/mantineNotification";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
     addMyMusicianRole,
