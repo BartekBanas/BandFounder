@@ -11,6 +11,10 @@ export async function getMyChatrooms(): Promise<ChatRoom[]> {
             headers: authorizedHeaders()
         });
 
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
         let chatrooms: ChatRoom[] = await response.json();
         return chatrooms;
     } catch (e) {
@@ -19,12 +23,16 @@ export async function getMyChatrooms(): Promise<ChatRoom[]> {
     }
 }
 
-export async function getChatroom (chatroomId: string): Promise<ChatRoom> {
+export async function getChatroom(chatroomId: string): Promise<ChatRoom> {
     try {
         const response = await fetch(`${API_URL}/chatrooms/${chatroomId}`, {
             method: 'GET',
             headers: authorizedHeaders()
         });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
 
         return await response.json() as ChatRoom;
     } catch (e) {
@@ -48,7 +56,13 @@ export async function getDirectChatroomWithUser(accountId: string): Promise<Chat
             throw new Error(await response.text());
         }
 
-        return await response.json() as ChatRoom;
+        const chatrooms = (await response.json()) as ChatRoom[];
+
+        if (!Array.isArray(chatrooms) || chatrooms.length === 0) {
+            return null;
+        }
+
+        return chatrooms[0];
 
     } catch (e) {
         mantineErrorNotification('Failed to fetch direct conversation');

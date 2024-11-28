@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Box } from "@mui/material";
-import { getProfilePicture, uploadProfilePicture } from "../../api/account";
-import { mantineErrorNotification, mantineSuccessNotification } from "../common/mantineNotification";
+import React, {useState, useEffect} from "react";
+import {getProfilePicture, uploadProfilePicture} from "../../api/account";
+import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import UserAvatar from "../common/UserAvatar";
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import './styles/ProfileDrawer.css';
@@ -12,7 +11,7 @@ interface ProfilePictureProps {
     size: number;
 }
 
-const ProfilePicture: React.FC<ProfilePictureProps> = ({ accountId, isMyProfile, size = 50 }) => {
+const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile, size = 50}) => {
     const [preview, setPreview] = useState<string>("");
     const [loading, setLoading] = useState(false);
 
@@ -24,7 +23,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ accountId, isMyProfile,
                     setPreview(imageUrl);
                 }
             } catch (error) {
-                console.error("Error fetching profile picture:", error);
+                console.info("Error fetching profile picture:", error);
             }
         };
         loadProfilePicture();
@@ -69,7 +68,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ accountId, isMyProfile,
                         />
                         <label htmlFor="profile-picture-upload" style={{cursor: 'pointer', position: 'relative'}}>
                             <UserAvatar userId={accountId} size={size} className={'avatar-hover-effect'}/>
-                            <UploadFileIcon className="upload-icon" />
+                            <UploadFileIcon className="upload-icon"/>
                         </label>
                     </div>
                 </div>

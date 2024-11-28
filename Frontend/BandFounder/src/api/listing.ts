@@ -29,7 +29,7 @@ export async function contactListingOwner(listingId: string): Promise<ChatroomDt
         });
 
         if (!response.ok) {
-            throw new Error('Failed to contact the listing owner');
+            return undefined;
         }
 
         const chatroom: ChatroomDto = await response.json();

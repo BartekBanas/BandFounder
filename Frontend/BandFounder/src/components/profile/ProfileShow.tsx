@@ -97,9 +97,9 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                 const response = await createDirectChatroom(targetId);
                 window.location.href = "/messages/" + response.id;
             } catch (e) {
-                const chatRoomId = await getDirectChatroomWithUser(targetId);
-                if (chatRoomId) {
-                    window.location.href = "/messages/" + chatRoomId;
+                const chatRoom = await getDirectChatroomWithUser(targetId);
+                if (chatRoom?.id) {
+                    window.location.href = "/messages/" + chatRoom.id;
                 } else {
                     mantineErrorNotification("An error occurred when trying to message " + account!.name);
                     throw new Error("Failed to find chatroom with user " + targetId);

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Avatar, CircularProgress } from "@mui/material";
-import { getProfilePicture } from "../../api/account";
+import React, {useState, useEffect} from "react";
+import {Avatar, CircularProgress} from "@mui/material";
+import {getProfilePicture} from "../../api/account";
 import defaultProfileImage from "../../assets/defaultProfileImage.jpg";
 
 interface UserAvatarProps {
@@ -10,7 +10,7 @@ interface UserAvatarProps {
     style?: React.CSSProperties; // Optional style prop
 }
 
-const UserAvatar: React.FC<UserAvatarProps> = ({ userId, size = 50, className, style }) => {
+const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50, className, style}) => {
     const [avatarUrl, setAvatarUrl] = useState<string>(defaultProfileImage);
     const [loading, setLoading] = useState(false);
 
@@ -21,7 +21,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ userId, size = 50, className, s
                 const imageUrl = await getProfilePicture(userId);
                 setAvatarUrl(imageUrl || defaultProfileImage);
             } catch (error) {
-                console.error("Error fetching user avatar:", error);
                 setAvatarUrl(defaultProfileImage);
             } finally {
                 setLoading(false);
@@ -34,7 +33,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ userId, size = 50, className, s
     return (
         <div className={className} style={style}> {/* Apply optional style here */}
             {loading ? (
-                <CircularProgress size={size / 2} />
+                <CircularProgress size={size / 2}/>
             ) : (
                 <Avatar
                     src={avatarUrl}

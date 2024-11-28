@@ -1,14 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {Menu, IconButton, Avatar, Box, Typography, Button} from '@mui/material';
-import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
+import {Menu, IconButton, Box, Typography, Button} from '@mui/material';
 import {commonTaste} from "../../../types/CommonTaste";
 import {Listing} from "../../../types/Listing";
 import {contactListingOwner, getCommonTaste} from "../../../api/listing";
 import {getDirectChatroomWithUser} from "../../../api/chatroom";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 import ProfilePicture from "../../profile/ProfilePicture";
-
-
 
 const OwnerListingElement = ({listing}: { listing: Listing }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -36,19 +33,20 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
         try {
             if (listing?.ownerId) {
                 const response = await contactListingOwner(listing.id);
-                handleClose();
+
                 if (response) {
                     window.location.href = '/messages/' + response.id;
                 } else {
-                    const chatRoomId = await getDirectChatroomWithUser(listing.ownerId);
-                    if (chatRoomId) {
-                        window.location.href = '/messages/' + chatRoomId;
+                    const chatroom = await getDirectChatroomWithUser(listing.ownerId);
+                    if (chatroom?.id) {
+                        window.location.href = '/messages/' + chatroom.id;
                     } else {
                         throw new Error('Failed to find chatroom with user ' + listing.ownerId);
                     }
                 }
             }
         } catch (error) {
+            console.error(error);
             mantineErrorNotification("Failed to contact the listing's owner");
         }
     };
