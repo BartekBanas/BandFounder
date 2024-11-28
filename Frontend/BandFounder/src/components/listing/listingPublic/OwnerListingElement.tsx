@@ -8,6 +8,8 @@ import {getDirectChatroomWithUser} from "../../../api/chatroom";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 import ProfilePicture from "../../profile/ProfilePicture";
 
+
+
 const OwnerListingElement = ({listing}: { listing: Listing }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [commonTaste, setCommonTaste] = useState<commonTaste | null>(null);
