@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import UseSpotifyConnected from "../../../hooks/useSpotifyAccountLinked";
-import { useNavigate } from "react-router-dom";
-import { deleteSpotifyCredential, redirectToSpotifyAuthorizationPage } from "./spotifyConnection";
-import { sleep } from "../../../hooks/utils";
-import { muiDarkTheme } from "../../../assets/muiDarkTheme";
-import { SpotifyIcon } from "./SpotifyIcon";
-import { Button } from "@mui/material";
+import {useNavigate} from "react-router-dom";
+import {deleteSpotifyCredential, redirectToSpotifyAuthorizationPage} from "./spotifyConnection";
+import {sleep} from "../../common/utils";
+import {muiDarkTheme} from "../../../assets/muiDarkTheme";
+import {SpotifyIcon} from "./SpotifyIcon";
+import {Button} from "@mui/material";
 
 export function SpotifyConnectionButton() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
@@ -42,7 +42,7 @@ export function SpotifyConnectionButton() {
                             backgroundColor: muiDarkTheme.palette.error.dark,
                         },
                     }}
-                    startIcon={<SpotifyIcon />}
+                    startIcon={<SpotifyIcon/>}
                     onClick={handleDelete}
                 >
                     Disconnect with Spotify
@@ -58,7 +58,7 @@ export function SpotifyConnectionButton() {
                         },
                     }}
                     onClick={redirectToSpotifyAuthorizationPage}
-                    startIcon={<SpotifyIcon />}
+                    startIcon={<SpotifyIcon/>}
                 >
                     Link Spotify Account
                 </Button>

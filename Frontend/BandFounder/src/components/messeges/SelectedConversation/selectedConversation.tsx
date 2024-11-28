@@ -12,6 +12,7 @@ import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getChatroom} from "../../../api/chatroom";
 import {ImageAvatar} from "../../common/ImageAvatar";
 import UserAvatar from "../../common/UserAvatar";
+import {formatMessageWithLinks} from "../../common/utils";
 
 interface SelectedConversationProps {
     id: string;
@@ -269,7 +270,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
-                                    <div className="messageContent">{message.content}</div>
+                                    <div className="messageContent">{formatMessageWithLinks(message.content)}</div>
                                 </Tooltip>
                             </div>
                         ) : (
@@ -280,7 +281,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
-                                    <div className="messageContent">{message.content}</div>
+                                    <div className="messageContent">{formatMessageWithLinks(message.content)}</div>
                                 </Tooltip>
                             </div>
                         )}
