@@ -1,16 +1,16 @@
-import React, {FC, useEffect, useRef, useState} from "react";
-import {Message} from "../../../types/Message";
-import {CircularProgress, IconButton, TextField, Tooltip} from "@mui/material";
+import React, { FC, useEffect, useRef, useState } from "react";
+import { Message } from "../../../types/Message";
+import { CircularProgress, IconButton, TextField, Tooltip } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
 import "./../../../assets/CustomScrollbar.css";
-import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
-import {getAccount, getProfilePicture} from "../../../api/account";
-import {getUserId} from "../../../hooks/authentication";
-import {Account} from "../../../types/Account";
-import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
-import {getChatroom} from "../../../api/chatroom";
-import {ImageAvatar} from "../../common/ImageAvatar";
+import { getMessagesFromChatroom, sendMessage } from "../../../api/messages";
+import { getAccount, getProfilePicture } from "../../../api/account";
+import { getUserId } from "../../../hooks/authentication";
+import { Account } from "../../../types/Account";
+import { ChatRoom, ChatRoomType } from "../../../types/ChatRoom";
+import { getChatroom } from "../../../api/chatroom";
+import { ImageAvatar } from "../../common/ImageAvatar";
 import UserAvatar from "../../common/UserAvatar";
 
 interface SelectedConversationProps {
@@ -22,25 +22,18 @@ interface MessageWithSenderName extends Message {
     timeSinceSent: string;
 }
 
-export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
+export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
     const [chatroom, setChatroom] = useState<ChatRoom>();
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
     const [chatroomName, setChatroomName] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
     const [pageNumber, setPageNumber] = useState<number>(1);
-    const [pageSize] = useState<number>(5);
+    const [pageSize] = useState<number>(10);
     const [hasMore, setHasMore] = useState<boolean>(true);
     const bottomRef = useRef<HTMLDivElement>(null);
-    const topRef = useRef<HTMLDivElement>(null);
     const ws = useRef<WebSocket | null>(null);
     const userCache = useRef<Record<string, string>>({}); // Cache for sender names
-    const [isLoadingAvatars, setIsLoadingAvatars] = useState(true);
-
-    const userAvatarsCache: Record<string, string> = {};
-    const addAvatarToCache = (userId: string, imageUrl: string) => {
-        userAvatarsCache[userId] = imageUrl
-    }
 
     const [participants, setParticipants] = useState<Account[]>([]);
     const addParticipant = (account: Account) => {
@@ -53,9 +46,12 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     };
 
     useEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [currentConversation]);
+
+    useEffect(() => {
         const fetchChatroom = async () => {
             const chatroom = await getChatroom(id);
-
             if (chatroom.membersIds) {
                 const localParticipants: Account[] = [];
 
@@ -63,9 +59,6 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     const member = await getAccount(memberId);
                     localParticipants.push(member);
                     addParticipant(member);
-
-                    const imageUrl = await getProfilePicture(member.id);
-                    addAvatarToCache(member.id, imageUrl || "poop");
                 }
 
                 if (chatroom.type === ChatRoomType.Direct) {
@@ -80,7 +73,6 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             }
 
             setChatroom(chatroom);
-            setIsLoadingAvatars(false);
         };
 
         fetchChatroom();
@@ -91,6 +83,12 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             console.error("Chatroom ID is not provided");
             return;
         }
+
+        const initializeChatroom = async () => {
+            await fetchOlderMessages(); // Fetch initial messages
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" }); // Scroll to bottom after fetching messages
+        };
+
         const wsUrl = `wss://localhost:7095/api/chatrooms?chatRoomId=${id}`;
         ws.current = new WebSocket(wsUrl);
 
@@ -98,14 +96,10 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             try {
                 const message = JSON.parse(event.data);
                 console.log("Received message:", message);
-                if (!message.senderId) {
-                    console.error("Received message with undefined senderId:", message);
-                    return;
-                }
+                if (!message.senderId) return;
 
                 let account = participants.find((participant) => participant.id === message.senderId);
                 if (!account) {
-                    console.log("Fetching new participant");
                     account = await getAccount(message.senderId);
                     addParticipant(account);
                 }
@@ -118,9 +112,8 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     senderName,
                     timeSinceSent,
                 };
-                if (account.id !== getUserId()) {
-                    setCurrentConversation((prev) => [...prev, newMessageWithSenderName]);
-                }
+                setCurrentConversation((prev) => [...prev, newMessageWithSenderName]);
+                bottomRef.current?.scrollIntoView({ behavior: "smooth" }); // Scroll to bottom after receiving a new message
             } catch (error) {
                 console.error("Error parsing WebSocket message:", error);
             }
@@ -130,73 +123,85 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             console.log("WebSocket disconnected");
         };
 
+        initializeChatroom(); // Trigger initial message load
+
         return () => {
             ws.current?.close();
         };
     }, [id]);
 
+
+    const fetchOlderMessages = async () => {
+        if (!id || !hasMore || loading) {
+            console.error("Chatroom ID is not provided or no more messages to fetch or already loading");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const conversation: Message[] = await getMessagesFromChatroom(id, pageNumber, pageSize);
+
+            if (conversation.length < pageSize) setHasMore(false);
+
+            const conversationWithNames = await Promise.all(
+                conversation.map(async (message) => {
+                    const senderName =
+                        userCache.current[message.senderId] ??
+                        (await getAccount(message.senderId)
+                            .then((user) => {
+                                userCache.current[message.senderId] = user.name || "Unknown User";
+                                return user.name || "Unknown User";
+                            })
+                            .catch(() => "Unknown User"));
+
+                    return {
+                        ...message,
+                        senderName,
+                        timeSinceSent: calculateTimeSinceSent(new Date(message.sentDate)),
+                    };
+                })
+            );
+
+            setCurrentConversation((prev) => [
+                ...conversationWithNames.reverse(),
+                ...prev,
+            ]);
+            setPageNumber((prev) => prev + 1);
+        } catch (error) {
+            console.error("Error fetching older messages:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     useEffect(() => {
-        const fetchOlderMessages = async () => {
-            if (!id || !hasMore || pageNumber <= 0) return;
+        const conversationElement = document.getElementById("fullConversation");
 
-            setLoading(true);
-            try {
-                const conversation: Message[] = await getMessagesFromChatroom(id, pageNumber, pageSize);
+        if (!conversationElement) {
+            console.error("Conversation element not found"); // Debug
+            return;
+        }
 
-                const conversationWithNames = await Promise.all(
-                    conversation.map(async (message) => {
-                        if (!message.senderId) {
-                            console.error("Fetched message with undefined senderId:", message);
-                            return null;
-                        }
-
-                        const senderName =
-                            userCache.current[message.senderId] ??
-                            (await getAccount(message.senderId)
-                                .then((user) => {
-                                    const name = user.name || "Unknown User";
-                                    userCache.current[message.senderId] = name;
-                                    return name;
-                                })
-                                .catch((error) => {
-                                    console.error("Failed to fetch user:", error);
-                                    return "Unknown User";
-                                }));
-
-                        const timeSinceSent = calculateTimeSinceSent(new Date(message.sentDate));
-
-                        return {
-                            ...message,
-                            senderName,
-                            timeSinceSent,
-                        };
-                    })
-                );
-
-                const validMessages = conversationWithNames.filter((msg) => msg !== null) as MessageWithSenderName[];
-
-                const sortedConversationWithNames = validMessages.sort(
-                    (a, b) => new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime()
-                );
-
-                setCurrentConversation((prev) => [...sortedConversationWithNames, ...prev]);
-                setHasMore(conversation.length === pageSize); // If fetched less than `pageSize`, no more messages
-                setPageNumber((prev) => prev + 1); // Increment page number for next fetch
-            } catch (error) {
-                console.error("Error fetching older messages:", error);
-            } finally {
-                setLoading(false);
+        const handleScroll = async () => {
+            if (conversationElement.scrollTop === 0 && hasMore && !loading) {
+                const currentScrollHeight = conversationElement.scrollHeight;
+                await fetchOlderMessages();
+                setTimeout(() => {
+                    if (conversationElement.scrollHeight > currentScrollHeight) {
+                        conversationElement.scrollTop =
+                            conversationElement.scrollHeight - currentScrollHeight;
+                    }
+                }, 0);
             }
         };
 
-        fetchOlderMessages();
-    }, [id, hasMore, pageNumber, pageSize]);
+        conversationElement.addEventListener("scroll", handleScroll);
+        return () => {
+            conversationElement.removeEventListener("scroll", handleScroll);
+        };
+    }, [hasMore, loading, currentConversation]);
 
-    useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({behavior: "smooth"});
-        }
-    }, [currentConversation]);
 
     const handleSendMessage = async () => {
         if (!newMessage.trim()) return;
@@ -215,13 +220,11 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                 timeSinceSent: "just now",
             };
 
-            setCurrentConversation((prev) => [...prev, newMessageObject]);
+            // setCurrentConversation((prev) => [...prev, newMessageObject]);
             await sendMessage(id, trimmedMessage);
 
             if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current.send(JSON.stringify({content: trimmedMessage}));
-            } else {
-                console.error("WebSocket is not open");
+                ws.current.send(JSON.stringify({ content: trimmedMessage }));
             }
 
             setNewMessage("");
@@ -250,9 +253,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     return (
         <div id="mainSelectedConversation">
             <h1 id="selectedConversationTitle">{chatroomName}</h1>
-            <ul id="fullConversation" className="custom-scrollbar" style={{listStyleType: "none", padding: 0}}>
-                {loading && <CircularProgress/>}
-                <div ref={topRef}/>
+            <ul id="fullConversation" className="custom-scrollbar" style={{ listStyleType: "none", padding: 0 }}>
                 {currentConversation.map((message, index) => (
                     <li
                         key={index}
@@ -263,9 +264,9 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     >
                         {message.senderId === getUserId() ? (
                             <div className="singleMessageYou">
-                                <Tooltip title={`${message.senderName}`}>
-                                    <div className="messageProfilePresentation">
-                                        <UserAvatar userId={message.senderId}/>
+                                <Tooltip title={message.senderName}>
+                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginLeft: '3px' }}>
+                                        <UserAvatar userId={message.senderId} size={20} style={{display:'flex', alignItems:'center'}}/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -274,9 +275,9 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                             </div>
                         ) : (
                             <div className="singleMessageThey">
-                                <Tooltip title={`${message.senderName}`}>
-                                    <div className="messageProfilePresentation">
-                                        <ImageAvatar imageUrl={userAvatarsCache[message.senderId]} size={20}/>
+                                <Tooltip title={message.senderName}>
+                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '3px' }}>
+                                        <UserAvatar userId={message.senderId} size={20} style={{display:'flex', alignItems:'center'}}/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -286,9 +287,9 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                         )}
                     </li>
                 ))}
-                <div ref={bottomRef}/>
+                <div ref={bottomRef} />
             </ul>
-            <div id="sendBox" style={{display: "flex", alignItems: "center", marginTop: "1rem"}}>
+            <div id="sendBox" style={{ display: "flex", alignItems: "center", marginTop: "1rem" }}>
                 <TextField
                     fullWidth
                     variant="outlined"
@@ -296,10 +297,10 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    inputProps={{"aria-label": "Type a message"}}
+                    inputProps={{ "aria-label": "Type a message" }}
                 />
                 <IconButton color="primary" onClick={handleSendMessage} aria-label="Send message">
-                    <SendIcon/>
+                    <SendIcon />
                 </IconButton>
             </div>
         </div>

@@ -1,15 +1,16 @@
-import React, {useState, useEffect} from "react";
-import {Avatar, CircularProgress} from "@mui/material";
-import {getProfilePicture} from "../../api/account";
-import defaultProfileImage from '../../assets/defaultProfileImage.jpg';
+import React, { useState, useEffect } from "react";
+import { Avatar, CircularProgress } from "@mui/material";
+import { getProfilePicture } from "../../api/account";
+import defaultProfileImage from "../../assets/defaultProfileImage.jpg";
 
 interface UserAvatarProps {
     userId: string;
     size?: number;
     className?: string;
+    style?: React.CSSProperties; // Optional style prop
 }
 
-const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50, className}) => {
+const UserAvatar: React.FC<UserAvatarProps> = ({ userId, size = 50, className, style }) => {
     const [avatarUrl, setAvatarUrl] = useState<string>(defaultProfileImage);
     const [loading, setLoading] = useState(false);
 
@@ -31,9 +32,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50, className}) =
     }, [userId]);
 
     return (
-        <div className={className}>
+        <div className={className} style={style}> {/* Apply optional style here */}
             {loading ? (
-                <CircularProgress size={size / 2}/>
+                <CircularProgress size={size / 2} />
             ) : (
                 <Avatar
                     src={avatarUrl}
