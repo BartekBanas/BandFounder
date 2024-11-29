@@ -10,6 +10,7 @@ public interface ISpotifyConnectionService
     Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid? accountId = null);
     Task<List<SpotifyArtistDto>> SaveRelevantArtists();
     Task<List<SpotifyArtistDto>> RetrieveSpotifyUsersArtistsAsync();
+    Task AddSpotifyTokens(SpotifyTokensDto dto);
 }
 
 public class SpotifyConnectionService : ISpotifyConnectionService
@@ -87,5 +88,10 @@ public class SpotifyConnectionService : ISpotifyConnectionService
         var followedArtists = await _spotifyContentRetriever.GetFollowedArtistsAsync(userId);
         
         return topArtists.Concat(followedArtists).DistinctBy(artist => artist.Id).ToList();
+    }
+
+    public async Task AddSpotifyTokens(SpotifyTokensDto dto)
+    {
+        await _spotifyTokenService.CreateSpotifyTokens(dto, _authenticationService.GetUserId());
     }
 }

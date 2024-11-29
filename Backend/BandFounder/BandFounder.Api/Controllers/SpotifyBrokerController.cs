@@ -46,6 +46,16 @@ public class SpotifyBrokerController : ControllerBase
     }
     
     [Authorize]
+    [Obsolete("Use /spotify/tokens instead. This endpoint is for development purposes only.")]
+    [HttpPost("spotify/tokens/manual")]
+    public async Task<IActionResult> AddSpotifyTokens([FromBody] SpotifyTokensDto dto)
+    {
+        await _spotifyConnectionService.AddSpotifyTokens(dto);
+
+        return Ok();
+    }
+    
+    [Authorize]
     [HttpGet("spotify/tokens")]
     public async Task<IActionResult> GetSpotifyTokens()
     {
