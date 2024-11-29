@@ -63,6 +63,9 @@ public class RepositoriesExtensionsTests
     [TestCase("nu-metalcore", "Nu-metalcore")]
     [TestCase("pov: indie", "Pov: Indie")]
     [TestCase("australian post-hardcore", "Australian Post-hardcore")]
+    [TestCase("R&B", "R&b")]
+    [TestCase("EDM", "Edm")]
+    [TestCase("K-Pop", "K-pop")]
     public void NormalizeGenreName_ShouldHandleComplexCasesCorrectly(string input, string expectedOutput)
     {
         // Act
