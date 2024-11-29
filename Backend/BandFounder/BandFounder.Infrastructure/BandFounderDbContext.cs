@@ -90,7 +90,44 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .HasForeignKey(message => message.SenderId)
             .OnDelete(DeleteBehavior.Restrict); // When an account is deleted, their messages are not automatically deleted
         
+        PopulateGenres(modelBuilder);
         PopulateMusicianRole(modelBuilder);
+    }
+    
+    private void PopulateGenres(ModelBuilder modelBuilder)
+    {
+        List<Genre> defaultMusicianRoles =
+        [
+            new() { Name = "Pop" },
+            new() { Name = "Hip-Hop" },
+            new() { Name = "Rap" },
+            new() { Name = "Rock" },
+            new() { Name = "Indie" },
+            new() { Name = "Electronic" },
+            new() { Name = "Dance" },
+            new() { Name = "R&b" },
+            new() { Name = "Soul" },
+            new() { Name = "Jazz" },
+            new() { Name = "Classical" },
+            new() { Name = "Metal" },
+            new() { Name = "Punk" },
+            new() { Name = "Reggae" },
+            new() { Name = "Funk" },
+            new() { Name = "Blues" },
+            new() { Name = "Country" },
+            new() { Name = "K-Pop" },
+            new() { Name = "Folk" },
+            new() { Name = "Edm" },
+            new() { Name = "Trap" },
+            new() { Name = "Ambient" },
+            new() { Name = "House" },
+            new() { Name = "Techno" },
+            new() { Name = "Dubstep" },
+            new() { Name = "Grunge" },
+            new() { Name = "Synthwave" }
+        ];
+        
+        modelBuilder.Entity<Genre>().HasData(defaultMusicianRoles);
     }
 
     private void PopulateMusicianRole(ModelBuilder modelBuilder)
