@@ -1,5 +1,4 @@
-﻿using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Messages;
+﻿using BandFounder.Application.Dtos.Messages;
 using BandFounder.Application.Services.Authorization;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
@@ -10,8 +9,7 @@ namespace BandFounder.Application.Services;
 public interface IMessageService
 {
     Task SendMessage(SendMessageDto dto);
-    Task<IEnumerable<MessageDto>> GetChatroomMessages(Guid chatRoomId);
-    Task<IEnumerable<MessageDto>> GetChatroomPagedMessages(GetPagedMessagesDto request);
+    Task<IEnumerable<Message>> GetChatroomMessages(GetMessagesRequest request);
 }
 
 public class MessageService : IMessageService
@@ -54,43 +52,28 @@ public class MessageService : IMessageService
         await _messageRepository.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<MessageDto>> GetChatroomMessages(Guid chatRoomId)
+    public async Task<IEnumerable<Message>> GetChatroomMessages(GetMessagesRequest request)
     {
         var userClaims = _authenticationService.GetUserClaims();
-
-        var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == chatRoomId, 
-            nameof(Chatroom.Members));
-
+        
+        var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == request.ChatRoomId,
+            includeProperties: nameof(Chatroom.Members));
+        
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsMemberOf);
         
-        var messages = await _messageRepository
-            .GetAsync(
-                message => message.ChatRoomId == chatRoomId,
-                query => query.OrderBy(message => message.SentDate) // Sent Date ascending
-            );
-
-        return messages.ToDto();
-    }
-    
-    public async Task<IEnumerable<MessageDto>> GetChatroomPagedMessages(GetPagedMessagesDto request)
-    {
-        var userClaims = _authenticationService.GetUserClaims();
-
-        var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == request.ChatRoomId, 
-            nameof(Chatroom.Members));
-
-        await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsMemberOf);
-
         var messages = await _messageRepository
             .GetAsync(
                 message => message.ChatRoomId == request.ChatRoomId,
                 query => query.OrderByDescending(message => message.SentDate)
             );
         
-        var paginatedMessages = messages
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize);
-
-        return paginatedMessages.ToDto();
+        if (request is { PageNumber: not null, PageSize: not null })
+        {
+            messages = messages
+                .Skip((request.PageNumber.Value - 1) * request.PageSize.Value)
+                .Take(request.PageSize.Value);
+        }
+        
+        return messages;
     }
 }
