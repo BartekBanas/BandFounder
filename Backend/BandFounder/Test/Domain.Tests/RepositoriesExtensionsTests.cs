@@ -59,17 +59,18 @@ public class RepositoriesExtensionsTests
         Assert.That(result, Is.EqualTo(expectedOutput));
     }
     
-    [TestCase("k-pop girl group", "K-pop Girl Group")]
-    [TestCase("nu-metalcore", "Nu-metalcore")]
+    [TestCase("k-pop girl group", "K-Pop Girl Group")]
+    [TestCase("nu-metalcore", "Nu-Metalcore")]
     [TestCase("pov: indie", "Pov: Indie")]
-    [TestCase("australian post-hardcore", "Australian Post-hardcore")]
-    [TestCase("R&B", "R&b")]
+    [TestCase("australian post-hardcore", "Australian Post-Hardcore")]
+    [TestCase("R&B", "R&B")]
     [TestCase("EDM", "Edm")]
-    [TestCase("K-Pop", "K-pop")]
+    [TestCase("K-Pop", "K-Pop")]
+    [TestCase("Hip-Hop", "Hip-Hop")]
     public void NormalizeGenreName_ShouldHandleComplexCasesCorrectly(string input, string expectedOutput)
     {
         // Act
-        var result = RepositoriesExtensions.NormalizeName(input);
+        var result = input.NormalizeName();
 
         // Assert
         Assert.That(result, Is.EqualTo(expectedOutput));

@@ -134,12 +134,27 @@ public static class RepositoriesExtensions
 
     public static string NormalizeName(this string input)
     {
-        // Split by spaces, remove extra spaces, and capitalize each word
-        var words = input.Trim()
-            .Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries)
-            .Select(word => char.ToUpper(word[0]) + word.Substring(1).ToLower());
-    
-        // Join words back into a single string with a single space separating them
-        return string.Join(" ", words);
+        // Separators that require capitalization after them
+        var separators = new[] { ' ', '&', '-' };
+
+        var result = new System.Text.StringBuilder();
+        var capitalizeNext = true;
+
+        foreach (var ch in input.Trim())
+        {
+            if (separators.Contains(ch))
+            {
+                result.Append(ch); // Add the separator to the result
+                capitalizeNext = true; // Next character should be capitalized
+            }
+            else
+            {
+                result.Append(capitalizeNext ? char.ToUpper(ch) : char.ToLower(ch));
+                capitalizeNext = false; // Reset capitalization flag after a letter
+            }
+        }
+
+        // Remove extra spaces between words and return the final result
+        return System.Text.RegularExpressions.Regex.Replace(result.ToString(), @"\s+", " ");
     }
 }
