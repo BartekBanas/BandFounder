@@ -97,29 +97,22 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
     {
         List<MusicianRole> defaultMusicianRoles =
         [
-            new() { Name = "Any" },
+            new() { Name = "Songwriter" },
             new() { Name = "Vocalist" },
             new() { Name = "Guitarist" },
             new() { Name = "Bassist" },
             new() { Name = "Drummer" },
             new() { Name = "Keyboardist" },
             new() { Name = "Pianist" },
-            new() { Name = "Saxophonist" },
             new() { Name = "Trumpeter" },
             new() { Name = "Violinist" },
-            new() { Name = "Cellist" },
-            new() { Name = "Harmonica Player" },
             new() { Name = "Synthesizer" },
             new() { Name = "Sampler" },
             new() { Name = "Sound Engineer" },
             new() { Name = "Producer" },
             new() { Name = "Acoustic Guitarist" },
-            new() { Name = "Flautist" },
-            new() { Name = "Clarinetist" },
-            new() { Name = "Accordionist" },
-            new() { Name = "Mandolin Player" },
-            new() { Name = "Banjo Player" },
-            new() { Name = "Ukulele Player" },
+            new() { Name = "Mixing Engineer" },
+            new() { Name = "Mastering Engineer" },
         ];
         
         modelBuilder.Entity<MusicianRole>().HasData(defaultMusicianRoles);
