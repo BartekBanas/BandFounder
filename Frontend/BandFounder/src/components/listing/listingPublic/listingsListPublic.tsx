@@ -161,15 +161,6 @@ const ListingsListPublic: React.FC = () => {
                     <div>
                         <input
                             type="checkbox"
-                            id="excludeOwnListings"
-                            checked={tempExcludeOwnListings || false}
-                            onChange={() => setTempExcludeOwnListings(!tempExcludeOwnListings)}
-                        />
-                        <label htmlFor="excludeOwnListings">Exclude own listings</label>
-                    </div>
-                    <div>
-                        <input
-                            type="checkbox"
                             id="matchMusicRole"
                             checked={tempMatchMusicRole || false}
                             onChange={() => setTempMatchMusicRole(!tempMatchMusicRole)}
