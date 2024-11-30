@@ -1,3 +1,4 @@
+using BandFounder.Application.Dtos;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -70,7 +71,8 @@ public class ContentController(
     public async Task<IActionResult> GetUsersListings([FromRoute] Guid accountId)
     {
         var listings = await listingService.GetUserListingsAsync(accountId);
+        var dto = listings.ToDto();
         
-        return Ok(listings);
+        return Ok(dto);
     }
 }

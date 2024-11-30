@@ -37,17 +37,18 @@ public class ListingController : Controller
     [HttpGet]
     public async Task<IActionResult> GetMusicProjectListings([FromQuery] FeedFilterOptions filterOptions)
     {
-        var musicProjects = await _listingService.GetListingsFeedAsync(filterOptions);
+        var listingsFeedDto = await _listingService.GetListingsFeedAsync(filterOptions);
         
-        return Ok(musicProjects);
+        return Ok(listingsFeedDto);
     }
 
     [Obsolete, Authorize, HttpGet("me")]
     public async Task<IActionResult> GetMyMusicProjectListings()
     {
-        var myProjects = await _listingService.GetUserListingsAsync();
+        var myListings = await _listingService.GetUserListingsAsync();
+        var dto = myListings.ToDto();
         
-        return Ok(myProjects);
+        return Ok(dto);
     }
 
     [Authorize]
