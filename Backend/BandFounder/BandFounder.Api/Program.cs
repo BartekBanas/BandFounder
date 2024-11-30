@@ -115,7 +115,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(policyBuilder => policyBuilder
     .AllowAnyHeader()
-    .WithOrigins("http://localhost:3000", "http://localhost:3001")
+    .WithOrigins("http://localhost:3000", "http://localhost:3001", "bandfounder.com")
     .AllowAnyMethod()
     .AllowCredentials());
 

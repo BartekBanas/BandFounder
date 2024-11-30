@@ -13,6 +13,7 @@ import { getChatroom } from "../../../api/chatroom";
 import { ImageAvatar } from "../../common/ImageAvatar";
 import UserAvatar from "../../common/UserAvatar";
 import {formatMessageWithLinks} from "../../common/utils";
+import { API_URL } from "../../../config";
 
 interface SelectedConversationProps {
     id: string;
@@ -90,7 +91,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
             bottomRef.current?.scrollIntoView({ behavior: "smooth" }); // Scroll to bottom after fetching messages
         };
 
-        const wsUrl = `wss://localhost:7095/api/chatrooms?chatRoomId=${id}`;
+        const wsUrl = `${API_URL?.replace('https', 'wss')}/api/chatrooms?chatRoomId=${id}`;
         ws.current = new WebSocket(wsUrl);
 
         ws.current.onmessage = async (event) => {

@@ -3,7 +3,7 @@ import {mantineErrorNotification, mantineSuccessNotification} from "../../common
 import {authorizedHeaders} from "../../../hooks/authentication";
 import {fetchSpotifyAppClientId, requestSpotifyAccountLinkFromCode} from "../../../api/spotify";
 
-const BaseAppUrl = "http://localhost:3000/";
+const BaseAppUrl = "https://bandfounder.com/";
 const SpotifyConnectionPageUrl = BaseAppUrl + "spotifyConnection/callback/";
 const SpotifyAuthorizeUrl = "https://accounts.spotify.com/authorize";
 
