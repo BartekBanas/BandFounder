@@ -3,7 +3,7 @@ using BandFounder.Infrastructure.Spotify.Dto;
 
 namespace BandFounder.Application.Dtos.Accounts;
 
-public class AccountDetailedDto
+public class AccountBackup
 {
     public string Name { get; init; }
     public string Email { get; init; }

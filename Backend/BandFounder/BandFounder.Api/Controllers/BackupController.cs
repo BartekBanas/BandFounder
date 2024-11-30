@@ -38,12 +38,12 @@ public class BackupController : Controller
     {
         var artists = (await _artistRepository.GetAsync()).ToDto();
         
-        List<AccountDetailedDto> accounts = [];
+        List<AccountBackup> accounts = [];
         var accountDtos = await _accountService.GetAccountsAsync();
         foreach (var accountDto in accountDtos)
         {
             var account = await _accountService.GetDetailedAccount(Guid.Parse(accountDto.Id));
-            var accountBackup = account.ToDetailedDto();
+            var accountBackup = account.ToBackupDto();
             
             var usersListings = await _listingService.GetUserListingsAsync(account.Id);
             var listingDtos = usersListings.Select(listing => new ListingCreateDto
@@ -105,7 +105,7 @@ public class BackupController : Controller
         return result;
     }
 
-    private async Task RestoreAccounts(IEnumerable<AccountDetailedDto> accounts, List<Artist> artists)
+    private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts, List<Artist> artists)
     {
         foreach (var accountDto in accounts)
         {
