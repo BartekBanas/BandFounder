@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
+using BandFounder.Api.WebSockets;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Authorization;
@@ -13,7 +14,6 @@ using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using BandFounder.Api.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -61,6 +61,7 @@ services.AddScoped<IRepository<Chatroom>, Repository<Chatroom, BandFounderDbCont
 services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();
 services.AddScoped<IRepository<Genre>, Repository<Genre, BandFounderDbContext>>();
 services.AddScoped<IRepository<SpotifyTokens>, Repository<SpotifyTokens, BandFounderDbContext>>();
+services.AddScoped<IRepository<PasswordResetToken>, Repository<PasswordResetToken, BandFounderDbContext>>();
 
 services.AddScoped<IRepository<ProfilePicture>, Repository<ProfilePicture, BandFounderDbContext>>();
 services.AddScoped<IRepository<MusicianRole>, Repository<MusicianRole, BandFounderDbContext>>();
@@ -78,6 +79,8 @@ services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
 services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 services.AddScoped<IContentService, ContentService>();
+services.AddScoped<IPasswordResetService, PasswordResetService>();
+services.AddScoped<IEmailService, EmailService>();
 
 services.AddSingleton<WebSocketConnectionManager>();
 

@@ -11,10 +11,12 @@ namespace BandFounder.Api.Controllers;
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;
+    private readonly IPasswordResetService _passwordResetService;
 
-    public AccountController(IAccountService accountService)
+    public AccountController(IAccountService accountService, IPasswordResetService passwordResetService)
     {
         _accountService = accountService;
+        _passwordResetService = passwordResetService;
     }
 
     [HttpPost]
@@ -144,6 +146,22 @@ public class AccountController : Controller
     public async Task<IActionResult> ClearProfile()
     {
         await _accountService.ClearUserMusicProfile();
+        
+        return Ok();
+    }
+    
+    [HttpPost("request-password-reset")]
+    public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto dto)
+    {
+        await _passwordResetService.SendResetPasswordEmailAsync(dto);
+        
+        return Ok();
+    }
+    
+    [HttpPost("password-reset")]
+    public async Task<IActionResult> ResetPassword([FromBody] PasswordResetDto resetDto)
+    {
+        await _passwordResetService.ResetPasswordAsync(resetDto);
         
         return Ok();
     }

@@ -6,6 +6,7 @@ public interface IHashingService
 {
     string HashPassword(string password);
     bool VerifyPassword(Account account, string password);
+    bool VerifyPhrase(string phrase, string hashedPhrase);
 }
 
 public class HashingService : IHashingService
@@ -18,5 +19,10 @@ public class HashingService : IHashingService
     public bool VerifyPassword(Account account, string password)
     {
         return BCrypt.Net.BCrypt.Verify(password, account.PasswordHash);
+    }
+
+    public bool VerifyPhrase(string phrase, string hashedPhrase)
+    {
+        return BCrypt.Net.BCrypt.Verify(phrase, hashedPhrase);
     }
 }
