@@ -243,7 +243,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                                sx={{fontSize: '20px !important'}}/>
                                 )}
                                 sx={{
-                                    minWidth: `${lengthOfGenre(listingGenre.length) + 10}%`,
+                                    minWidth: `${lengthOfGenre(listingGenre?.length || 0) + 10}%`,
                                     maxWidth: '40%',
                                     marginTop: '5px',
                                     fontSize: '12px !important',
