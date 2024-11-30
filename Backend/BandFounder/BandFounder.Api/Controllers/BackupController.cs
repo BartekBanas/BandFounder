@@ -107,31 +107,31 @@ public class BackupController : Controller
 
     private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts, List<Artist> artists)
     {
-        foreach (var accountDto in accounts)
+        foreach (var accountBackup in accounts)
         {
             var id = Guid.NewGuid();
             
             var account = new Account
             {
                 Id = id,
-                Name = accountDto.Name,
-                Email = accountDto.Email,
-                SpotifyTokens = accountDto.SpotifyTokens is not null
+                Name = accountBackup.Name,
+                Email = accountBackup.Email,
+                SpotifyTokens = accountBackup.SpotifyTokens is not null
                     ? new SpotifyTokens
                     {
-                        AccessToken = accountDto.SpotifyTokens.AccessToken,
-                        RefreshToken = accountDto.SpotifyTokens.RefreshToken,
-                        ExpirationDate = accountDto.SpotifyTokens.ExpirationDate,
+                        AccessToken = accountBackup.SpotifyTokens.AccessToken,
+                        RefreshToken = accountBackup.SpotifyTokens.RefreshToken,
+                        ExpirationDate = accountBackup.SpotifyTokens.ExpirationDate,
                         AccountId = id,
                     }
                     : null,
-                PasswordHash = _hashingService.HashPassword(accountDto.Name),
+                PasswordHash = _hashingService.HashPassword(accountBackup.Name),
                 DateCreated = DateTime.UtcNow
             };
             
             account.Artists.AddRange(artists);
             
-            foreach (var musicianRole in accountDto.MusicianRoles)
+            foreach (var musicianRole in accountBackup.MusicianRoles)
             {
                 var role = await _musicianRoleRepository.GetOrCreateAsync(musicianRole);
                 
@@ -139,6 +139,16 @@ public class BackupController : Controller
             }
             
             await _accountRepository.CreateAsync(account);
+            
+            await RestoreUsersListings(accountBackup.Listings, account.Id);
+        }
+    }
+    
+    private async Task RestoreUsersListings(IEnumerable<ListingCreateDto> listings, Guid accountId)
+    {
+        foreach (var listingDto in listings)
+        {
+            await _listingService.CreateListingAsync(listingDto, accountId);
         }
     }
 }
