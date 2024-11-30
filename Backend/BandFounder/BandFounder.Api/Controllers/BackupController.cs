@@ -17,10 +17,12 @@ public class BackupController : Controller
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<Genre> _genreRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
+    private readonly IListingService _listingService;
     private readonly IHashingService _hashingService;
 
     public BackupController(IAccountService accountService, IRepository<Artist> artistRepository, 
-        IRepository<Genre> genreRepository, IRepository<Account> accountRepository, IHashingService hashingService, IRepository<MusicianRole> musicianRoleRepository)
+        IRepository<Genre> genreRepository, IRepository<Account> accountRepository, IHashingService hashingService, 
+        IRepository<MusicianRole> musicianRoleRepository, IListingService listingService)
     {
         _accountService = accountService;
         _artistRepository = artistRepository;
@@ -28,6 +30,7 @@ public class BackupController : Controller
         _accountRepository = accountRepository;
         _hashingService = hashingService;
         _musicianRoleRepository = musicianRoleRepository;
+        _listingService = listingService;
     }
 
     [HttpGet]
@@ -40,7 +43,21 @@ public class BackupController : Controller
         foreach (var accountDto in accountDtos)
         {
             var account = await _accountService.GetDetailedAccount(Guid.Parse(accountDto.Id));
-            accounts.Add(account.ToDetailedDto());
+            var accountBackup = account.ToDetailedDto();
+            
+            var usersListings = await _listingService.GetUserListingsAsync(account.Id);
+            var listingDtos = usersListings.Select(listing => new ListingCreateDto
+            {
+                Name = listing.Name,
+                Genre = listing.GenreName,
+                Type = listing.Type,
+                Description = listing.Description,
+                MusicianSlots = listing.MusicianSlots.Select(slot => new MusicianSlotCreateDto { Role = slot.Role.Name }).ToList()
+            }).ToList();
+            
+            accountBackup.Listings = listingDtos;
+            
+            accounts.Add(accountBackup);
         }
         
         var dto = new BackupDto()
