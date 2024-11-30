@@ -13,9 +13,9 @@ public interface IListingService
     Task<Listing?> GetListingAsync(Guid listingId);
     Task<IEnumerable<Listing>> GetListingsAsync();
     Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions);
-    Task<IEnumerable<ListingDto>> GetUserListingsAsync(Guid? accountId = null);
+    Task<IEnumerable<Listing>> GetUserListingsAsync(Guid? accountId = null);
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
-    Task<Listing> CreateListingAsync(ListingCreateDto dto);
+    Task<Listing> CreateListingAsync(ListingCreateDto dto, Guid? accountId = null);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
     Task<ChatroomDto> ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
@@ -36,7 +36,7 @@ public class ListingService : IListingService
     private readonly IRepository<MusicianSlot> _musicianSlotRepository;
     private readonly IRepository<Listing> _listingRepository;
     
-    private Guid UserId => _authenticationService.GetUserId();
+    private Guid CurrentUserId => _authenticationService.GetUserId();
 
     public ListingService(
         IAccountService accountService,
@@ -111,20 +111,20 @@ public class ListingService : IListingService
         };
     }
     
-    public async Task<IEnumerable<ListingDto>> GetUserListingsAsync(Guid? accountId = null)
+    public async Task<IEnumerable<Listing>> GetUserListingsAsync(Guid? accountId = null)
     {
-        accountId ??= UserId;
+        accountId ??= CurrentUserId;
         
         var myListings = await _listingRepository.GetAsync(
             filter: listing => listing.OwnerId == accountId,
             includeProperties: [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
 
-        return myListings.ToDto();
+        return myListings;
     }
 
     public async Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null)
     {
-        var userId = accountId ?? UserId;
+        var userId = accountId ?? CurrentUserId;
         
         Listing listing;
         try
@@ -142,9 +142,9 @@ public class ListingService : IListingService
         return new ArtistsAndGenresDto(commonArtists, commonGenres);
     }
 
-    public async Task<Listing> CreateListingAsync(ListingCreateDto dto)
+    public async Task<Listing> CreateListingAsync(ListingCreateDto dto, Guid? accountId = null)
     {
-        var userId = _authenticationService.GetUserId();
+        var userId = accountId ?? CurrentUserId;
         await _accountService.GetAccountAsync(userId);
 
         var projectGenre = string.IsNullOrWhiteSpace(dto.Genre) ? null : await _genreRepository.GetOrCreateAsync(dto.Genre);
@@ -198,7 +198,7 @@ public class ListingService : IListingService
         var listing = await _listingRepository.GetOneRequiredAsync
             (listing => listing.Id == musicianSlot.ListingId);
 
-        if (UserId != listing.OwnerId)
+        if (CurrentUserId != listing.OwnerId)
         {
             throw new ForbiddenError("You do not have access to this music project listing");
         }
@@ -225,7 +225,7 @@ public class ListingService : IListingService
     {
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
 
-        if (listing.OwnerId != UserId)
+        if (listing.OwnerId != CurrentUserId)
         {
             throw new ForbiddenError("You may only delete your own listings.");
         }
@@ -242,7 +242,7 @@ public class ListingService : IListingService
             throw new NotFoundError("Listing not found");
         }
         
-        if (listing.OwnerId != UserId)
+        if (listing.OwnerId != CurrentUserId)
         {
             throw new ForbiddenError("You cannot edit this listing");
         }

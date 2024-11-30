@@ -20,14 +20,14 @@ public static class DtoMapper
         };
     }
 
-    public static IEnumerable<AccountDetailedDto> ToDetailedDto(this IEnumerable<Account> accounts)
+    public static IEnumerable<AccountBackup> ToBackupDto(this IEnumerable<Account> accounts)
     {
-        return accounts.Select(account => account.ToDetailedDto());
+        return accounts.Select(account => account.ToBackupDto());
     }
     
-    public static AccountDetailedDto ToDetailedDto(this Account account)
+    public static AccountBackup ToBackupDto(this Account account)
     {
-        return new AccountDetailedDto
+        return new AccountBackup
         {
             Name = account.Name,
             Email = account.Email,

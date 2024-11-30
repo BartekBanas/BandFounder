@@ -17,10 +17,12 @@ public class BackupController : Controller
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<Genre> _genreRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
+    private readonly IListingService _listingService;
     private readonly IHashingService _hashingService;
 
     public BackupController(IAccountService accountService, IRepository<Artist> artistRepository, 
-        IRepository<Genre> genreRepository, IRepository<Account> accountRepository, IHashingService hashingService, IRepository<MusicianRole> musicianRoleRepository)
+        IRepository<Genre> genreRepository, IRepository<Account> accountRepository, IHashingService hashingService, 
+        IRepository<MusicianRole> musicianRoleRepository, IListingService listingService)
     {
         _accountService = accountService;
         _artistRepository = artistRepository;
@@ -28,6 +30,7 @@ public class BackupController : Controller
         _accountRepository = accountRepository;
         _hashingService = hashingService;
         _musicianRoleRepository = musicianRoleRepository;
+        _listingService = listingService;
     }
 
     [HttpGet]
@@ -35,12 +38,26 @@ public class BackupController : Controller
     {
         var artists = (await _artistRepository.GetAsync()).ToDto();
         
-        List<AccountDetailedDto> accounts = [];
+        List<AccountBackup> accounts = [];
         var accountDtos = await _accountService.GetAccountsAsync();
         foreach (var accountDto in accountDtos)
         {
             var account = await _accountService.GetDetailedAccount(Guid.Parse(accountDto.Id));
-            accounts.Add(account.ToDetailedDto());
+            var accountBackup = account.ToBackupDto();
+            
+            var usersListings = await _listingService.GetUserListingsAsync(account.Id);
+            var listingDtos = usersListings.Select(listing => new ListingCreateDto
+            {
+                Name = listing.Name,
+                Genre = listing.GenreName,
+                Type = listing.Type,
+                Description = listing.Description,
+                MusicianSlots = listing.MusicianSlots.Select(slot => new MusicianSlotCreateDto { Role = slot.Role.Name }).ToList()
+            }).ToList();
+            
+            accountBackup.Listings = listingDtos;
+            
+            accounts.Add(accountBackup);
         }
         
         var dto = new BackupDto()
@@ -88,33 +105,33 @@ public class BackupController : Controller
         return result;
     }
 
-    private async Task RestoreAccounts(IEnumerable<AccountDetailedDto> accounts, List<Artist> artists)
+    private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts, List<Artist> artists)
     {
-        foreach (var accountDto in accounts)
+        foreach (var accountBackup in accounts)
         {
             var id = Guid.NewGuid();
             
             var account = new Account
             {
                 Id = id,
-                Name = accountDto.Name,
-                Email = accountDto.Email,
-                SpotifyTokens = accountDto.SpotifyTokens is not null
+                Name = accountBackup.Name,
+                Email = accountBackup.Email,
+                SpotifyTokens = accountBackup.SpotifyTokens is not null
                     ? new SpotifyTokens
                     {
-                        AccessToken = accountDto.SpotifyTokens.AccessToken,
-                        RefreshToken = accountDto.SpotifyTokens.RefreshToken,
-                        ExpirationDate = accountDto.SpotifyTokens.ExpirationDate,
+                        AccessToken = accountBackup.SpotifyTokens.AccessToken,
+                        RefreshToken = accountBackup.SpotifyTokens.RefreshToken,
+                        ExpirationDate = accountBackup.SpotifyTokens.ExpirationDate,
                         AccountId = id,
                     }
                     : null,
-                PasswordHash = _hashingService.HashPassword(accountDto.Name),
+                PasswordHash = _hashingService.HashPassword(accountBackup.Name),
                 DateCreated = DateTime.UtcNow
             };
             
             account.Artists.AddRange(artists);
             
-            foreach (var musicianRole in accountDto.MusicianRoles)
+            foreach (var musicianRole in accountBackup.MusicianRoles)
             {
                 var role = await _musicianRoleRepository.GetOrCreateAsync(musicianRole);
                 
@@ -122,6 +139,16 @@ public class BackupController : Controller
             }
             
             await _accountRepository.CreateAsync(account);
+            
+            if (accountBackup.Listings != null) await RestoreUsersListings(accountBackup.Listings, account.Id);
+        }
+    }
+    
+    private async Task RestoreUsersListings(IEnumerable<ListingCreateDto> listings, Guid accountId)
+    {
+        foreach (var listingDto in listings)
+        {
+            await _listingService.CreateListingAsync(listingDto, accountId);
         }
     }
 }
