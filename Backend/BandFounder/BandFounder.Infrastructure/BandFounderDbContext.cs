@@ -105,7 +105,7 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             new() { Name = "Indie" },
             new() { Name = "Electronic" },
             new() { Name = "Dance" },
-            new() { Name = "R&b" },
+            new() { Name = "R&B" },
             new() { Name = "Soul" },
             new() { Name = "Jazz" },
             new() { Name = "Classical" },
