@@ -30,7 +30,8 @@ services.AddHttpContextAccessor();
 services.AddSwaggerGen();
 
 builder.Services.AddDbContext<BandFounderDbContext>(options =>
-    options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase")));
+    options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase"), 
+        npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
 
