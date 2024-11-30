@@ -10,5 +10,5 @@ public class AccountBackup
     public SpotifyTokensDto? SpotifyTokens { get; set; }
     public List<string> MusicianRoles { get; set; }
     public List<string> Artists { get; set; }
-    public List<ListingCreateDto> Listings { get; set; }
+    public List<ListingCreateDto>? Listings { get; set; }
 }

@@ -140,7 +140,7 @@ public class BackupController : Controller
             
             await _accountRepository.CreateAsync(account);
             
-            await RestoreUsersListings(accountBackup.Listings, account.Id);
+            if (accountBackup.Listings != null) await RestoreUsersListings(accountBackup.Listings, account.Id);
         }
     }
     
