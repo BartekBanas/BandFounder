@@ -208,7 +208,7 @@ const ListingsListPublic: React.FC = () => {
             <div className="listingsList">
                 {listings.map((listing, index) => (
                     <div ref={listings.length === index + 1 ? lastListingElementRef : null} key={listing.listing.id}>
-                        <ListingPublic listingId={listing.listing.id}/>
+                        <ListingPublic listing={listing.listing}/>
                     </div>
                 ))}
                 {loading && (
