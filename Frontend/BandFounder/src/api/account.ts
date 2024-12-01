@@ -260,7 +260,6 @@ export async function uploadProfilePicture(file: File): Promise<void> {
     });
 
     if (!response.ok) {
-        mantineErrorNotification('Failed to upload profile picture');
         throw new Error(await response.text());
     }
 }
