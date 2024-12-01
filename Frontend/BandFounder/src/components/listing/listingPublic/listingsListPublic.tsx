@@ -45,11 +45,9 @@ const ListingsListPublic: React.FC = () => {
     }, [loading, hasMore]);
 
     useEffect(() => {
-        // Fetch genres for the dropdown
         const fetchGenres = async () => {
             try {
-                const genres = await getGenres();
-                setGenreOptions(genres);
+                setGenreOptions(await getGenres());
             } catch (error) {
                 console.error('Error fetching genres:', error);
             }
@@ -62,25 +60,25 @@ const ListingsListPublic: React.FC = () => {
         // Parse URL parameters and apply filters
         const params = new URLSearchParams(location.search);
 
-        const excludeOwn = params.get('excludeOwn') === 'true';
-        const matchMusic = params.get('matchMusicRole') === 'true';
-        const latest = params.get('fromLatest') === 'true';
-        const type = params.get('listingType') as ListingType | undefined;
-        const genre = params.get('genre') || undefined;
+        const excludeOwn = params.has('excludeOwn') ? params.get('excludeOwn') === 'true' : undefined;
+        const matchMusic = params.has('matchMusicRole') ? params.get('matchMusicRole') === 'true' : true;
+        const latest = params.has('fromLatest') ? params.get('fromLatest') === 'true' : undefined;
+        const type = params.has('listingType') ? (params.get('listingType') as ListingType) : undefined;
+        const genre = params.has('genre') ? params.get('genre') ?? undefined : undefined;
 
         // Update main filters
         setExcludeOwnListings(excludeOwn);
         setMatchMusicRole(matchMusic);
         setFromLatest(latest);
-        setListingType(type || undefined);
-        setGenreFilter(genre || undefined);
+        setListingType(type);
+        setGenreFilter(genre);
 
         // Update temporary filters for UI
         setTempExcludeOwnListings(excludeOwn);
         setTempMatchMusicRole(matchMusic);
         setTempFromLatest(latest);
-        setTempListingType(type || undefined);
-        setTempGenreFilter(genre || undefined);
+        setTempListingType(type);
+        setTempGenreFilter(genre);
     }, [location.search]);
 
     useEffect(() => {
@@ -112,7 +110,6 @@ const ListingsListPublic: React.FC = () => {
 
     const applyFilters = () => {
         // Sync temporary filters with main filters
-        setExcludeOwnListings(tempExcludeOwnListings);
         setMatchMusicRole(tempMatchMusicRole);
         setFromLatest(tempFromLatest);
         setListingType(tempListingType);
