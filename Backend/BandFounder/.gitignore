@@ -458,3 +458,4 @@ Desktop.ini
 
 # File for storing spotif app credentials
 /BandFounder.Api/spotifyAppCredentials.json
+/BandFounder.Api/emailCredentials.json
