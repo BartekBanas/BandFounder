@@ -12,6 +12,7 @@ const ListingsListPublic: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [listings, setListings] = useState<ListingWithScore[]>([]);
+    const [genreOptions, setGenreOptions] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [pageSize] = useState<number>(5);
@@ -23,7 +24,7 @@ const ListingsListPublic: React.FC = () => {
     const [fromLatest, setFromLatest] = useState<boolean | undefined>(undefined);
     const [listingType, setListingType] = useState<ListingType | undefined>(undefined);
     const [genreFilter, setGenreFilter] = useState<string | undefined>(undefined);
-    const [genreOptions, setGenreOptions] = useState<string[]>([]);
+    const [filtersLoaded, setFiltersLoaded] = useState(false);
 
     // Temporary filters for UI
     const [tempExcludeOwnListings, setTempExcludeOwnListings] = useState<boolean | undefined>(undefined);
@@ -79,10 +80,13 @@ const ListingsListPublic: React.FC = () => {
         setTempFromLatest(latest);
         setTempListingType(type);
         setTempGenreFilter(genre);
+
+        setFiltersLoaded(true);
     }, [location.search]);
 
     useEffect(() => {
-        // Fetch listings based on filters and pagination
+        if (!filtersLoaded) return;
+
         const fetchListings = async () => {
             setLoading(true);
             try {
@@ -106,7 +110,7 @@ const ListingsListPublic: React.FC = () => {
         };
 
         fetchListings();
-    }, [excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter, pageNumber]);
+    }, [filtersLoaded, excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter, pageNumber, pageSize]);
 
     const applyFilters = () => {
         // Sync temporary filters with main filters
