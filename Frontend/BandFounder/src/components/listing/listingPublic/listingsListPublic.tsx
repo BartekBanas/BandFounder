@@ -12,9 +12,10 @@ const ListingsListPublic: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [listings, setListings] = useState<ListingWithScore[]>([]);
+    const [genreOptions, setGenreOptions] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [pageNumber, setPageNumber] = useState<number>(1);
-    const [pageSize] = useState<number>(2);
+    const [pageSize] = useState<number>(5);
     const [hasMore, setHasMore] = useState<boolean>(true);
 
     // Main filters
@@ -23,7 +24,7 @@ const ListingsListPublic: React.FC = () => {
     const [fromLatest, setFromLatest] = useState<boolean | undefined>(undefined);
     const [listingType, setListingType] = useState<ListingType | undefined>(undefined);
     const [genreFilter, setGenreFilter] = useState<string | undefined>(undefined);
-    const [genreOptions, setGenreOptions] = useState<string[]>([]);
+    const [filtersLoaded, setFiltersLoaded] = useState(false);
 
     // Temporary filters for UI
     const [tempExcludeOwnListings, setTempExcludeOwnListings] = useState<boolean | undefined>(undefined);
@@ -45,11 +46,9 @@ const ListingsListPublic: React.FC = () => {
     }, [loading, hasMore]);
 
     useEffect(() => {
-        // Fetch genres for the dropdown
         const fetchGenres = async () => {
             try {
-                const genres = await getGenres();
-                setGenreOptions(genres);
+                setGenreOptions(await getGenres());
             } catch (error) {
                 console.error('Error fetching genres:', error);
             }
@@ -62,29 +61,32 @@ const ListingsListPublic: React.FC = () => {
         // Parse URL parameters and apply filters
         const params = new URLSearchParams(location.search);
 
-        const excludeOwn = params.get('excludeOwn') === 'true';
-        const matchMusic = params.get('matchMusicRole') === 'true';
-        const latest = params.get('fromLatest') === 'true';
-        const type = params.get('listingType') as ListingType | undefined;
-        const genre = params.get('genre') || undefined;
+        const excludeOwn = params.has('excludeOwn') ? params.get('excludeOwn') === 'true' : undefined;
+        const matchMusic = params.has('matchMusicRole') ? params.get('matchMusicRole') === 'true' : true;
+        const latest = params.has('fromLatest') ? params.get('fromLatest') === 'true' : undefined;
+        const type = params.has('listingType') ? (params.get('listingType') as ListingType) : undefined;
+        const genre = params.has('genre') ? params.get('genre') ?? undefined : undefined;
 
         // Update main filters
         setExcludeOwnListings(excludeOwn);
         setMatchMusicRole(matchMusic);
         setFromLatest(latest);
-        setListingType(type || undefined);
-        setGenreFilter(genre || undefined);
+        setListingType(type);
+        setGenreFilter(genre);
 
         // Update temporary filters for UI
         setTempExcludeOwnListings(excludeOwn);
         setTempMatchMusicRole(matchMusic);
         setTempFromLatest(latest);
-        setTempListingType(type || undefined);
-        setTempGenreFilter(genre || undefined);
+        setTempListingType(type);
+        setTempGenreFilter(genre);
+
+        setFiltersLoaded(true);
     }, [location.search]);
 
     useEffect(() => {
-        // Fetch listings based on filters and pagination
+        if (!filtersLoaded) return;
+
         const fetchListings = async () => {
             setLoading(true);
             try {
@@ -108,11 +110,10 @@ const ListingsListPublic: React.FC = () => {
         };
 
         fetchListings();
-    }, [excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter, pageNumber]);
+    }, [filtersLoaded, excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter, pageNumber, pageSize]);
 
     const applyFilters = () => {
         // Sync temporary filters with main filters
-        setExcludeOwnListings(tempExcludeOwnListings);
         setMatchMusicRole(tempMatchMusicRole);
         setFromLatest(tempFromLatest);
         setListingType(tempListingType);
@@ -208,7 +209,7 @@ const ListingsListPublic: React.FC = () => {
             <div className="listingsList">
                 {listings.map((listing, index) => (
                     <div ref={listings.length === index + 1 ? lastListingElementRef : null} key={listing.listing.id}>
-                        <ListingPublic listingId={listing.listing.id}/>
+                        <ListingPublic listing={listing.listing}/>
                     </div>
                 ))}
                 {loading && (
