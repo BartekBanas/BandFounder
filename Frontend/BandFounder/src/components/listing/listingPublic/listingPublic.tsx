@@ -1,37 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
 import './style.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
-import {getUser} from "../../../api/account";
 import OwnerListingElement from "./OwnerListingElement";
-import {getListing} from "../../../api/listing";
 import {formatMessageWithLinks} from "../../common/utils";
+import {Listing} from "../../../types/Listing";
 
 interface ListingPublicProps {
-    listingId: string;
+    listing: Listing;
 }
 
-const ListingPublic: React.FC<ListingPublicProps> = ({ listingId }) => {
-    const [listing, setListing] = useState<any>(null);
-
-    useEffect(() => {
-        const fetchListing = async () => {
-            const data = await getListing(listingId);
-            if (data) {
-                const owner = await getUser(data.ownerId);
-                setListing({ ...data, owner });
-            }
-        };
-
-        fetchListing();
-    }, [listingId]);
-
+const ListingPublic: React.FC<ListingPublicProps> = ({listing}) => {
     const theme = createTheme({
         components: {
             Loader: Loader.extend({
                 defaultProps: {
-                    loaders: { ...Loader.defaultLoaders, ring: RingLoader },
+                    loaders: {...Loader.defaultLoaders, ring: RingLoader},
                     type: 'ring',
                 },
             }),
@@ -41,7 +26,7 @@ const ListingPublic: React.FC<ListingPublicProps> = ({ listingId }) => {
     if (!listing) {
         return <div className="App-header">
             <MantineThemeProvider theme={theme}>
-                <Loader size={200} />
+                <Loader size={200}/>
             </MantineThemeProvider>
         </div>;
     }
@@ -49,7 +34,7 @@ const ListingPublic: React.FC<ListingPublicProps> = ({ listingId }) => {
     return (
         <div className={'listing'}>
             <div className={'listingHeader'}>
-                    <OwnerListingElement listing={listing}/>
+                <OwnerListingElement listing={listing}/>
                 <div className={'listingTitle'}>
                     <p>{listing?.name}</p>
                 </div>
@@ -65,7 +50,8 @@ const ListingPublic: React.FC<ListingPublicProps> = ({ listingId }) => {
             </div>
             <div className={'listingFooter'}>
                 {listing?.musicianSlots.map((slot: any) => (
-                    <div key={slot.id} className={`listingRole ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
+                    <div key={slot.id}
+                         className={`listingRole ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
                         <img src={defaultProfileImage} alt="Default Profile"/>
                         <p>Role: {slot.role}</p>
                         <p>Status: {slot.status}</p>
