@@ -7,15 +7,24 @@ import {getDirectChatroomWithUser} from "../../../api/chatroom";
 import {mantineErrorNotification, mantineInformationNotification} from "../../common/mantineNotification";
 import ProfilePicture from "../../profile/ProfilePicture";
 import {getUserId} from "../../../hooks/authentication";
+import {Account} from "../../../types/Account";
+import {getAccount} from "../../../api/account";
 
 const OwnerListingElement = ({listing}: { listing: Listing }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [commonTaste, setCommonTaste] = useState<commonTaste | null>(null);
+    const [owner, setOwner] = useState<Account | undefined>(undefined);
 
     useEffect(() => {
         if (listing?.ownerId) {
             getCommonTaste(listing.id).then((data) => {
                 setCommonTaste(data);
+            }).catch((error) => {
+                console.error(error);
+            });
+
+            getAccount(listing.ownerId).then((data) => {
+                setOwner(data);
             }).catch((error) => {
                 console.error(error);
             });
@@ -59,7 +68,7 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
     };
 
     async function handleViewOwnerProfile() {
-        window.location.href = '/profile/' + listing?.owner.name;
+        window.location.href = '/profile/' + owner?.name;
     }
 
     return (
@@ -67,7 +76,7 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
             <IconButton onClick={handleClick}>
                 <ProfilePicture isMyProfile={false} accountId={listing.ownerId} size={40}/>
             </IconButton>
-            <p>{listing?.owner?.name}</p>
+            <p>{owner?.name}</p>
 
             {listing.ownerId !== getUserId() && (
                 <Menu
