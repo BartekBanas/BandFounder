@@ -3,9 +3,7 @@ import {
     authorizedHeader,
     authorizedHeaders,
     getAuthToken,
-    getUserId,
-    removeAuthToken,
-    removeUserId
+    getUserId
 } from "../hooks/authentication";
 import {
     mantineErrorNotification,
@@ -123,16 +121,15 @@ export async function updateMyAccount(name: string | null, password: string | nu
     return response;
 }
 
-export async function deleteMyAccount() {
+export async function deleteMyAccount(): Promise<void> {
     const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'DELETE',
         headers: authorizedHeaders()
     });
 
-    removeAuthToken();
-    removeUserId();
-
-    return response;
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
 }
 
 export async function getMyMusicianRoles(): Promise<string[]> {
