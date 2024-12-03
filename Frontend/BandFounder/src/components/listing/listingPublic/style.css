@@ -182,6 +182,7 @@
     border-radius: 8px;
     padding: 20px;
     background-color: #464646;
+    width: auto;
 }
 
 @media (max-width: 1400px) {
@@ -233,4 +234,8 @@
     margin-bottom: 10px;
     border-bottom: 1px solid #ccc;
     width: 100%;
+}
+
+.listingsFilters > *:last-child {
+    border-bottom: 0;
 }

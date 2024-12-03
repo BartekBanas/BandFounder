@@ -144,6 +144,31 @@ const ListingsListPublic: React.FC = () => {
         navigate({search: params.toString()}, {replace: true});
     };
 
+    const onReset = () => {
+        // Reset temporary filters to default values
+        setTempExcludeOwnListings(undefined);
+        setTempMatchMusicRole(undefined);
+        setTempFromLatest(undefined);
+        setTempListingType(undefined);
+        setTempGenreFilter(undefined);
+
+        // Reset main filters to default values
+        setExcludeOwnListings(undefined);
+        setMatchMusicRole(undefined);
+        setFromLatest(undefined);
+        setListingType(undefined);
+        setGenreFilter(undefined);
+
+        // Reset pagination
+        setPageNumber(1);
+        setListings([]);
+
+        // Clear URL parameters
+        const params = new URLSearchParams();
+        navigate({ search: params.toString() }, { replace: true });
+    };
+
+
     const theme = createTheme({
         components: {
             Loader: Loader.extend({
@@ -193,18 +218,42 @@ const ListingsListPublic: React.FC = () => {
                     </TextField>
                 </div>
                 <div>
-                    <Autocomplete
-                        options={genreOptions}
+                    <TextField
+                        select
+                        label="Genre"
                         value={tempGenreFilter || ''}
-                        renderInput={(params) => <TextField {...params} label="Genre" variant="outlined"/>}
-                        onChange={(e, value) => setTempGenreFilter(value || undefined)}
-                        sx={{width: '100%'}}
-                    />
+                        onChange={(e) => setTempGenreFilter(e.target.value as string)}
+                        sx={{ width: '100%' }}
+                        SelectProps={{
+                            MenuProps: {
+                                PaperProps: {
+                                    style: {
+                                        maxHeight: '400px', // Set the maximum height here
+                                    },
+                                },
+                            },
+                        }}
+                    >
+                        <MenuItem value="">
+                            <em>None</em>
+                        </MenuItem>
+                        {genreOptions.map((genre) => (
+                            <MenuItem key={genre} value={genre}>
+                                {genre}
+                            </MenuItem>
+                        ))}
+                    </TextField>
                 </div>
-                <Button variant="contained" color="primary" onClick={applyFilters}>
-                    Apply Filters
-                </Button>
+                <div style={{display: 'flex', gap: '1rem'}} id={'filtersButtons'}>
+                    <Button variant="contained" color="primary" onClick={applyFilters}>
+                        Apply Filters
+                    </Button>
+                    <Button variant="outlined" color="primary" onClick={onReset}>
+                        Reset Filters
+                    </Button>
+                </div>
             </div>
+
 
             <div className="listingsList">
                 {listings.map((listing, index) => (
