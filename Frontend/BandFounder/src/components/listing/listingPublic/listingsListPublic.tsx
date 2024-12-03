@@ -244,7 +244,7 @@ const ListingsListPublic: React.FC = () => {
                         ))}
                     </TextField>
                 </div>
-                <div style={{display: 'flex', gap: '1rem'}}>
+                <div style={{display: 'flex', gap: '1rem'}} id={'filtersButtons'}>
                     <Button variant="contained" color="primary" onClick={applyFilters}>
                         Apply Filters
                     </Button>

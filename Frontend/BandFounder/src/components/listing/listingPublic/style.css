@@ -235,3 +235,7 @@
     border-bottom: 1px solid #ccc;
     width: 100%;
 }
+
+.listingsFilters > *:last-child {
+    border-bottom: 0;
+}
