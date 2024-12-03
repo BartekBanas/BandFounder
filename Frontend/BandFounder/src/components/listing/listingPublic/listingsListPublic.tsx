@@ -143,6 +143,31 @@ const ListingsListPublic: React.FC = () => {
         navigate({search: params.toString()}, {replace: true});
     };
 
+    const onReset = () => {
+        // Reset temporary filters to default values
+        setTempExcludeOwnListings(undefined);
+        setTempMatchMusicRole(undefined);
+        setTempFromLatest(undefined);
+        setTempListingType(undefined);
+        setTempGenreFilter(undefined);
+
+        // Reset main filters to default values
+        setExcludeOwnListings(undefined);
+        setMatchMusicRole(undefined);
+        setFromLatest(undefined);
+        setListingType(undefined);
+        setGenreFilter(undefined);
+
+        // Reset pagination
+        setPageNumber(1);
+        setListings([]);
+
+        // Clear URL parameters
+        const params = new URLSearchParams();
+        navigate({ search: params.toString() }, { replace: true });
+    };
+
+
     const theme = createTheme({
         components: {
             Loader: Loader.extend({
@@ -209,10 +234,16 @@ const ListingsListPublic: React.FC = () => {
                         sx={{width: '100%'}}
                     />
                 </div>
-                <Button variant="contained" color="primary" onClick={applyFilters}>
-                    Apply Filters
-                </Button>
+                <div style={{display: 'flex', gap: '1rem'}}>
+                    <Button variant="contained" color="primary" onClick={applyFilters}>
+                        Apply Filters
+                    </Button>
+                    <Button variant="outlined" color="primary" onClick={onReset}>
+                        Reset Filters
+                    </Button>
+                </div>
             </div>
+
 
             <div className="listingsList">
                 {listings.map((listing, index) => (
