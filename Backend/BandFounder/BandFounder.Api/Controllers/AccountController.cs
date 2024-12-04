@@ -121,9 +121,16 @@ public class AccountController : Controller
     [Authorize]
     public async Task<IActionResult> UpdateProfilePicture(Guid accountId, IFormFile file)
     {
+        const long maxFileSize = 10 * 1024 * 1024;
+        
         if (file.Length == 0)
         {
             return BadRequest("Provide valid file");
+        }
+        
+        if (file.Length > maxFileSize)
+        {
+            return BadRequest("File size cannot exceed 10 MB");
         }
 
         await _accountService.UpdateProfilePicture(accountId, file);
