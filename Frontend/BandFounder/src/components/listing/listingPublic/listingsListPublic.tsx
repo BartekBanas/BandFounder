@@ -62,7 +62,7 @@ const ListingsListPublic: React.FC = () => {
         const params = new URLSearchParams(location.search);
 
         const excludeOwn = params.has('excludeOwn') ? params.get('excludeOwn') === 'true' : undefined;
-        const matchMusic = params.has('matchMusicRole') ? params.get('matchMusicRole') === 'true' : true;
+        const matchMusic = params.get('matchAnyRole') === 'true';
         const latest = params.has('fromLatest') ? params.get('fromLatest') === 'true' : undefined;
         const type = params.has('listingType') ? (params.get('listingType') as ListingType) : undefined;
         const genre = params.has('genre') ? params.get('genre') ?? undefined : undefined;
@@ -129,7 +129,9 @@ const ListingsListPublic: React.FC = () => {
             params.set('excludeOwn', tempExcludeOwnListings.toString());
         }
         if (tempMatchMusicRole !== undefined) {
-            params.set('matchMusicRole', tempMatchMusicRole.toString());
+            params.set('matchAnyRole', tempMatchMusicRole.toString());
+        } else {
+            params.set('matchAnyRole', 'false');
         }
         if (tempFromLatest !== undefined) {
             params.set('fromLatest', tempFromLatest.toString());
@@ -191,7 +193,7 @@ const ListingsListPublic: React.FC = () => {
                             checked={tempMatchMusicRole || false}
                             onChange={() => setTempMatchMusicRole(!tempMatchMusicRole)}
                         />
-                        <label htmlFor="matchMusicRole">Match music role</label>
+                        <label htmlFor="matchMusicRole">Match any role</label>
                     </div>
                     <div>
                         <input
