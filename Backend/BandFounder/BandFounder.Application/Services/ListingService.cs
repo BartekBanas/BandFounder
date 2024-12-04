@@ -105,6 +105,14 @@ public class ListingService : IListingService
             .OrderByDescending(listing => listing.SimilarityScore)
             .ToList();
         
+        if (filterOptions is { PageNumber: not null, PageSize: not null })
+        {
+            listingsWithScores = listingsWithScores
+                .Skip((filterOptions.PageNumber.Value - 1) * filterOptions.PageSize.Value)
+                .Take(filterOptions.PageSize.Value)
+                .ToList();
+        }
+        
         return new ListingsFeedDto
         {
             Listings = listingsWithScores
@@ -332,17 +340,6 @@ public class ListingService : IListingService
         if (filterOptions.FromLatest)
         {
             listings.Sort((x, y) => y.DateCreated.CompareTo(x.DateCreated));
-        }
-
-        if (filterOptions is { PageNumber: not null, PageSize: not null })
-        {
-            var pagedListings = listings
-                .Skip((filterOptions.PageNumber.Value - 1) * filterOptions.PageSize.Value)
-                .Take(filterOptions.PageSize.Value)
-                .ToList();
-        
-            listings.Clear();
-            listings.AddRange(pagedListings);
         }
     }
 }
