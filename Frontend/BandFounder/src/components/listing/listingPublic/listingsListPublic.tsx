@@ -193,7 +193,7 @@ const ListingsListPublic: React.FC = () => {
                             checked={tempMatchMusicRole || false}
                             onChange={() => setTempMatchMusicRole(!tempMatchMusicRole)}
                         />
-                        <label htmlFor="matchMusicRole">Match any music role</label>
+                        <label htmlFor="matchMusicRole">Match any role</label>
                     </div>
                     <div>
                         <input
