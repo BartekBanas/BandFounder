@@ -74,7 +74,9 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
             params.append('ExcludeOwn', ListingFeedFilters.excludeOwn.toString());
         }
         if (ListingFeedFilters.matchMusicRole !== undefined) {
-            params.append('MatchRole', ListingFeedFilters.matchMusicRole.toString());
+            if(ListingFeedFilters.matchMusicRole) {
+                params.append('MatchRole', 'false');
+            }
         }
         if (ListingFeedFilters.fromLatest !== undefined) {
             params.append('FromLatest', ListingFeedFilters.fromLatest.toString());

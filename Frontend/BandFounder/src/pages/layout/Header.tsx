@@ -32,7 +32,7 @@ export const Header: FC = () => {
     }
 
     const handleHomeClick = () => {
-        navigate('/home');
+        window.location.href = '/home';
     }
 
     const handleMessagesClick = () => {
