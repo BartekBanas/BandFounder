@@ -13,7 +13,7 @@ namespace BandFounder.Application.Services;
 public interface IAccountService
 {
     Task<Account> GetAccountAsync(Guid? accountId = null);
-    Task<Account> GetDetailedAccount(Guid? accountId = null);
+    Task<Account> GetDetailedAccount(Guid? accountId = null, params string[] includeProperties);
     Task<IEnumerable<AccountDto>> GetAccountsAsync();
     Task<IEnumerable<Account>> GetAccountsAsync(AccountFilters filters);
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
@@ -35,6 +35,7 @@ public class AccountService : IAccountService
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
+    private readonly IChatroomService _chatroomService;
 
     private readonly IValidator<Account> _validator;
     private readonly IAuthenticationService _authenticationService;
@@ -46,6 +47,7 @@ public class AccountService : IAccountService
         IRepository<Artist> artistRepository,
         IRepository<MusicianRole> musicianRoleRepository,
         IRepository<SpotifyTokens> spotifyTokensRepository,
+        IChatroomService chatroomService,
         IValidator<Account> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
@@ -55,6 +57,7 @@ public class AccountService : IAccountService
         _artistRepository = artistRepository;
         _musicianRoleRepository = musicianRoleRepository;
         _spotifyTokensRepository = spotifyTokensRepository;
+        _chatroomService = chatroomService;
         _validator = validator;
         _authenticationService = authenticationService;
         _hashingService = hashingService;
@@ -69,9 +72,15 @@ public class AccountService : IAccountService
         return account;
     }
 
-    public async Task<Account> GetDetailedAccount(Guid? accountId = null)
+    public async Task<Account> GetDetailedAccount(Guid? accountId = null, params string[] includeProperties)
     {
         accountId ??= _authenticationService.GetUserId();
+
+        if (includeProperties is { Length: > 0 })
+        {
+            return await _accountRepository.GetOneRequiredAsync(key: accountId, keyPropertyName: "Id",
+                includeProperties: includeProperties);
+        }
 
         return await _accountRepository.GetOneRequiredAsync(key: accountId, keyPropertyName: "Id",
             includeProperties:

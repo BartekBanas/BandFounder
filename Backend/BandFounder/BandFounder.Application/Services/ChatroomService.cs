@@ -10,9 +10,9 @@ namespace BandFounder.Application.Services;
 
 public interface IChatroomService
 {
-    Task<ChatroomDto> CreateChatroom(ChatroomCreateDto request);
+    Task<ChatroomDto> CreateChatroom(Account issuer, ChatroomCreateDto request);
     Task<ChatroomDto> GetChatroom(Guid chatroomId);
-    Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(ChatroomFilters? filters = null);
+    Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(Account issuer, ChatroomFilters? filters = null);
     Task DeleteChatroom(Guid chatroomId);
     Task InviteToChatroom(Guid chatroomId, Guid invitedUserId);
     Task LeaveChatroom(Guid chatroomId);
@@ -21,26 +21,23 @@ public interface IChatroomService
 public class ChatroomService : IChatroomService
 {
     private readonly IRepository<Chatroom> _chatRoomRepository;
+    private readonly IRepository<Account> _accountRepository;
     
     private readonly IAuthenticationService _authenticationService;
     private readonly IAuthorizationService _authorizationService;
-    private readonly IAccountService _accountService;
 
-    public ChatroomService(IRepository<Chatroom> chatRoomRepository, IAuthenticationService authenticationService,
-        IAuthorizationService authorizationService, IAccountService accountService)
+    public ChatroomService(IRepository<Chatroom> chatRoomRepository, IRepository<Account> accountRepository,
+        IAuthenticationService authenticationService, IAuthorizationService authorizationService)
     {
         _chatRoomRepository = chatRoomRepository;
+        _accountRepository = accountRepository;
         _authenticationService = authenticationService;
         _authorizationService = authorizationService;
-        _accountService = accountService;
     }
 
-    public async Task<ChatroomDto> CreateChatroom(ChatroomCreateDto request)
+    public async Task<ChatroomDto> CreateChatroom(Account issuer, ChatroomCreateDto request)
     {
-        var userId = _authenticationService.GetUserId();
-        await _accountService.GetAccountAsync(userId);
-
-        var newChatRoom = await CreateChatroomEntity(userId, request);
+        var newChatRoom = await CreateChatroomEntity(issuer, request);
         await _chatRoomRepository.CreateAsync(newChatRoom);
 
         await _chatRoomRepository.SaveChangesAsync();
@@ -60,14 +57,10 @@ public class ChatroomService : IChatroomService
         return chatroom.ToDto();
     }
 
-    public async Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(ChatroomFilters? filters = null)
+    public async Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(Account issuer, ChatroomFilters? filters = null)
     {
-        var userId = _authenticationService.GetUserId();
-        
-        var account = await _accountService.GetDetailedAccount(userId);
-        
         var usersChatrooms = await _chatRoomRepository.GetAsync(
-            chatRoom => chatRoom.Members.Contains(account), includeProperties: nameof(Chatroom.Members));
+            chatRoom => chatRoom.Members.Contains(issuer), includeProperties: nameof(Chatroom.Members));
         
         if (filters is { ChatRoomType: not null })
         {
@@ -76,7 +69,7 @@ public class ChatroomService : IChatroomService
         
         if (filters is { WithUser: not null })
         {
-            var selectedUser = await _accountService.GetAccountAsync(filters.WithUser);
+            var selectedUser = await _accountRepository.GetOneRequiredAsync(filters.WithUser);
             usersChatrooms = usersChatrooms.Where(chatroom => chatroom.Members.Contains(selectedUser));
         }
         
@@ -121,33 +114,26 @@ public class ChatroomService : IChatroomService
             throw new BadRequestError("You cannot invite yourself to a chatroom");
         }
         
-        var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == chatroomId,
+        var chatroom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == chatroomId,
             nameof(Chatroom.Members));
         
-        await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsMemberOf);
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, chatroom, AuthorizationPolicies.IsMemberOf);
 
-        if (chatRoom.ChatRoomType is ChatRoomType.Direct)
+        if (chatroom.ChatRoomType is ChatRoomType.Direct)
         {
-            throw new BadRequestError("You cannot invite anyone to a direct messaging chatroom");
+            throw new BadRequestError("You cannot invite anyone to a direct chatroom");
         }
 
-        CheckUserMembershipInChatroom(chatRoom, invitedUserId);
-
-        await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsOwnerOf);
-
-        var invitedAccount = await _accountService.GetDetailedAccount(invitedUserId);
-
-        chatRoom.Members.Add(invitedAccount);
-
-        await _chatRoomRepository.SaveChangesAsync();
-    }
-
-    private static void CheckUserMembershipInChatroom(Chatroom chatRoom, Guid accountId)
-    {
-        if (chatRoom.Members.Any(account => account.Id == accountId))
+        if (chatroom.Members.Any(account => account.Id == invitedUserId))
         {
             throw new BadRequestError("Selected user is already a member of this chatroom");
         }
+
+        var invitedAccount = await _accountRepository.GetOneRequiredAsync(invitedUserId);
+
+        chatroom.Members.Add(invitedAccount);
+
+        await _chatRoomRepository.SaveChangesAsync();
     }
 
     public async Task LeaveChatroom(Guid chatroomId)
@@ -171,10 +157,8 @@ public class ChatroomService : IChatroomService
         await _chatRoomRepository.SaveChangesAsync();
     }
 
-    private async Task<Chatroom> CreateChatroomEntity(Guid issuerId, ChatroomCreateDto chatroomCreateDto)
+    private async Task<Chatroom> CreateChatroomEntity(Account issuer, ChatroomCreateDto chatroomCreateDto)
     {
-        var issuer = await _accountService.GetDetailedAccount(issuerId);
-
         return chatroomCreateDto.ChatRoomType switch
         {
             ChatRoomType.General => await CreateGeneralChatroom(issuer, chatroomCreateDto),
@@ -207,7 +191,7 @@ public class ChatroomService : IChatroomService
         
         try
         {
-            recipient = await _accountService.GetDetailedAccount(chatroomCreateDto.InvitedAccountId!);
+            recipient = await _accountRepository.GetOneRequiredAsync(chatroomCreateDto.InvitedAccountId!);
         }
         catch (Exception e)
         {

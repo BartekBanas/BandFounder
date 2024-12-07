@@ -14,23 +14,23 @@ public class ChatroomServiceTests
 {
     private ChatroomService _chatroomService;
     private IRepository<Chatroom> _chatRoomRepositoryMock;
+    private IRepository<Account> _accountRepositoryMock;
     private IAuthenticationService _authenticationServiceMock;
     private IAuthorizationService _authorizationServiceMock;
-    private IAccountService _accountServiceMock;
 
     [SetUp]
     public void Setup()
     {
         _chatRoomRepositoryMock = Substitute.For<IRepository<Chatroom>>();
+        _accountRepositoryMock = Substitute.For<IRepository<Account>>();
         _authenticationServiceMock = Substitute.For<IAuthenticationService>();
         _authorizationServiceMock = Substitute.For<IAuthorizationService>();
-        _accountServiceMock = Substitute.For<IAccountService>();
 
         _chatroomService = new ChatroomService(
             _chatRoomRepositoryMock,
+            _accountRepositoryMock,
             _authenticationServiceMock,
-            _authorizationServiceMock,
-            _accountServiceMock
+            _authorizationServiceMock
         );
     }
 
@@ -45,7 +45,6 @@ public class ChatroomServiceTests
             Name = "General Chatroom"
         };
 
-        _authenticationServiceMock.GetUserId().Returns(userId);
         var account = new Account
         {
             Id = userId,
@@ -53,11 +52,9 @@ public class ChatroomServiceTests
             PasswordHash = null,
             Email = null
         };
-        _accountServiceMock.GetAccountAsync(userId).Returns(account);
-        _accountServiceMock.GetDetailedAccount(userId).Returns(account);
 
         // Act
-        var result = await _chatroomService.CreateChatroom(chatroomDto);
+        var result = await _chatroomService.CreateChatroom(account, chatroomDto);
 
         // Assert
         Assert.That(result.Name, Is.EqualTo(chatroomDto.Name));
@@ -76,11 +73,17 @@ public class ChatroomServiceTests
             ChatRoomType = ChatRoomType.General,
             Name = string.Empty
         };
-
-        _authenticationServiceMock.GetUserId().Returns(userId);
+        
+        var account = new Account
+        {
+            Id = userId,
+            Name = null,
+            PasswordHash = null,
+            Email = null
+        };
 
         // Act & Assert
-        Assert.ThrowsAsync<BadRequestError>(async () => await _chatroomService.CreateChatroom(chatroomDto));
+        Assert.ThrowsAsync<BadRequestError>(async () => await _chatroomService.CreateChatroom(account, chatroomDto));
     }
     
     [Test]
@@ -101,15 +104,12 @@ public class ChatroomServiceTests
             Email = null
         };
 
-        _authenticationServiceMock.GetUserId().Returns(userId);
-        _accountServiceMock.GetDetailedAccount(userId).Returns(account);
-
         _chatRoomRepositoryMock.GetAsync(Arg.Any<Expression<Func<Chatroom, bool>>>(),
                 Arg.Any<Func<IQueryable<Chatroom>, IOrderedQueryable<Chatroom>>>(), nameof(Chatroom.Members))
             .Returns(Task.FromResult<IEnumerable<Chatroom>>(account.Chatrooms));
 
         // Act
-        var result = await _chatroomService.GetUsersChatrooms();
+        var result = await _chatroomService.GetUsersChatrooms(account);
 
         // Assert
         Assert.That(result.Count(), Is.EqualTo(2));
