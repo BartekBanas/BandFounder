@@ -54,12 +54,6 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .WithOne(slot => slot.Listing)
             .HasForeignKey(slot => slot.ListingId);
 
-        // Configuring one-to-many relationship: MusicianSlot has one MusicianRole
-        // modelBuilder.Entity<MusicianSlot>()
-        //     .HasOne(slot => slot.Role)
-        //     .WithMany()
-        //     .HasForeignKey(slot => slot.RoleId);
-
         // Configuring many-to-many relationship between Account and MusicianRole
         modelBuilder.Entity<Account>()
             .HasMany(account => account.MusicianRoles)
@@ -70,7 +64,7 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .HasMany(account => account.Chatrooms)
             .WithMany(chatroom => chatroom.Members);
         
-        // Many-to-One relationship: Listing has one owner (Account)
+        // Many-to-One relationship: Chatroom has one owner (Account)
         modelBuilder.Entity<Chatroom>()
             .HasOne(chatroom => chatroom.Owner)
             .WithMany()
