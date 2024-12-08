@@ -16,6 +16,7 @@ public interface IChatroomService
     Task DeleteChatroom(Guid chatroomId);
     Task InviteToChatroom(Guid chatroomId, Guid invitedUserId);
     Task LeaveChatroom(Guid chatroomId);
+    Task LeaveAllChatrooms(Account account);
 }
 
 public class ChatroomService : IChatroomService
@@ -138,6 +139,7 @@ public class ChatroomService : IChatroomService
 
     public async Task LeaveChatroom(Guid chatroomId)
     {
+        var userId = _authenticationService.GetUserId();
         var userClaims = _authenticationService.GetUserClaims();
         var chatroom = await _chatRoomRepository.GetOneRequiredAsync(
             filter: chatRoom => chatRoom.Id == chatroomId, includeProperties: nameof(Chatroom.Members));
@@ -150,11 +152,29 @@ public class ChatroomService : IChatroomService
         }
         else
         {
-            chatroom.Members.Remove(
-                chatroom.Members.First(account => account.Id == _authenticationService.GetUserId()));
+            if (chatroom.OwnerId == userId)
+            {
+                var luckyUser = chatroom.Members.First(account => account.Id != userId);
+                chatroom.OwnerId = luckyUser.Id;
+            }
+            
+            var memberToRemove = chatroom.Members.FirstOrDefault(account => account.Id == userId);
+            if (memberToRemove != null)
+            {
+                chatroom.Members.Remove(memberToRemove);
+            }
         }
 
         await _chatRoomRepository.SaveChangesAsync();
+    }
+
+    public async Task LeaveAllChatrooms(Account account)
+    {
+        var chatrooms = account.Chatrooms.ToList();
+        foreach (var chatroom in chatrooms)
+        {
+            await LeaveChatroom(chatroom.Id);
+        }
     }
 
     private async Task<Chatroom> CreateChatroomEntity(Account issuer, ChatroomCreateDto chatroomCreateDto)

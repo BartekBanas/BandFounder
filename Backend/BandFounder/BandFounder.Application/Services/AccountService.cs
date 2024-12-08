@@ -262,7 +262,10 @@ public class AccountService : IAccountService
     public async Task DeleteAccountAsync(Guid? accountId = null)
     {
         accountId ??= _authenticationService.GetUserId();
+
+        var account = await GetDetailedAccount(accountId: accountId, includeProperties: nameof(Account.Chatrooms));
         
+        await _chatroomService.LeaveAllChatrooms(account);
         await _accountRepository.DeleteOneAsync(accountId);
 
         await _accountRepository.SaveChangesAsync();
