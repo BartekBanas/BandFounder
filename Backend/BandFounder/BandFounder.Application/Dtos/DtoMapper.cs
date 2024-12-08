@@ -1,10 +1,8 @@
 using BandFounder.Application.Dtos.Accounts;
-using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Dtos.Messages;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure.Spotify.Dto;
 using ArtistDto = BandFounder.Application.Dtos.Metadata.ArtistDto;
 
 namespace BandFounder.Application.Dtos;
@@ -18,28 +16,6 @@ public static class DtoMapper
             Id = account.Id.ToString(),
             Name = account.Name,
             Email = account.Email
-        };
-    }
-
-    public static IEnumerable<AccountBackup> ToBackupDto(this IEnumerable<Account> accounts)
-    {
-        return accounts.Select(account => account.ToBackupDto());
-    }
-    
-    public static AccountBackup ToBackupDto(this Account account)
-    {
-        return new AccountBackup
-        {
-            Name = account.Name,
-            Email = account.Email,
-            SpotifyTokens = account.SpotifyTokens is not null ? new SpotifyTokensDto()
-            {
-                AccessToken = account.SpotifyTokens.AccessToken,
-                RefreshToken = account.SpotifyTokens.RefreshToken,
-                ExpirationDate = account.SpotifyTokens.ExpirationDate
-            } : null,
-            MusicianRoles = account.MusicianRoles.Select(role => role.Name).ToList(),
-            Artists = account.Artists.Select(artist => artist.Name).ToList()
         };
     }
 
