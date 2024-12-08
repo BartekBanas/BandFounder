@@ -14,7 +14,7 @@ public interface IAccountService
 {
     Task<Account> GetAccountAsync(Guid? accountId = null);
     Task<Account> GetDetailedAccount(Guid? accountId = null, params string[] includeProperties);
-    Task<IEnumerable<AccountDto>> GetAccountsAsync();
+    Task<IEnumerable<Account>> GetAccountsAsync();
     Task<IEnumerable<Account>> GetAccountsAsync(AccountFilters filters);
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
@@ -90,13 +90,11 @@ public class AccountService : IAccountService
             ]);
     }
 
-    public async Task<IEnumerable<AccountDto>> GetAccountsAsync()
+    public async Task<IEnumerable<Account>> GetAccountsAsync()
     {
         var accounts = await _accountRepository.GetAsync();
 
-        var dtos = accounts.ToDto();
-        
-        return dtos;
+        return accounts;
     }
 
     public async Task<IEnumerable<Account>> GetAccountsAsync(AccountFilters filters)

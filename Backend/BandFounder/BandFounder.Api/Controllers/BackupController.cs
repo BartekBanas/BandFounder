@@ -34,18 +34,31 @@ public class BackupController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetBackup()
+    public async Task<IActionResult> GetBackup([FromQuery] bool? profilePictures = false)
     {
         var artists = (await _artistRepository.GetAsync()).ToBackupDto();
         
-        List<AccountBackup> accounts = [];
-        var accountDtos = await _accountService.GetAccountsAsync();
-        foreach (var accountDto in accountDtos)
+        List<AccountBackup> accountsBackup = [];
+        var accounts = await _accountService.GetAccountsAsync();
+        foreach (var account in accounts)
         {
-            var account = await _accountService.GetDetailedAccount(Guid.Parse(accountDto.Id));
-            var accountBackup = account.ToBackupDto();
+            var propertiesToBackup = new List<string>
+            {
+                nameof(Account.Artists), "Artists.Genres", nameof(Account.Chatrooms), 
+                nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens)
+            };
             
-            var usersListings = await _listingService.GetUserListingsAsync(account.Id);
+            if (profilePictures is true)
+            {
+                propertiesToBackup.Add(nameof(Account.ProfilePicture));
+            }
+            
+            var detailedAccount = await _accountService.GetDetailedAccount(
+                account.Id, includeProperties: propertiesToBackup.ToArray());
+            
+            var accountBackup = detailedAccount.ToBackupDto();
+            
+            var usersListings = await _listingService.GetUserListingsAsync(detailedAccount.Id);
             var listingDtos = usersListings.Select(listing => new ListingCreateDto
             {
                 Name = listing.Name,
@@ -57,12 +70,12 @@ public class BackupController : Controller
             
             accountBackup.Listings = listingDtos;
             
-            accounts.Add(accountBackup);
+            accountsBackup.Add(accountBackup);
         }
         
         var dto = new BackupDto()
         {
-            Accounts = accounts,
+            Accounts = accountsBackup,
             Artists = artists
         };
         
@@ -100,6 +113,14 @@ public class BackupController : Controller
                 Id = id,
                 Name = accountBackup.Name,
                 Email = accountBackup.Email,
+                ProfilePicture = accountBackup.ProfilePicture is not null
+                    ? new ProfilePicture
+                    {
+                        AccountId = id,
+                        MimeType = accountBackup.ProfilePicture.MimeType,
+                        ImageData = Convert.FromBase64String(accountBackup.ProfilePicture.ImageDataBase64)
+                    }
+                    : null,
                 SpotifyTokens = accountBackup.SpotifyTokens is not null
                     ? new SpotifyTokens
                     {

@@ -17,6 +17,7 @@ public static class BackupDtoMapper
         {
             Name = account.Name,
             Email = account.Email,
+            ProfilePicture = account.ProfilePicture?.ToBackupDto(),
             SpotifyTokens = account.SpotifyTokens is not null ? new SpotifyTokensDto()
             {
                 AccessToken = account.SpotifyTokens.AccessToken,
@@ -41,6 +42,15 @@ public static class BackupDtoMapper
             Name = artist.Name,
             Genres = artist.Genres.Select(genre => genre.Name).ToList(),
             Popularity = artist.Popularity
+        };
+    }
+    
+    public static ProfilePictureBackup ToBackupDto(this ProfilePicture? profilePicture)
+    {
+        return new ProfilePictureBackup
+        {
+            MimeType = profilePicture.MimeType,
+            ImageDataBase64 = Convert.ToBase64String(profilePicture.ImageData)
         };
     }
 }
