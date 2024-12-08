@@ -1,5 +1,4 @@
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure.Spotify.Dto;
 
 namespace BandFounder.Infrastructure;
 
@@ -56,7 +55,7 @@ public static class RepositoriesExtensions
         }
     }
     
-    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> accountRepository, IRepository<Genre> genreRepository,
+    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> artistRepository, IRepository<Genre> genreRepository,
         string artistName, List<string>? genres = null, int popularity = 0, string? id = null)
     {
         if (string.IsNullOrWhiteSpace(artistName))
@@ -64,7 +63,7 @@ public static class RepositoriesExtensions
             throw new ArgumentException("Artist name cannot be empty or whitespace");
         }
         
-        var artistEntity = await accountRepository.GetOneAsync(artist => artist.Name == artistName,
+        var artistEntity = await artistRepository.GetOneAsync(artist => artist.Name == artistName,
             includeProperties: nameof(Artist.Genres));
 
         if (artistEntity is not null) // Check for artist's lacking properties
@@ -102,19 +101,19 @@ public static class RepositoriesExtensions
                 newArtist.Genres.Add(genre);
             }
             
-            await accountRepository.CreateAsync(newArtist);
+            await artistRepository.CreateAsync(newArtist);
             return newArtist;
         }
     }
 
-    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> accountRepository, string artistName)
+    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> artistRepository, string artistName)
     {
         if (string.IsNullOrWhiteSpace(artistName))
         {
             throw new ArgumentException("Artist name cannot be empty or whitespace");
         }
         
-        var artistEntity = await accountRepository.GetOneAsync(artist => artist.Name == artistName,
+        var artistEntity = await artistRepository.GetOneAsync(artist => artist.Name == artistName,
             includeProperties: nameof(Artist.Genres));
 
         if (artistEntity is not null)
@@ -128,8 +127,21 @@ public static class RepositoriesExtensions
             Name = artistName
         };
         
-        await accountRepository.CreateAsync(newArtist);
+        await artistRepository.CreateAsync(newArtist);
         return newArtist;
+    }
+
+    public static async Task<IEnumerable<Artist>> GetOrCreateAsync(this IRepository<Artist> artistRepository,
+        IEnumerable<string> artistNames)
+    {
+        var artists = new List<Artist>();
+        
+        foreach (var artistName in artistNames)
+        {
+            artists.Add(await artistRepository.GetOrCreateAsync(artistName));
+        }
+        
+        return artists;
     }
 
     public static string NormalizeName(this string input)

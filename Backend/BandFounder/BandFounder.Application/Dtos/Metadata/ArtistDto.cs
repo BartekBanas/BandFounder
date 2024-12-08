@@ -1,4 +1,4 @@
-namespace BandFounder.Application.Dtos.Listings;
+namespace BandFounder.Application.Dtos.Metadata;
 
 public class ArtistDto
 {

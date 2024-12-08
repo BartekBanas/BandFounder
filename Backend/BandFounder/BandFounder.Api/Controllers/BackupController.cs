@@ -1,5 +1,5 @@
 using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Accounts;
+using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
@@ -36,7 +36,7 @@ public class BackupController : Controller
     [HttpGet]
     public async Task<IActionResult> GetBackup()
     {
-        var artists = (await _artistRepository.GetAsync()).ToDto();
+        var artists = (await _artistRepository.GetAsync()).ToBackupDto();
         
         List<AccountBackup> accounts = [];
         var accountDtos = await _accountService.GetAccountsAsync();
@@ -72,40 +72,24 @@ public class BackupController : Controller
     [HttpPost]
     public async Task<IActionResult> RestoreBackup([FromBody] BackupDto backupDto)
     {
-        var artists = await RestoreArtists(backupDto.Artists);
-        await RestoreAccounts(backupDto.Accounts, artists);
+        await RestoreArtists(backupDto.Artists);
+        await RestoreAccounts(backupDto.Accounts);
 
         await _accountRepository.SaveChangesAsync();
 
         return Ok();
     }
 
-    private async Task<List<Artist>> RestoreArtists(IEnumerable<ArtistDto> artists)
+    private async Task RestoreArtists(IEnumerable<ArtistBackup> artists)
     {
-        List<Artist> result = [];
-        
         foreach (var artistDto in artists)
         {
-            var newArtist = new Artist
-            {
-                Id = artistDto.Id,
-                Name = artistDto.Name
-            };
-
-            foreach (var genreName in artistDto.Genres)
-            {
-                var genre = await _genreRepository.GetOrCreateAsync(genreName);
-            
-                newArtist.Genres.Add(genre);
-            }
-            
-            result.Add(newArtist);
+            await _artistRepository.GetOrCreateAsync(
+                _genreRepository, artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
         }
-        
-        return result;
     }
 
-    private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts, List<Artist> artists)
+    private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts)
     {
         foreach (var accountBackup in accounts)
         {
@@ -129,8 +113,11 @@ public class BackupController : Controller
                 DateCreated = DateTime.UtcNow
             };
             
+            // Restoring account's artists
+            var artists = await _artistRepository.GetOrCreateAsync(accountBackup.Artists);
             account.Artists.AddRange(artists);
             
+            // Restoring account's musician roles
             foreach (var musicianRole in accountBackup.MusicianRoles)
             {
                 var role = await _musicianRoleRepository.GetOrCreateAsync(musicianRole);

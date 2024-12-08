@@ -1,7 +1,7 @@
 ﻿using BandFounder.Application.Dtos.Listings;
 using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace BandFounder.Application.Dtos.Accounts;
+namespace BandFounder.Application.Dtos.Backup;
 
 public class AccountBackup
 {
