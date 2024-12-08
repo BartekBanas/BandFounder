@@ -1,10 +1,11 @@
 using BandFounder.Application.Dtos.Accounts;
+using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Dtos.Messages;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure.Spotify.Dto;
-using ArtistDto = BandFounder.Application.Dtos.Listings.ArtistDto;
+using ArtistDto = BandFounder.Application.Dtos.Metadata.ArtistDto;
 
 namespace BandFounder.Application.Dtos;
 

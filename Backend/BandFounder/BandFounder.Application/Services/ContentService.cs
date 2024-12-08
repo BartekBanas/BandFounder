@@ -1,5 +1,5 @@
 using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Listings;
+using BandFounder.Application.Dtos.Metadata;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
 
