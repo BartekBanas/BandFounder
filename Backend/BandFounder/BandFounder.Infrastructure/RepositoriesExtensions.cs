@@ -23,6 +23,7 @@ public static class RepositoriesExtensions
         {
             var newGenre = new Genre { Name = normalizedGenreName };
             await repository.CreateAsync(newGenre);
+            await repository.SaveChangesAsync();
             
             return newGenre;
         }
@@ -47,6 +48,8 @@ public static class RepositoriesExtensions
         {
             var newRole = new MusicianRole { Name = normalizedRoleName };
             await repository.CreateAsync(newRole);
+            await repository.SaveChangesAsync();
+            
             return newRole;
         }
         else
@@ -102,6 +105,8 @@ public static class RepositoriesExtensions
             }
             
             await artistRepository.CreateAsync(newArtist);
+            await artistRepository.SaveChangesAsync();
+            
             return newArtist;
         }
     }
@@ -128,6 +133,8 @@ public static class RepositoriesExtensions
         };
         
         await artistRepository.CreateAsync(newArtist);
+        await artistRepository.SaveChangesAsync();
+        
         return newArtist;
     }
 
