@@ -82,7 +82,7 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .HasMany<Message>()
             .WithOne(message => message.Sender)
             .HasForeignKey(message => message.SenderId)
-            .OnDelete(DeleteBehavior.Restrict); // When an account is deleted, their messages are not automatically deleted
+            .OnDelete(DeleteBehavior.SetNull); // When an account is deleted, their messages are not automatically deleted
         
         PopulateGenres(modelBuilder);
         PopulateMusicianRole(modelBuilder);
