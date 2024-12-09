@@ -1,5 +1,5 @@
 using BandFounder.Application.Dtos;
-using BandFounder.Application.Dtos.Accounts;
+using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
@@ -34,18 +34,31 @@ public class BackupController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetBackup()
+    public async Task<IActionResult> GetBackup([FromQuery] bool? profilePictures = false)
     {
-        var artists = (await _artistRepository.GetAsync()).ToDto();
+        var artists = (await _artistRepository.GetAsync()).ToBackupDto();
         
-        List<AccountBackup> accounts = [];
-        var accountDtos = await _accountService.GetAccountsAsync();
-        foreach (var accountDto in accountDtos)
+        List<AccountBackup> accountsBackup = [];
+        var accounts = await _accountService.GetAccountsAsync();
+        foreach (var account in accounts)
         {
-            var account = await _accountService.GetDetailedAccount(Guid.Parse(accountDto.Id));
-            var accountBackup = account.ToBackupDto();
+            var propertiesToBackup = new List<string>
+            {
+                nameof(Account.Artists), "Artists.Genres", nameof(Account.Chatrooms), 
+                nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens)
+            };
             
-            var usersListings = await _listingService.GetUserListingsAsync(account.Id);
+            if (profilePictures is true)
+            {
+                propertiesToBackup.Add(nameof(Account.ProfilePicture));
+            }
+            
+            var detailedAccount = await _accountService.GetDetailedAccount(
+                account.Id, includeProperties: propertiesToBackup.ToArray());
+            
+            var accountBackup = detailedAccount.ToBackupDto();
+            
+            var usersListings = await _listingService.GetUserListingsAsync(detailedAccount.Id);
             var listingDtos = usersListings.Select(listing => new ListingCreateDto
             {
                 Name = listing.Name,
@@ -57,12 +70,12 @@ public class BackupController : Controller
             
             accountBackup.Listings = listingDtos;
             
-            accounts.Add(accountBackup);
+            accountsBackup.Add(accountBackup);
         }
         
         var dto = new BackupDto()
         {
-            Accounts = accounts,
+            Accounts = accountsBackup,
             Artists = artists
         };
         
@@ -72,43 +85,35 @@ public class BackupController : Controller
     [HttpPost]
     public async Task<IActionResult> RestoreBackup([FromBody] BackupDto backupDto)
     {
-        var artists = await RestoreArtists(backupDto.Artists);
-        await RestoreAccounts(backupDto.Accounts, artists);
+        await RestoreArtists(backupDto.Artists);
+        await RestoreAccounts(backupDto.Accounts);
 
         await _accountRepository.SaveChangesAsync();
 
         return Ok();
     }
 
-    private async Task<List<Artist>> RestoreArtists(IEnumerable<ArtistDto> artists)
+    private async Task RestoreArtists(IEnumerable<ArtistBackup> artists)
     {
-        List<Artist> result = [];
-        
         foreach (var artistDto in artists)
         {
-            var newArtist = new Artist
-            {
-                Id = artistDto.Id,
-                Name = artistDto.Name
-            };
-
-            foreach (var genreName in artistDto.Genres)
-            {
-                var genre = await _genreRepository.GetOrCreateAsync(genreName);
-            
-                newArtist.Genres.Add(genre);
-            }
-            
-            result.Add(newArtist);
+            await _artistRepository.GetOrCreateAsync(
+                _genreRepository, artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
         }
-        
-        return result;
     }
 
-    private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts, List<Artist> artists)
+    private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts)
     {
         foreach (var accountBackup in accounts)
         {
+            var existingAccount = await _accountRepository.GetOneAsync(
+                a => a.Name == accountBackup.Name || a.Email == accountBackup.Email);
+            
+            if (existingAccount != null)
+            {
+                continue;
+            }
+            
             var id = Guid.NewGuid();
             
             var account = new Account
@@ -116,6 +121,14 @@ public class BackupController : Controller
                 Id = id,
                 Name = accountBackup.Name,
                 Email = accountBackup.Email,
+                ProfilePicture = accountBackup.ProfilePicture is not null
+                    ? new ProfilePicture
+                    {
+                        AccountId = id,
+                        MimeType = accountBackup.ProfilePicture.MimeType,
+                        ImageData = Convert.FromBase64String(accountBackup.ProfilePicture.ImageDataBase64)
+                    }
+                    : null,
                 SpotifyTokens = accountBackup.SpotifyTokens is not null
                     ? new SpotifyTokens
                     {
@@ -129,8 +142,11 @@ public class BackupController : Controller
                 DateCreated = DateTime.UtcNow
             };
             
+            // Restoring account's artists
+            var artists = await _artistRepository.GetOrCreateAsync(accountBackup.Artists);
             account.Artists.AddRange(artists);
             
+            // Restoring account's musician roles
             foreach (var musicianRole in accountBackup.MusicianRoles)
             {
                 var role = await _musicianRoleRepository.GetOrCreateAsync(musicianRole);

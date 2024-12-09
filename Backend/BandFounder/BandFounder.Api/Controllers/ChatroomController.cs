@@ -1,5 +1,6 @@
 ﻿using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Services;
+using BandFounder.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,17 +11,20 @@ namespace BandFounder.Api.Controllers;
 public class ChatroomController : Controller
 {
     private readonly IChatroomService _chatroomService;
+    private readonly IAccountService _accountService;
 
-    public ChatroomController(IChatroomService chatroomService)
+    public ChatroomController(IChatroomService chatroomService, IAccountService accountService)
     {
         _chatroomService = chatroomService;
+        _accountService = accountService;
     }
 
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetUserChatrooms([FromQuery] ChatroomFilters filters)
     {
-        var chatRoomDtos = await _chatroomService.GetUsersChatrooms(filters);
+        var issuer = await _accountService.GetDetailedAccount(includeProperties: nameof(Account.Chatrooms));
+        var chatRoomDtos = await _chatroomService.GetUsersChatrooms(issuer, filters);
 
         return Ok(chatRoomDtos);
     }
@@ -38,9 +42,10 @@ public class ChatroomController : Controller
     [HttpPost]
     public async Task<IActionResult> CreateChatroom(ChatroomCreateDto dto)
     {
-        var createdChatroomDto = await _chatroomService.CreateChatroom(dto);
+        var issuer = await _accountService.GetAccountAsync();
+        var createdChatroomDto = await _chatroomService.CreateChatroom(issuer, dto);
 
-        return Created($"api/chatroom/{createdChatroomDto.Id}", createdChatroomDto);
+        return Created($"api/chatrooms/{createdChatroomDto.Id}", createdChatroomDto);
     }
 
     [Authorize]

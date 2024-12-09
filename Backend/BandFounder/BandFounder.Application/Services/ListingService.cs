@@ -218,6 +218,7 @@ public class ListingService : IListingService
 
     public async Task<ChatroomDto> ContactOwner(Guid listingId)
     {
+        var issuer = await _accountService.GetAccountAsync(_authenticationService.GetUserId());
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
         
         var chatroomCreateDto = new ChatroomCreateDto()
@@ -226,7 +227,7 @@ public class ListingService : IListingService
             InvitedAccountId = listing.OwnerId
         };
 
-        return await _chatroomService.CreateChatroom(chatroomCreateDto);
+        return await _chatroomService.CreateChatroom(issuer, chatroomCreateDto);
     }
 
     public async Task DeleteListing(Guid listingId)
