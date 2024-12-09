@@ -3,3 +3,9 @@ export interface ChatRoomCreateDto {
     name?: string;
     invitedAccountId: string;
 }
+
+export interface ChatroomGroupCreateDto {
+    chatRoomType: string;
+    name: string;
+    invitedAccountIds: string[];
+}

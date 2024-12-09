@@ -1,16 +1,15 @@
-import React, { FC, useEffect, useRef, useState } from "react";
-import { Message } from "../../../types/Message";
-import { CircularProgress, IconButton, TextField, Tooltip } from "@mui/material";
+import React, {FC, useEffect, useRef, useState} from "react";
+import {Message} from "../../../types/Message";
+import {Button, IconButton, TextField, Tooltip, Modal, Box, Autocomplete, Chip} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
 import "./../../../assets/CustomScrollbar.css";
-import { getMessagesFromChatroom, sendMessage } from "../../../api/messages";
-import { getAccount, getProfilePicture } from "../../../api/account";
-import { getUserId } from "../../../hooks/authentication";
-import { Account } from "../../../types/Account";
-import { ChatRoom, ChatRoomType } from "../../../types/ChatRoom";
-import { getChatroom } from "../../../api/chatroom";
-import { ImageAvatar } from "../../common/ImageAvatar";
+import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
+import {getAccount, getAccounts} from "../../../api/account";
+import {getUserId} from "../../../hooks/authentication";
+import {Account} from "../../../types/Account";
+import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
+import {getChatroom, inviteToChatroom} from "../../../api/chatroom";
 import UserAvatar from "../../common/UserAvatar";
 import {formatMessageWithLinks} from "../../common/utils";
 
@@ -23,7 +22,7 @@ interface MessageWithSenderName extends Message {
     timeSinceSent: string;
 }
 
-export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
+export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [chatroom, setChatroom] = useState<ChatRoom>();
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
@@ -46,8 +45,32 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
         });
     };
 
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
+    const [selectedUsers, setSelectedUsers] = useState<Account[]>([]);
+    const [otherUsers, setOtherUsers] = useState<Account[]>([]); // Assume this is fetched similarly as in AllConversations
+
+    const fetchOtherUsers = async () => {
+        const myId = getUserId();
+        const accounts = await getAccounts();
+        setOtherUsers(accounts.filter((account: Account) => account.id !== myId));
+    };
+
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        fetchOtherUsers();
+    }, []);
+
+    const handleAddUser = (event: any, newValue: Account | null) => {
+        if (newValue && !selectedUsers.includes(newValue)) {
+            setSelectedUsers([...selectedUsers, newValue]);
+        }
+    };
+
+    const handleDeleteUser = (userToDelete: Account) => {
+        setSelectedUsers(selectedUsers.filter((user) => user.id !== userToDelete.id));
+    };
+
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({behavior: "smooth"});
     }, [currentConversation]);
 
     useEffect(() => {
@@ -87,7 +110,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
 
         const initializeChatroom = async () => {
             await fetchOlderMessages(); // Fetch initial messages
-            bottomRef.current?.scrollIntoView({ behavior: "smooth" }); // Scroll to bottom after fetching messages
+            bottomRef.current?.scrollIntoView({behavior: "smooth"}); // Scroll to bottom after fetching messages
         };
 
         const wsUrl = `wss://localhost:7095/api/chatrooms?chatRoomId=${id}`;
@@ -114,7 +137,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                     timeSinceSent,
                 };
                 setCurrentConversation((prev) => [...prev, newMessageWithSenderName]);
-                bottomRef.current?.scrollIntoView({ behavior: "smooth" }); // Scroll to bottom after receiving a new message
+                bottomRef.current?.scrollIntoView({behavior: "smooth"}); // Scroll to bottom after receiving a new message
             } catch (error) {
                 console.error("Error parsing WebSocket message:", error);
             }
@@ -225,7 +248,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
             await sendMessage(id, trimmedMessage);
 
             if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current.send(JSON.stringify({ content: trimmedMessage }));
+                ws.current.send(JSON.stringify({content: trimmedMessage}));
             }
 
             setNewMessage("");
@@ -251,10 +274,28 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
         return `${Math.floor(timeDifference / 86400)} day${Math.floor(timeDifference / 86400) === 1 ? "" : "s"} ago`;
     };
 
+    const handleInviteUser = async () => {
+        try {
+            await inviteToChatroom(id, selectedUsers.map(user => user.id));
+            setModalOpen(false);
+            window.location.reload();
+        } catch (error) {
+            console.error("Error adding user:", error);
+        }
+    }
+
     return (
         <div id="mainSelectedConversation">
-            <h1 id="selectedConversationTitle">{chatroomName}</h1>
-            <ul id="fullConversation" className="custom-scrollbar" style={{ listStyleType: "none", padding: 0 }}>
+            <div id={'conversationHeader'}>
+                <h1 id="selectedConversationTitle">
+                    {chatroom?.type === 'General' ? 'Group chat: ' : ''} {chatroomName}
+                </h1>
+                {chatroom?.type === 'General' && (
+                    <Button color={'primary'} variant={'contained'} onClick={() => setModalOpen(true)}>Invite
+                        user</Button>
+                )}
+            </div>
+            <ul id="fullConversation" className="custom-scrollbar" style={{listStyleType: "none", padding: 0}}>
                 {currentConversation.map((message, index) => (
                     <li
                         key={index}
@@ -266,8 +307,14 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                         {message.senderId === getUserId() ? (
                             <div className="singleMessageYou">
                                 <Tooltip title={message.senderName}>
-                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginLeft: '3px' }}>
-                                        <UserAvatar userId={message.senderId} size={20} style={{display:'flex', alignItems:'center'}}/>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        marginLeft: '3px'
+                                    }}>
+                                        <UserAvatar userId={message.senderId} size={20}
+                                                    style={{display: 'flex', alignItems: 'center'}}/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -277,8 +324,14 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                         ) : (
                             <div className="singleMessageThey">
                                 <Tooltip title={message.senderName}>
-                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '3px' }}>
-                                        <UserAvatar userId={message.senderId} size={20} style={{display:'flex', alignItems:'center'}}/>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        marginRight: '3px'
+                                    }}>
+                                        <UserAvatar userId={message.senderId} size={20}
+                                                    style={{display: 'flex', alignItems: 'center'}}/>
                                     </div>
                                 </Tooltip>
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
@@ -288,9 +341,9 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                         )}
                     </li>
                 ))}
-                <div ref={bottomRef} />
+                <div ref={bottomRef}/>
             </ul>
-            <div id="sendBox" style={{ display: "flex", alignItems: "center", marginTop: "1rem" }}>
+            <div id="sendBox" style={{display: "flex", alignItems: "center", marginTop: "1rem"}}>
                 <TextField
                     fullWidth
                     variant="outlined"
@@ -298,12 +351,56 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({ id }) => {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    inputProps={{ "aria-label": "Type a message" }}
+                    inputProps={{"aria-label": "Type a message"}}
                 />
                 <IconButton color="primary" onClick={handleSendMessage} aria-label="Send message">
-                    <SendIcon />
+                    <SendIcon/>
                 </IconButton>
             </div>
+            <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()}>
+                    <h2>Invite Users</h2>
+                    <Autocomplete
+                        options={otherUsers}
+                        getOptionLabel={(option) => option.name}
+                        onChange={handleAddUser}
+                        renderInput={(params) => <TextField {...params} label="Add Users" variant="outlined"/>}
+                    />
+                    <div>
+                        {selectedUsers.map((user) => (
+                            <Chip
+                                key={user.id}
+                                label={user.name}
+                                onDelete={() => handleDeleteUser(user)}
+                                style={{margin: '5px'}}
+                            />
+                        ))}
+                    </div>
+                    <Button variant="contained" color="primary" onClick={handleInviteUser}>
+                        Invite
+                    </Button>
+                </Box>
+            </Modal>
         </div>
     );
+};
+
+const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #FFF',
+    borderRadius: 8,
+    boxShadow: 24,
+    p: 4,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    '& > *': {
+        width: '100%',
+        margin: '10px 0',
+    },
 };

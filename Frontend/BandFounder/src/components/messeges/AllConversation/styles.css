@@ -1,4 +1,4 @@
-#mainChatroomsList{
+#mainChatroomsList {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -12,14 +12,14 @@
     overflow-y: auto;
 }
 
-#openConversationsList img{
+#openConversationsList img {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    margin:0;
+    margin: 0;
 }
 
-.singleConversationShortcut{
+.singleConversationShortcut {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -27,11 +27,19 @@
     padding: 5px;
 }
 
-.singleConversationShortcut:last-of-type{
+.singleConversationShortcut:last-of-type {
     border-bottom: none;
 }
 
-.singleConversationShortcut:hover{
+.singleConversationShortcut:hover {
     background-color: #3f3f3f;
     cursor: pointer;
+}
+
+#topOfMainChatoomList {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid white;
 }

@@ -3,6 +3,7 @@ import {ChatRoom, ChatRoomType} from "../types/ChatRoom";
 import {ChatRoomCreateDto} from "../types/ChatroomCreateDto";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {authorizedHeaders} from "../hooks/authentication";
+import {getUser} from "./account";
 
 export async function getMyChatrooms(): Promise<ChatRoom[]> {
     try {
@@ -95,6 +96,47 @@ export async function createDirectChatroom(accountId: string): Promise<ChatRoom>
     }
 }
 
+export async function createGroupChatroom(invitedAccountsUsernames: string[], name: string): Promise<ChatRoom> {
+    try {
+        const user = await getUser(invitedAccountsUsernames[0]);
+        const chatRoom: ChatRoomCreateDto = {
+            chatRoomType: 'General',
+            invitedAccountId: user.id,
+            name: name
+        };
+
+        const response = await fetch(`${API_URL}/chatrooms`, {
+            method: 'POST',
+            headers: authorizedHeaders(),
+            body: JSON.stringify(chatRoom)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw {status: response.status, message: errorData};
+        }
+
+        const chatroom = await response.json() as ChatRoom;
+        for (let i = 0; i < invitedAccountsUsernames.length; i++) {
+            const user = await getUser(invitedAccountsUsernames[i]);
+            const response = await fetch(`${API_URL}/chatrooms/${chatroom.id}/invite/${user.id}`, {
+                method: 'POST',
+                headers: authorizedHeaders(),
+            });
+            console.log(response);
+            if (!response.ok) {
+                const errorData = await response.text();
+                throw {status: response.status, message: errorData};
+            }
+        }
+
+        return chatroom;
+    } catch (e) {
+        console.error('Error creating chatroom:', e);
+        throw e;
+    }
+}
+
 export const leaveChatroom = async (chatRoomId: string): Promise<any> => {
     try {
         const response = await fetch(`${API_URL}/chatrooms/${chatRoomId}/leave`, {
@@ -105,5 +147,24 @@ export const leaveChatroom = async (chatRoomId: string): Promise<any> => {
     } catch (e) {
         mantineErrorNotification('Failed to leave chatroom');
         console.error('Error leaving chatroom:', e);
+    }
+}
+
+export const inviteToChatroom = async (chatRoomId: string, accountUsernames: string[]): Promise<any> => {
+    try {
+        for (let i = 0; i < accountUsernames.length; i++) {
+            const user = await getUser(accountUsernames[i]);
+            const response = await fetch(`${API_URL}/chatrooms/${chatRoomId}/invite/${user.id}`, {
+                method: 'POST',
+                headers: authorizedHeaders()
+            });
+            if (!response.ok) {
+                const errorData = await response.text();
+                throw {status: response.status, message: errorData};
+            }
+        }
+    } catch (e) {
+        mantineErrorNotification('Failed to invite to chatroom');
+        console.error('Error inviting to chatroom:', e);
     }
 }
