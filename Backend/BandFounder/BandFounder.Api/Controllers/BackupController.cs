@@ -106,6 +106,14 @@ public class BackupController : Controller
     {
         foreach (var accountBackup in accounts)
         {
+            var existingAccount = await _accountRepository.GetOneAsync(
+                a => a.Name == accountBackup.Name || a.Email == accountBackup.Email);
+            
+            if (existingAccount != null)
+            {
+                continue;
+            }
+            
             var id = Guid.NewGuid();
             
             var account = new Account
