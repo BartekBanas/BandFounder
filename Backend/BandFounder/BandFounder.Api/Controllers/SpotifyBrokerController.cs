@@ -9,24 +9,17 @@ namespace BandFounder.Api.Controllers;
 [Route("api")]
 public class SpotifyBrokerController : ControllerBase
 {
-    private readonly ISpotifyContentRetriever _spotifyContentRetriever;
     private readonly ISpotifyConnectionService _spotifyConnectionService;
-    private readonly ISpotifyTokenService _spotifyTokenService;
-    
     private readonly IAuthenticationService _authenticationService;
-    
+
     public SpotifyBrokerController(
-        ISpotifyContentRetriever spotifyContentRetriever,
         ISpotifyConnectionService spotifyConnectionService,
-        ISpotifyTokenService spotifyTokenService, 
         IAuthenticationService authenticationService)
     {
-        _spotifyContentRetriever = spotifyContentRetriever;
         _spotifyConnectionService = spotifyConnectionService;
-        _spotifyTokenService = spotifyTokenService;
         _authenticationService = authenticationService;
     }
-    
+
     [HttpGet("spotify/app/clientId")]
     public async Task<IActionResult> GetSpotifyAppCredentials()
     {
@@ -40,7 +33,9 @@ public class SpotifyBrokerController : ControllerBase
     [HttpPost("spotify/tokens")]
     public async Task<IActionResult> ConnectToSpotify([FromBody] SpotifyConnectionDto dto)
     {
-        await _spotifyConnectionService.LinkAccountToSpotify(dto);
+        var userId = _authenticationService.GetUserId();
+        
+        await _spotifyConnectionService.LinkAccountToSpotify(dto, userId);
 
         return Ok();
     }
@@ -50,7 +45,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpPost("spotify/tokens/manual")]
     public async Task<IActionResult> AddSpotifyTokens([FromBody] SpotifyTokensDto dto)
     {
-        await _spotifyConnectionService.AddSpotifyTokens(dto);
+        await _spotifyConnectionService.CreateSpotifyTokens(dto, _authenticationService.GetUserId());
 
         return Ok();
     }
@@ -61,7 +56,7 @@ public class SpotifyBrokerController : ControllerBase
     {
         var userId = _authenticationService.GetUserId();
 
-        var credentialsDto = await _spotifyTokenService.GetSpotifyTokens(userId);
+        var credentialsDto = await _spotifyConnectionService.GetSpotifyTokens(userId);
 
         return Ok(credentialsDto);
     }
@@ -70,7 +65,9 @@ public class SpotifyBrokerController : ControllerBase
     [HttpPost("spotify/update-artists")]
     public async Task<IActionResult> UpdateArtistsFromSpotify()
     {
-        var newlyAddedArtists = await _spotifyConnectionService.SaveRelevantArtists();
+        var userId = _authenticationService.GetUserId();
+        
+        var newlyAddedArtists = await _spotifyConnectionService.SaveRelevantArtists(userId);
 
         return Ok(newlyAddedArtists);
     }
@@ -79,7 +76,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpGet("accounts/{accountId:guid}/artists/spotify/top")]
     public async Task<IActionResult> GetUsersSpotifyTopArtists([FromRoute] Guid accountId)
     {
-        var artistDtoList = await _spotifyContentRetriever.GetTopArtistsAsync(accountId, 10);
+        var artistDtoList = await _spotifyConnectionService.GetTopArtistsAsync(accountId, 10);
         var artists = artistDtoList.Select(artist => artist.Name).ToList();
 
         return Ok(artists);
@@ -89,7 +86,7 @@ public class SpotifyBrokerController : ControllerBase
     [HttpGet("accounts/{accountId:guid}/artists/spotify/followed")]
     public async Task<IActionResult> GetUsersSpotifyFollowedArtists([FromRoute] Guid accountId)
     {
-        var artistDtoList = await _spotifyContentRetriever.GetFollowedArtistsAsync(accountId);
+        var artistDtoList = await _spotifyConnectionService.GetFollowedArtistsAsync(accountId);
         var artists = artistDtoList.Select(artist => artist.Name).ToList();
 
         return Ok(artists);
