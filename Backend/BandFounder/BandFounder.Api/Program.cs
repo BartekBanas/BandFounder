@@ -10,7 +10,6 @@ using BandFounder.Application.Services.Authorization.Requirements;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
-using BandFounder.Domain.Validation;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
@@ -53,7 +52,7 @@ var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConf
 services.AddJwtAuthentication(jwtConfig!);
 services.AddAuthorizationSwaggerGen();
 
-services.AddValidatorsFromAssembly(typeof(AssemblyMarker).Assembly);
+services.AddValidatorsFromAssembly(typeof(BandFounder.Domain.Validation.AssemblyMarker).Assembly);
 
 services.AddScoped<IJwtService, JwtService>();
 services.AddScoped<IAuthenticationService, AuthenticationService>();
