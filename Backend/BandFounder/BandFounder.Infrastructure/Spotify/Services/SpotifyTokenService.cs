@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using BandFounder.Domain.Entities;
+using BandFounder.Domain.Repositories;
 using BandFounder.Infrastructure.Errors;
 using BandFounder.Infrastructure.Spotify.Dto;
 

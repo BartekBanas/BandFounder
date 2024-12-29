@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
+using BandFounder.Api.WebSockets;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Authorization;
@@ -8,12 +9,13 @@ using BandFounder.Application.Services.Authorization.Handlers;
 using BandFounder.Application.Services.Authorization.Requirements;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
+using BandFounder.Domain.Repositories;
+using BandFounder.Domain.Validation;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using BandFounder.Api.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -51,7 +53,7 @@ var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConf
 services.AddJwtAuthentication(jwtConfig!);
 services.AddAuthorizationSwaggerGen();
 
-services.AddValidatorsFromAssembly(typeof(BandFounder.Application.Validation.AssemblyMarker).Assembly);
+services.AddValidatorsFromAssembly(typeof(AssemblyMarker).Assembly);
 
 services.AddScoped<IJwtService, JwtService>();
 services.AddScoped<IAuthenticationService, AuthenticationService>();

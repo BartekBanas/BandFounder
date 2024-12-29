@@ -1,12 +1,11 @@
 using System.Linq.Expressions;
-using BandFounder.Application.Error;
-using BandFounder.Application.Validation;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
-using BandFounder.Infrastructure.Errors;
+using BandFounder.Domain.Errors;
+using BandFounder.Domain.Repositories;
+using BandFounder.Domain.Validation;
 using NSubstitute;
 
-namespace Validators.Tests;
+namespace Domain.Tests;
 
 [TestFixture]
 public class AccountValidatorTests

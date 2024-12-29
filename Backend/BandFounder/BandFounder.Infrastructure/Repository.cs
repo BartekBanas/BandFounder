@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using BandFounder.Domain;
-using BandFounder.Infrastructure.Errors;
+using BandFounder.Domain.Errors;
+using BandFounder.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace BandFounder.Infrastructure;

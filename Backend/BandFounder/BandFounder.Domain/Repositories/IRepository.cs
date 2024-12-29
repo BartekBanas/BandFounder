@@ -1,7 +1,6 @@
 ﻿using System.Linq.Expressions;
-using BandFounder.Domain;
 
-namespace BandFounder.Infrastructure;
+namespace BandFounder.Domain.Repositories;
 
 public interface IRepository;
 

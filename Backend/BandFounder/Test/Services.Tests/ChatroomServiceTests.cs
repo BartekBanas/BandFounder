@@ -3,7 +3,7 @@ using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using NSubstitute;
 

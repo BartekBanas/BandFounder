@@ -4,7 +4,7 @@ using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Error;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 

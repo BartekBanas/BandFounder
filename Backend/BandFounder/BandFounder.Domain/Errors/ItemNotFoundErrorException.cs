@@ -1,6 +1,6 @@
-﻿namespace BandFounder.Infrastructure.Errors;
+﻿namespace BandFounder.Domain.Errors;
 
-public class ItemNotFoundErrorException : InfrastructureErrorException
+public class ItemNotFoundErrorException : DomainErrorException
 {
     public ItemNotFoundErrorException(string? message= "") : base(message)
     {

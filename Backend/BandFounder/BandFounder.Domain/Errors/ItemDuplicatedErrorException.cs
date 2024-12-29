@@ -1,6 +1,6 @@
-﻿namespace BandFounder.Infrastructure.Errors;
+﻿namespace BandFounder.Domain.Errors;
 
-public class ItemDuplicatedErrorException : InfrastructureErrorException
+public class ItemDuplicatedErrorException : DomainErrorException
 {
     public ItemDuplicatedErrorException(string? message) : base(message)
     {

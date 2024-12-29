@@ -3,7 +3,7 @@ using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Error;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using FluentValidation;
 
 namespace BandFounder.Application.Services;

@@ -1,6 +1,6 @@
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using NSubstitute;
 
 namespace Services.Tests;

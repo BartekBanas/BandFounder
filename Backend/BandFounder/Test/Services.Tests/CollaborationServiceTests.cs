@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using FluentValidation;
 using NSubstitute;
 

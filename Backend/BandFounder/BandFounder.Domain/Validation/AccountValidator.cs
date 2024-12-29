@@ -1,11 +1,10 @@
 ﻿using System.Text.RegularExpressions;
-using BandFounder.Application.Error;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
-using BandFounder.Infrastructure.Errors;
+using BandFounder.Domain.Errors;
+using BandFounder.Domain.Repositories;
 using FluentValidation;
 
-namespace BandFounder.Application.Validation;
+namespace BandFounder.Domain.Validation;
 
 public class AccountValidator : AbstractValidator<Account>
 {

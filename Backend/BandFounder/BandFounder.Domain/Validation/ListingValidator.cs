@@ -1,7 +1,7 @@
 using BandFounder.Domain.Entities;
 using FluentValidation;
 
-namespace BandFounder.Application.Validation;
+namespace BandFounder.Domain.Validation;
 
 public class ListingValidator : AbstractValidator<Listing>
 {
