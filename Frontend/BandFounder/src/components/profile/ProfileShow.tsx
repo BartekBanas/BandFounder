@@ -188,7 +188,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                 </ul>
             </div>
             <div className={'topGenres'} style={{display: 'flex'}}>
-                <p>Genres: </p>
+                <p>Top Genres: </p>
                 <ul>
                     {genres?.map((genre, index) => (
                         <li key={index}>{genre}</li>
