@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Accounts;
-using BandFounder.Application.Error;
+using BandFounder.Application.Exceptions;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
@@ -157,10 +157,10 @@ public class AccountService : IAccountService
                 account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
 
         if (foundAccount is null)
-            throw new ForbiddenError("Username of email is incorrect");
+            throw new ForbiddenException("Username of email is incorrect");
 
         if (!_hashingService.VerifyPassword(foundAccount, loginDto.Password))
-            throw new ForbiddenError("Password is incorrect");
+            throw new ForbiddenException("Password is incorrect");
 
         var claims = _authenticationService.GenerateClaimsIdentity(foundAccount);
 
@@ -209,7 +209,7 @@ public class AccountService : IAccountService
 
         if (originalAccount.Equals(updatedAccount))
         {
-            throw new BadRequestError("Updated account is indifferent to the original");
+            throw new BadRequestException("Updated account is indifferent to the original");
         }
 
         await _accountRepository.UpdateAsync(updatedAccount, accountId);
@@ -234,7 +234,7 @@ public class AccountService : IAccountService
         }
         catch (ArgumentException exception)
         {
-            throw new BadRequestError(exception.Message);
+            throw new BadRequestException(exception.Message);
         }
         
         if (account.MusicianRoles.Any(currentRole => currentRole.Name == musicianRole.Name))
@@ -280,7 +280,7 @@ public class AccountService : IAccountService
         
         if (musicianRole == null)
         {
-            throw new NotFoundError("Role not found.");
+            throw new NotFoundException("Role not found.");
         }
         
         account.MusicianRoles.Remove(musicianRole);
@@ -308,12 +308,12 @@ public class AccountService : IAccountService
         var account = await GetDetailedAccount(accountId);
         if (account.Id != _authenticationService.GetUserId())
         {
-            throw new ForbiddenError("You cannot add artists to this account");
+            throw new ForbiddenException("You cannot add artists to this account");
         }
 
         if (account.Artists.Select(artist => artist.Name).Contains(artistName))
         {
-            throw new BadRequestError($"Artist {artistName} is already linked to this account");
+            throw new BadRequestException($"Artist {artistName} is already linked to this account");
         }
         
         Artist artist;
@@ -323,7 +323,7 @@ public class AccountService : IAccountService
         }
         catch (ArgumentException exception)
         {
-            throw new BadRequestError(exception.Message);
+            throw new BadRequestException(exception.Message);
         }
         
         account.Artists.Add(artist);
@@ -335,7 +335,7 @@ public class AccountService : IAccountService
     {
         if (accountId != _authenticationService.GetUserId())
         {
-            throw new ForbiddenError("You cannot update profile picture of another user");
+            throw new ForbiddenException("You cannot update profile picture of another user");
         }
         
         var account = await _accountRepository.GetOneRequiredAsync(
@@ -371,7 +371,7 @@ public class AccountService : IAccountService
         
         if (account.ProfilePicture == null || account.ProfilePicture.ImageData.Length == 0)
         {
-            throw new NotFoundError("Profile picture not found");
+            throw new NotFoundException("Profile picture not found");
         }
 
         return account.ProfilePicture;

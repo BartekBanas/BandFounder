@@ -1,6 +1,6 @@
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Listings;
-using BandFounder.Application.Error;
+using BandFounder.Application.Exceptions;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +27,7 @@ public class ListingController : Controller
 
         if (listing is null)
         {
-            throw new NotFoundError("Listing not found");
+            throw new NotFoundException("Listing not found");
         }
         
         return Ok(listing.ToDto());

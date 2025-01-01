@@ -1,7 +1,7 @@
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using BandFounder.Infrastructure.Spotify.Dto;
-using BandFounder.Infrastructure.Spotify.Errors;
+using BandFounder.Infrastructure.Spotify.Exceptions;
 using BandFounder.Infrastructure.Spotify.Services;
 
 namespace BandFounder.Application.Services;
@@ -70,7 +70,7 @@ public class SpotifyConnectionService(
         var spotifyTokens = await spotifyTokensRepository.GetOneAsync(userId);
         if (spotifyTokens is null)
         {
-            throw new SpotifyAccountNotLinkedError();
+            throw new SpotifyAccountNotLinkedException();
         }
 
         return spotifyTokens.ToDto();
@@ -81,7 +81,7 @@ public class SpotifyConnectionService(
         var spotifyTokens = await spotifyTokensRepository.GetOneAsync(userId);
         if (spotifyTokens is null)
         {
-            throw new SpotifyAccountNotLinkedError();
+            throw new SpotifyAccountNotLinkedException();
         }
 
         // Check if the stored token is still valid

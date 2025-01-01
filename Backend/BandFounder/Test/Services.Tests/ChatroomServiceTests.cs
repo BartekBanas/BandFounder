@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using BandFounder.Application.Dtos.Chatrooms;
-using BandFounder.Application.Error;
+using BandFounder.Application.Exceptions;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
@@ -83,7 +83,7 @@ public class ChatroomServiceTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<BadRequestError>(async () => await _chatroomService.CreateChatroom(account, chatroomDto));
+        Assert.ThrowsAsync<BadRequestException>(async () => await _chatroomService.CreateChatroom(account, chatroomDto));
     }
     
     [Test]
@@ -127,7 +127,7 @@ public class ChatroomServiceTests
         _authenticationServiceMock.GetUserId().Returns(userId);
 
         // Act & Assert
-        Assert.ThrowsAsync<BadRequestError>(async () =>
+        Assert.ThrowsAsync<BadRequestException>(async () =>
             await _chatroomService.InviteToChatroom(chatroomId, userId));
     }
 }

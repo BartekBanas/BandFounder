@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 using BandFounder.Domain;
-using BandFounder.Domain.Errors;
+using BandFounder.Domain.Exceptions;
 using BandFounder.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -126,7 +126,7 @@ public class Repository<TEntity, TDbContext> : IRepository<TEntity>
             query = query.Include(includeProperty);
         }
 
-        return await query.FirstOrDefaultAsync() ?? throw new ItemNotFoundErrorException();
+        return await query.FirstOrDefaultAsync() ?? throw new ItemNotFoundException();
     }
 
     public virtual async Task<TEntity> GetOneRequiredAsync(object key, params string[] includeProperties)
@@ -135,7 +135,7 @@ public class Repository<TEntity, TDbContext> : IRepository<TEntity>
 
         if (entity == null)
         {
-            throw new ItemNotFoundErrorException();
+            throw new ItemNotFoundException();
         }
 
         foreach (var includeProperty in includeProperties)
@@ -161,7 +161,7 @@ public class Repository<TEntity, TDbContext> : IRepository<TEntity>
 
         if (entity == null)
         {
-            throw new ItemNotFoundErrorException();
+            throw new ItemNotFoundException();
         }
 
         return entity;
@@ -172,7 +172,7 @@ public class Repository<TEntity, TDbContext> : IRepository<TEntity>
         var entity = await GetOneAsync(keys);
 
         if (entity == null)
-            throw new ItemNotFoundErrorException();
+            throw new ItemNotFoundException();
 
         return entity;
     }

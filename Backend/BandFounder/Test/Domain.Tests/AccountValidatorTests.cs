@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using BandFounder.Domain.Entities;
-using BandFounder.Domain.Errors;
+using BandFounder.Domain.Exceptions;
 using BandFounder.Domain.Repositories;
 using BandFounder.Domain.Validation;
 using NSubstitute;
@@ -138,7 +138,7 @@ public class AccountValidatorTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<ItemDuplicatedErrorException>(async () => await _validator.ValidateAsync(account));
+        Assert.ThrowsAsync<ItemDuplicatedException>(async () => await _validator.ValidateAsync(account));
     }
 
     [Test]
@@ -166,7 +166,7 @@ public class AccountValidatorTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<ItemDuplicatedErrorException>(async () => await _validator.ValidateAsync(account));
+        Assert.ThrowsAsync<ItemDuplicatedException>(async () => await _validator.ValidateAsync(account));
     }
 
     [TestCase("ab")]

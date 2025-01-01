@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using BandFounder.Infrastructure.Spotify.Dto;
-using BandFounder.Infrastructure.Spotify.Errors;
+using BandFounder.Infrastructure.Spotify.Exceptions;
 
 namespace BandFounder.Infrastructure.Spotify.Services;
 

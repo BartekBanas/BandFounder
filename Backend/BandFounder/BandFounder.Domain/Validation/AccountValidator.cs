@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using BandFounder.Domain.Entities;
-using BandFounder.Domain.Errors;
+using BandFounder.Domain.Exceptions;
 using BandFounder.Domain.Repositories;
 using FluentValidation;
 
@@ -29,7 +29,7 @@ public class AccountValidator : AbstractValidator<Account>
 
         if (matchingAccounts.Any())
         {
-            throw new ItemDuplicatedErrorException("Account with that username already exists");
+            throw new ItemDuplicatedException("Account with that username already exists");
         }
     }
     
@@ -59,7 +59,7 @@ public class AccountValidator : AbstractValidator<Account>
 
         if (matchingAccounts.Any())
         {
-            throw new ItemDuplicatedErrorException("Account with that email address already exists");
+            throw new ItemDuplicatedException("Account with that email address already exists");
         }
     }
 }
