@@ -89,7 +89,7 @@ public class MusicTasteService : IMusicTasteService
         return artistSimilarityScore;
     }
 
-    public virtual Dictionary<string, int> GetWagedGenres(Account account)
+    public Dictionary<string, int> GetWagedGenres(Account account)
     {
         var wagedGenres = new Dictionary<string, int>();
 
