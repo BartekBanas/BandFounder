@@ -1,7 +1,7 @@
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
-using BandFounder.Infrastructure.Errors;
 using BandFounder.Infrastructure.Spotify.Dto;
+using BandFounder.Infrastructure.Spotify.Errors;
 using BandFounder.Infrastructure.Spotify.Services;
 
 namespace BandFounder.Application.Services;

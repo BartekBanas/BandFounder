@@ -15,8 +15,4 @@
       <ProjectReference Include="..\BandFounder.Domain\BandFounder.Domain.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Spotify\" />
-    </ItemGroup>
-
 </Project>

@@ -1,5 +1,5 @@
 ﻿using BandFounder.Domain.Errors;
-using BandFounder.Infrastructure.Errors;
+using BandFounder.Infrastructure.Spotify.Errors;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
