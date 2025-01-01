@@ -1,10 +1,9 @@
-﻿using BandFounder.Domain.Errors;
+﻿using BandFounder.Application.Error;
+using BandFounder.Domain.Errors;
 using BandFounder.Infrastructure.Spotify.Errors;
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
-namespace BandFounder.Application.Error;
+namespace BandFounder.Api.Middlewares;
 
 public class ErrorHandlingMiddleware : IMiddleware
 {

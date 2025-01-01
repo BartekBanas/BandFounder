@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
+using BandFounder.Api.Middlewares;
 using BandFounder.Api.WebSockets;
-using BandFounder.Application.Error;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Authorization;
 using BandFounder.Application.Services.Authorization.Handlers;
