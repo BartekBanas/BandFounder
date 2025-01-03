@@ -1,9 +1,9 @@
 ﻿using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Chatrooms;
-using BandFounder.Application.Error;
+using BandFounder.Application.Exceptions;
 using BandFounder.Application.Services.Authorization;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
 
 namespace BandFounder.Application.Services;
@@ -96,7 +96,7 @@ public class ChatroomService : IChatroomService
 
                 if (chatroom.Members.Count > 1)
                 {
-                    throw new ForbiddenError("You cannot delete private conversations");
+                    throw new ForbiddenException("You cannot delete private conversations");
                 }
 
                 break;
@@ -112,7 +112,7 @@ public class ChatroomService : IChatroomService
         var userClaims = _authenticationService.GetUserClaims();
         if (invitedUserId == _authenticationService.GetUserId())
         {
-            throw new BadRequestError("You cannot invite yourself to a chatroom");
+            throw new BadRequestException("You cannot invite yourself to a chatroom");
         }
         
         var chatroom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == chatroomId,
@@ -122,12 +122,12 @@ public class ChatroomService : IChatroomService
 
         if (chatroom.ChatRoomType is ChatRoomType.Direct)
         {
-            throw new BadRequestError("You cannot invite anyone to a direct chatroom");
+            throw new BadRequestException("You cannot invite anyone to a direct chatroom");
         }
 
         if (chatroom.Members.Any(account => account.Id == invitedUserId))
         {
-            throw new BadRequestError("Selected user is already a member of this chatroom");
+            throw new BadRequestException("Selected user is already a member of this chatroom");
         }
 
         var invitedAccount = await _accountRepository.GetOneRequiredAsync(invitedUserId);
@@ -183,7 +183,7 @@ public class ChatroomService : IChatroomService
         {
             ChatRoomType.General => await CreateGeneralChatroom(issuer, chatroomCreateDto),
             ChatRoomType.Direct => await CreateDirectChatroom(issuer, chatroomCreateDto),
-            _ => throw new BadRequestError("Invalid chatroom type")
+            _ => throw new BadRequestException("Invalid chatroom type")
         };
     }
 
@@ -191,7 +191,7 @@ public class ChatroomService : IChatroomService
     {
         if (string.IsNullOrEmpty(chatroomCreateDto.Name))
         {
-            throw new BadRequestError("Chatroom name is required");
+            throw new BadRequestException("Chatroom name is required");
         }
 
         var chatroom = new Chatroom
@@ -215,7 +215,7 @@ public class ChatroomService : IChatroomService
         }
         catch (Exception e)
         {
-            throw new BadRequestError("Invited account is invalid");
+            throw new BadRequestException("Invited account is invalid");
         }
 
         var existingChatrooms = await _chatRoomRepository.GetOneAsync(
@@ -225,7 +225,7 @@ public class ChatroomService : IChatroomService
 
         if (existingChatrooms is not null)
         {
-            throw new ConflictError("You already have an existing conversation with this user");
+            throw new ConflictException("You already have an existing conversation with this user");
         }
 
         var chatroom = new Chatroom

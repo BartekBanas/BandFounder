@@ -1,6 +1,8 @@
-﻿namespace BandFounder.Infrastructure.Errors;
+﻿using BandFounder.Infrastructure.Errors;
 
-public class FailedToFetchSpotifyTokenException : InfrastructureErrorException
+namespace BandFounder.Infrastructure.Spotify.Exceptions;
+
+public class FailedToFetchSpotifyTokenException : InfrastructureException
 {
     public FailedToFetchSpotifyTokenException(string? message= "") : base(message)
     {

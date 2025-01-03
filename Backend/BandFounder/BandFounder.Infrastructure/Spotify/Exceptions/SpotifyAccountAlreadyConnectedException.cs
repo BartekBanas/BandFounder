@@ -1,6 +1,8 @@
-namespace BandFounder.Infrastructure.Errors;
+using BandFounder.Infrastructure.Errors;
 
-public class SpotifyAccountAlreadyConnectedException : InfrastructureErrorException
+namespace BandFounder.Infrastructure.Spotify.Exceptions;
+
+public class SpotifyAccountAlreadyConnectedException : InfrastructureException
 {
     private const string DefaultMessage = "This account is already connected to a Spotify account.";
 

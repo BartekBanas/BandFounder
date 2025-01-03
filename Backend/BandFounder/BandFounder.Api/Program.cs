@@ -1,19 +1,20 @@
 using System.Text.Json.Serialization;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
-using BandFounder.Application.Error;
+using BandFounder.Api.Middlewares;
+using BandFounder.Api.WebSockets;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Authorization;
 using BandFounder.Application.Services.Authorization.Handlers;
 using BandFounder.Application.Services.Authorization.Requirements;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
+using BandFounder.Domain.Repositories;
 using BandFounder.Infrastructure;
 using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using BandFounder.Api.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -51,7 +52,7 @@ var jwtConfig = configuration.GetRequiredSection("JwtConfiguration").Get<JwtConf
 services.AddJwtAuthentication(jwtConfig!);
 services.AddAuthorizationSwaggerGen();
 
-services.AddValidatorsFromAssembly(typeof(BandFounder.Application.Validation.AssemblyMarker).Assembly);
+services.AddValidatorsFromAssembly(typeof(BandFounder.Domain.Validation.AssemblyMarker).Assembly);
 
 services.AddScoped<IJwtService, JwtService>();
 services.AddScoped<IAuthenticationService, AuthenticationService>();
@@ -73,9 +74,8 @@ services.AddScoped<IHashingService, HashingService>();
 services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<IMessageService, MessageService>();
 services.AddScoped<IChatroomService, ChatroomService>();
-services.AddScoped<ISpotifyTokenService, SpotifyTokenService>();
-services.AddScoped<ISpotifyContentRetriever, SpotifyContentRetriever>();
 services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
+services.AddScoped<ISpotifyClient, SpotifyClient>();
 services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 services.AddScoped<IContentService, ContentService>();

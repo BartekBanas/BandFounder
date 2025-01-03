@@ -3,7 +3,7 @@ using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;

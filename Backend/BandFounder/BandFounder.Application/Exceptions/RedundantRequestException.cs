@@ -1,4 +1,4 @@
-namespace BandFounder.Application.Error;
+namespace BandFounder.Application.Exceptions;
 
 public class RedundantRequestException : Exception
 {

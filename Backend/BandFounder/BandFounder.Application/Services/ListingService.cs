@@ -1,9 +1,9 @@
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
-using BandFounder.Application.Error;
+using BandFounder.Application.Exceptions;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 using FluentValidation;
 
 namespace BandFounder.Application.Services;
@@ -141,7 +141,7 @@ public class ListingService : IListingService
         }
         catch (Exception e)
         {
-            throw new NotFoundError("Could not find listing");
+            throw new NotFoundException("Could not find listing");
         }
         
         var commonArtists = await _musicTasteService.GetCommonArtists(userId, listing.OwnerId);
@@ -175,7 +175,7 @@ public class ListingService : IListingService
             }
             catch (Exception e)
             {
-                throw new BadRequestError(e.Message);
+                throw new BadRequestException(e.Message);
             }
 
             var musicianSlot = new MusicianSlot
@@ -208,7 +208,7 @@ public class ListingService : IListingService
 
         if (CurrentUserId != listing.OwnerId)
         {
-            throw new ForbiddenError("You do not have access to this music project listing");
+            throw new ForbiddenException("You do not have access to this music project listing");
         }
         
         musicianSlot.Status = slotStatus;
@@ -236,7 +236,7 @@ public class ListingService : IListingService
 
         if (listing.OwnerId != CurrentUserId)
         {
-            throw new ForbiddenError("You may only delete your own listings.");
+            throw new ForbiddenException("You may only delete your own listings.");
         }
         
         await _listingRepository.DeleteOneAsync(listing.Id);
@@ -248,12 +248,12 @@ public class ListingService : IListingService
         var listing = await GetListingAsync(listingId);
         if (listing is null)
         {
-            throw new NotFoundError("Listing not found");
+            throw new NotFoundException("Listing not found");
         }
         
         if (listing.OwnerId != CurrentUserId)
         {
-            throw new ForbiddenError("You cannot edit this listing");
+            throw new ForbiddenException("You cannot edit this listing");
         }
 
         // Update basic listing details

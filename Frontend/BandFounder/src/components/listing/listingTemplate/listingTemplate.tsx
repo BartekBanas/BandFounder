@@ -13,13 +13,13 @@ import {
     IconButton,
     Autocomplete
 } from '@mui/material';
-import Cookies from "universal-cookie";
 import CloseIcon from "@mui/icons-material/Close";
 import {ListingCreateDto} from "../../../types/ListingCreateDto";
 import {getUser} from "../../../api/account";
 import {postListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import ProfilePicture from "../../profile/ProfilePicture";
+import {getUserId} from "../../../hooks/authentication";
 
 interface ListingTemplateProps {
 }
@@ -37,7 +37,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const userId = new Cookies().get('user_id');
+            const userId = getUserId();
             const userData = await getUser(userId);
             setUser(userData);
         };

@@ -72,9 +72,10 @@ const privateRoutes = [{
 }]
 
 export const Routing: FC = function () {
-    const isAuthorized = useIsAuthenticated();
+    const isAuthenticated = useIsAuthenticated();
     let routes;
-    if (isAuthorized) {
+
+    if (isAuthenticated) {
         routes = privateRoutes;
     } else {
         routes = publicRoutes;

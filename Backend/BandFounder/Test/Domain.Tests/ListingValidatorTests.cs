@@ -1,8 +1,8 @@
-using BandFounder.Application.Validation;
 using BandFounder.Domain.Entities;
+using BandFounder.Domain.Validation;
 using FluentValidation.TestHelper;
 
-namespace Validators.Tests;
+namespace Domain.Tests;
 
 [TestFixture]
 public class ListingValidatorTests

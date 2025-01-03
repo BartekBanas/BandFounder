@@ -1,7 +1,7 @@
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Metadata;
 using BandFounder.Domain.Entities;
-using BandFounder.Infrastructure;
+using BandFounder.Domain.Repositories;
 
 namespace BandFounder.Application.Services;
 

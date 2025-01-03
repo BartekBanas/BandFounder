@@ -1,9 +1,9 @@
-﻿using BandFounder.Infrastructure.Errors;
+﻿using BandFounder.Application.Exceptions;
+using BandFounder.Domain.Exceptions;
+using BandFounder.Infrastructure.Spotify.Exceptions;
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
-namespace BandFounder.Application.Error;
+namespace BandFounder.Api.Middlewares;
 
 public class ErrorHandlingMiddleware : IMiddleware
 {
@@ -25,7 +25,7 @@ public class ErrorHandlingMiddleware : IMiddleware
             var validationFailure = ex.Errors.FirstOrDefault();
             await HandleErrorAsync(context, StatusCodes.Status400BadRequest, validationFailure!.ErrorMessage);
         }
-        catch (Exception ex) when (ex is BadRequestError or CustomValidationException)
+        catch (Exception ex) when (ex is BadRequestException or CustomValidationException)
         {
             await HandleErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
@@ -33,15 +33,15 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await HandleErrorAsync(context, StatusCodes.Status401Unauthorized, ex.Message);
         }
-        catch (Exception ex) when (ex is ForbiddenError)
+        catch (Exception ex) when (ex is ForbiddenException)
         {
             await HandleErrorAsync(context, StatusCodes.Status403Forbidden, ex.Message);
         }
-        catch (Exception ex) when (ex is ItemNotFoundErrorException or NotFoundError or SpotifyAccountNotLinkedError)
+        catch (Exception ex) when (ex is ItemNotFoundException or NotFoundException or SpotifyAccountNotLinkedException)
         {
             await HandleErrorAsync(context, StatusCodes.Status404NotFound, ex.Message);
         }
-        catch (Exception ex) when (ex is ItemDuplicatedErrorException or ConflictError or SpotifyAccountAlreadyConnectedException)
+        catch (Exception ex) when (ex is ItemDuplicatedException or ConflictException or SpotifyAccountAlreadyConnectedException)
         {
             await HandleErrorAsync(context, StatusCodes.Status409Conflict, ex.Message);
         }
