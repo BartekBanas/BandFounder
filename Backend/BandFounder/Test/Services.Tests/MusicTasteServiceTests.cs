@@ -16,27 +16,36 @@ public class MusicTasteServiceTests
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
 
-        var user1Genres = new Dictionary<string, int>
-        {
-            { "Rock", 3 },
-            { "Jazz", 5 },
-            { "Pop", 2 }
-        };
-
-        var user2Genres = new Dictionary<string, int>
-        {
-            { "Rock", 5 },
-            { "Jazz", 4 },
-            { "Classical", 3 }
-        };
-
         var user1 = new Account
         {
             Id = requesterId,
             Name = null,
             PasswordHash = null,
             Email = null,
-            DateCreated = default
+            DateCreated = default,
+            Artists =
+            {
+                new Artist
+                {
+                    Id = "Artist1",
+                    Name = "Artist1",
+                    Genres =
+                    [
+                        new Genre() { Name = "Rock" },
+                        new Genre() { Name = "Jazz" }
+                    ]
+                },
+                new Artist
+                {
+                    Id = "Artist2",
+                    Name = "Artist2",
+                    Genres =
+                    [
+                        new Genre() { Name = "Jazz" },
+                        new Genre() { Name = "Blues" }
+                    ]
+                }
+            }
         };
         var user2 = new Account
         {
@@ -44,19 +53,35 @@ public class MusicTasteServiceTests
             Name = null,
             PasswordHash = null,
             Email = null,
-            DateCreated = default
+            DateCreated = default,
+            Artists =
+            [
+                new Artist()
+                {
+                    Id = "Artist3",
+                    Name = "Artist3",
+                    Genres =
+                    [
+                        new Genre() { Name = "Jazz" },
+                        new Genre() { Name = "Rock" }
+                    ]
+                },
+
+                new Artist()
+                {
+                    Id = "Artist4",
+                    Name = "Artist4",
+                    Genres =
+                    [
+                        new Genre() { Name = "Classical" },
+                        new Genre() { Name = "Jazz" }
+                    ]
+                }
+            ]
         };
 
         accountService.GetDetailedAccount(requesterId).Returns(user1);
         accountService.GetDetailedAccount(targetUserId).Returns(user2);
-
-        musicTasteService.When(x => x.GetWagedGenres(user1))
-            .DoNotCallBase();
-        musicTasteService.GetWagedGenres(user1).Returns(user1Genres);
-
-        musicTasteService.When(x => x.GetWagedGenres(user2))
-            .DoNotCallBase();
-        musicTasteService.GetWagedGenres(user2).Returns(user2Genres);
 
         // Act
         var result = await musicTasteService.GetCommonGenres(requesterId, targetUserId);
