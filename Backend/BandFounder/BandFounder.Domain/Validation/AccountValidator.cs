@@ -17,12 +17,12 @@ public class AccountValidator : AbstractValidator<Account>
         RuleFor(account => account.Email).EmailAddress().NotEmpty();
         RuleFor(account => account.Name).Length(3, 32).NotEmpty();
         RuleFor(account => account.PasswordHash).NotEmpty();
-        RuleFor(account => account).CustomAsync(ValidateUniqueName);
+        RuleFor(account => account).CustomAsync(ValidateUniqueUsername);
         RuleFor(account => account).CustomAsync(ValidateUsername);
         RuleFor(account => account).CustomAsync(ValidateUniqueEmail);
     }
     
-    private async Task ValidateUniqueName(Account account, ValidationContext<Account> context, CancellationToken token)
+    private async Task ValidateUniqueUsername(Account account, ValidationContext<Account> context, CancellationToken token)
     {
         var matchingAccounts = await _accountRepository.GetAsync
             (existingAccount => existingAccount.Name.ToLower() == account.Name.ToLower());
