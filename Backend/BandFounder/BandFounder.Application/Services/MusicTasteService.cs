@@ -46,6 +46,25 @@ public class MusicTasteService : IMusicTasteService
         return commonGenres;
     }
 
+    public Dictionary<string, int> GetWagedGenres(Account account)
+    {
+        var wagedGenres = new Dictionary<string, int>();
+
+        foreach (var genre in account.Artists.SelectMany(artist => artist.Genres))
+        {
+            if (!wagedGenres.TryAdd(genre.Name, 1))
+            {
+                wagedGenres[genre.Name]++;
+            }
+        }
+
+        var sortedWagedGenres = wagedGenres
+            .OrderByDescending(genre => genre.Value)
+            .ToDictionary(genre => genre.Key, genre => genre.Value);
+
+        return sortedWagedGenres;
+    }
+
     public async Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId)
     {
         var user1 = await _accountService.GetDetailedAccount(requesterId);
@@ -87,24 +106,5 @@ public class MusicTasteService : IMusicTasteService
         var artistSimilarityScore = commonArtists * 3;
 
         return artistSimilarityScore;
-    }
-
-    public Dictionary<string, int> GetWagedGenres(Account account)
-    {
-        var wagedGenres = new Dictionary<string, int>();
-
-        foreach (var genre in account.Artists.SelectMany(artist => artist.Genres))
-        {
-            if (!wagedGenres.TryAdd(genre.Name, 1))
-            {
-                wagedGenres[genre.Name]++;
-            }
-        }
-
-        var sortedWagedGenres = wagedGenres
-            .OrderByDescending(genre => genre.Value)
-            .ToDictionary(genre => genre.Key, genre => genre.Value);
-
-        return sortedWagedGenres;
     }
 }
