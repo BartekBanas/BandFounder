@@ -35,7 +35,7 @@ public class SpotifyConnectionService(
         {
             AccessToken = tokensResponse.AccessToken,
             RefreshToken = tokensResponse.RefreshToken,
-            ExpirationDate = DateTime.UtcNow.AddSeconds(tokensResponse.ExpiresIn - 60)
+            ExpirationDate = DateTime.UtcNow.AddSeconds(tokensResponse.ExpiresIn - 10)
         };
         
         await CreateSpotifyTokens(tokensDto, userId);
