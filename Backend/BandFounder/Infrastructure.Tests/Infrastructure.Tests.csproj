@@ -22,4 +22,8 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\BandFounder.Infrastructure\BandFounder.Infrastructure.csproj" />
+    </ItemGroup>
+
 </Project>
