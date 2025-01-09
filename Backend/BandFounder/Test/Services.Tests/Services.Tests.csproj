@@ -23,23 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Update="spotifyTopArtistsResponse.json">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="spotifyTopArtistsResponse.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="spotifyFollowedArtistsResponse.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\..\BandFounder.Application\BandFounder.Application.csproj" />
     </ItemGroup>
 

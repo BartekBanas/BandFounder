@@ -26,4 +26,13 @@
       <ProjectReference Include="..\BandFounder.Infrastructure\BandFounder.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="spotifyFollowedArtistsResponse.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="spotifyTopArtistsResponse.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
