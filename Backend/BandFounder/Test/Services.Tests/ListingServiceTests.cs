@@ -120,7 +120,6 @@ public class ListingServiceTests
         // Arrange
         const string roleName = "Guitarist";
         var userId = Guid.NewGuid();
-        var roleId = Guid.NewGuid();
 
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();

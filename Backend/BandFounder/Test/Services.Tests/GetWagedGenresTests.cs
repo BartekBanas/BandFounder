@@ -82,10 +82,13 @@ public class GetWagedGenresTests
         var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
-        Assert.That(result.Count, Is.EqualTo(3));  // Expecting 3 genres: Rock, Pop, Jazz
-        Assert.That(result["Rock"], Is.EqualTo(2));
-        Assert.That(result["Pop"], Is.EqualTo(1));
-        Assert.That(result["Jazz"], Is.EqualTo(1));
+        Assert.That(result, Has.Count.EqualTo(3));  // Expecting 3 genres: Rock, Pop, Jazz
+        Assert.Multiple(() =>
+        {
+            Assert.That(result["Rock"], Is.EqualTo(2));
+            Assert.That(result["Pop"], Is.EqualTo(1));
+            Assert.That(result["Jazz"], Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -110,7 +113,7 @@ public class GetWagedGenresTests
         var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
-        Assert.That(result.Count, Is.EqualTo(0));  // No genres
+        Assert.That(result, Is.Empty);  // No genres
     }
     
     [Test]
@@ -156,7 +159,7 @@ public class GetWagedGenresTests
             PasswordHash = null,
             Email = null
         };
-    
+        
         _authenticationServiceMock.GetUserId().Returns(userId);
         _accountRepositoryMock.GetOneRequiredAsync(
             userId, Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
@@ -207,8 +210,8 @@ public class GetWagedGenresTests
         var result = await _contentServiceMock.GetWagedGenres(userId);
 
         // Assert
-        Assert.AreEqual(1, result.Count);
-        Assert.AreEqual(1, result["Rock"]);
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result["Rock"], Is.EqualTo(1));
     }
 
     [Test]
