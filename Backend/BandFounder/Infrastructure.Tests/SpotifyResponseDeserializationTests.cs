@@ -1,7 +1,7 @@
 using System.Text.Json;
 using BandFounder.Infrastructure.Spotify.Dto;
 
-namespace Services.Tests;
+namespace Infrastructure.Tests;
 
 public class SpotifyResponseDeserializationTests
 {
