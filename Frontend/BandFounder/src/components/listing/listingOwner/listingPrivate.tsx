@@ -16,7 +16,7 @@ import {
     IconButton,
     Autocomplete
 } from "@mui/material";
-import {ListingCreateDto} from "../../../types/ListingCreateDto";
+import {ListingCreate} from "../../../types/ListingCreate";
 import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
 import {getUser} from "../../../api/account";
@@ -125,7 +125,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
 
     const handleUpdateListing = async () => {
         try {
-            const updatedListing: ListingCreateDto = {
+            const updatedListing: ListingCreate = {
                 name: listingName,
                 type: listingType,
                 genre: listingGenre,

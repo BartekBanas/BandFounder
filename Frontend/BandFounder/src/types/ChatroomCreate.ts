@@ -1,4 +1,4 @@
-export interface ChatRoomCreateDto {
+export interface ChatroomCreate {
     chatRoomType: string;
     name?: string;
     invitedAccountId: string;

@@ -1,4 +1,4 @@
-import {MusicianSlotDto} from "./MusicianSlotsDto";
+import {MusicianSlot} from "./MusicianSlot";
 import {Account} from "./Account";
 
 export interface Listing {
@@ -8,7 +8,7 @@ export interface Listing {
     genre: string;
     type: ListingType;
     description: string;
-    musicianSlots: MusicianSlotDto[];
+    musicianSlots: MusicianSlot[];
     owner: Account;
 }
 

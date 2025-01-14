@@ -4,7 +4,7 @@ export interface Account {
     email: string;
 }
 
-export interface CreateAccountDto {
+export interface CreateAccount {
     Name: string;
     Password: string;
     Email: string;

@@ -1,6 +1,6 @@
 import {API_URL} from "../config";
 import {ChatRoom, ChatRoomType} from "../types/ChatRoom";
-import {ChatRoomCreateDto} from "../types/ChatroomCreateDto";
+import {ChatroomCreate} from "../types/ChatroomCreate";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {authorizedHeaders} from "../hooks/authentication";
 
@@ -72,7 +72,7 @@ export async function getDirectChatroomWithUser(accountId: string): Promise<Chat
 
 export async function createDirectChatroom(accountId: string): Promise<ChatRoom> {
     try {
-        const chatRoom: ChatRoomCreateDto = {
+        const chatRoom: ChatroomCreate = {
             chatRoomType: 'Direct',
             invitedAccountId: accountId
         };

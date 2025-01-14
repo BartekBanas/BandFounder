@@ -14,7 +14,7 @@ import {
     Autocomplete
 } from '@mui/material';
 import CloseIcon from "@mui/icons-material/Close";
-import {ListingCreateDto} from "../../../types/ListingCreateDto";
+import {ListingCreate} from "../../../types/ListingCreate";
 import {getUser} from "../../../api/account";
 import {postListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
@@ -115,7 +115,7 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
 
     const handlePostListing = async () => {
         try {
-            const createdListing: ListingCreateDto = {
+            const createdListing: ListingCreate = {
                 name: listingName,
                 type: listingType,
                 genre: listingGenre,

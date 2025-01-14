@@ -2,8 +2,8 @@ import {API_URL} from "../config";
 import {authorizedHeaders} from "../hooks/authentication";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {commonTaste} from "../types/CommonTaste";
-import {ChatroomDto} from "../types/chatroomDto";
-import {ListingCreateDto} from "../types/ListingCreateDto";
+import {ChatRoom} from "../types/ChatRoom";
+import {ListingCreate} from "../types/ListingCreate";
 import {Listing, ListingFeedFilters, ListingsFeedDto} from "../types/Listing";
 
 export async function getCommonTaste(listingId: string): Promise<commonTaste> {
@@ -21,7 +21,7 @@ export async function getCommonTaste(listingId: string): Promise<commonTaste> {
     return artistsAndGenres;
 }
 
-export async function contactListingOwner(listingId: string): Promise<ChatroomDto | undefined> {
+export async function contactListingOwner(listingId: string): Promise<ChatRoom | undefined> {
     try {
         const response = await fetch(`${API_URL}/listings/${listingId}/contact`, {
             method: 'POST',
@@ -32,7 +32,7 @@ export async function contactListingOwner(listingId: string): Promise<ChatroomDt
             return undefined;
         }
 
-        const chatroom: ChatroomDto = await response.json();
+        const chatroom: ChatRoom = await response.json();
         return chatroom;
     } catch (error) {
         console.error(error);
@@ -108,7 +108,7 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
     }
 }
 
-export async function postListing(listing: ListingCreateDto): Promise<void> {
+export async function postListing(listing: ListingCreate): Promise<void> {
     try {
         const response = await fetch(`${API_URL}/listings`, {
             method: 'POST',
@@ -134,7 +134,7 @@ export async function postListing(listing: ListingCreateDto): Promise<void> {
     }
 }
 
-export async function updateListing(listing: ListingCreateDto, listingId: string): Promise<void> {
+export async function updateListing(listing: ListingCreate, listingId: string): Promise<void> {
     try {
         const response = await fetch(`${API_URL}/listings/${listingId}`, {
             method: 'PUT',
