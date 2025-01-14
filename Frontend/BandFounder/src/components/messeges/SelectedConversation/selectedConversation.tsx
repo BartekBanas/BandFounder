@@ -3,7 +3,7 @@ import {Message} from "../../../types/Message";
 import {IconButton, TextField, Tooltip} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
-import "./../../../assets/CustomScrollbar.css";
+import "../../../styles/customScrollbar.css";
 import {getMessagesFromChatroom, sendMessage} from "../../../api/messages";
 import {getAccount} from "../../../api/account";
 import {getUserId} from "../../../hooks/authentication";

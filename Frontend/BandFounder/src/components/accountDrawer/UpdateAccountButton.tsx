@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {Modal, Box, TextField, Button, Stack, Typography, Divider} from "@mui/material";
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {updateMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 

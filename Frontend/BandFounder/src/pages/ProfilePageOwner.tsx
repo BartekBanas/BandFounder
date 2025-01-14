@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import ProfileShow from "../components/profile/ProfileShow";
 import ListingsListPrivate from "../components/listing/listingOwner/listingsListPrivate";
-import './../assets/CustomScrollbar.css'
+import '../styles/customScrollbar.css'
 import './styles/profilePage.css';
 import {getAccount} from "../api/account";
 import {getUserId} from "../hooks/authentication";

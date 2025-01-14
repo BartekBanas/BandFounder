@@ -14,7 +14,7 @@ import {
 import {useNavigate} from 'react-router-dom';
 import ChatIcon from '@mui/icons-material/Chat';
 import SearchIcon from '@mui/icons-material/Search';
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
 import {Account} from "../../types/Account";
 import {getAccount, getAccounts} from "../../api/account";

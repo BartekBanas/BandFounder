@@ -5,7 +5,7 @@ import {getMyAccount, registerAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 
 export function LoginForm() {
     const [name, setName] = useState('');

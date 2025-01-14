@@ -4,7 +4,7 @@ import {getMyChatrooms, createDirectChatroom} from "../../../api/chatroom";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import './styles.css'
-import './../../../assets/CustomScrollbar.css'
+import '../../../styles/customScrollbar.css'
 import {getUserId} from "../../../hooks/authentication";
 import {getAccounts, getUser} from "../../../api/account";
 import {Account} from "../../../types/Account";

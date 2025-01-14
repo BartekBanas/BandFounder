@@ -14,7 +14,7 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {useDisclosure} from "@mantine/hooks";
 import {mantineErrorNotification} from "../common/mantineNotification";
 import DeleteIcon from "@mui/icons-material/Delete";

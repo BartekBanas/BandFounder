@@ -6,7 +6,7 @@ import {RingLoader} from "../components/common/RingLoader";
 import ListingsListPublic from "../components/listing/listingPublic/listingsListPublic";
 import ListingTemplate from "../components/listing/listingTemplate/listingTemplate";
 import './styles/mainContainer.css'
-import '../assets/CustomScrollbar.css'
+import '../styles/customScrollbar.css'
 
 export function MainPage() {
     const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);

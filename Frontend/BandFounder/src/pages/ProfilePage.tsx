@@ -1,7 +1,7 @@
 import React, {FC, useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
 import ProfileShow from "../components/profile/ProfileShow";
-import './../assets/CustomScrollbar.css'
+import '../styles/customScrollbar.css'
 import ListingsListProfilePublic from "../components/listing/listingProfilePublic/listingsListProfilePublic";
 import './styles/profilePage.css'
 import {getAccount} from "../api/account";

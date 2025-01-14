@@ -1,6 +1,6 @@
 import {useDisclosure} from '@mantine/hooks';
 import {Box, Button, IconButton, Modal, Stack, Typography} from '@mui/material';
-import {muiDarkTheme} from "../../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../../styles/muiDarkTheme";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 import {leaveChatroom} from "../../../api/chatroom";
 import {FC} from "react";

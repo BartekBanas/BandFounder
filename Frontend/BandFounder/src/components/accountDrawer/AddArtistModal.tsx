@@ -4,7 +4,7 @@ import {useDisclosure} from "@mantine/hooks";
 import {authorizedHeaders, getUserId} from "../../hooks/authentication";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {Autocomplete, Box, Button, Modal, Stack, TextField, Typography} from '@mui/material';
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {getArtists} from "../../api/metadata";
 
 export const AddArtistModal: FC = () => {

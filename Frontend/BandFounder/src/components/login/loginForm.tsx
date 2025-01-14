@@ -5,7 +5,7 @@ import {getMyAccount, login} from "../../api/account";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
 import {mantineErrorNotification, mantineInformationNotification} from "../common/mantineNotification";
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 
 export const useLoginApi = () => {
     return async (usernameOrEmail: string, password: string) => {

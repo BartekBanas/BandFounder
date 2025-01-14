@@ -3,7 +3,7 @@ import {Button, Modal, Box, Typography, Stack} from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import {deleteListing} from "../../../api/listing";
 import {mantineErrorNotification} from "../../common/mantineNotification";
-import {muiDarkTheme} from "../../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../../styles/muiDarkTheme";
 
 interface DeleteListingButtonProps {
     listingId: string;

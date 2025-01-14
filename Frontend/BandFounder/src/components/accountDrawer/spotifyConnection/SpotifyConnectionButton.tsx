@@ -3,7 +3,7 @@ import UseSpotifyConnected from "../../../hooks/useSpotifyAccountLinked";
 import {useNavigate} from "react-router-dom";
 import {deleteSpotifyCredential, redirectToSpotifyAuthorizationPage} from "./spotifyConnection";
 import {sleep} from "../../common/utils";
-import {muiDarkTheme} from "../../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../../styles/muiDarkTheme";
 import {SpotifyIcon} from "./SpotifyIcon";
 import {Button} from "@mui/material";
 

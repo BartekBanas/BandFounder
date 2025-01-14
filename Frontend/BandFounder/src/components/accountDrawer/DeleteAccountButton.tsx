@@ -2,7 +2,7 @@ import {useDisclosure} from '@mantine/hooks';
 import {deleteMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {Box, Button, Modal, Stack, Typography} from '@mui/material';
-import {muiDarkTheme} from "../../assets/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {removeAuthToken, removeUserId} from "../../hooks/authentication";
 import {useNavigate} from "react-router-dom";
 
