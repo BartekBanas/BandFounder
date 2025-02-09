@@ -26,6 +26,7 @@ import {DeleteListingButton} from "./DeleteListingButton";
 import {formatMessageWithLinks} from "../../common/utils";
 import {MusicianSlot, SlotType} from "../../../types/MusicianSlot";
 import {castToListingType, Listing} from "../../../types/Listing";
+import {ListingUpdate} from "../../../types/ListingUpdate";
 
 interface ListingPrivateProps {
     listingId: string;
@@ -120,7 +121,6 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
 
     const handleAddNewRole = () => {
         const newSlot: MusicianSlot = {
-            id: Math.random().toString(36).substr(2, 9),
             role: '',
             status: SlotType.Available,
         };
@@ -129,7 +129,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
 
     const handleUpdateListing = async () => {
         try {
-            const updatedListing: ListingCreate = {
+            const updatedListing: ListingUpdate = {
                 name: listingName,
                 type: listingType,
                 genre: listing?.genre,

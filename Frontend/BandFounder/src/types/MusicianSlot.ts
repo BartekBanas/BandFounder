@@ -1,5 +1,5 @@
 export interface MusicianSlot {
-    id: string;
+    id?: string;
     role: string;
     status: SlotType;
 }

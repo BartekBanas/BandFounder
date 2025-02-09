@@ -5,6 +5,7 @@ import {commonTaste} from "../types/CommonTaste";
 import {ChatRoom} from "../types/ChatRoom";
 import {ListingCreate} from "../types/ListingCreate";
 import {Listing, ListingFeedFilters, ListingsFeedDto} from "../types/Listing";
+import {ListingUpdate} from "../types/ListingUpdate";
 
 export async function getCommonTaste(listingId: string): Promise<commonTaste> {
     const response = await fetch(`${API_URL}/listings/${listingId}/commonTaste`, {
@@ -134,7 +135,7 @@ export async function postListing(listing: ListingCreate): Promise<void> {
     }
 }
 
-export async function updateListing(listing: ListingCreate, listingId: string): Promise<void> {
+export async function updateListing(listing: ListingUpdate, listingId: string): Promise<void> {
     try {
         const response = await fetch(`${API_URL}/listings/${listingId}`, {
             method: 'PUT',

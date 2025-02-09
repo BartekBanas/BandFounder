@@ -266,7 +266,7 @@ public class ListingService : IListingService
         listing.Genre = string.IsNullOrWhiteSpace(dto.Genre) ? null : await _genreRepository.GetOrCreateAsync(dto.Genre);
         listing.GenreName = dto.Genre;
         listing.Type = dto.Type;
-        listing.Description = dto.Description ?? "";
+        listing.Description ??= dto.Description;
 
         // Process MusicianSlots
         var existingSlots = listing.MusicianSlots.ToList();
@@ -275,12 +275,13 @@ public class ListingService : IListingService
         foreach (var slotDto in dto.MusicianSlots)
         {
             var role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.Role);
-            var existingSlot = existingSlots.FirstOrDefault(musicianSlot => musicianSlot.Role.Name == role.Name);
+            var existingSlot = existingSlots.FirstOrDefault(musicianSlot => musicianSlot.Id == slotDto.Id);
 
             if (existingSlot != null)
             {
                 // Update existing slot if it exists
                 existingSlot.Status = slotDto.Status;
+                existingSlot.Role = role;
                 updatedSlots.Add(existingSlot);
                 existingSlots.Remove(existingSlot); // Remove from the list of slots to delete
             }
