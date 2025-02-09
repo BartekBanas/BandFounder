@@ -19,7 +19,7 @@ public interface IListingService
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
     Task<ChatroomDto> ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
-    Task UpdateListing(Guid listingId, ListingCreateDto dto);
+    Task UpdateListing(Guid listingId, ListingUpdateDto dto);
 }
 
 public class ListingService : IListingService
@@ -256,6 +256,11 @@ public class ListingService : IListingService
             throw new ForbiddenException("You cannot edit this listing");
         }
 
+        if (HasDuplicateSlots(dto))
+        {
+            throw new BadRequestException("Slots' IDs must be unique");
+        }
+
         // Update basic listing details
         listing.Name = dto.Name;
         listing.Genre = string.IsNullOrWhiteSpace(dto.Genre) ? null : await _genreRepository.GetOrCreateAsync(dto.Genre);
@@ -309,6 +314,15 @@ public class ListingService : IListingService
         // Save the changes
         await _listingRepository.UpdateAsync(listing, listing.Id);
         await _listingRepository.SaveChangesAsync();
+    }
+
+    private bool HasDuplicateSlots(ListingUpdateDto listingUpdateDto)
+    {
+        var duplicateSlot = listingUpdateDto.MusicianSlots
+            .GroupBy(slot => slot.Id)
+            .FirstOrDefault(group => group.Count() > 1);
+        
+        return duplicateSlot != null;
     }
 
     private void FilterListings(Account account, List<Listing> listings, FeedFilterOptions filterOptions)
