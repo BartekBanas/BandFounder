@@ -13,7 +13,7 @@ import {
     InputLabel,
     MenuItem,
     IconButton,
-    Autocomplete
+    Autocomplete, SelectChangeEvent
 } from "@mui/material";
 import {ListingCreate} from "../../../types/ListingCreate";
 import CloseIcon from "@mui/icons-material/Close";
@@ -25,7 +25,7 @@ import ProfilePicture from "../../profile/ProfilePicture";
 import {DeleteListingButton} from "./DeleteListingButton";
 import {formatMessageWithLinks} from "../../common/utils";
 import {MusicianSlot} from "../../../types/MusicianSlot";
-import {Listing} from "../../../types/Listing";
+import {castToListingType, Listing} from "../../../types/Listing";
 
 interface ListingPrivateProps {
     listingId: string;
@@ -83,8 +83,15 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
         }
     }
 
-    const handleEditType = () => {
-        setListingType(prevType => prevType === 'CollaborativeSong' ? 'Band' : 'CollaborativeSong');
+    const handleEditType = (event: SelectChangeEvent): void => {
+        if (listing) {
+            const castedType = castToListingType(event.target.value);
+            if (castedType) {
+                listing.type = castedType;
+            } else {
+                console.error('Invalid listing type');
+            }
+        }
     };
 
     const handleEditSlot = (slotId: string) => {
@@ -173,14 +180,14 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
             </div>
             <div className={'listingHeader'}>
                 <div className={'ownerListingElements'}>
-                    <ProfilePicture isMyProfile={false} accountId={listing.ownerId} size={40}/>
+                    <ProfilePicture isMyProfile={true} accountId={listing.ownerId} size={40}/>
                     <p>{listing?.owner?.name}</p>
                 </div>
                 <div className={'listingTitle'}>
                     <p>{listing?.name}</p>
                 </div>
                 <div className={'listingType'}>
-                    <div className={`listingType-${listing.type}`} onClick={handleEditType}>
+                    <div className={`listingType-${listing.type}`}>
                         <p>{listing.type === 'CollaborativeSong' ? 'Song' : listing.type}</p>
                     </div>
                     <p>{listing?.genre}</p>
