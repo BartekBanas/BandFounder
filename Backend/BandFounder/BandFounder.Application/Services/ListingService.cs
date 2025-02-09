@@ -243,7 +243,7 @@ public class ListingService : IListingService
         await _listingRepository.SaveChangesAsync();
     }
 
-    public async Task UpdateListing(Guid listingId, ListingCreateDto dto)
+    public async Task UpdateListing(Guid listingId, ListingUpdateDto dto)
     {
         var listing = await GetListingAsync(listingId);
         if (listing is null)
