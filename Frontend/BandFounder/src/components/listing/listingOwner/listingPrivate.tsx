@@ -12,27 +12,27 @@ import {
     Select,
     InputLabel,
     MenuItem,
-    SelectChangeEvent,
     IconButton,
     Autocomplete
 } from "@mui/material";
 import {ListingCreate} from "../../../types/ListingCreate";
 import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
-import {getUser} from "../../../api/account";
 import EditIcon from '@mui/icons-material/Edit';
 import {getListing, updateListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import ProfilePicture from "../../profile/ProfilePicture";
 import {DeleteListingButton} from "./DeleteListingButton";
 import {formatMessageWithLinks} from "../../common/utils";
+import {MusicianSlot} from "../../../types/MusicianSlot";
+import {Listing} from "../../../types/Listing";
 
 interface ListingPrivateProps {
     listingId: string;
 }
 
 const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
-    const [listing, setListing] = useState<any>(null);
+    const [listing, setListing] = useState<Listing>();
     const [open, setOpen] = useState(false);
     const [listingType, setListingType] = useState<string>('');
     const [listingGenre, setListingGenre] = useState<string>('');
@@ -46,8 +46,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
         const fetchListing = async () => {
             const data = await getListing(listingId);
             if (data) {
-                const owner = await getUser(data.ownerId);
-                setListing({...data, owner});
+                setListing(data);
                 setListingType(data.type);
                 setListingGenre(data.genre);
                 setListingDescription(data.description);
@@ -79,19 +78,17 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     const handleClose = () => setOpen(false);
 
     const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setListingName(event.target.value);
+        if (listing) {
+            listing.name = (event.target.value);
+        }
     }
 
     const handleEditType = () => {
         setListingType(prevType => prevType === 'CollaborativeSong' ? 'Band' : 'CollaborativeSong');
     };
 
-    const handleGenreSelectChange = (event: SelectChangeEvent<string>) => {
-        setListingGenre(event.target.value);
-    };
-
     const handleEditSlot = (slotId: string) => {
-        const newSlots = listingMusicianSlots.map((slot: any) => {
+        const newSlots = listingMusicianSlots.map((slot: MusicianSlot) => {
             if (slot.id === slotId) {
                 return {...slot, status: slot.status === 'Available' ? 'Filled' : 'Available'};
             }
@@ -128,7 +125,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
             const updatedListing: ListingCreate = {
                 name: listingName,
                 type: listingType,
-                genre: listingGenre,
+                genre: listing?.genre,
                 description: listingDescription,
                 musicianSlots: listingMusicianSlots,
             }
