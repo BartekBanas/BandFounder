@@ -24,7 +24,7 @@ import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import ProfilePicture from "../../profile/ProfilePicture";
 import {DeleteListingButton} from "./DeleteListingButton";
 import {formatMessageWithLinks} from "../../common/utils";
-import {MusicianSlot} from "../../../types/MusicianSlot";
+import {MusicianSlot, SlotType} from "../../../types/MusicianSlot";
 import {castToListingType, Listing} from "../../../types/Listing";
 
 interface ListingPrivateProps {
@@ -119,10 +119,10 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     }
 
     const handleAddNewRole = () => {
-        const newSlot = {
+        const newSlot: MusicianSlot = {
             id: Math.random().toString(36).substr(2, 9),
             role: '',
-            status: 'Available',
+            status: SlotType.Available,
         };
         setListingMusicianSlots([...listingMusicianSlots, newSlot]);
     }
@@ -139,7 +139,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
             await updateListing(updatedListing, listingId);
             window.location.reload();
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
     }
 
@@ -310,8 +310,8 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                             onChange={() => handleEditSlot(slot.id)}
                                             style={{fontSize: '12px', maxHeight: '35px'}}
                                         >
-                                            <MenuItem value={'Available'}>Available</MenuItem>
-                                            <MenuItem value={'Filled'}>Filled</MenuItem>
+                                            <MenuItem value={SlotType.Available}>Available</MenuItem>
+                                            <MenuItem value={SlotType.Filled}>Filled</MenuItem>
                                         </Select>
                                     </div>
                                 </div>
