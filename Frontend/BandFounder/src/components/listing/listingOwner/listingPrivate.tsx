@@ -12,27 +12,28 @@ import {
     Select,
     InputLabel,
     MenuItem,
-    SelectChangeEvent,
     IconButton,
-    Autocomplete
+    Autocomplete, SelectChangeEvent
 } from "@mui/material";
 import {ListingCreate} from "../../../types/ListingCreate";
 import CloseIcon from "@mui/icons-material/Close";
 import {lengthOfGenre} from "../listingTemplate/listingTemplate";
-import {getUser} from "../../../api/account";
 import EditIcon from '@mui/icons-material/Edit';
 import {getListing, updateListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import ProfilePicture from "../../profile/ProfilePicture";
 import {DeleteListingButton} from "./DeleteListingButton";
 import {formatMessageWithLinks} from "../../common/utils";
+import {MusicianSlot, SlotType} from "../../../types/MusicianSlot";
+import {castToListingType, Listing} from "../../../types/Listing";
+import {ListingUpdate} from "../../../types/ListingUpdate";
 
 interface ListingPrivateProps {
     listingId: string;
 }
 
 const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
-    const [listing, setListing] = useState<any>(null);
+    const [listing, setListing] = useState<Listing>();
     const [open, setOpen] = useState(false);
     const [listingType, setListingType] = useState<string>('');
     const [listingGenre, setListingGenre] = useState<string>('');
@@ -46,8 +47,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
         const fetchListing = async () => {
             const data = await getListing(listingId);
             if (data) {
-                const owner = await getUser(data.ownerId);
-                setListing({...data, owner});
+                setListing(data);
                 setListingType(data.type);
                 setListingGenre(data.genre);
                 setListingDescription(data.description);
@@ -79,19 +79,24 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     const handleClose = () => setOpen(false);
 
     const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setListingName(event.target.value);
+        if (listing) {
+            listing.name = (event.target.value);
+        }
     }
 
-    const handleEditType = () => {
-        setListingType(prevType => prevType === 'CollaborativeSong' ? 'Band' : 'CollaborativeSong');
-    };
-
-    const handleGenreSelectChange = (event: SelectChangeEvent<string>) => {
-        setListingGenre(event.target.value);
+    const handleEditType = (event: SelectChangeEvent): void => {
+        if (listing) {
+            const castedType = castToListingType(event.target.value);
+            if (castedType) {
+                listing.type = castedType;
+            } else {
+                console.error('Invalid listing type');
+            }
+        }
     };
 
     const handleEditSlot = (slotId: string) => {
-        const newSlots = listingMusicianSlots.map((slot: any) => {
+        const newSlots = listingMusicianSlots.map((slot: MusicianSlot) => {
             if (slot.id === slotId) {
                 return {...slot, status: slot.status === 'Available' ? 'Filled' : 'Available'};
             }
@@ -115,27 +120,26 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     }
 
     const handleAddNewRole = () => {
-        const newSlot = {
-            id: Math.random().toString(36).substr(2, 9),
+        const newSlot: MusicianSlot = {
             role: '',
-            status: 'Available',
+            status: SlotType.Available,
         };
         setListingMusicianSlots([...listingMusicianSlots, newSlot]);
     }
 
     const handleUpdateListing = async () => {
         try {
-            const updatedListing: ListingCreate = {
+            const updatedListing: ListingUpdate = {
                 name: listingName,
                 type: listingType,
-                genre: listingGenre,
+                genre: listing?.genre,
                 description: listingDescription,
                 musicianSlots: listingMusicianSlots,
             }
             await updateListing(updatedListing, listingId);
             window.location.reload();
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
     }
 
@@ -176,14 +180,14 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
             </div>
             <div className={'listingHeader'}>
                 <div className={'ownerListingElements'}>
-                    <ProfilePicture isMyProfile={false} accountId={listing.ownerId} size={40}/>
+                    <ProfilePicture isMyProfile={true} accountId={listing.ownerId} size={40}/>
                     <p>{listing?.owner?.name}</p>
                 </div>
                 <div className={'listingTitle'}>
                     <p>{listing?.name}</p>
                 </div>
                 <div className={'listingType'}>
-                    <div className={`listingType-${listing.type}`} onClick={handleEditType}>
+                    <div className={`listingType-${listing.type}`}>
                         <p>{listing.type === 'CollaborativeSong' ? 'Song' : listing.type}</p>
                     </div>
                     <p>{listing?.genre}</p>
@@ -306,8 +310,8 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                                             onChange={() => handleEditSlot(slot.id)}
                                             style={{fontSize: '12px', maxHeight: '35px'}}
                                         >
-                                            <MenuItem value={'Available'}>Available</MenuItem>
-                                            <MenuItem value={'Filled'}>Filled</MenuItem>
+                                            <MenuItem value={SlotType.Available}>Available</MenuItem>
+                                            <MenuItem value={SlotType.Filled}>Filled</MenuItem>
                                         </Select>
                                     </div>
                                 </div>

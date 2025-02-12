@@ -19,7 +19,7 @@ public interface IListingService
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
     Task<ChatroomDto> ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
-    Task UpdateListing(Guid listingId, ListingCreateDto dto);
+    Task UpdateListing(Guid listingId, ListingUpdateDto dto);
 }
 
 public class ListingService : IListingService
@@ -243,7 +243,7 @@ public class ListingService : IListingService
         await _listingRepository.SaveChangesAsync();
     }
 
-    public async Task UpdateListing(Guid listingId, ListingCreateDto dto)
+    public async Task UpdateListing(Guid listingId, ListingUpdateDto dto)
     {
         var listing = await GetListingAsync(listingId);
         if (listing is null)
@@ -256,59 +256,60 @@ public class ListingService : IListingService
             throw new ForbiddenException("You cannot edit this listing");
         }
 
+        if (HasDuplicateSlots(dto))
+        {
+            throw new BadRequestException("Slots' IDs must be unique");
+        }
+
         // Update basic listing details
         listing.Name = dto.Name;
         listing.Genre = string.IsNullOrWhiteSpace(dto.Genre) ? null : await _genreRepository.GetOrCreateAsync(dto.Genre);
         listing.GenreName = dto.Genre;
         listing.Type = dto.Type;
-        listing.Description = dto.Description ?? "";
+        listing.Description ??= dto.Description;
 
-        // Process MusicianSlots
-        var existingSlots = listing.MusicianSlots.ToList();
-        var updatedSlots = new List<MusicianSlot>();
-
-        foreach (var slotDto in dto.MusicianSlots)
+        for (int i = listing.MusicianSlots.Count - 1; i >= 0; i--)
         {
-            var role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.Role);
-            var existingSlot = existingSlots.FirstOrDefault(musicianSlot => musicianSlot.Role.Name == role.Name);
+            var existingSlot = listing.MusicianSlots[i];
+            var matchedSlotDto = dto.MusicianSlots.FirstOrDefault(slotUpdateDto => slotUpdateDto.Id == existingSlot.Id);
 
-            if (existingSlot != null)
+            if (matchedSlotDto != null)
             {
-                // Update existing slot if it exists
-                existingSlot.Status = slotDto.Status;
-                updatedSlots.Add(existingSlot);
-                existingSlots.Remove(existingSlot); // Remove from the list of slots to delete
+                existingSlot.Status = matchedSlotDto.Status;
+                existingSlot.Role = await _musicianRoleRepository.GetOrCreateAsync(matchedSlotDto.Role);
             }
             else
             {
-                // Add new slot if no matching slot exists
-                updatedSlots.Add(new MusicianSlot
-                {
-                    Role = role,
-                    Status = slotDto.Status,
-                    ListingId = listingId
-                });
+                listing.MusicianSlots.RemoveAt(i);
             }
         }
 
-        // Remove slots that were not updated (i.e. slots that are no longer part of the new dto)
-        foreach (var slotToRemove in existingSlots)
+        foreach (var slotDto in dto.MusicianSlots.Where(slotUpdateDto => slotUpdateDto.Id == null))
         {
-            await _musicianSlotRepository.DeleteOneAsync(slotToRemove.Id);
+            listing.MusicianSlots.Add(new MusicianSlot
+            {
+                Role = await _musicianRoleRepository.GetOrCreateAsync(slotDto.Role),
+                Status = slotDto.Status,
+                ListingId = listingId
+            });
         }
 
-        // Assign updated slots to the listing
-        listing.MusicianSlots = updatedSlots;
-        
         var validationResult = await _listingValidator.ValidateAsync(listing);
         if (validationResult.IsValid is false)
         {
             throw new ValidationException(validationResult.Errors);
         }
 
-        // Save the changes
-        await _listingRepository.UpdateAsync(listing, listing.Id);
         await _listingRepository.SaveChangesAsync();
+    }
+
+    private bool HasDuplicateSlots(ListingUpdateDto listingUpdateDto)
+    {
+        var duplicateSlot = listingUpdateDto.MusicianSlots
+            .GroupBy(slot => slot.Id)
+            .FirstOrDefault(group => group.Count() > 1);
+        
+        return duplicateSlot != null;
     }
 
     private void FilterListings(Account account, List<Listing> listings, FeedFilterOptions filterOptions)

@@ -12,11 +12,6 @@ export interface Listing {
     owner: Account;
 }
 
-export enum ListingType {
-    Band = 'Band',
-    CollaborativeSong = 'CollaborativeSong'
-}
-
 export interface ListingWithScore {
     listing: Listing;
     similarityScore: number;
@@ -34,4 +29,17 @@ export interface ListingFeedFilters {
     genre: string | undefined
     pageNumber: number | undefined;
     pageSize: number | undefined;
+}
+
+export enum ListingType {
+    Band = 'Band',
+    CollaborativeSong = 'CollaborativeSong'
+}
+
+export function castToListingType(value: string): ListingType | null {
+    return isListingType(value) ? (value as ListingType) : null;
+}
+
+function isListingType(value: string): value is ListingType {
+    return Object.values(ListingType).includes(value as ListingType);
 }

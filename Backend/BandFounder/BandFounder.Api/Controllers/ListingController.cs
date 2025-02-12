@@ -89,7 +89,7 @@ public class ListingController : Controller
 
     [Authorize]
     [HttpPut("{listingId:guid}")]
-    public async Task<IActionResult> UpdateListing([FromRoute] Guid listingId, [FromBody] ListingCreateDto dto)
+    public async Task<IActionResult> UpdateListing([FromRoute] Guid listingId, [FromBody] ListingUpdateDto dto)
     {
         await _listingService.UpdateListing(listingId, dto);
         
