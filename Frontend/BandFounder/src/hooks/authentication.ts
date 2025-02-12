@@ -10,7 +10,7 @@ export function getAuthToken () {
 
 export function setAuthToken(token: string) {
     return Cookies.set('auth_token', token, {
-        expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
+        expires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
         sameSite: 'Strict',
     });
 }
