@@ -109,7 +109,7 @@ export async function updateMyAccount(name: string | null, password: string | nu
     requestBody.email = email ?? undefined;
 
     const response = await fetch(`${API_URL}/accounts/me`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: authorizedHeaders(),
         body: JSON.stringify(requestBody),
     });

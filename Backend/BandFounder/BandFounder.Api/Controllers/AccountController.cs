@@ -73,7 +73,7 @@ public class AccountController : Controller
     }
 
     [Authorize]
-    [HttpPut("me")]
+    [HttpPatch("me")]
     public async Task<IActionResult> UpdateMyAccount([FromBody] UpdateAccountDto dto)
     {
         var updatedAccount = await _accountService.UpdateAccountAsync(dto);
