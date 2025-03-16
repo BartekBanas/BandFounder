@@ -19,6 +19,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Create spotifyAppCredentials.json
+        run: echo "${{ secrets.SPOTIFY_CREDENTIALS_JSON }}" > Backend/BandFounder/BandFounder.Api/spotifyAppCredentials.json
+
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
