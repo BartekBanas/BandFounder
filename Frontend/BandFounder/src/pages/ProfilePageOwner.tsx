@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import ProfileShow from "../components/profile/ProfileShow";
 import ListingsListPrivate from "../components/listing/listingOwner/listingsListPrivate";
 import '../styles/customScrollbar.css'

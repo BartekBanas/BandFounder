@@ -1,4 +1,4 @@
-import React, {FC, useEffect, useState} from 'react';
+import {FC, useEffect, useState} from "react";
 import {API_URL} from '../../config';
 import {useDisclosure} from "@mantine/hooks";
 import {authorizedHeaders, getUserId} from "../../hooks/authentication";

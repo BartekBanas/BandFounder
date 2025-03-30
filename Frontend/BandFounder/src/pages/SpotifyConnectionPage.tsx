@@ -1,5 +1,5 @@
 import {Center, Loader} from "@mantine/core";
-import React, {useEffect} from "react";
+import {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {linkAccountWithSpotifyFromCode} from "../components/accountDrawer/spotifyConnection/spotifyConnection";
 
