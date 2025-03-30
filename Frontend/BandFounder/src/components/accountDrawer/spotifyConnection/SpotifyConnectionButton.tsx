@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import UseSpotifyConnected from "../../../hooks/useSpotifyAccountLinked";
 import {useNavigate} from "react-router-dom";
 import {deleteSpotifyCredential, redirectToSpotifyAuthorizationPage} from "./spotifyConnection";

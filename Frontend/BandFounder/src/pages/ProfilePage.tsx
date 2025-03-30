@@ -1,4 +1,4 @@
-import React, {FC, useEffect, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
 import ProfileShow from "../components/profile/ProfileShow";
 import '../styles/customScrollbar.css'
