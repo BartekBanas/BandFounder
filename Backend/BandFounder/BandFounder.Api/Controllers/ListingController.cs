@@ -88,6 +88,15 @@ public class ListingController : Controller
     }
 
     [Authorize]
+    [HttpPut("slots/{musicSlotId:guid}/assign")]
+    public async Task<IActionResult> AssignUserToSlot([FromRoute] Guid musicSlotId, [FromBody] Guid accountId)
+    {
+        await _listingService.AssignUserToSlot(musicSlotId, accountId);
+        
+        return Ok();
+    }
+
+    [Authorize]
     [HttpPut("{listingId:guid}")]
     public async Task<IActionResult> UpdateListing([FromRoute] Guid listingId, [FromBody] ListingUpdateDto dto)
     {

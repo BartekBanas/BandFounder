@@ -17,6 +17,7 @@ public interface IListingService
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
     Task<Listing> CreateListingAsync(ListingCreateDto dto, Guid? accountId = null);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
+    Task AssignUserToSlot(Guid slotId, Guid accountId);
     Task<ChatroomDto> ContactOwner(Guid listingId);
     Task DeleteListing(Guid listingId);
     Task UpdateListing(Guid listingId, ListingUpdateDto dto);
@@ -212,6 +213,28 @@ public class ListingService : IListingService
         }
         
         musicianSlot.Status = slotStatus;
+        
+        await _musicianSlotRepository.SaveChangesAsync();
+    }
+
+    public async Task AssignUserToSlot(Guid slotId, Guid accountId)
+    {
+        var musicianSlot = await _musicianSlotRepository.GetOneRequiredAsync(slotId);
+        var listing = await _listingRepository.GetOneRequiredAsync
+            (listing => listing.Id == musicianSlot.ListingId);
+        
+        if (CurrentUserId != listing.OwnerId)
+        {
+            throw new ForbiddenException("You do not have access to this music project listing");
+        }
+        
+        var invitedAccount = await _accountService.GetAccountAsync(accountId);
+        if (invitedAccount == null)
+        {
+            throw new NotFoundException("Assignee account not found");
+        }
+        
+        musicianSlot.AssigneeId = invitedAccount.Id;
         
         await _musicianSlotRepository.SaveChangesAsync();
     }
