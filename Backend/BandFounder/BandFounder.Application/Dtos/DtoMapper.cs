@@ -44,7 +44,8 @@ public static class DtoMapper
                 {
                     Id = slot.Id,
                     Role = slot.Role.Name,
-                    Status = slot.Status.ToString()
+                    Status = slot.Status.ToString(),
+                    AssigneeId = slot.AssigneeId
                 }).ToList()
         };
     }
