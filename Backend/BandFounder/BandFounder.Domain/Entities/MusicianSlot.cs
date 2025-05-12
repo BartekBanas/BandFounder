@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace BandFounder.Domain.Entities;
 
 public class MusicianSlot : Entity
-{ 
+{
     [Key]
     public Guid Id { get; set; }
 
@@ -16,6 +16,9 @@ public class MusicianSlot : Entity
 
     public virtual Guid ListingId { get; set; }
     public virtual Listing Listing { get; set; } = null!;
+    
+    public Guid? AssigneeId { get; set; }
+    public virtual Account? Assignee { get; set; }
 }
 
 public enum SlotStatus

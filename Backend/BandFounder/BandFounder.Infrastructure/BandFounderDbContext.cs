@@ -54,6 +54,14 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .WithOne(slot => slot.Listing)
             .HasForeignKey(slot => slot.ListingId);
 
+        // Many-to-One relationship: MusicianSlot has an optional assignee Account
+        modelBuilder.Entity<MusicianSlot>()
+            .HasOne(slot => slot.Assignee)
+            .WithMany(account => account.AssignedMusicianSlots)
+            .HasForeignKey(slot => slot.AssigneeId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Configuring many-to-many relationship between Account and MusicianRole
         modelBuilder.Entity<Account>()
             .HasMany(account => account.MusicianRoles)

@@ -25,6 +25,9 @@ public class Account : Entity
     // One-to-Many relationship with Listing
     public virtual List<Listing> Listings { get; set; } = [];
     
+    // One-to-Many relationship with Listing
+    public virtual List<MusicianSlot> AssignedMusicianSlots  { get; set; } = [];
+    
     // Many-to-Many relationship with MusicRole
     public virtual List<MusicianRole> MusicianRoles { get; set; } = [];
     
