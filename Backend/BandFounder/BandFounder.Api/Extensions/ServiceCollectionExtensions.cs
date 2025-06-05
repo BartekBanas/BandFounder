@@ -15,14 +15,14 @@ public static class ServiceCollectionExtensions
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
                 Description =
                     "JWT Authorization header using the Bearer scheme." +
-                    "\r\n\r\n Enter 'Bearer' [space] and then your token in the text input below." +
-                    "\r\n\r\nExample: \"Bearer abCdEf12345\""
+                    "\r\n\r\n Enter only your token below." +
+                    "\r\n\r\nExample: \"abc123token\""
             });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -34,7 +34,10 @@ public static class ServiceCollectionExtensions
                         {
                             Type = ReferenceType.SecurityScheme,
                             Id = "Bearer"
-                        }
+                        },
+                        Scheme = "bearer",
+                        Name = "Authorization",
+                        In = ParameterLocation.Header
                     },
                     Array.Empty<string>()
                 }
