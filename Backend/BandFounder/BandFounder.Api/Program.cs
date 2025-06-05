@@ -30,7 +30,7 @@ services.AddEndpointsApiExplorer();
 services.AddHttpContextAccessor();
 services.AddSwaggerGen();
 
-builder.Services.AddDbContext<BandFounderDbContext>(options =>
+services.AddDbContext<BandFounderDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase"), 
         npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
