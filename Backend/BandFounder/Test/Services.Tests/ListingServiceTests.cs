@@ -4,6 +4,7 @@ using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using NSubstitute;
 
 namespace Services.Tests;
@@ -11,6 +12,7 @@ namespace Services.Tests;
 public class ListingServiceTests
 {
     private readonly IChatroomService _chatroomServiceMock = Substitute.For<IChatroomService>();
+    private readonly IAuthorizationService _authorizationServiceMock = Substitute.For<IAuthorizationService>();
     private readonly IRepository<Genre> _genreRepositoryMock = Substitute.For<IRepository<Genre>>();
     private readonly IRepository<MusicianRole> _musicianRoleRepositoryMock = Substitute.For<IRepository<MusicianRole>>();
     private readonly IRepository<MusicianSlot> _musicianSlotRepositoryMock = Substitute.For<IRepository<MusicianSlot>>();
@@ -95,6 +97,7 @@ public class ListingServiceTests
         var service = new ListingService(
             accountServiceMock,
             authenticationServiceMock,
+            _authorizationServiceMock,
             musicTasteServiceMock,
             _chatroomServiceMock,
             _validator,
@@ -177,6 +180,7 @@ public class ListingServiceTests
         var service = new ListingService(
             accountServiceMock,
             authenticationServiceMock,
+            _authorizationServiceMock,
             musicTasteServiceMock,
             _chatroomServiceMock,
             _validator,
