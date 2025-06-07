@@ -30,7 +30,7 @@ services.AddEndpointsApiExplorer();
 services.AddHttpContextAccessor();
 services.AddSwaggerGen();
 
-builder.Services.AddDbContext<BandFounderDbContext>(options =>
+services.AddDbContext<BandFounderDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase"), 
         npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
@@ -38,6 +38,7 @@ services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfigur
 
 services.AddScoped<IAuthorizationHandler, ChatRoomAuthorizationHandler>();
 services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
+services.AddScoped<IAuthorizationHandler, ListingAuthorizationHandler>();
 
 services.AddAuthorization(options =>
 {

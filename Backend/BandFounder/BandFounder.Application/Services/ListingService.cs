@@ -2,9 +2,11 @@ using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Exceptions;
+using BandFounder.Application.Services.Authorization;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BandFounder.Application.Services;
 
@@ -27,6 +29,7 @@ public class ListingService : IListingService
 {
     private readonly IAccountService _accountService;
     private readonly IAuthenticationService _authenticationService;
+    private readonly IAuthorizationService _authorizationService;
     private readonly IMusicTasteService _musicTasteService;
     private readonly IChatroomService _chatroomService;
     
@@ -42,6 +45,7 @@ public class ListingService : IListingService
     public ListingService(
         IAccountService accountService,
         IAuthenticationService authenticationService,
+        IAuthorizationService authorizationService,
         IMusicTasteService musicTasteService,
         IChatroomService chatroomService,
         IValidator<Listing> listingValidator,
@@ -52,6 +56,7 @@ public class ListingService : IListingService
     {
         _accountService = accountService;
         _authenticationService = authenticationService;
+        _authorizationService = authorizationService;
         _musicTasteService = musicTasteService;
         _chatroomService = chatroomService;
         _listingValidator = listingValidator;
@@ -207,10 +212,8 @@ public class ListingService : IListingService
         var listing = await _listingRepository.GetOneRequiredAsync
             (listing => listing.Id == musicianSlot.ListingId);
 
-        if (CurrentUserId != listing.OwnerId)
-        {
-            throw new ForbiddenException("You do not have access to this music project listing");
-        }
+        var userClaims = _authenticationService.GetUserClaims();
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
         
         musicianSlot.Status = slotStatus;
         
@@ -223,10 +226,8 @@ public class ListingService : IListingService
         var listing = await _listingRepository.GetOneRequiredAsync
             (listing => listing.Id == musicianSlot.ListingId);
         
-        if (CurrentUserId != listing.OwnerId)
-        {
-            throw new ForbiddenException("You do not have access to this music project listing");
-        }
+        var userClaims = _authenticationService.GetUserClaims();
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
         
         var invitedAccount = await _accountService.GetAccountAsync(accountId);
         if (invitedAccount == null)
@@ -256,11 +257,9 @@ public class ListingService : IListingService
     public async Task DeleteListing(Guid listingId)
     {
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
-
-        if (listing.OwnerId != CurrentUserId)
-        {
-            throw new ForbiddenException("You may only delete your own listings.");
-        }
+        
+        var userClaims = _authenticationService.GetUserClaims();
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
         
         await _listingRepository.DeleteOneAsync(listing.Id);
         await _listingRepository.SaveChangesAsync();
@@ -274,11 +273,9 @@ public class ListingService : IListingService
             throw new NotFoundException("Listing not found");
         }
         
-        if (listing.OwnerId != CurrentUserId)
-        {
-            throw new ForbiddenException("You cannot edit this listing");
-        }
-
+        var userClaims = _authenticationService.GetUserClaims();
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
+        
         if (HasDuplicateSlots(dto))
         {
             throw new BadRequestException("Slots' IDs must be unique");

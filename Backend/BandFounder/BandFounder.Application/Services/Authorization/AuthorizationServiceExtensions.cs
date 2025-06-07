@@ -12,9 +12,15 @@ public static class AuthorizationServiceExtensions
         try
         {
             var authorizationResult = await authorizationService.AuthorizeAsync(claimsPrincipal, resource, policy);
-
+            
             if (!authorizationResult.Succeeded)
-                throw new ForbiddenException();
+            {
+                var resourceName = resource is not null 
+                    ? resource.GetType().Name 
+                    : "resource";
+
+                throw new ForbiddenException($"You do not have permission to access this {resourceName}.");
+            }
         }
         catch (ForbiddenException exception)
         {

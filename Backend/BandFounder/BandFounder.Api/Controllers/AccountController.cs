@@ -39,11 +39,6 @@ public class AccountController : Controller
     {
         var accounts = await _accountService.GetAccountsAsync(filters);
         
-        if (!accounts.Any())
-        {
-            return NotFound();
-        }
-        
         var accountDtos = accounts.ToDto();
         
         if (filters.Username is not null)
