@@ -38,6 +38,7 @@ services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfigur
 
 services.AddScoped<IAuthorizationHandler, ChatRoomAuthorizationHandler>();
 services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
+services.AddScoped<IAuthorizationHandler, ListingAuthorizationHandler>();
 
 services.AddAuthorization(options =>
 {
