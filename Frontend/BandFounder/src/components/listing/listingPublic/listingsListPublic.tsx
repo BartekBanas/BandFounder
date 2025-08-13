@@ -3,35 +3,28 @@ import {useNavigate, useLocation} from 'react-router-dom';
 import ListingPublic from './listingPublic';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
-import {Autocomplete, MenuItem, TextField, Button} from "@mui/material";
-import {getGenres} from "../../../api/metadata";
 import {getListingFeed} from "../../../api/listing";
 import {ListingFeedFilters, ListingType, ListingWithScore} from "../../../types/Listing";
+import ListingsFilters, { ListingsFiltersState } from './ListingsFilters';
 
 const ListingsListPublic: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [listings, setListings] = useState<ListingWithScore[]>([]);
-    const [genreOptions, setGenreOptions] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [pageSize] = useState<number>(5);
     const [hasMore, setHasMore] = useState<boolean>(true);
 
     // Main filters
-    const [excludeOwnListings, setExcludeOwnListings] = useState<boolean | undefined>(undefined);
-    const [matchMusicRole, setMatchMusicRole] = useState<boolean | undefined>(undefined);
-    const [fromLatest, setFromLatest] = useState<boolean | undefined>(undefined);
-    const [listingType, setListingType] = useState<ListingType | undefined>(undefined);
-    const [genreFilter, setGenreFilter] = useState<string | undefined>(undefined);
+    const [filters, setFilters] = useState<ListingsFiltersState>({
+        excludeOwnListings: undefined,
+        matchMusicRole: undefined,
+        fromLatest: undefined,
+        listingType: undefined,
+        genreFilter: undefined,
+    });
     const [filtersLoaded, setFiltersLoaded] = useState(false);
-
-    // Temporary filters for UI
-    const [tempExcludeOwnListings, setTempExcludeOwnListings] = useState<boolean | undefined>(undefined);
-    const [tempMatchMusicRole, setTempMatchMusicRole] = useState<boolean | undefined>(undefined);
-    const [tempFromLatest, setTempFromLatest] = useState<boolean | undefined>(undefined);
-    const [tempListingType, setTempListingType] = useState<ListingType | undefined>(undefined);
-    const [tempGenreFilter, setTempGenreFilter] = useState<string | undefined>(undefined);
 
     const observer = useRef<IntersectionObserver | null>(null);
     const lastListingElementRef = useCallback((node: any) => {
@@ -46,18 +39,6 @@ const ListingsListPublic: React.FC = () => {
     }, [loading, hasMore]);
 
     useEffect(() => {
-        const fetchGenres = async () => {
-            try {
-                setGenreOptions(await getGenres());
-            } catch (error) {
-                console.error('Error fetching genres:', error);
-            }
-        };
-
-        fetchGenres();
-    }, []);
-
-    useEffect(() => {
         // Parse URL parameters and apply filters
         const params = new URLSearchParams(location.search);
 
@@ -67,19 +48,13 @@ const ListingsListPublic: React.FC = () => {
         const type = params.has('listingType') ? (params.get('listingType') as ListingType) : undefined;
         const genre = params.has('genre') ? params.get('genre') ?? undefined : undefined;
 
-        // Update main filters
-        setExcludeOwnListings(excludeOwn);
-        setMatchMusicRole(matchMusic);
-        setFromLatest(latest);
-        setListingType(type);
-        setGenreFilter(genre);
-
-        // Update temporary filters for UI
-        setTempExcludeOwnListings(excludeOwn);
-        setTempMatchMusicRole(matchMusic);
-        setTempFromLatest(latest);
-        setTempListingType(type);
-        setTempGenreFilter(genre);
+        setFilters({
+            excludeOwnListings: excludeOwn,
+            matchMusicRole: matchMusic,
+            fromLatest: latest,
+            listingType: type,
+            genreFilter: genre,
+        });
 
         setFiltersLoaded(true);
     }, [location.search]);
@@ -90,16 +65,16 @@ const ListingsListPublic: React.FC = () => {
         const fetchListings = async () => {
             setLoading(true);
             try {
-                const filters: ListingFeedFilters = {
-                    excludeOwn: excludeOwnListings,
-                    matchMusicRole: matchMusicRole,
-                    fromLatest: fromLatest,
-                    listingType: listingType,
-                    genre: genreFilter,
+                const feedFilters: ListingFeedFilters = {
+                    excludeOwn: filters.excludeOwnListings,
+                    matchMusicRole: filters.matchMusicRole,
+                    fromLatest: filters.fromLatest,
+                    listingType: filters.listingType,
+                    genre: filters.genreFilter,
                     pageNumber: pageNumber,
                     pageSize: pageSize
                 };
-                const listingsFeed = await getListingFeed(filters);
+                const listingsFeed = await getListingFeed(feedFilters);
                 setListings((prevListings) => [...prevListings, ...listingsFeed.listings]);
                 setHasMore(listingsFeed.listings.length > 0);
             } catch (error) {
@@ -110,66 +85,49 @@ const ListingsListPublic: React.FC = () => {
         };
 
         fetchListings();
-    }, [filtersLoaded, excludeOwnListings, matchMusicRole, fromLatest, listingType, genreFilter, pageNumber, pageSize]);
+    }, [filtersLoaded, filters, pageNumber, pageSize]);
 
-    const applyFilters = () => {
-        // Sync temporary filters with main filters
-        setMatchMusicRole(tempMatchMusicRole);
-        setFromLatest(tempFromLatest);
-        setListingType(tempListingType);
-        setGenreFilter(tempGenreFilter);
-
-        // Reset pagination
+    const handleApplyFilters = (newFilters: ListingsFiltersState) => {
+        setFilters(newFilters);
         setPageNumber(1);
         setListings([]);
 
         // Update URL parameters
         const params = new URLSearchParams();
-        if (tempExcludeOwnListings !== undefined) {
-            params.set('excludeOwn', tempExcludeOwnListings.toString());
+        if (newFilters.excludeOwnListings !== undefined) {
+            params.set('excludeOwn', newFilters.excludeOwnListings.toString());
         }
-        if (tempMatchMusicRole !== undefined) {
-            params.set('matchAnyRole', tempMatchMusicRole.toString());
+        if (newFilters.matchMusicRole !== undefined) {
+            params.set('matchAnyRole', newFilters.matchMusicRole.toString());
         } else {
             params.set('matchAnyRole', 'false');
         }
-        if (tempFromLatest !== undefined) {
-            params.set('fromLatest', tempFromLatest.toString());
+        if (newFilters.fromLatest !== undefined) {
+            params.set('fromLatest', newFilters.fromLatest.toString());
         }
-        if (tempListingType) {
-            params.set('listingType', tempListingType);
+        if (newFilters.listingType) {
+            params.set('listingType', newFilters.listingType);
         }
-        if (tempGenreFilter) {
-            params.set('genre', tempGenreFilter);
+        if (newFilters.genreFilter) {
+            params.set('genre', newFilters.genreFilter);
         }
 
         navigate({search: params.toString()}, {replace: true});
     };
 
-    const onReset = () => {
-        // Reset temporary filters to default values
-        setTempExcludeOwnListings(undefined);
-        setTempMatchMusicRole(undefined);
-        setTempFromLatest(undefined);
-        setTempListingType(undefined);
-        setTempGenreFilter(undefined);
-
-        // Reset main filters to default values
-        setExcludeOwnListings(undefined);
-        setMatchMusicRole(undefined);
-        setFromLatest(undefined);
-        setListingType(undefined);
-        setGenreFilter(undefined);
-
-        // Reset pagination
+    const handleResetFilters = () => {
+        setFilters({
+            excludeOwnListings: undefined,
+            matchMusicRole: undefined,
+            fromLatest: undefined,
+            listingType: undefined,
+            genreFilter: undefined,
+        });
         setPageNumber(1);
         setListings([]);
-
-        // Clear URL parameters
         const params = new URLSearchParams();
         navigate({ search: params.toString() }, { replace: true });
     };
-
 
     const theme = createTheme({
         components: {
@@ -184,78 +142,11 @@ const ListingsListPublic: React.FC = () => {
 
     return (
         <>
-            <div className="listingsFilters">
-                <div className="filtersCheckboxes">
-                    <div>
-                        <input
-                            type="checkbox"
-                            id="matchMusicRole"
-                            checked={tempMatchMusicRole || false}
-                            onChange={() => setTempMatchMusicRole(!tempMatchMusicRole)}
-                        />
-                        <label htmlFor="matchMusicRole">Match any role</label>
-                    </div>
-                    <div>
-                        <input
-                            type="checkbox"
-                            id="fromLatest"
-                            checked={tempFromLatest || false}
-                            onChange={() => setTempFromLatest(!tempFromLatest)}
-                        />
-                        <label htmlFor="fromLatest">From latest</label>
-                    </div>
-                </div>
-                <div>
-                    <TextField
-                        select
-                        label="Listing type"
-                        value={tempListingType || ''}
-                        onChange={(e) => setTempListingType(e.target.value as ListingType)}
-                        sx={{width: '100%'}}
-                        id="listingType"
-                    >
-                        <MenuItem value="">All</MenuItem>
-                        <MenuItem value="CollaborativeSong">CollaborativeSong</MenuItem>
-                        <MenuItem value="Band">Band</MenuItem>
-                    </TextField>
-                </div>
-                <div>
-                    <TextField
-                        select
-                        label="Genre"
-                        value={tempGenreFilter || ''}
-                        onChange={(e) => setTempGenreFilter(e.target.value as string)}
-                        sx={{ width: '100%' }}
-                        SelectProps={{
-                            MenuProps: {
-                                PaperProps: {
-                                    style: {
-                                        maxHeight: '400px', // Set the maximum height here
-                                    },
-                                },
-                            },
-                        }}
-                    >
-                        <MenuItem value="">
-                            <em>None</em>
-                        </MenuItem>
-                        {genreOptions.map((genre) => (
-                            <MenuItem key={genre} value={genre}>
-                                {genre}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                </div>
-                <div style={{display: 'flex', gap: '1rem'}} id={'filtersButtons'}>
-                    <Button variant="contained" color="primary" onClick={applyFilters}>
-                        Apply Filters
-                    </Button>
-                    <Button variant="outlined" color="primary" onClick={onReset}>
-                        Reset Filters
-                    </Button>
-                </div>
-            </div>
-
+            <ListingsFilters
+                filters={filters}
+                onApply={handleApplyFilters}
+                onReset={handleResetFilters}
+            />
 
             <div className="listingsList">
                 {listings.map((listing, index) => (
