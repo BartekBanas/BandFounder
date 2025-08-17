@@ -145,14 +145,19 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
 
             const conversationWithNames = await Promise.all(
                 conversation.map(async (message) => {
-                    const senderName =
-                        userCache.current[message.senderId] ??
-                        (await getAccount(message.senderId)
-                            .then((user) => {
-                                userCache.current[message.senderId] = user.name || "Unknown User";
-                                return user.name || "Unknown User";
-                            })
-                            .catch(() => "Unknown User"));
+                    let senderName: string;
+                    if (userCache.current[message.senderId]) {
+                        senderName = userCache.current[message.senderId];
+                    } else {
+                        try {
+                            const user = await getAccount(message.senderId);
+                            senderName = user.name;
+                            userCache.current[message.senderId] = senderName;
+                        } catch (error) {
+                            senderName = "Deleted User";
+                            userCache.current[message.senderId] = senderName;
+                        }
+                    }
 
                     return {
                         ...message,

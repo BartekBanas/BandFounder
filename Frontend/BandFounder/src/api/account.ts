@@ -79,7 +79,6 @@ export async function getAccount(accountId: string): Promise<Account> {
     });
 
     if (!response.ok) {
-        mantineErrorNotification('Failed to fetch user');
         throw new Error('Failed to fetch user');
     }
 
