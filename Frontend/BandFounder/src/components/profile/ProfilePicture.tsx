@@ -4,21 +4,22 @@ import {mantineErrorNotification, mantineSuccessNotification} from "../common/ma
 import UserAvatar from "../common/UserAvatar";
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import './styles/ProfileDrawer.css';
+import defaultProfileImage from "../../assets/defaultProfileImage.jpg";
 
 interface ProfilePictureProps {
-    accountId: string;
-    isMyProfile: boolean;
+    accountId?: string;
+    isMyProfile?: boolean;
     size: number;
 }
 
-const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile, size = 50}) => {
-    const [preview, setPreview] = useState<string>("");
+const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile = false, size = 50}) => {
+    const [preview, setPreview] = useState<string>(defaultProfileImage);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const loadProfilePicture = async () => {
             try {
-                const imageUrl = await getProfilePicture(accountId);
+                const imageUrl = await getProfilePicture(accountId!);
                 if (imageUrl) {
                     setPreview(imageUrl);
                 }

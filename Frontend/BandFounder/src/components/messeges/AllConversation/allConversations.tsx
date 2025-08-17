@@ -1,8 +1,7 @@
-import {FC, useState, useEffect} from "react";
-import {ChatRoom} from "../../../types/ChatRoom";
+import React, {FC, useState, useEffect} from "react";
+import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getMyChatrooms, createDirectChatroom} from "../../../api/chatroom";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
-import {useNavigate} from "react-router-dom";
 import './styles.css'
 import '../../../styles/customScrollbar.css'
 import {getUserId} from "../../../hooks/authentication";
@@ -11,16 +10,40 @@ import {Account} from "../../../types/Account";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 import {LeaveChatroomModal} from "./LeaveChatroomModal";
 import ProfilePicture from "../../profile/ProfilePicture";
+import defaultProfileImage from "../../../assets/defaultProfileImage.jpg";
 
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
+}
+
+function ChatroomAvatar({chatRoom, myId}: { chatRoom: ChatRoom, myId: string }) {
+    switch (chatRoom.type) {
+        case ChatRoomType.Direct: {
+            const otherUserId = chatRoom.membersIds.find(id => id !== myId);
+            return (
+                <ProfilePicture
+                    accountId={otherUserId}
+                    isMyProfile={false}
+                    size={40}
+                />
+            );
+        }
+
+        case ChatRoomType.General: // TODO 103
+            return (
+                <img src={defaultProfileImage} alt="Default Profile"/>
+            );
+
+        default:
+            throw new Error(`Unsupported chatroom type '${chatRoom.type}'`);
+    }
 }
 
 export const AllConversations: FC<AllConversationsProps> = ({onSelectConversation}) => {
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [otherUsers, setOtherUsers] = useState<Account[]>([]);
     const [refreshConversations, setRefreshConversations] = useState<boolean>(false);
-    const navigate = useNavigate();
+    const myId = getUserId();
 
     useEffect(() => {
         fetchConversations();
@@ -31,7 +54,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
         const chatrooms = await getMyChatrooms();
 
         for (const chatroom of chatrooms) {
-            if (chatroom.type === 'Direct') {
+            if (chatroom.type === ChatRoomType.Direct) {
                 const otherUserId = chatroom.membersIds.find((id) => id !== getUserId());
                 if (otherUserId) {
                     const user = await getUser(otherUserId);
@@ -112,7 +135,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
                 {chatRooms.map((chatRoom) => (
                     <li className={'singleConversationShortcut'} key={chatRoom.id}
                         onClick={() => handleSelectConversation(chatRoom.id)}>
-                        <ProfilePicture accountId={chatRoom.membersIds[0]} isMyProfile={false} size={40}/>
+                        <ChatroomAvatar chatRoom={chatRoom} myId={myId}/>
                         <div>{chatRoom.name}</div>
                         <div onClick={(e) => e.stopPropagation()}>
                             <LeaveChatroomModal

@@ -4,7 +4,7 @@ import {getProfilePicture} from "../../api/account";
 import defaultProfileImage from "../../assets/defaultProfileImage.jpg";
 
 interface UserAvatarProps {
-    userId: string;
+    userId?: string;
     size?: number;
     className?: string;
     style?: React.CSSProperties; // Optional style prop
@@ -15,17 +15,17 @@ const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50, className, st
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchAvatar = async () => {
+        async function fetchAvatar(): Promise<void> {
             setLoading(true);
             try {
-                const imageUrl = await getProfilePicture(userId);
+                const imageUrl = await getProfilePicture(userId!);
                 setAvatarUrl(imageUrl || defaultProfileImage);
             } catch (error) {
                 setAvatarUrl(defaultProfileImage);
             } finally {
                 setLoading(false);
             }
-        };
+        }
 
         fetchAvatar();
     }, [userId]);
@@ -37,7 +37,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({userId, size = 50, className, st
             ) : (
                 <Avatar
                     src={avatarUrl}
-                    alt={`User ${userId}`}
+                    alt={userId ? `${userId}'s avatar` : "Default avatar"}
                     sx={{
                         width: size,
                         height: size,
