@@ -28,7 +28,7 @@
     "globals": "^15.15.0",
     "react-router-dom": "^7.5.2",
     "typescript": "~5.7.2",
-    "vite": "^6.3.5",
+    "vite": "^6.3.6",
     "web-vitals": "^4.2.4"
   }
 }
