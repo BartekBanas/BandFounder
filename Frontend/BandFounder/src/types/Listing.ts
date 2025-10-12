@@ -22,7 +22,6 @@ export interface ListingsFeedDto {
 }
 
 export interface ListingFeedFilters {
-    excludeOwn: boolean | undefined,
     matchMusicRole: boolean | undefined,
     fromLatest: boolean | undefined,
     listingType: ListingType | undefined,

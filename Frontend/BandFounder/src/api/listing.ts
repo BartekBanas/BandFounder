@@ -71,9 +71,6 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
     try {
         const params = new URLSearchParams();
 
-        if (ListingFeedFilters.excludeOwn !== undefined) {
-            params.append('ExcludeOwn', ListingFeedFilters.excludeOwn.toString());
-        }
         if (ListingFeedFilters.matchMusicRole !== undefined) {
             if(ListingFeedFilters.matchMusicRole) {
                 params.append('MatchRole', 'false');
