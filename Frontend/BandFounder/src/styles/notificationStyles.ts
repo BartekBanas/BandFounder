@@ -4,6 +4,7 @@ const notificationStyles = (theme: MantineTheme) => ({
     root: {
         backgroundColor: theme.colors.dark[6],
         borderColor: theme.colors.dark[7],
+        fontFamily: `'Roboto', sans-serif`,
         '&::before': {backgroundColor: theme.colors.yellow},
     },
     title: {color: theme.colors.gray[2]},
@@ -14,7 +15,7 @@ const notificationStyles = (theme: MantineTheme) => ({
         '&:hover': {
             color: theme.colors.dark[0],
             backgroundColor: theme.colors.gray[1] + ' !important',
-        }
+        },
     },
 });
 
