@@ -18,7 +18,6 @@ const ListingsListPublic: React.FC = () => {
 
     // Main filters
     const [filters, setFilters] = useState<ListingsFiltersState>({
-        excludeOwnListings: undefined,
         matchMusicRole: undefined,
         fromLatest: undefined,
         listingType: undefined,
@@ -42,14 +41,12 @@ const ListingsListPublic: React.FC = () => {
         // Parse URL parameters and apply filters
         const params = new URLSearchParams(location.search);
 
-        const excludeOwn = params.has('excludeOwn') ? params.get('excludeOwn') === 'true' : undefined;
         const matchMusic = params.get('matchAnyRole') === 'true';
         const latest = params.has('fromLatest') ? params.get('fromLatest') === 'true' : undefined;
         const type = params.has('listingType') ? (params.get('listingType') as ListingType) : undefined;
         const genre = params.has('genre') ? params.get('genre') ?? undefined : undefined;
 
         setFilters({
-            excludeOwnListings: excludeOwn,
             matchMusicRole: matchMusic,
             fromLatest: latest,
             listingType: type,
@@ -66,7 +63,6 @@ const ListingsListPublic: React.FC = () => {
             setLoading(true);
             try {
                 const feedFilters: ListingFeedFilters = {
-                    excludeOwn: filters.excludeOwnListings,
                     matchMusicRole: filters.matchMusicRole,
                     fromLatest: filters.fromLatest,
                     listingType: filters.listingType,
@@ -94,9 +90,6 @@ const ListingsListPublic: React.FC = () => {
 
         // Update URL parameters
         const params = new URLSearchParams();
-        if (newFilters.excludeOwnListings !== undefined) {
-            params.set('excludeOwn', newFilters.excludeOwnListings.toString());
-        }
         if (newFilters.matchMusicRole !== undefined) {
             params.set('matchAnyRole', newFilters.matchMusicRole.toString());
         } else {
@@ -117,7 +110,6 @@ const ListingsListPublic: React.FC = () => {
 
     const handleResetFilters = () => {
         setFilters({
-            excludeOwnListings: undefined,
             matchMusicRole: undefined,
             fromLatest: undefined,
             listingType: undefined,
@@ -167,3 +159,4 @@ const ListingsListPublic: React.FC = () => {
 };
 
 export default ListingsListPublic;
+

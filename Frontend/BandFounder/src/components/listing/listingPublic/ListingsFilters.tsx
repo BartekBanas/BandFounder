@@ -1,10 +1,9 @@
 import React, {useState, useEffect} from 'react';
-import {MenuItem, TextField, Button} from "@mui/material";
+import {TextField, MenuItem, Button} from "@mui/material";
 import {ListingType} from "../../../types/Listing";
 import {getGenres} from "../../../api/metadata";
 
 export interface ListingsFiltersState {
-    excludeOwnListings?: boolean;
     matchMusicRole?: boolean;
     fromLatest?: boolean;
     listingType?: ListingType;
@@ -17,14 +16,21 @@ interface ListingsFiltersProps {
     onReset: () => void;
 }
 
-const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onReset}) => {
-    const [tempFilters, setTempFilters] = useState<ListingsFiltersState>(filters);
-    const [genreOptions, setGenreOptions] = useState<string[]>([]);
+const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onReset}: ListingsFiltersProps) => {
+    // Local temp state for editing filters before applying
+    const [tempMatchMusicRole, setTempMatchMusicRole] = useState<boolean | undefined>(filters.matchMusicRole);
+    const [tempFromLatest, setTempFromLatest] = useState<boolean | undefined>(filters.fromLatest);
+    const [tempListingType, setTempListingType] = useState<ListingType | undefined>(filters.listingType);
+    const [tempGenreFilter, setTempGenreFilter] = useState<string | undefined>(filters.genreFilter);
 
     useEffect(() => {
-        setTempFilters(filters);
+        setTempMatchMusicRole(filters.matchMusicRole);
+        setTempFromLatest(filters.fromLatest);
+        setTempListingType(filters.listingType);
+        setTempGenreFilter(filters.genreFilter);
     }, [filters]);
 
+    const [genreOptions, setGenreOptions] = useState<string[]>([]);
     useEffect(() => {
         const fetchGenres = async () => {
             try {
@@ -35,6 +41,24 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
         };
         fetchGenres();
     }, []);
+
+    const handleApply = () => {
+        onApply({
+            matchMusicRole: tempMatchMusicRole,
+            fromLatest: tempFromLatest,
+            listingType: tempListingType,
+            genreFilter: tempGenreFilter,
+        });
+    };
+
+    const handleReset = () => {
+        setTempMatchMusicRole(undefined);
+        setTempFromLatest(undefined);
+        setTempListingType(undefined);
+        setTempGenreFilter(undefined);
+        onReset();
+    };
+
     return (
         <div className="listingsFilters">
             <div className="filtersCheckboxes">
@@ -42,13 +66,8 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     <input
                         type="checkbox"
                         id="matchMusicRole"
-                        checked={tempFilters.matchMusicRole || false}
-                        onChange={() =>
-                            setTempFilters(f => ({
-                                ...f,
-                                matchMusicRole: !f.matchMusicRole
-                            }))
-                        }
+                        checked={tempMatchMusicRole || false}
+                        onChange={() => setTempMatchMusicRole(!tempMatchMusicRole)}
                     />
                     <label htmlFor="matchMusicRole">Match any role</label>
                 </div>
@@ -56,13 +75,8 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     <input
                         type="checkbox"
                         id="fromLatest"
-                        checked={tempFilters.fromLatest || false}
-                        onChange={() =>
-                            setTempFilters(f => ({
-                                ...f,
-                                fromLatest: !f.fromLatest
-                            }))
-                        }
+                        checked={tempFromLatest || false}
+                        onChange={() => setTempFromLatest(!tempFromLatest)}
                     />
                     <label htmlFor="fromLatest">From latest</label>
                 </div>
@@ -71,13 +85,8 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                 <TextField
                     select
                     label="Listing type"
-                    value={tempFilters.listingType || ''}
-                    onChange={(e) =>
-                        setTempFilters(f => ({
-                            ...f,
-                            listingType: e.target.value as ListingType
-                        }))
-                    }
+                    value={tempListingType || ''}
+                    onChange={(e) => setTempListingType(e.target.value as ListingType)}
                     sx={{width: '100%'}}
                     id="listingType"
                 >
@@ -90,13 +99,8 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                 <TextField
                     select
                     label="Genre"
-                    value={tempFilters.genreFilter || ''}
-                    onChange={(e) =>
-                        setTempFilters(f => ({
-                            ...f,
-                            genreFilter: e.target.value as string
-                        }))
-                    }
+                    value={tempGenreFilter || ''}
+                    onChange={(e) => setTempGenreFilter(e.target.value as string)}
                     sx={{width: '100%'}}
                     SelectProps={{
                         MenuProps: {
@@ -119,18 +123,10 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                 </TextField>
             </div>
             <div style={{display: 'flex', gap: '1rem'}} id={'filtersButtons'}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => onApply(tempFilters)}
-                >
+                <Button variant="contained" color="primary" onClick={handleApply}>
                     Apply Filters
                 </Button>
-                <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={onReset}
-                >
+                <Button variant="outlined" color="primary" onClick={handleReset}>
                     Reset Filters
                 </Button>
             </div>
@@ -139,4 +135,3 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
 };
 
 export default ListingsFilters;
-
