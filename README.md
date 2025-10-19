@@ -20,14 +20,15 @@ Once you find a listing you’re interested in, you can click on the author’s 
 the details of the collaboration.
 ![MainPage.png](preview/MainPage.png)
 
+### Music taste comparison
+
+Based on the artists you listen to on Spotify or added manually, BandFounder will be able to compare your music taste
+with that of other users.
+![ListingAuthorOverview.png](preview/ListingAuthorOverview.png)
+
 ### Chat with other musicians
 
 ![ChattingPage.png](preview/ChattingPage.png)
-
-### Music Integration
-
-Based on the artists you listen to on Spotify or added manually, Bandfounder will be able to compare your music taste
-with that of other users.
 
 ### Create your own listings
 
