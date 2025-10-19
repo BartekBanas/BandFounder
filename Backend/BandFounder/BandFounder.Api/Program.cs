@@ -15,6 +15,7 @@ using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -33,6 +34,13 @@ services.AddSwaggerGen();
 services.AddDbContext<BandFounderDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase"), 
         npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
+
+// services.Configure<IdentityOptions>(options =>
+// {
+//     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);
+//     options.Lockout.MaxFailedAccessAttempts = 5;
+//     options.Lockout.AllowedForNewUsers = true;
+// });
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
 
@@ -85,9 +93,18 @@ services.AddSingleton<WebSocketConnectionManager>();
 
 services.AddScoped<ErrorHandlingMiddleware>();
 
+services.AddMemoryCache();
+services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
+services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+
 var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+app.UseIpRateLimiting();
 
 app.UseWebSockets();
 app.Use(async (context, next) =>
