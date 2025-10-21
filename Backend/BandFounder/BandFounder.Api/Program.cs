@@ -93,9 +93,13 @@ services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>(
 services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
 
+services.AddCorsPolicies(configuration);
+
 var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+app.UseCors(app.Environment.IsDevelopment() ? CorsPolicies.LocalDevelopment : CorsPolicies.Production);
 
 app.UseIpRateLimiting();
 
@@ -123,12 +127,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseCors(policyBuilder => policyBuilder
-    .AllowAnyHeader()
-    .WithOrigins("http://localhost:3000", "http://localhost:3001")
-    .AllowAnyMethod()
-    .AllowCredentials());
 
 app.UseHttpsRedirection();
 
