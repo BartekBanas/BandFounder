@@ -15,6 +15,7 @@ using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -85,9 +86,22 @@ services.AddSingleton<WebSocketConnectionManager>();
 
 services.AddScoped<ErrorHandlingMiddleware>();
 
+services.AddMemoryCache();
+services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
+services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+
+services.AddCorsPolicies(configuration);
+
 var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+app.UseCors(app.Environment.IsDevelopment() ? CorsPolicies.LocalDevelopment : CorsPolicies.Production);
+
+app.UseIpRateLimiting();
 
 app.UseWebSockets();
 app.Use(async (context, next) =>
@@ -113,12 +127,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseCors(policyBuilder => policyBuilder
-    .AllowAnyHeader()
-    .WithOrigins("http://localhost:3000", "http://localhost:3001")
-    .AllowAnyMethod()
-    .AllowCredentials());
 
 app.UseHttpsRedirection();
 

@@ -73,4 +73,44 @@ public static class ServiceCollectionExtensions
             };
         });
     }
+
+    public static void AddCorsPolicies(this IServiceCollection services, IConfiguration configuration)
+    {
+        var configuredOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+        var devOrigins = new List<string> { "http://localhost:3000", "http://localhost:3001" };
+        if (configuredOrigins.Length > 0)
+        {
+            foreach (var origin in configuredOrigins)
+            {
+                if (!devOrigins.Contains(origin)) devOrigins.Add(origin);
+            }
+        }
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy(CorsPolicies.LocalDevelopment, policy =>
+            {
+                policy.WithOrigins(devOrigins.ToArray())
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+
+            options.AddPolicy(CorsPolicies.Production, policy =>
+            {
+                if (configuredOrigins.Length > 0)
+                {
+                    policy.WithOrigins(configuredOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                }
+                else
+                {
+                    // Intentionally keep restrictive when no production origins are configured.
+                }
+            });
+        });
+    }
 }

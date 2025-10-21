@@ -3,6 +3,7 @@ using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BandFounder.Api.Controllers;
 
@@ -18,6 +19,7 @@ public class AccountController : Controller
     }
 
     [HttpPost]
+    [EnableRateLimiting("IpRateLimiting")]
     public async Task<IActionResult> RegisterAccount([FromBody] RegisterAccountDto dto)
     {
         var token = await _accountService.RegisterAccountAsync(dto);
@@ -26,6 +28,7 @@ public class AccountController : Controller
     }
 
     [HttpPost("authenticate")]
+    [EnableRateLimiting("IpRateLimiting")]
     public async Task<IActionResult> Authenticate([FromBody] LoginDto dto)
     {
         var token = await _accountService.AuthenticateAsync(dto);
