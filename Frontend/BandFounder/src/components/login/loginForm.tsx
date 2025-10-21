@@ -7,24 +7,21 @@ import {mantineErrorNotification, mantineInformationNotification} from "../commo
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 
-export const useLoginApi = () => {
-    return async (usernameOrEmail: string, password: string) => {
-        const authorizationToken = await login(usernameOrEmail, password);
-        setAuthToken(authorizationToken);
+export async function performLogin(usernameOrEmail: string, password: string) {
+    const authorizationToken = await login(usernameOrEmail, password);
+    setAuthToken(authorizationToken);
 
-        const account = await getMyAccount();
-        setUserId(account.id);
+    const account = await getMyAccount();
+    setUserId(account.id);
 
-        mantineInformationNotification(`Welcome ${account.name}`);
-    };
-};
+    mantineInformationNotification(`Welcome ${account.name}`);
+}
 
 export function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
-    const login = useLoginApi();
 
     useEffect(() => {
         if (window.location.pathname === '/login/expiredSession') {
@@ -35,7 +32,7 @@ export function LoginForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await login(email, password);
+            await performLogin(email, password);
             navigate('/home');
         } catch (e: any) {
             mantineErrorNotification("Login failed");
