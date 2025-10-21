@@ -55,7 +55,7 @@ export function LoginForm() {
                     }
                 }
 
-                mantineErrorNotification("Too many login attempts. Please wait a moment and try again" + retryMsg);
+                mantineErrorNotification("Too many login attempts. Please try again later");
                 return;
             }
 
