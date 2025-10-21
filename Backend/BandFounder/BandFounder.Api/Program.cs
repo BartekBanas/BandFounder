@@ -35,13 +35,6 @@ services.AddDbContext<BandFounderDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("BandfounderDatabase"), 
         npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
-// services.Configure<IdentityOptions>(options =>
-// {
-//     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);
-//     options.Lockout.MaxFailedAccessAttempts = 5;
-//     options.Lockout.AllowedForNewUsers = true;
-// });
-
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
 
 services.AddScoped<IAuthorizationHandler, ChatRoomAuthorizationHandler>();
