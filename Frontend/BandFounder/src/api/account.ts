@@ -51,7 +51,15 @@ export async function login(usernameOrEmail: string, password: string): Promise<
     const responseContent = await response.text();
 
     if (!response.ok) {
-        throw new Error(responseContent);
+        const error: any = new Error(responseContent || `HTTP ${response.status} ${response.statusText}`);
+        error.status = response.status;
+        error.responseText = responseContent;
+        try {
+            error.retryAfter = response.headers.get('Retry-After');
+        } catch (e) {
+            // ignore header read errors
+        }
+        throw error;
     }
 
     return responseContent; // Authentication JWT
