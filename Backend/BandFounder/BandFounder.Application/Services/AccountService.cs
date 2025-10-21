@@ -157,10 +157,10 @@ public class AccountService : IAccountService
                 account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
 
         if (foundAccount is null)
-            throw new ForbiddenException("Username of email is incorrect");
+            throw new ForbiddenException("Incorrect login details");
 
         if (!_hashingService.VerifyPassword(foundAccount, loginDto.Password))
-            throw new ForbiddenException("Password is incorrect");
+            throw new ForbiddenException("Incorrect login details");
 
         var claims = _authenticationService.GenerateClaimsIdentity(foundAccount);
 
