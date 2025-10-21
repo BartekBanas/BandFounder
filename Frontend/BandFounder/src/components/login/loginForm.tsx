@@ -34,16 +34,17 @@ export function LoginForm() {
         try {
             await performLogin(email, password);
             navigate('/home');
-        } catch (err: any) {
-            console.log(JSON.stringify(err));
+        } catch (error: any) {
+            const status = error?.response?.status ?? error?.status;
+            const message = error?.responseText ?? error?.message ?? '';
 
-            const status = err?.response?.status ?? err?.status;
-            const message = err?.responseText ?? err?.message ?? '';
-
-            console.error('Login error details', {status, message, name: err?.name, stack: err?.stack, rawError: err});
+            if (status === 403) {
+                mantineErrorNotification("Incorrect login details");
+                return;
+            }
 
             if (status === 429) {
-                const retryAfter = err?.retryAfter;
+                const retryAfter = error?.retryAfter;
                 let retryMsg = '';
                 if (retryAfter) {
                     const seconds = parseInt(String(retryAfter), 10);
@@ -54,13 +55,13 @@ export function LoginForm() {
                     }
                 }
 
-                mantineErrorNotification("Too many login attempts. Please wait a moment and try again." + retryMsg);
+                mantineErrorNotification("Too many login attempts. Please wait a moment and try again" + retryMsg);
                 return;
             }
 
-            // Fall back to server-provided message if available, otherwise a generic message
-            mantineErrorNotification(message || "Login failed");
-            console.error(err);
+            // Unexpected error
+            mantineErrorNotification("Login failed");
+            console.error(error);
         }
     };
 
