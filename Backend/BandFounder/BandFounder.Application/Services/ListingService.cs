@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Dtos.Listings;
@@ -86,15 +87,59 @@ public class ListingService : IListingService
     
     public async Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions)
     {
+        // Build a database-side filter to reduce the number of loaded listings
         var userId = _authenticationService.GetUserId();
         var userAccount = await _accountService.GetDetailedAccount(userId);
-        
-        var listings = await _listingRepository.GetAsync(includeProperties:
-            [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
 
-        var listingsList = listings.ToList();
-        FilterListings(userAccount, listingsList, filterOptions);
-        
+        // Start with a predicate that's always true and add conditions
+        Expression<Func<Listing, bool>> filter = listing => true;
+
+        if (filterOptions.ExcludeOwn)
+        {
+            filter = AndAlso(filter, listing => listing.OwnerId != userId);
+        }
+
+        if (filterOptions.ListingType is not null)
+        {
+            var type = filterOptions.ListingType.Value;
+            filter = AndAlso(filter, listing => listing.Type == type);
+        }
+
+        if (filterOptions.Genre is not null)
+        {
+            var genre = filterOptions.Genre;
+            filter = AndAlso(filter, listing => listing.GenreName == genre);
+        }
+
+        if (filterOptions.MatchRole && userAccount.MusicianRoles.Count > 0)
+        {
+            var roleNames = userAccount.MusicianRoles.Select(r => r.Name).ToList();
+            if (roleNames.Contains("Any"))
+            {
+                filter = AndAlso(filter, listing => listing.MusicianSlots.Any(slot => slot.Status == SlotStatus.Available));
+            }
+            else
+            {
+                // Use local list contains (translates to SQL IN) to match slot role names
+                filter = AndAlso(filter, listing => listing.MusicianSlots.Any(slot => slot.Status == SlotStatus.Available && roleNames.Contains(slot.Role.Name)));
+            }
+        }
+
+        // Fetch all listings matching the filter. Paging is applied after similarity scoring below,
+        // because the feed is ranked by music-taste match rather than date or insertion order.
+        var includeProperties = new[] { nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role" };
+
+        Func<IQueryable<Listing>, IOrderedQueryable<Listing>>? orderBy = null;
+        if (filterOptions.FromLatest)
+        {
+            orderBy = q => q.OrderByDescending(l => l.DateCreated);
+        }
+
+        var listingsList = (await _listingRepository.GetAsync(
+            filter: filter,
+            orderBy: orderBy,
+            includeProperties: includeProperties)).ToList();
+
         var listingsWithScores = new List<ListingWithScore>();
 
         foreach (var listing in listingsList)
@@ -145,7 +190,7 @@ public class ListingService : IListingService
         {
             listing = await _listingRepository.GetOneRequiredAsync(listingId);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new NotFoundException("Could not find listing");
         }
@@ -332,36 +377,27 @@ public class ListingService : IListingService
         return duplicateSlot != null;
     }
 
-    private void FilterListings(Account account, List<Listing> listings, FeedFilterOptions filterOptions)
+    // Helper to combine expressions
+    private static Expression<Func<T, bool>> AndAlso<T>(Expression<Func<T, bool>> left, Expression<Func<T, bool>> right)
     {
-        if (filterOptions.ExcludeOwn)
-        {
-            listings.RemoveAll(listing => listing.OwnerId == account.Id);
-        }
-        
-        if (filterOptions.MatchRole && account.MusicianRoles.Count > 0)
-        {
-            listings.RemoveAll(listing => 
-                !listing.MusicianSlots.Any(slot => 
-                    slot.Status == SlotStatus.Available &&
-                    account.MusicianRoles.Any(role => role.Name == "Any" || role.Name == slot.Role.Name)
-                )
-            );
-        }
+        var parameter = Expression.Parameter(typeof(T));
 
-        if (filterOptions.ListingType is not null)
-        {
-            listings.RemoveAll(listing => listing.Type != filterOptions.ListingType);
-        }
+        var leftVisitor = new ParameterRebinder { Map = { [left.Parameters[0]] = parameter } };
+        var leftBody = leftVisitor.Visit(left.Body);
 
-        if (filterOptions.Genre is not null)
+        var rightVisitor = new ParameterRebinder { Map = { [right.Parameters[0]] = parameter } };
+        var rightBody = rightVisitor.Visit(right.Body);
+
+        return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(leftBody, rightBody), parameter);
+    }
+
+    private class ParameterRebinder : ExpressionVisitor
+    {
+        public readonly Dictionary<ParameterExpression, ParameterExpression> Map = new();
+
+        protected override Expression VisitParameter(ParameterExpression node)
         {
-            listings.RemoveAll(listing => listing.GenreName != filterOptions.Genre);
-        }
-        
-        if (filterOptions.FromLatest)
-        {
-            listings.Sort((x, y) => y.DateCreated.CompareTo(x.DateCreated));
+            return Map.GetValueOrDefault(node, node);
         }
     }
 }
