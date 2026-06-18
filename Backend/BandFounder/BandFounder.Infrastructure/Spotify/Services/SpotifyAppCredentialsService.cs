@@ -3,7 +3,12 @@ using BandFounder.Infrastructure.Spotify.Dto;
 
 namespace BandFounder.Infrastructure.Spotify.Services;
 
-public class SpotifyAppCredentialsService
+public interface ISpotifyAppCredentialsService
+{
+    Task<SpotifyAppCredentials> LoadCredentials();
+}
+
+public class SpotifyAppCredentialsService : ISpotifyAppCredentialsService
 {
     private readonly string _filePath;
 

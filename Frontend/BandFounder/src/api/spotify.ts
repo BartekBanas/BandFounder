@@ -53,18 +53,24 @@ export async function fetchSpotifyAppClientId(): Promise<string> {
     return responseText;
 }
 
-export async function getTopArtists(guid: string): Promise<string[]> {
+export async function getTopArtists(guid: string): Promise<string[] | null> {
     try {
         const response = await fetch(`${API_URL}/accounts/${guid}/artists/spotify/top`, {
             method: 'GET',
             headers: authorizedHeaders()
         });
-        if (!response.ok) {
-            throw new Error(await response.text());
+        if (response.ok) {
+            return await response.json();
         }
-        return await response.json();
+        if (response.status === 404) {
+            return null;
+        }
+        console.error('Error getting top artists:', await response.text());
+        mantineErrorNotification('Failed to load Spotify top artists');
+        return null;
     } catch (error) {
         console.error('Error getting top artists:', error);
-        return [];
+        mantineErrorNotification('Failed to load Spotify top artists');
+        return null;
     }
 }

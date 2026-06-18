@@ -45,7 +45,9 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
 
         const fetchTopArtists = async () => {
             const artists = await getTopArtists(getUserId());
-            setTopArtists(artists.splice(0, 5));
+            if (artists) {
+                setTopArtists(artists.splice(0, 5));
+            }
         }
 
         const fetchTopGenres = async () => {
