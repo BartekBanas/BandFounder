@@ -1,4 +1,4 @@
-﻿namespace BandFounder.Infrastructure.Errors;
+﻿namespace BandFounder.Infrastructure.Exceptions;
 
 public abstract class InfrastructureException : Exception
 {
