@@ -119,8 +119,7 @@ public class SpotifyConnectionService(
         {
             await spotifyTokensRepository.DeleteOneAsync(userId);
             await spotifyTokensRepository.SaveChangesAsync();
-            throw new SpotifyAccountNotLinkedException(
-                "Your Spotify connection has expired. Please link your account again.");
+            throw new SpotifyReauthorizationRequiredException();
         }
     }
 

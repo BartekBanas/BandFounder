@@ -163,7 +163,7 @@ public class SpotifyConnectionServiceTests
         _spotifyClient.RefreshTokenAsync(Arg.Any<string>(), Arg.Any<SpotifyAppCredentials>())
             .Returns<Task<SpotifyTokensResponse>>(_ => throw new SpotifyRefreshTokenExpiredException());
 
-        var ex = Assert.ThrowsAsync<SpotifyAccountNotLinkedException>(
+        var ex = Assert.ThrowsAsync<SpotifyReauthorizationRequiredException>(
             () => _spotifyConnectionService.GetTopArtistsAsync(userId));
 
         Assert.That(ex!.Message, Does.Contain("expired"));
