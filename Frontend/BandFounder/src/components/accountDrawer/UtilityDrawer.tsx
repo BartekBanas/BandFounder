@@ -8,7 +8,7 @@ import {AddArtistModal} from "./AddArtistModal";
 import {getUserId, removeAuthToken, removeUserId} from "../../hooks/authentication";
 import './UtilityDrawer.css';
 import {Account} from "../../types/Account";
-import {getTopArtists} from "../../api/spotify";
+import {getTopArtists, TopArtist} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
 import {getAccount} from "../../api/account";
 import ProfilePicture from "../profile/ProfilePicture";
@@ -20,7 +20,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     const [opened, {open, close}] = useDisclosure(false);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [user, setUser] = useState<Account>();
-    const [topArtists, setTopArtists] = useState<string[]>([]);
+    const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
     const [topGenres, setTopGenres] = useState<string[]>([]);
 
     const handleLogout = () => {
@@ -86,7 +86,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                         <h2>Top Artists</h2>
                         <ul>
                             {topArtists.map((artist, index) => (
-                                <li key={index}>{index + 1}. {artist}</li>
+                                <li key={artist.id}>{index + 1}. {artist.name}</li>
                             ))}
                         </ul>
                     </div>

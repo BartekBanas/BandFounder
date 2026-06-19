@@ -1,75 +1,161 @@
-.profileMain{
+.profileMain {
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    height: 300px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 24px;
+    min-height: 300px;
+    padding: 24px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
-.profileMain #profileImage{
+.profileMain #profileImage {
     width: 200px;
     height: 200px;
     border-radius: 25%;
 }
 
-.profileMain .topArtists{
+.profileLeftPart {
     display: flex;
     flex-direction: column;
-    justify-content: start;
-    align-items: start;
-}
-.profileMain .topArtists ul {
-    border: 1px solid white;
-    padding: 5px;
-    border-radius: 10px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
 }
 
-.profileMain .topGenres{
+.profileTasteGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    flex: 1;
+    min-width: 260px;
+    max-width: 960px;
+    align-items: stretch;
+}
+
+.profile-taste-card {
+    flex: 1;
+    min-width: 200px;
+    background-color: var(--card-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
     display: flex;
     flex-direction: column;
-    justify-content: start;
-    align-items: start;
+    gap: 12px;
 }
 
-.profileMain .topGenres ul{
-    border: 1px solid white;
-    padding: 5px;
-    border-radius: 10px;
+.profile-taste-card__title {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }
 
-.musicRoles{
+.profile-taste-card__tags {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: start;
-    height: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 174px;
     overflow-y: auto;
 }
 
-.musicRoles .musicRolesList{
+.profile-taste-card__empty {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.profile-taste-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: var(--text-primary);
+    background-color: var(--card-surface-elevated);
+    border: 1px solid var(--border-subtle);
+}
+
+.profile-taste-tag--artist {
+    background-color: var(--cta-surface-accent);
+    border-color: rgba(59, 130, 246, 0.25);
+    font-size: 0.9rem;
+    padding: 3px 10px;
+}
+
+.profile-artist-tag {
+    cursor: default;
+}
+
+.profile-artist-popover {
+    position: fixed;
+    transform: translate(-50%, calc(-100% - 8px));
+    z-index: 1500;
+    padding: 4px;
+    background-color: var(--card-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+}
+
+.profile-artist-popover__img {
+    display: block;
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.profile-taste-tag--genre {
+    color: var(--text-secondary);
+}
+
+.profile-taste-card--roles .musicRolesList {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
     overflow-y: auto;
-    height: 70%;
-    min-width: 180px;
-    border: 1px solid white;
-    padding: 5px;
-    border-radius: 10px;
+    max-height: 174px;
+    min-width: 0;
+    border: none;
+    padding: 0;
 }
 
-.profileMain{
+.profile-taste-card--roles .MuiList-root {
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    height: 300px;
-    padding: 10px;
-    border-bottom: 1px solid white;
-}
-
-.css-cfd5wn-MuiListItem-root{
+    flex-wrap: wrap;
+    gap: 8px;
     padding: 0 !important;
-    padding-top: 4px !important;
 }
 
-.MuiList-root.MuiList-padding.css-b7dj7n-MuiList-root{
-    padding-top: 0 !important;
+.profile-taste-card--roles .MuiListItem-root {
+    width: auto;
+    padding: 0 !important;
+}
+
+.profile-taste-card--roles .MuiChip-root {
+    background-color: var(--card-surface-elevated) !important;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.profile-taste-card--roles .MuiChip-deleteIcon {
+    color: var(--text-secondary) !important;
+}
+
+.profile-taste-card--roles .MuiChip-deleteIcon:hover {
+    color: var(--text-primary) !important;
+}
+
+.profile-taste-card__add-btn {
+    align-self: flex-start;
+    margin-top: auto;
 }
