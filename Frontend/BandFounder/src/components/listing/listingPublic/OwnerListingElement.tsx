@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import '../shared/listingShared.css';
 import {Menu, IconButton, Box, Typography, Button} from '@mui/material';
 import {commonTaste} from "../../../types/CommonTaste";
 import {Listing} from "../../../types/Listing";
@@ -72,7 +73,7 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
     }
 
     return (
-        <div className={'ownerListingElements'}>
+        <div className="owner-listing-elements">
             <IconButton onClick={handleClick}>
                 <ProfilePicture isMyProfile={false} accountId={listing.ownerId} size={40}/>
             </IconButton>

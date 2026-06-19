@@ -1,3 +1,4 @@
+import './styles/theme.css';
 import './App.css';
 import {Routing} from "./pages/Routing";
 import {BrowserRouter} from "react-router-dom";

@@ -1,7 +1,7 @@
 .custom-scrollbar {
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: #555 #1f1f1f;
+    scrollbar-color: #3d465c var(--background-default, #141820);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -9,14 +9,14 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: #1f1f1f;
+    background: var(--background-default, #141820);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #555;
+    background: #3d465c;
     border-radius: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #888;
+    background: #4f5a72;
 }

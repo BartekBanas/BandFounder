@@ -5,6 +5,7 @@ import ListingPrivate from "./listingPrivate";
 import {Listing} from "../../../types/Listing";
 import {getUsersListings} from "../../../api/listing";
 import {getUserId} from "../../../hooks/authentication";
+import '../shared/listingShared.css';
 
 const ListingsListPrivate: React.FC = () => {
     const [listings, setListings] = useState<Listing[]>([]);

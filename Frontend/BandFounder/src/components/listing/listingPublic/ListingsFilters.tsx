@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react';
-import {TextField, MenuItem, Button} from "@mui/material";
+import {TextField, MenuItem} from "@mui/material";
 import {ListingType} from "../../../types/Listing";
 import {getGenres} from "../../../api/metadata";
+import './style.css';
 
 export interface ListingsFiltersState {
     matchMusicRole?: boolean;
@@ -17,7 +18,6 @@ interface ListingsFiltersProps {
 }
 
 const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onReset}: ListingsFiltersProps) => {
-    // Local temp state for editing filters before applying
     const [tempMatchMusicRole, setTempMatchMusicRole] = useState<boolean | undefined>(filters.matchMusicRole);
     const [tempFromLatest, setTempFromLatest] = useState<boolean | undefined>(filters.fromLatest);
     const [tempListingType, setTempListingType] = useState<ListingType | undefined>(filters.listingType);
@@ -60,9 +60,10 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
     };
 
     return (
-        <div className="listingsFilters">
-            <div className="filtersCheckboxes">
-                <div>
+        <div className="listings-filters">
+            <h2 className="listings-filters__title">Filter Listings</h2>
+            <div className="listings-filters__checkboxes">
+                <div className="listings-filters__checkbox-row">
                     <input
                         type="checkbox"
                         id="matchMusicRole"
@@ -71,7 +72,7 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     />
                     <label htmlFor="matchMusicRole">Match any role</label>
                 </div>
-                <div>
+                <div className="listings-filters__checkbox-row">
                     <input
                         type="checkbox"
                         id="fromLatest"
@@ -81,27 +82,29 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     <label htmlFor="fromLatest">From latest</label>
                 </div>
             </div>
-            <div>
+            <div className="listings-filters__field">
                 <TextField
                     select
                     label="Listing type"
                     value={tempListingType || ''}
                     onChange={(e) => setTempListingType(e.target.value as ListingType)}
-                    sx={{width: '100%'}}
+                    fullWidth
+                    size="small"
                     id="listingType"
                 >
                     <MenuItem value="">All</MenuItem>
-                    <MenuItem value="CollaborativeSong">CollaborativeSong</MenuItem>
+                    <MenuItem value="CollaborativeSong">Song</MenuItem>
                     <MenuItem value="Band">Band</MenuItem>
                 </TextField>
             </div>
-            <div>
+            <div className="listings-filters__field">
                 <TextField
                     select
                     label="Genre"
                     value={tempGenreFilter || ''}
                     onChange={(e) => setTempGenreFilter(e.target.value as string)}
-                    sx={{width: '100%'}}
+                    fullWidth
+                    size="small"
                     SelectProps={{
                         MenuProps: {
                             PaperProps: {
@@ -122,13 +125,13 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     ))}
                 </TextField>
             </div>
-            <div style={{display: 'flex', gap: '1rem'}} id={'filtersButtons'}>
-                <Button variant="contained" color="primary" onClick={handleApply}>
+            <div className="listings-filters__actions">
+                <button type="button" className="listings-filters__apply" onClick={handleApply}>
                     Apply Filters
-                </Button>
-                <Button variant="outlined" color="primary" onClick={handleReset}>
-                    Reset Filters
-                </Button>
+                </button>
+                <button type="button" className="listings-filters__reset" onClick={handleReset}>
+                    Reset
+                </button>
             </div>
         </div>
     );
