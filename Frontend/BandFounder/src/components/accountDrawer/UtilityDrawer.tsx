@@ -1,12 +1,15 @@
 import React, {FC, useEffect, useState} from 'react';
 import {useDisclosure} from "@mantine/hooks";
-import {Drawer, IconButton, Button, Menu, MenuItem} from "@mui/material";
+import {Button, Drawer, IconButton, Typography} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
 import {DeleteAccountButton} from "./DeleteAccountButton";
 import {UpdateAccountButton} from "./UpdateAccountButton";
 import {SpotifyConnectionButton} from "./spotifyConnection/SpotifyConnectionButton";
 import {AddArtistModal} from "./AddArtistModal";
 import {getUserId, removeAuthToken, removeUserId} from "../../hooks/authentication";
 import './UtilityDrawer.css';
+import '../../styles/customScrollbar.css';
 import {Account} from "../../types/Account";
 import {getTopArtists, TopArtist} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
@@ -18,7 +21,6 @@ interface UtilityDrawerProps {
 
 export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     const [opened, {open, close}] = useDisclosure(false);
-    const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [user, setUser] = useState<Account>();
     const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
     const [topGenres, setTopGenres] = useState<string[]>([]);
@@ -29,29 +31,21 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
         window.location.reload();
     };
 
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setMenuAnchor(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setMenuAnchor(null);
-    };
-
     useEffect(() => {
         const getUser = async () => {
             const user = await getAccount(getUserId());
             setUser(user);
-        }
+        };
 
         const fetchTopArtists = async () => {
             const artists = await getTopArtists(getUserId());
-            setTopArtists(artists.splice(0, 5));
-        }
+            setTopArtists(artists.slice(0, 5));
+        };
 
         const fetchTopGenres = async () => {
             const genres = await getUsersGenres(getUserId());
-            setTopGenres(genres.splice(0, 5));
-        }
+            setTopGenres(genres.slice(0, 5));
+        };
 
         getUser();
         fetchTopArtists();
@@ -61,98 +55,99 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     return (
         <>
             <Drawer
+                className="utility-drawer"
                 open={opened}
                 onClose={close}
                 anchor="left"
-                sx={{
-                    width: 300,
-                    '& .MuiDrawer-paper': {
-                        width: 300,
-                        backgroundColor: 'background.default',
-                        color: 'text.primary',
-                    },
-                }}
-                id={'mainDrawer'}
+                id="mainDrawer"
             >
-                <div className={'drawerHeader'}>
-                    <h1 id={'mainDrawerTitle'}>Account Utilities</h1>
-                </div>
-                <div className={'profileShowDrawer'}>
-                    <ProfilePicture accountId={user?.id!} isMyProfile={true} size={120}/>
-                    <p>{user?.name}</p>
-                </div>
-                <div className={'musicTasteDrawer'}>
-                    <div id={'topArtistsDrawer'}>
-                        <h2>Top Artists</h2>
-                        <ul>
-                            {topArtists.map((artist, index) => (
-                                <li key={artist.id}>{index + 1}. {artist.name}</li>
-                            ))}
-                        </ul>
+                <header className="utility-drawer__header">
+                    <h1 className="utility-drawer__title" id="mainDrawerTitle">Account</h1>
+                    <IconButton
+                        className="utility-drawer__close"
+                        onClick={close}
+                        aria-label="Close account menu"
+                        size="small"
+                    >
+                        <CloseIcon/>
+                    </IconButton>
+                </header>
+
+                <div className="utility-drawer__body custom-scrollbar">
+                    <div className="utility-drawer__profile">
+                        {user?.id && (
+                            <ProfilePicture accountId={user.id} isMyProfile={true} size={120}/>
+                        )}
+                        <Typography className="utility-drawer__username" component="p">
+                            {user?.name ?? ''}
+                        </Typography>
                     </div>
-                    <div id={'topGenresDrawer'}>
-                        <h2>Top Genres</h2>
-                        <ul>
-                            {topGenres.map((genre, index) => (
-                                <li key={index}>{index + 1}. {genre}</li>
-                            ))}
-                        </ul>
+
+                    <div className="utility-drawer__taste-grid">
+                        <section className="utility-drawer__taste-card custom-scrollbar">
+                            <h3 className="utility-drawer__taste-title">Top Artists</h3>
+                            {topArtists.length > 0 ? (
+                                <ol className="utility-drawer__taste-list">
+                                    {topArtists.map((artist) => (
+                                        <li key={artist.id}>{artist.name}</li>
+                                    ))}
+                                </ol>
+                            ) : (
+                                <span className="utility-drawer__taste-empty">No artists yet</span>
+                            )}
+                        </section>
+
+                        <section className="utility-drawer__taste-card custom-scrollbar">
+                            <h3 className="utility-drawer__taste-title">Top Genres</h3>
+                            {topGenres.length > 0 ? (
+                                <ol className="utility-drawer__taste-list">
+                                    {topGenres.map((genre, index) => (
+                                        <li key={index}>{genre}</li>
+                                    ))}
+                                </ol>
+                            ) : (
+                                <span className="utility-drawer__taste-empty">No genres yet</span>
+                            )}
+                        </section>
                     </div>
-                </div>
-                <div className={'drawerBody'}>
-                    <div className={'accountButtonsDrawer'}>
-                        {/* Dropdown Menu */}
-                        <Button
-                            variant="outlined"
-                            onClick={handleMenuOpen}
-                            color="info"
-                        >
-                            Account Actions
-                        </Button>
-                        <Menu
-                            anchorEl={menuAnchor}
-                            open={Boolean(menuAnchor)}
-                            onClose={handleMenuClose}
-                            id={'accountActionsMenu'}
-                        >
-                            <MenuItem>
-                                <DeleteAccountButton/>
-                            </MenuItem>
-                            <MenuItem onClick={handleMenuClose}>
-                                <SpotifyConnectionButton/>
-                            </MenuItem>
-                        </Menu>
-                        <div className={'smallerButtonsDrawer'}>
+
+                    <section className="utility-drawer__section">
+                        <h3 className="utility-drawer__section-label">Account</h3>
+                        <div className="utility-drawer__section-actions">
                             <UpdateAccountButton/>
                             <AddArtistModal/>
                         </div>
-                    </div>
+                    </section>
+
+                    <section className="utility-drawer__section">
+                        <h3 className="utility-drawer__section-label">Spotify</h3>
+                        <div className="utility-drawer__section-actions">
+                            <SpotifyConnectionButton/>
+                        </div>
+                    </section>
+
+                    <section className="utility-drawer__section">
+                        <h3 className="utility-drawer__section-label">Danger zone</h3>
+                        <div className="utility-drawer__section-actions">
+                            <DeleteAccountButton/>
+                        </div>
+                    </section>
                 </div>
-                <div className={'drawerFooter'}>
-                    <Button variant={"outlined"} onClick={handleLogout} color={"warning"}>
+
+                <footer className="utility-drawer__footer">
+                    <Button
+                        className="utility-drawer__logout"
+                        variant="outlined"
+                        onClick={handleLogout}
+                    >
                         Logout
                     </Button>
-                </div>
+                </footer>
             </Drawer>
 
-            <div>
-                <IconButton onClick={open} size="large" color="primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width={36} height={36} viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-                         className="icon icon-tabler icons-tabler-outline icon-tabler-adjustments">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M4 10a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                        <path d="M6 4v4"/>
-                        <path d="M6 12v8"/>
-                        <path d="M10 16a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                        <path d="M12 4v10"/>
-                        <path d="M12 18v2"/>
-                        <path d="M16 7a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                        <path d="M18 4v1"/>
-                        <path d="M18 9v11"/>
-                    </svg>
-                </IconButton>
-            </div>
+            <IconButton onClick={open} color="inherit" aria-label="Open account menu">
+                <MenuIcon/>
+            </IconButton>
         </>
     );
 };
