@@ -1,129 +1,145 @@
 #mainSelectedConversation{
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    border: 1px solid white;
-    border-radius: 10px;
-    padding: 5px;
-    margin-top: 20px;
-    margin-right: 10px;
+    background-color: var(--card-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 0;
     height: 100%;
-    width: 70%;
+    min-height: 0;
+    flex: 1;
+    min-width: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-#fullConversation{
-    border-radius: 10px;
-    padding: 5px;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-}
-
-#fullConversation > *{
-    margin-bottom: 0 !important;
-    margin-top: 2px !important;
+#emptyConversation{
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
 }
 
 #selectedConversationTitle{
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid white;
-    padding: 5px;
+    gap: 12px;
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-subtle);
+    background-color: var(--card-surface-elevated);
+}
+
+#fullConversation{
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+#fullConversation > li{
+    display: flex;
+    margin: 3px 0 !important;
+}
+
+#fullConversation > li.messageRowYou{
+    justify-content: flex-end;
+}
+
+#fullConversation > li.messageRowThey{
+    justify-content: flex-start;
 }
 
 #sendBox{
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-top: 1px solid white;
-    padding: 5px;
-    padding-top: 15px;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--card-surface-elevated);
+}
+
+#sendBox .MuiOutlinedInput-root{
+    border-radius: 999px;
+    background-color: var(--card-surface);
 }
 
 .singleMessageYou {
     display: flex;
-    justify-self: right;
     flex-direction: row-reverse;
-    margin: 0 5px;
-    padding: 10px;
-    background-color: #35565d;
-    border: 2px solid #21363a;
-    border-radius: 15px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    align-items: flex-end;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: var(--primary-main);
+    border-radius: 16px 16px 4px 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     max-width: 70%;
-    align-self: flex-start;
     overflow-wrap: break-word;
     word-break: break-word;
     white-space: pre-wrap;
-}
-
-.singleMessageYou .messageProfilePresentation {
-    margin-left: 10px; /* Space between profile picture and message */
 }
 
 .singleMessageYou .messageContent {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    font-size: 15px;
+    font-size: 0.95rem;
+    color: #ffffff;
     word-wrap: break-word;
 }
 
 .singleMessageThey {
     display: flex;
-    justify-self: left;
     flex-direction: row;
-    padding: 10px;
-    background-color: #494326;
-    border: 2px solid #33301a;
-    border-radius: 15px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    align-items: flex-end;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: var(--card-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px 16px 16px 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     max-width: 70%;
-    align-self: flex-end;
     overflow-wrap: break-word;
     word-break: break-word;
     white-space: pre-wrap;
 }
 
-.singleMessageThey .messageProfilePresentation {
-    margin-right: 10px;
+.singleMessageThey .messageContent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    word-wrap: break-word;
 }
 
-.singleMessageYou img{
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+.messageContent a{
+    color: inherit;
+    text-decoration: underline;
 }
 
+.singleMessageYou img,
 .singleMessageThey img{
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    margin:0;
+    margin: 0;
 }
 
-.messageProfilePresentation{
-    display: flex;
-    flex-direction: column;
-    font-size: 10px;
-}
-
-.messageContent{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    font-size: 15px;
-}
-
-.messageTime{
-    display: flex;
-    justify-content: flex-end;
-    align-items: end;
-    font-size: 8px;
-}
-
-.singleMessageYou .user-avatar-container{
+.singleMessageYou .user-avatar-container,
+.singleMessageThey .user-avatar-container{
     margin: 0 !important;
     display: flex;
     justify-content: center;
