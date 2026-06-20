@@ -50,6 +50,8 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     }, [currentConversation]);
 
     useEffect(() => {
+        if (!id) return;
+
         const fetchChatroom = async () => {
             const chatroom = await getChatroom(id);
             if (chatroom.membersIds) {
@@ -181,6 +183,8 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
 
 
     useEffect(() => {
+        if (!id) return;
+
         const conversationElement = document.getElementById("fullConversation");
 
         if (!conversationElement) {
@@ -263,58 +267,60 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         return `${Math.floor(timeDifference / 86400)} day${Math.floor(timeDifference / 86400) === 1 ? "" : "s"} ago`;
     };
 
+    if (!id) {
+        return (
+            <div id="mainSelectedConversation">
+                <div id="emptyConversation">Select a chat to start messaging</div>
+            </div>
+        );
+    }
+
     return (
         <div id="mainSelectedConversation">
             <h1 id="selectedConversationTitle">{chatroomName}</h1>
-            <ul id="fullConversation" className="custom-scrollbar" style={{listStyleType: "none", padding: 0}}>
-                {currentConversation.map((message, index) => (
-                    <li
-                        key={index}
-                        style={{
-                            textAlign: message.senderName === "You" ? "right" : "left",
-                            margin: "10px 0",
-                        }}
-                    >
-                        {message.senderId === getUserId() ? (
-                            <div className="singleMessageYou">
-                                <Tooltip title={message.senderName}>
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        marginLeft: '3px'
-                                    }}>
-                                        <UserAvatar userId={message.senderId} size={20}
-                                                    style={{display: 'flex', alignItems: 'center'}}/>
+            <ul id="fullConversation" className="custom-scrollbar">
+                {[...currentConversation]
+                    .sort((a, b) => new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime())
+                    .map((message, index, sortedConversation) => {
+                    const previousMessage = sortedConversation[index - 1];
+                    const GROUP_TIME_GAP_MS = 5 * 60 * 1000;
+                    const isFirstInGroup =
+                        index === 0 ||
+                        previousMessage.senderId !== message.senderId ||
+                        new Date(message.sentDate).getTime() -
+                            new Date(previousMessage.sentDate).getTime() >
+                            GROUP_TIME_GAP_MS;
+                    return (
+                        <li
+                            key={index}
+                            className={`messageRow${isFirstInGroup ? "" : " grouped"}`}
+                        >
+                            <div className="messageAvatarGutter">
+                                {isFirstInGroup && (
+                                    <Tooltip title={message.senderName}>
+                                        <div>
+                                            <UserAvatar userId={message.senderId} size={40}/>
+                                        </div>
+                                    </Tooltip>
+                                )}
+                            </div>
+                            <div className="messageBody">
+                                {isFirstInGroup && (
+                                    <div className="messageHeader">
+                                        <span className="senderName">{message.senderName}</span>
+                                        <span className="messageTime">{message.timeSinceSent}</span>
                                     </div>
-                                </Tooltip>
+                                )}
                                 <Tooltip title={`Sent ${message.timeSinceSent}`}>
                                     <div className="messageContent">{formatMessageWithLinks(message.content)}</div>
                                 </Tooltip>
                             </div>
-                        ) : (
-                            <div className="singleMessageThey">
-                                <Tooltip title={message.senderName}>
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        marginRight: '3px'
-                                    }}>
-                                        <UserAvatar userId={message.senderId} size={20}
-                                                    style={{display: 'flex', alignItems: 'center'}}/>
-                                    </div>
-                                </Tooltip>
-                                <Tooltip title={`Sent ${message.timeSinceSent}`}>
-                                    <div className="messageContent">{formatMessageWithLinks(message.content)}</div>
-                                </Tooltip>
-                            </div>
-                        )}
-                    </li>
-                ))}
+                        </li>
+                    );
+                })}
                 <div ref={bottomRef}/>
             </ul>
-            <div id="sendBox" style={{display: "flex", alignItems: "center", marginTop: "1rem"}}>
+            <div id="sendBox">
                 <TextField
                     fullWidth
                     variant="outlined"

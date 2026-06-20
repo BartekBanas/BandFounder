@@ -24,7 +24,7 @@ function ChatroomAvatar({chatRoom, myId}: { chatRoom: ChatRoom, myId: string }) 
                 <ProfilePicture
                     accountId={otherUserId}
                     isMyProfile={false}
-                    size={40}
+                    size={48}
                 />
             );
         }
@@ -125,19 +125,19 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
                 renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined"/>}
                 style={{margin: "20px", maxWidth: "100%"}}
             />
-            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-                {
-                    chatRooms.length > 0 ? <h2>Open Conversations</h2> :
+            {
+                chatRooms.length > 0 ? <div id="chatroomsListHeading">Open Conversations</div> :
+                    <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                         <CircularProgress size={30} sx={{marginBottom: '20px'}}/>
-                }
-            </div>
+                    </div>
+            }
             <ul id={'openConversationsList'} className={'custom-scrollbar'}>
                 {chatRooms.map((chatRoom) => (
                     <li className={'singleConversationShortcut'} key={chatRoom.id}
                         onClick={() => handleSelectConversation(chatRoom.id)}>
                         <ChatroomAvatar chatRoom={chatRoom} myId={myId}/>
-                        <div>{chatRoom.name}</div>
-                        <div onClick={(e) => e.stopPropagation()}>
+                        <div className={'conversationName'}>{chatRoom.name}</div>
+                        <div className={'leaveChatroomBtn'} onClick={(e) => e.stopPropagation()}>
                             <LeaveChatroomModal
                                 chatroom={chatRoom}
                                 setRefreshConversations={setRefreshConversations}
