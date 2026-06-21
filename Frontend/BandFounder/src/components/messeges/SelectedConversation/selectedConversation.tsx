@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useRef, useState} from "react";
 import {Message} from "../../../types/Message";
-import {IconButton, TextField, Tooltip} from "@mui/material";
+import {IconButton, TextField} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
 import "../../../styles/customScrollbar.css";
@@ -10,7 +10,7 @@ import {getUserId} from "../../../hooks/authentication";
 import {Account} from "../../../types/Account";
 import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getChatroom} from "../../../api/chatroom";
-import UserAvatar from "../../common/UserAvatar";
+import InteractiveUserAvatar from "../../common/InteractiveUserAvatar";
 import {formatMessageWithLinks} from "../../common/utils";
 
 interface SelectedConversationProps {
@@ -321,11 +321,12 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                         >
                             <div className="messageAvatarGutter">
                                 {isFirstInGroup ? (
-                                    <Tooltip title={message.senderName}>
-                                        <div>
-                                            <UserAvatar userId={message.senderId} size={40}/>
-                                        </div>
-                                    </Tooltip>
+                                    <InteractiveUserAvatar
+                                        userId={message.senderId}
+                                        name={message.senderName}
+                                        size={40}
+                                        showName={false}
+                                    />
                                 ) : (
                                     <span className="groupedMessageTime">
                                         {formatMessageTime(messageSentDate)}

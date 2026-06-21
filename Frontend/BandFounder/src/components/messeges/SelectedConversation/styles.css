@@ -117,6 +117,10 @@
     align-items: center;
 }
 
+.messageAvatarGutter .MuiIconButton-root{
+    padding: 0;
+}
+
 .groupedMessageTime{
     font-size: 0.62rem;
     line-height: 1.25rem;
