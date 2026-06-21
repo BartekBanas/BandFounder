@@ -83,6 +83,7 @@
 
 .messageRow.grouped{
     margin-top: 0;
+    align-items: baseline;
 }
 
 .messageAvatarGutter{
@@ -106,6 +107,26 @@
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.groupedMessageTime{
+    font-size: 0.62rem;
+    line-height: 1.25rem;
+    color: var(--text-secondary);
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+    user-select: none;
+    transform: translateX(8px);
+}
+
+.messageRow.grouped:hover .groupedMessageTime{
+    opacity: 1;
+}
+
+.messageRow.grouped .messageAvatarGutter{
+    padding-top: 0;
+    justify-content: flex-end;
 }
 
 .messageBody{
@@ -135,6 +156,7 @@
 
 .messageContent {
     font-size: 0.95rem;
+    line-height: 1.25rem;
     color: var(--text-primary);
     overflow-wrap: break-word;
     word-break: break-word;
