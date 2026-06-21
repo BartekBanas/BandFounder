@@ -22,6 +22,12 @@ interface MessageWithSenderName extends Message {
     formattedSentDate: string;
 }
 
+const parseMessageDate = (sentDate: string | undefined): Date => {
+    if (!sentDate) return new Date();
+    const date = new Date(sentDate);
+    return Number.isNaN(date.getTime()) ? new Date() : date;
+};
+
 const formatMessageDate = (messageTime: Date): string => {
     const day = messageTime.getDate().toString().padStart(2, "0");
     const month = (messageTime.getMonth() + 1).toString().padStart(2, "0");
@@ -127,7 +133,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                 }
 
                 const senderName = account.name;
-                const formattedSentDate = formatMessageDate(new Date(message.sentDate));
+                const formattedSentDate = formatMessageDate(parseMessageDate(message.sentDate));
 
                 const newMessageWithSenderName: MessageWithSenderName = {
                     ...message,
@@ -184,7 +190,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     return {
                         ...message,
                         senderName,
-                        formattedSentDate: formatMessageDate(new Date(message.sentDate)),
+                        formattedSentDate: formatMessageDate(parseMessageDate(message.sentDate)),
                     };
                 })
             );
@@ -290,17 +296,20 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             <h1 id="selectedConversationTitle">{chatroomName}</h1>
             <ul id="fullConversation" className="custom-scrollbar">
                 {[...currentConversation]
-                    .sort((a, b) => new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime())
+                    .sort((a, b) => parseMessageDate(a.sentDate).getTime() - parseMessageDate(b.sentDate).getTime())
                     .map((message, index, sortedConversation) => {
                     const previousMessage = sortedConversation[index - 1];
                     const GROUP_TIME_GAP_MS = 5 * 60 * 1000;
-                    const messageSentDate = new Date(message.sentDate);
+                    const messageSentDate = parseMessageDate(message.sentDate);
+                    const previousMessageSentDate = previousMessage
+                        ? parseMessageDate(previousMessage.sentDate)
+                        : null;
                     const isFirstInGroup =
                         index === 0 ||
                         previousMessage.senderId !== message.senderId ||
-                        !isSameDay(messageSentDate, new Date(previousMessage.sentDate)) ||
-                        messageSentDate.getTime() -
-                            new Date(previousMessage.sentDate).getTime() >
+                        !previousMessageSentDate ||
+                        !isSameDay(messageSentDate, previousMessageSentDate) ||
+                        messageSentDate.getTime() - previousMessageSentDate.getTime() >
                             GROUP_TIME_GAP_MS;
                     const messageContent = (
                         <div className="messageContent">{formatMessageWithLinks(message.content)}</div>

@@ -15,20 +15,18 @@ namespace BandFounder.Api.Controllers;
 public class MessageController : Controller
 {
     private readonly IMessageService _messageService;
-    private readonly IAccountService _accountService;
     private readonly WebSocketConnectionManager _webSocketConnectionManager;
     private readonly JsonSerializerOptions _serializationOptions;
 
     public MessageController(
         IMessageService messageService,
-        IAccountService accountService,
         WebSocketConnectionManager webSocketConnectionManager)
     {
         _messageService = messageService;
-        _accountService = accountService;
         _webSocketConnectionManager = webSocketConnectionManager;
         _serializationOptions = new JsonSerializerOptions
         {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             ReferenceHandler = ReferenceHandler.Preserve
         };
     }
@@ -43,13 +41,9 @@ public class MessageController : Controller
 
         try
         {
-            // Send the message via the service
-            await _messageService.SendMessage(new SendMessageDto(chatRoomId, message));
-
-            // Create the message payload
-            var senderAccount = await _accountService.GetAccountAsync();
-            var messagePayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(
-                new { senderId = senderAccount.Id, content = message }, _serializationOptions));
+            var createdMessage = await _messageService.SendMessage(new SendMessageDto(chatRoomId, message));
+            var messagePayload = Encoding.UTF8.GetBytes(
+                JsonSerializer.Serialize(createdMessage.ToDto(), _serializationOptions));
             
             // Broadcast the message to WebSocket clients in the chat room
             foreach (var socket in _webSocketConnectionManager.GetConnections(chatRoomId))
