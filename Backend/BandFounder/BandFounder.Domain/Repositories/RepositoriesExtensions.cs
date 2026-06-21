@@ -65,50 +65,85 @@ public static class RepositoriesExtensions
         {
             throw new ArgumentException("Artist name cannot be empty or whitespace");
         }
-        
-        var artistEntity = await artistRepository.GetOneAsync(artist => artist.Name == artistName,
+
+        var spotifyId = NormalizeSpotifyArtistId(id);
+
+        if (spotifyId is not null)
+        {
+            var artistById = await artistRepository.GetOneAsync(artist => artist.Id == spotifyId,
+                includeProperties: nameof(Artist.Genres));
+
+            if (artistById is not null)
+            {
+                await EnrichArtistAsync(artistById, genreRepository, artistName, genres, popularity);
+                return artistById;
+            }
+        }
+
+        var artistByName = await artistRepository.GetOneAsync(artist => artist.Name == artistName,
             includeProperties: nameof(Artist.Genres));
 
-        if (artistEntity is not null) // Check for artist's lacking properties
+        if (artistByName is not null)
         {
-            if (artistEntity.Popularity == 0 && popularity > 0)
-            {
-                artistEntity.Popularity = popularity;
-            }
-            
-            if (artistEntity.Genres.Count == 0 && genres is not null)
-            {
-                foreach (var genreName in genres)
-                {
-                    var genre = await genreRepository.GetOrCreateAsync(genreName);
-
-                    artistEntity.Genres.Add(genre);
-                }
-            }
-            
-            return artistEntity;
+            await EnrichArtistAsync(artistByName, genreRepository, artistName, genres, popularity);
+            return artistByName;
         }
-        else // Create a new artist
+
+        var newArtist = new Artist
         {
-            var newArtist = new Artist
-            {
-                Id = id ?? Guid.NewGuid().ToString(),
-                Name = artistName,
-                Popularity = popularity
-            };
-            
-            foreach (var genreName in genres ?? [])
+            Id = spotifyId ?? Guid.NewGuid().ToString(),
+            Name = artistName,
+            Popularity = popularity
+        };
+
+        foreach (var genreName in genres ?? [])
+        {
+            var genre = await genreRepository.GetOrCreateAsync(genreName);
+
+            newArtist.Genres.Add(genre);
+        }
+
+        await artistRepository.CreateAsync(newArtist);
+        await artistRepository.SaveChangesAsync();
+
+        return newArtist;
+    }
+
+    private static async Task EnrichArtistAsync(Artist artist, IRepository<Genre> genreRepository,
+        string artistName, List<string>? genres, int popularity)
+    {
+        if (artist.Name != artistName)
+        {
+            artist.Name = artistName;
+        }
+
+        if (artist.Popularity == 0 && popularity > 0)
+        {
+            artist.Popularity = popularity;
+        }
+
+        if (artist.Genres.Count == 0 && genres is { Count: > 0 })
+        {
+            foreach (var genreName in genres)
             {
                 var genre = await genreRepository.GetOrCreateAsync(genreName);
-                
-                newArtist.Genres.Add(genre);
+
+                artist.Genres.Add(genre);
             }
-            
-            await artistRepository.CreateAsync(newArtist);
-            await artistRepository.SaveChangesAsync();
-            
-            return newArtist;
         }
+    }
+
+    private static string? NormalizeSpotifyArtistId(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return null;
+        }
+
+        const string uriPrefix = "spotify:artist:";
+        return id.StartsWith(uriPrefix, StringComparison.OrdinalIgnoreCase)
+            ? id[uriPrefix.Length..]
+            : id;
     }
 
     public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> artistRepository, string artistName)
