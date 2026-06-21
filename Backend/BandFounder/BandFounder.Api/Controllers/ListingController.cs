@@ -61,15 +61,6 @@ public class ListingController : Controller
     }
 
     [Authorize]
-    [HttpGet("{listingId:guid}/commonTaste")]
-    public async Task<IActionResult> GetCommonArtistsAndGenres(Guid listingId)
-    {
-        var responseDto = await _listingService.GetCommonArtistsAndGenresWithListingsAsync(listingId);
-        
-        return Ok(responseDto);
-    }
-
-    [Authorize]
     [HttpPost("{listingId:guid}/contact")]
     public async Task<IActionResult> ContactListingOwner(Guid listingId)
     {
