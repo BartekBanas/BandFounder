@@ -276,8 +276,8 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         }
     };
 
-    const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Enter") {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
             handleSendMessage();
         }
@@ -349,12 +349,19 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             <div id="sendBox">
                 <TextField
                     fullWidth
+                    multiline
+                    maxRows={4}
                     variant="outlined"
                     label="Type a message"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    inputProps={{"aria-label": "Type a message"}}
+                    onKeyDown={handleKeyDown}
+                    slotProps={{
+                        htmlInput: {
+                            "aria-label": "Type a message",
+                            className: "custom-scrollbar",
+                        },
+                    }}
                 />
                 <IconButton color="primary" onClick={handleSendMessage} aria-label="Send message">
                     <SendIcon/>

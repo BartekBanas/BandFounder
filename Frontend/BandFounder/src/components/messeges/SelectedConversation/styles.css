@@ -55,7 +55,7 @@
 
 #sendBox{
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 8px;
     padding: 12px 16px;
     border-top: 1px solid var(--border-subtle);
@@ -63,8 +63,16 @@
 }
 
 #sendBox .MuiOutlinedInput-root{
-    border-radius: 999px;
+    border-radius: 16px;
     background-color: var(--card-surface);
+}
+
+#sendBox .MuiOutlinedInput-notchedOutline{
+    border-radius: 16px;
+}
+
+#sendBox textarea.custom-scrollbar{
+    overflow-y: auto !important;
 }
 
 .messageRow{
