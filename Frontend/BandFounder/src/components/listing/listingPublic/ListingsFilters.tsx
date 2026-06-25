@@ -105,11 +105,15 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     onChange={(e) => setTempGenreFilter(e.target.value as string)}
                     fullWidth
                     size="small"
-                    SelectProps={{
-                        MenuProps: {
-                            PaperProps: {
-                                style: {
-                                    maxHeight: '400px',
+                    slotProps={{
+                        select: {
+                            MenuProps: {
+                                slotProps: {
+                                    paper: {
+                                        style: {
+                                            maxHeight: '400px',
+                                        },
+                                    },
                                 },
                             },
                         },

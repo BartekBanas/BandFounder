@@ -8,7 +8,7 @@ namespace BandFounder.Application.Services;
 
 public interface IMessageService
 {
-    Task SendMessage(SendMessageDto dto);
+    Task<Message> SendMessage(SendMessageDto dto);
     Task<IEnumerable<Message>> GetChatroomMessages(GetMessagesRequest request);
 }
 
@@ -29,7 +29,7 @@ public class MessageService : IMessageService
         _authorizationService = authorizationService;
     }
 
-    public async Task SendMessage(SendMessageDto dto)
+    public async Task<Message> SendMessage(SendMessageDto dto)
     {
         var userClaims = _authenticationService.GetUserClaims();
         var userId = _authenticationService.GetUserId();
@@ -50,6 +50,8 @@ public class MessageService : IMessageService
         chatRoom.Messages.Add(newMessage);
 
         await _messageRepository.SaveChangesAsync();
+
+        return newMessage;
     }
 
     public async Task<IEnumerable<Message>> GetChatroomMessages(GetMessagesRequest request)

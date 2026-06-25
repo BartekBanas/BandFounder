@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useRef, useState} from "react";
 import {Message} from "../../../types/Message";
-import {IconButton, TextField, Tooltip} from "@mui/material";
+import {IconButton, TextField} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./styles.css";
 import "../../../styles/customScrollbar.css";
@@ -10,7 +10,7 @@ import {getUserId} from "../../../hooks/authentication";
 import {Account} from "../../../types/Account";
 import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getChatroom} from "../../../api/chatroom";
-import UserAvatar from "../../common/UserAvatar";
+import InteractiveUserAvatar from "../../common/InteractiveUserAvatar";
 import {formatMessageWithLinks} from "../../common/utils";
 
 interface SelectedConversationProps {
@@ -19,8 +19,34 @@ interface SelectedConversationProps {
 
 interface MessageWithSenderName extends Message {
     senderName: string;
-    timeSinceSent: string;
+    formattedSentDate: string;
 }
+
+const parseMessageDate = (sentDate: string | undefined): Date => {
+    if (!sentDate) return new Date();
+    const date = new Date(sentDate);
+    return Number.isNaN(date.getTime()) ? new Date() : date;
+};
+
+const formatMessageDate = (messageTime: Date): string => {
+    const day = messageTime.getDate().toString().padStart(2, "0");
+    const month = (messageTime.getMonth() + 1).toString().padStart(2, "0");
+    const year = messageTime.getFullYear();
+    const hours = messageTime.getHours().toString().padStart(2, "0");
+    const minutes = messageTime.getMinutes().toString().padStart(2, "0");
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
+const formatMessageTime = (messageTime: Date): string => {
+    const hours = messageTime.getHours().toString().padStart(2, "0");
+    const minutes = messageTime.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+};
+
+const isSameDay = (a: Date, b: Date): boolean =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
 
 export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [chatroom, setChatroom] = useState<ChatRoom>();
@@ -50,6 +76,8 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     }, [currentConversation]);
 
     useEffect(() => {
+        if (!id) return;
+
         const fetchChatroom = async () => {
             const chatroom = await getChatroom(id);
             if (chatroom.membersIds) {
@@ -105,12 +133,12 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                 }
 
                 const senderName = account.name;
-                const timeSinceSent = calculateTimeSinceSent(new Date(message.sentDate));
+                const formattedSentDate = formatMessageDate(parseMessageDate(message.sentDate));
 
                 const newMessageWithSenderName: MessageWithSenderName = {
                     ...message,
                     senderName,
-                    timeSinceSent,
+                    formattedSentDate,
                 };
                 setCurrentConversation((prev) => [...prev, newMessageWithSenderName]);
                 bottomRef.current?.scrollIntoView({behavior: "smooth"}); // Scroll to bottom after receiving a new message
@@ -162,7 +190,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     return {
                         ...message,
                         senderName,
-                        timeSinceSent: calculateTimeSinceSent(new Date(message.sentDate)),
+                        formattedSentDate: formatMessageDate(parseMessageDate(message.sentDate)),
                     };
                 })
             );
@@ -181,6 +209,8 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
 
 
     useEffect(() => {
+        if (!id) return;
+
         const conversationElement = document.getElementById("fullConversation");
 
         if (!conversationElement) {
@@ -230,7 +260,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                 content: trimmedMessage,
                 sentDate: messageTime.toISOString(),
                 senderName: "You",
-                timeSinceSent: "just now",
+                formattedSentDate: formatMessageDate(messageTime),
             };
 
             // setCurrentConversation((prev) => [...prev, newMessageObject]);
@@ -246,83 +276,93 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         }
     };
 
-    const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Enter") {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
             handleSendMessage();
         }
     };
 
-    const calculateTimeSinceSent = (messageTime: Date): string => {
-        const currentTime = new Date();
-        const timeDifference = Math.floor((currentTime.getTime() - messageTime.getTime()) / 1000);
-
-        if (timeDifference < 60) return `${timeDifference} second${timeDifference === 1 ? "" : "s"} ago`;
-        if (timeDifference < 3600) return `${Math.floor(timeDifference / 60)} minute${Math.floor(timeDifference / 60) === 1 ? "" : "s"} ago`;
-        if (timeDifference < 86400) return `${Math.floor(timeDifference / 3600)} hour${Math.floor(timeDifference / 3600) === 1 ? "" : "s"} ago`;
-        return `${Math.floor(timeDifference / 86400)} day${Math.floor(timeDifference / 86400) === 1 ? "" : "s"} ago`;
-    };
+    if (!id) {
+        return (
+            <div id="mainSelectedConversation">
+                <div id="emptyConversation">Select a chat to start messaging</div>
+            </div>
+        );
+    }
 
     return (
         <div id="mainSelectedConversation">
             <h1 id="selectedConversationTitle">{chatroomName}</h1>
-            <ul id="fullConversation" className="custom-scrollbar" style={{listStyleType: "none", padding: 0}}>
-                {currentConversation.map((message, index) => (
-                    <li
-                        key={index}
-                        style={{
-                            textAlign: message.senderName === "You" ? "right" : "left",
-                            margin: "10px 0",
-                        }}
-                    >
-                        {message.senderId === getUserId() ? (
-                            <div className="singleMessageYou">
-                                <Tooltip title={message.senderName}>
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        marginLeft: '3px'
-                                    }}>
-                                        <UserAvatar userId={message.senderId} size={20}
-                                                    style={{display: 'flex', alignItems: 'center'}}/>
-                                    </div>
-                                </Tooltip>
-                                <Tooltip title={`Sent ${message.timeSinceSent}`}>
-                                    <div className="messageContent">{formatMessageWithLinks(message.content)}</div>
-                                </Tooltip>
+            <ul id="fullConversation" className="custom-scrollbar">
+                {[...currentConversation]
+                    .sort((a, b) => parseMessageDate(a.sentDate).getTime() - parseMessageDate(b.sentDate).getTime())
+                    .map((message, index, sortedConversation) => {
+                    const previousMessage = sortedConversation[index - 1];
+                    const GROUP_TIME_GAP_MS = 5 * 60 * 1000;
+                    const messageSentDate = parseMessageDate(message.sentDate);
+                    const previousMessageSentDate = previousMessage
+                        ? parseMessageDate(previousMessage.sentDate)
+                        : null;
+                    const isFirstInGroup =
+                        index === 0 ||
+                        previousMessage.senderId !== message.senderId ||
+                        !previousMessageSentDate ||
+                        !isSameDay(messageSentDate, previousMessageSentDate) ||
+                        messageSentDate.getTime() - previousMessageSentDate.getTime() >
+                            GROUP_TIME_GAP_MS;
+                    const messageContent = (
+                        <div className="messageContent">{formatMessageWithLinks(message.content)}</div>
+                    );
+                    return (
+                        <li
+                            key={index}
+                            className={`messageRow${isFirstInGroup ? "" : " grouped"}`}
+                        >
+                            <div className="messageAvatarGutter">
+                                {isFirstInGroup ? (
+                                    <InteractiveUserAvatar
+                                        userId={message.senderId}
+                                        name={message.senderName}
+                                        size={40}
+                                        showName={false}
+                                    />
+                                ) : (
+                                    <span className="groupedMessageTime">
+                                        {formatMessageTime(messageSentDate)}
+                                    </span>
+                                )}
                             </div>
-                        ) : (
-                            <div className="singleMessageThey">
-                                <Tooltip title={message.senderName}>
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        marginRight: '3px'
-                                    }}>
-                                        <UserAvatar userId={message.senderId} size={20}
-                                                    style={{display: 'flex', alignItems: 'center'}}/>
+                            <div className="messageBody">
+                                {isFirstInGroup && (
+                                    <div className="messageHeader">
+                                        <span className="senderName">{message.senderName}</span>
+                                        <span className="messageTime">{message.formattedSentDate}</span>
                                     </div>
-                                </Tooltip>
-                                <Tooltip title={`Sent ${message.timeSinceSent}`}>
-                                    <div className="messageContent">{formatMessageWithLinks(message.content)}</div>
-                                </Tooltip>
+                                )}
+                                {messageContent}
                             </div>
-                        )}
-                    </li>
-                ))}
+                        </li>
+                    );
+                })}
                 <div ref={bottomRef}/>
             </ul>
-            <div id="sendBox" style={{display: "flex", alignItems: "center", marginTop: "1rem"}}>
+            <div id="sendBox">
                 <TextField
                     fullWidth
+                    multiline
+                    maxRows={4}
                     variant="outlined"
                     label="Type a message"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    inputProps={{"aria-label": "Type a message"}}
+                    onKeyDown={handleKeyDown}
+                    slotProps={{
+                        htmlInput: {
+                            "aria-label": "Type a message",
+                            className: "custom-scrollbar",
+                        },
+                    }}
                 />
                 <IconButton color="primary" onClick={handleSendMessage} aria-label="Send message">
                     <SendIcon/>

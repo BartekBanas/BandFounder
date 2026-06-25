@@ -17,7 +17,6 @@ public interface IListingService
     Task<IEnumerable<Listing>> GetListingsAsync();
     Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions);
     Task<IEnumerable<Listing>> GetUserListingsAsync(Guid? accountId = null);
-    Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null);
     Task<Listing> CreateListingAsync(ListingCreateDto dto, Guid? accountId = null);
     Task UpdateSlotStatus(Guid slotId, SlotStatus slotStatus, Guid? listingId = null);
     Task AssignUserToSlot(Guid slotId, Guid accountId);
@@ -179,26 +178,6 @@ public class ListingService : IListingService
             includeProperties: [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
 
         return myListings;
-    }
-
-    public async Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresWithListingsAsync(Guid listingId, Guid? accountId = null)
-    {
-        var userId = accountId ?? CurrentUserId;
-        
-        Listing listing;
-        try
-        {
-            listing = await _listingRepository.GetOneRequiredAsync(listingId);
-        }
-        catch (Exception)
-        {
-            throw new NotFoundException("Could not find listing");
-        }
-        
-        var commonArtists = await _musicTasteService.GetCommonArtists(userId, listing.OwnerId);
-        var commonGenres = await _musicTasteService.GetCommonGenres(userId, listing.OwnerId);
-        
-        return new ArtistsAndGenresDto(commonArtists, commonGenres);
     }
 
     public async Task<Listing> CreateListingAsync(ListingCreateDto dto, Guid? accountId = null)

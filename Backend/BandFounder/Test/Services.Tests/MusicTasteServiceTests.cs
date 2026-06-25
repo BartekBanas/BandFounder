@@ -11,7 +11,7 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService);
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -97,7 +97,7 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService);
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -161,7 +161,7 @@ public class MusicTasteServiceTests
     public void GetWagedGenres_ShouldReturnGenresWithCorrectWeights()
     {
         // Arrange
-        var musicTasteService = new MusicTasteService(Substitute.For<IAccountService>());
+        var musicTasteService = new MusicTasteService(Substitute.For<IAccountService>(), Substitute.For<IAuthenticationService>());
 
         var user = new Account
         {
@@ -228,7 +228,7 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService);
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
