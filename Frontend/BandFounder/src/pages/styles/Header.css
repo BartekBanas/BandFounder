@@ -14,7 +14,7 @@
     width: 100%;
     border-bottom: 1px solid var(--border-subtle);
     backdrop-filter: blur(12px);
-    background-color: rgba(20, 24, 32, 0.85) !important;
+    background-color: var(--header-background) !important;
 }
 
 .header-toolbar {

@@ -5,7 +5,7 @@ import {getMyAccount, registerAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
-import {muiDarkTheme} from "../../styles/muiDarkTheme";
+import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
 
 export function LoginForm() {
     const [name, setName] = useState('');
@@ -53,7 +53,7 @@ export function LoginForm() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #1c1c1c, #2e2e2e)',
+                    background: `linear-gradient(135deg, ${designTokens.authGradientStart}, ${designTokens.authGradientEnd})`,
                 }}
             >
                 <Box

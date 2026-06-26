@@ -84,7 +84,7 @@
 
 .profile-taste-tag--artist {
     background-color: var(--cta-surface-accent);
-    border-color: rgba(59, 130, 246, 0.25);
+    border-color: var(--accent-blue-border);
     font-size: 0.9rem;
     padding: 3px 10px;
 }

@@ -1,5 +1,5 @@
 .listing-editor-modal .MuiBackdrop-root {
-    background-color: rgba(14, 20, 32, 0.78);
+    background-color: var(--overlay-backdrop);
     backdrop-filter: blur(6px);
 }
 
@@ -7,7 +7,7 @@
     width: 100%;
     max-width: 680px;
     margin: 16px;
-    background-color: #1e2433 !important;
+    background-color: var(--card-surface) !important;
     background-image: none !important;
     border: 1px solid var(--border-subtle);
     border-radius: 16px;
@@ -18,7 +18,7 @@
 .listing-editor-modal__header,
 .listing-editor-modal__body,
 .listing-editor-modal__footer {
-    background-color: #1e2433;
+    background-color: var(--card-surface);
 }
 
 .listing-editor-modal__header {
@@ -99,7 +99,7 @@
     padding: 10px 12px;
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
-    background-color: #141820;
+    background-color: var(--background-default);
     color: var(--text-primary);
     font-size: 0.9rem;
     font-family: inherit;
@@ -197,12 +197,12 @@
     padding: 12px;
     border-radius: 12px;
     border: 1px solid var(--border-subtle);
-    background-color: #141820;
+    background-color: var(--background-default);
 }
 
 .listing-editor-modal__role-card--filled {
-    border-color: rgba(76, 175, 80, 0.4);
-    background-color: rgba(76, 175, 80, 0.08);
+    border-color: var(--success-border);
+    background-color: var(--success-surface);
 }
 
 .listing-editor-modal__role-card-header {
@@ -227,8 +227,8 @@
 }
 
 .listing-editor-modal__role-delete:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: #ef4444;
+    background-color: var(--surface-overlay-subtle);
+    color: var(--error-main);
 }
 
 .listing-editor-modal__role-card .listing-editor-modal__select {
@@ -267,7 +267,7 @@
     border: none;
     border-radius: 10px;
     background-color: var(--accent-blue);
-    color: #fff;
+    color: var(--text-on-dark);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -275,7 +275,7 @@
 }
 
 .listing-editor-modal__submit:hover {
-    background-color: #2563eb;
+    background-color: var(--accent-blue);
     box-shadow: 0 0 12px var(--accent-blue-glow);
 }
 

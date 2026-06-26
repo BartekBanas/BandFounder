@@ -1,7 +1,7 @@
 .custom-scrollbar {
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: #3d465c var(--background-default, #141820);
+    scrollbar-color: var(--scrollbar-thumb) var(--background-default);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -9,14 +9,14 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: var(--background-default, #141820);
+    background: var(--background-default);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #3d465c;
+    background: var(--scrollbar-thumb);
     border-radius: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #4f5a72;
+    background: var(--scrollbar-thumb-hover);
 }

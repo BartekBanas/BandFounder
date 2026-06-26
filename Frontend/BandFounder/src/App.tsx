@@ -1,5 +1,8 @@
+import {applyThemeVariables} from './styles/designTokens';
 import './styles/theme.css';
 import './App.css';
+
+applyThemeVariables();
 import {Routing} from "./pages/Routing";
 import {BrowserRouter} from "react-router-dom";
 import {MantineProvider} from "@mantine/core";

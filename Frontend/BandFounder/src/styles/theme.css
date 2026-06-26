@@ -1,25 +1,3 @@
-:root {
-    --primary-main: #3b82f6;
-    --secondary-main: #252b3b;
-    --background-default: #141820;
-    --background-paper: #1e2433;
-    --text-primary: #e8eaed;
-    --text-secondary: #8b95a8;
-    --text-muted: #8b95a8;
-    --success-main: #4caf50;
-    --success-dark: #357a38;
-    --accent-blue: #3b82f6;
-    --accent-blue-glow: rgba(59, 130, 246, 0.35);
-    --card-surface: #1e2433;
-    --card-surface-elevated: #252b3b;
-    --border-subtle: #2d3548;
-    --band-badge: #9a1a1a;
-    --cta-surface: #252b3b;
-    --cta-surface-accent: rgba(59, 130, 246, 0.12);
-    --cta-text: #e8eaed;
-    --overlay-backdrop: rgba(14, 20, 32, 0.78);
-}
-
 body {
     background-color: var(--background-default);
     color: var(--text-primary);

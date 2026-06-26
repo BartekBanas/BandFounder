@@ -2,7 +2,7 @@ import React from 'react';
 import {Dialog, ThemeProvider} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import {muiDarkTheme} from '../../../styles/muiDarkTheme';
+import {designTokens, muiDarkTheme} from '../../../styles/muiDarkTheme';
 import './listingModal.css';
 
 export interface EditorMusicianSlot {
@@ -68,13 +68,13 @@ const ListingEditorModal: React.FC<ListingEditorModalProps> = ({
                 slotProps={{
                     paper: {
                         sx: {
-                            bgcolor: '#1e2433',
+                            bgcolor: designTokens.cardSurface,
                             backgroundImage: 'none',
                         },
                     },
                     backdrop: {
                         sx: {
-                            backgroundColor: 'rgba(14, 20, 32, 0.78)',
+                            backgroundColor: designTokens.overlayBackdrop,
                             backdropFilter: 'blur(6px)',
                         },
                     },

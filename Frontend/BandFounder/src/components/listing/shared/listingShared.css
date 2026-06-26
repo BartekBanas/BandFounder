@@ -79,7 +79,7 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text-on-dark);
 }
 
 .listing-type-badge--band {
@@ -176,12 +176,12 @@
 
 .role-slot-card:hover {
     transform: translateY(-1px);
-    border-color: #3d465c;
+    border-color: var(--border-strong);
 }
 
 .role-slot-card--filled {
     background-color: var(--success-main);
-    color: #fff;
+    color: var(--text-on-dark);
 }
 
 .role-slot-card__icon {
@@ -191,7 +191,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: var(--surface-overlay-subtle);
     color: var(--text-secondary);
 }
 
@@ -231,7 +231,7 @@
 .create-listing-card:hover {
     box-shadow: 0 6px 28px rgba(0, 0, 0, 0.28), 0 0 16px var(--accent-blue-glow);
     transform: translateY(-1px);
-    border-color: #3d465c;
+    border-color: var(--border-strong);
     border-left-color: var(--accent-blue);
 }
 
@@ -274,7 +274,7 @@
     border: none;
     border-radius: 999px;
     background-color: var(--accent-blue);
-    color: #fff;
+    color: var(--text-on-dark);
     font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -283,7 +283,7 @@
 }
 
 .create-listing-card__button:hover {
-    background-color: #2563eb;
+    background-color: var(--accent-blue);
     box-shadow: 0 0 12px var(--accent-blue-glow);
 }
 
