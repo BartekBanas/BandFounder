@@ -1,4 +1,4 @@
-import React, {FC, useEffect, useRef, useState} from "react";
+import React, {FC, useEffect, useLayoutEffect, useRef, useState} from "react";
 import {Message} from "../../../types/Message";
 import {IconButton, TextField} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
@@ -58,8 +58,11 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [pageSize] = useState<number>(10);
     const [hasMore, setHasMore] = useState<boolean>(true);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const conversationRef = useRef<HTMLUListElement>(null);
     const ws = useRef<WebSocket | null>(null);
     const userCache = useRef<Record<string, string>>({}); // Cache for sender names
+    const prependScrollHeightRef = useRef<number | null>(null);
+    const shouldScrollToBottomRef = useRef(false);
 
     const [participants, setParticipants] = useState<Account[]>([]);
     const addParticipant = (account: Account) => {
@@ -71,8 +74,21 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         });
     };
 
-    useEffect(() => {
-        bottomRef.current?.scrollIntoView({behavior: "smooth"});
+    useLayoutEffect(() => {
+        const conversationElement = conversationRef.current;
+        if (!conversationElement) return;
+
+        if (prependScrollHeightRef.current !== null) {
+            conversationElement.scrollTop =
+                conversationElement.scrollHeight - prependScrollHeightRef.current;
+            prependScrollHeightRef.current = null;
+            return;
+        }
+
+        if (shouldScrollToBottomRef.current) {
+            bottomRef.current?.scrollIntoView({behavior: "auto"});
+            shouldScrollToBottomRef.current = false;
+        }
     }, [currentConversation]);
 
     useEffect(() => {
@@ -114,7 +130,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
 
         const initializeChatroom = async () => {
             await fetchOlderMessages(); // Fetch initial messages
-            bottomRef.current?.scrollIntoView({behavior: "smooth"}); // Scroll to bottom after fetching messages
+            shouldScrollToBottomRef.current = true;
         };
 
         const wsUrl = `wss://localhost:7095/api/chatrooms?chatRoomId=${id}`;
@@ -141,7 +157,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     formattedSentDate,
                 };
                 setCurrentConversation((prev) => [...prev, newMessageWithSenderName]);
-                bottomRef.current?.scrollIntoView({behavior: "smooth"}); // Scroll to bottom after receiving a new message
+                shouldScrollToBottomRef.current = true;
             } catch (error) {
                 console.error("Error parsing WebSocket message:", error);
             }
@@ -211,28 +227,19 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     useEffect(() => {
         if (!id) return;
 
-        const conversationElement = document.getElementById("fullConversation");
-
-        if (!conversationElement) {
-            console.error("Conversation element not found");
-            return;
-        }
+        const conversationElement = conversationRef.current;
+        if (!conversationElement) return;
 
         const handleScroll = async () => {
             if (conversationElement.scrollTop === 0 && hasMore && !loading) {
-                const currentScrollHeight = conversationElement.scrollHeight;
+                prependScrollHeightRef.current = conversationElement.scrollHeight;
                 await fetchOlderMessages();
-                setTimeout(() => {
-                    if (conversationElement.scrollHeight > currentScrollHeight) {
-                        conversationElement.scrollTop =
-                            conversationElement.scrollHeight - currentScrollHeight;
-                    }
-                }, 0);
             }
         };
 
         const checkIfScrollable = async () => {
             if (conversationElement.scrollHeight <= conversationElement.clientHeight && hasMore && !loading) {
+                shouldScrollToBottomRef.current = true;
                 await fetchOlderMessages();
             }
         };
@@ -294,7 +301,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     return (
         <div id="mainSelectedConversation">
             <h1 id="selectedConversationTitle">{chatroomName}</h1>
-            <ul id="fullConversation" className="custom-scrollbar">
+            <ul id="fullConversation" ref={conversationRef} className="custom-scrollbar">
                 {[...currentConversation]
                     .sort((a, b) => parseMessageDate(a.sentDate).getTime() - parseMessageDate(b.sentDate).getTime())
                     .map((message, index, sortedConversation) => {
