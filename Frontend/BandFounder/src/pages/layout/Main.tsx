@@ -4,6 +4,7 @@ import {Content} from "../Content";
 import {Header} from "./Header";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {ThemeProvider} from "@mui/material";
+import '../../styles/theme.css';
 import '../../styles/customScrollbar.css'
 
 export const Main: FC = ({}) => {

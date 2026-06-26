@@ -1,4 +1,5 @@
 import React from "react";
+import {designTokens} from "../../styles/designTokens";
 
 export function sleep(milliseconds: number) {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -16,7 +17,7 @@ export function formatMessageWithLinks(message: string): React.ReactNode[] {
                             href={part}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{color: '#00AAFC', textDecoration: 'underline'}}
+                            style={{color: designTokens.link, textDecoration: 'underline'}}
                         >
                             {part}
                         </a>
@@ -31,7 +32,7 @@ export function formatMessageWithLinks(message: string): React.ReactNode[] {
                     href={part}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{color: '#00AAFC', textDecoration: 'underline'}}
+                    style={{color: designTokens.link, textDecoration: 'underline'}}
                 >
                     {part}
                 </a>

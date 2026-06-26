@@ -1,45 +1,66 @@
 import {createTheme} from "@mui/material";
+import {designTokens} from "./designTokens";
+
+export {designTokens} from "./designTokens";
 
 export const muiDarkTheme = createTheme({
     palette: {
         mode: 'dark',
         primary: {
-            main: '#dedede',
+            main: designTokens.accentBlue,
         },
         secondary: {
-            main: '#424242',
+            main: designTokens.cardSurfaceElevated,
         },
         background: {
-            default: '#2c2c2c',
-            paper: '#131313',
+            default: designTokens.pageBackground,
+            paper: designTokens.cardSurface,
         },
         text: {
-            primary: '#cbcbcb',
-            secondary: '#b0bec5',
+            primary: designTokens.textPrimary,
+            secondary: designTokens.textMuted,
         },
         success: {
-            main: '#4caf50',
-            dark: '#44bb4a',
-            contrastText: '#2a2a2a',
-        }
+            main: designTokens.successMain,
+            dark: designTokens.successDark,
+            contrastText: designTokens.textOnDark,
+        },
+        info: {
+            main: designTokens.accentBlue,
+        },
     },
     typography: {
+        fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
         button: {
-            textTransform: 'none', // Disable uppercase transformation
+            textTransform: 'none',
+        },
+    },
+    shape: {
+        borderRadius: 12,
+    },
+    components: {
+        MuiBackdrop: {
+            styleOverrides: {
+                root: {
+                    backgroundColor: designTokens.overlayBackdrop,
+                    backdropFilter: 'blur(6px)',
+                },
+            },
+        },
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    backgroundImage: 'none',
+                },
+            },
+        },
+        MuiDialog: {
+            styleOverrides: {
+                paper: {
+                    backgroundColor: designTokens.cardSurface,
+                    backgroundImage: 'none',
+                },
+            },
         },
     },
 });
-
-export const cssVariables = `
-    :root {
-        --primary-main: ${muiDarkTheme.palette.primary.main};
-        --secondary-main: ${muiDarkTheme.palette.secondary.main};
-        --background-default: ${muiDarkTheme.palette.background.default};
-        --background-paper: ${muiDarkTheme.palette.background.paper};
-        --text-primary: ${muiDarkTheme.palette.text.primary};
-        --text-secondary: ${muiDarkTheme.palette.text.secondary};
-        --success-main: ${muiDarkTheme.palette.success.main};
-        --success-dark: ${muiDarkTheme.palette.success.dark};
-        --success-contrastText: ${muiDarkTheme.palette.success.contrastText};
-    }
-`;

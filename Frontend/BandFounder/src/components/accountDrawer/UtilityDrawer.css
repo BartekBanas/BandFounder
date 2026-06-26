@@ -1,139 +1,158 @@
-.css-1jde8n2-MuiPaper-root-MuiDrawer-paper{
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: start;
-    align-items: start;
-}
-
-.drawerHeader {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0 8px;
-    width: 100%;
-    height: 64px;
-    font-size: 30px;
-    font-weight: bold;
-    color: #61dafb;
-}
-
-
-.drawerBody{
+.utility-drawer .MuiDrawer-paper {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    padding: 10px;
+    width: 340px;
+    background-color: var(--card-surface);
+    border-right: 1px solid var(--border-subtle);
+    color: var(--text-primary);
 }
 
-.accountButtonsDrawer{
+.utility-drawer__header {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    width: 100%;
-    padding: 10px;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
 }
 
-.accountButtonsDrawer button{
-    margin: 5px;
-    padding: 0;
-    width: 100%;
-    height: 50px;
-    font-size: 12px;
-}
-
-#accountActionsMenu button{
-    width: 230px;
-    height: 50px;
-}
-
-.profileShowDrawer{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    padding: 10px;
-}
-
-.profileShowDrawer img{
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    margin: 10px;
-    box-shadow: #61dafb 0px 0px 15px;
-}
-
-.profileShowDrawer p{
-    font-size: 20px;
-    font-weight: bold;
-}
-.smallerButtonsDrawer {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-}
-
-.smallerButtonsDrawer button{
+.utility-drawer__title {
     margin: 0;
-    width: 50%;
-    height: 50px;
-    font-size: 12px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-.smallerButtonsDrawer button:nth-child(1){
-    margin-right: 5px;
+.utility-drawer__close {
+    color: var(--text-secondary);
 }
 
-.smallerButtonsDrawer button:nth-child(2){
-    margin-left: 5px;
+.utility-drawer__close:hover {
+    color: var(--text-primary);
+    background-color: var(--card-surface-elevated);
 }
 
-.drawerFooter {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0 8px;
-    width: 100%;
-    height: 64px;
-    font-size: 30px;
-    font-weight: bold;
-}
-
-.musicTasteDrawer{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: start;
-    width: 100%;
-    padding: 10px;
-    font-size: clamp(12px, 0.5vw, 15px); /* Adjusts font size based on viewport */
-}
-
-.musicTasteDrawer > *{
-    margin: 5px;
-    border: #61dafb 2px solid;
-    box-shadow: #61dafb 0px 0px 15px;
-    border-radius: 5px;
-    padding: 5px;
-}
-
-#topArtistsDrawer{
+.utility-drawer__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 50%;
+    gap: 20px;
+    min-height: 0;
 }
 
-#topGenresDrawer{
+.utility-drawer__profile {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    width: 50%;
+    gap: 8px;
+}
+
+.utility-drawer__username {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.utility-drawer__taste-grid {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.utility-drawer__taste-card {
+    flex: 1;
+    min-width: 0;
+    background-color: var(--card-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.utility-drawer__taste-title {
+    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.utility-drawer__taste-list {
+    margin: 0;
+    padding: 0 0 0 1.1rem;
+    list-style-position: outside;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--text-primary);
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.utility-drawer__taste-list li {
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.utility-drawer__taste-list li::marker {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.utility-drawer__taste-empty {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+}
+
+.utility-drawer__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.utility-drawer__section-label {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.utility-drawer__section-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.utility-drawer__section-actions .MuiButton-root {
+    width: 100%;
+}
+
+.utility-drawer__footer {
+    flex-shrink: 0;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.utility-drawer__logout {
+    width: 100%;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-secondary) !important;
+}
+
+.utility-drawer__logout:hover {
+    border-color: var(--text-secondary) !important;
+    color: var(--text-primary) !important;
+    background-color: var(--card-surface-elevated) !important;
 }

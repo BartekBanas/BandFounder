@@ -1,58 +1,98 @@
-.profile-image{
+.profile-image {
     width: 30px;
     height: 30px;
-    border-radius:25px;
-    margin:5px;
+    border-radius: 25px;
+    margin: 5px;
 }
 
-.profile-image:hover{
+.profile-image:hover {
     cursor: pointer;
 }
 
-#mainHeader{
+#mainHeader {
     flex-grow: 1;
-    /*position: fixed;*/
     width: 100%;
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: blur(12px);
+    background-color: var(--header-background) !important;
+}
+
+.header-toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 16px;
+    min-height: 80px;
+    padding: 0 20px;
+}
+
+.header-toolbar__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-self: start;
+}
+
+.header-toolbar__center {
+    justify-self: center;
+    width: 100%;
+    max-width: 420px;
+}
+
+.header-toolbar__right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-self: end;
 }
 
 #appNameHeader {
-    flex-grow: 1;
-}
-
-#appNameHeader:hover{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    color: var(--text-primary);
     cursor: pointer;
+    user-select: none;
 }
 
-#searchBarMain{
-    width: 50px;
-    transition: width 0.5s;
+#appNameHeader:hover {
+    opacity: 0.9;
 }
 
-#searchBarMain:hover{
-    width:200px;
-}
-
-#searchBarMain:focus{
-    width:200px;
-}
-
-#rightSideOfMainHeader{
+.header-logo-icon {
     display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
     align-items: center;
-    margin-top: 15px;
+    justify-content: center;
+    color: var(--accent-blue);
 }
 
-#rightSideOfMainHeader > * {
-    margin-left: 10px;
+#searchBarMain {
+    width: 100%;
 }
 
-#leftSideOfMainHeader{
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    margin-top: 15px;
-    flex-grow: 1;
+#searchBarMain .MuiOutlinedInput-root {
+    border-radius: 999px;
+    background-color: var(--card-surface-elevated);
+}
+
+@media (max-width: 768px) {
+    .header-toolbar {
+        grid-template-columns: auto 1fr auto;
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    .header-toolbar__center {
+        max-width: none;
+    }
+
+    #appNameHeader span {
+        display: none;
+    }
 }

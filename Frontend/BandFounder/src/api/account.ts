@@ -11,6 +11,7 @@ import {
     mantineSuccessNotification
 } from "../components/common/mantineNotification";
 import {Account} from "../types/Account";
+import {commonTaste} from "../types/CommonTaste";
 
 export async function registerAccount(name: string, email: string, password: string) {
     const response = await fetch(`${API_URL}/accounts`, {
@@ -74,6 +75,20 @@ export async function getMyAccount(): Promise<Account> {
 
     const account: Account = await response.json();
     return account;
+}
+
+export async function getCommonTaste(userId: string): Promise<commonTaste> {
+    const response = await fetch(`${API_URL}/accounts/${userId}/commonTaste`, {
+        method: 'GET',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        mantineErrorNotification('Failed to fetch common taste');
+        throw new Error('Failed to fetch common taste');
+    }
+
+    return response.json();
 }
 
 export async function getAccount(accountId: string): Promise<Account> {

@@ -10,5 +10,7 @@ public class SpotifyArtistDto
 
     [JsonPropertyName("name")] public required string Name { get; set; }
 
+    [JsonPropertyName("images")] public List<SpotifyImageDto> Images { get; set; } = [];
+
     [JsonPropertyName("popularity")] public int Popularity { get; set; }
 }
