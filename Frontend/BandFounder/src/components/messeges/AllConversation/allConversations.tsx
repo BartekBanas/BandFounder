@@ -1,7 +1,8 @@
 import React, {FC, useState, useEffect} from "react";
 import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getMyChatrooms, createDirectChatroom} from "../../../api/chatroom";
-import {Autocomplete, CircularProgress, TextField} from "@mui/material";
+import {Autocomplete, Avatar, CircularProgress, TextField} from "@mui/material";
+import GroupsIcon from "@mui/icons-material/Groups";
 import './styles.css'
 import '../../../styles/customScrollbar.css'
 import {getUserId} from "../../../hooks/authentication";
@@ -11,8 +12,6 @@ import {mantineErrorNotification} from "../../common/mantineNotification";
 import {LeaveChatroomModal} from "./LeaveChatroomModal";
 import {CreateGroupChatroomModal} from "./CreateGroupChatroomModal";
 import ProfilePicture from "../../profile/ProfilePicture";
-import defaultProfileImage from "../../../assets/defaultProfileImage.jpg";
-
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
 }
@@ -30,9 +29,11 @@ function ChatroomAvatar({chatRoom, myId}: { chatRoom: ChatRoom, myId: string }) 
             );
         }
 
-        case ChatRoomType.General: // TODO 103
+        case ChatRoomType.General:
             return (
-                <img src={defaultProfileImage} alt="Default Profile"/>
+                <Avatar sx={{width: 48, height: 48}}>
+                    <GroupsIcon/>
+                </Avatar>
             );
 
         default:
