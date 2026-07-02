@@ -12,6 +12,7 @@ import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getChatroom} from "../../../api/chatroom";
 import InteractiveUserAvatar from "../../common/InteractiveUserAvatar";
 import {formatMessageWithLinks} from "../../common/utils";
+import {GroupMembersPanel} from "./GroupMembersPanel";
 
 interface SelectedConversationProps {
     id: string;
@@ -64,6 +65,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const prependScrollHeightRef = useRef<number | null>(null);
     const shouldScrollToBottomRef = useRef(false);
 
+    const [membersVersion, setMembersVersion] = useState<number>(0);
     const [participants, setParticipants] = useState<Account[]>([]);
     const addParticipant = (account: Account) => {
         setParticipants((prevParticipants) => {
@@ -120,7 +122,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         };
 
         fetchChatroom();
-    }, [id]);
+    }, [id, membersVersion]);
 
     useEffect(() => {
         if (!id) {
@@ -300,7 +302,21 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
 
     return (
         <div id="mainSelectedConversation">
-            <h1 id="selectedConversationTitle">{chatroomName}</h1>
+            <h1 id="selectedConversationTitle">
+                {chatroomName}
+                {chatroom?.type === ChatRoomType.General && (
+                    <>
+                        <span className="conversationMemberCount">
+                            {participants.length} {participants.length === 1 ? 'member' : 'members'}
+                        </span>
+                        <GroupMembersPanel
+                            chatroom={chatroom}
+                            participants={participants}
+                            onMembersChanged={() => setMembersVersion((version) => version + 1)}
+                        />
+                    </>
+                )}
+            </h1>
             <ul id="fullConversation" ref={conversationRef} className="custom-scrollbar">
                 {[...currentConversation]
                     .sort((a, b) => parseMessageDate(a.sentDate).getTime() - parseMessageDate(b.sentDate).getTime())

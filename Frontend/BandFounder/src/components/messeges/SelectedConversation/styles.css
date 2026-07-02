@@ -38,6 +38,13 @@
     background-color: var(--card-surface-elevated);
 }
 
+#selectedConversationTitle .conversationMemberCount{
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
 #fullConversation{
     display: flex;
     flex-direction: column;
