@@ -78,6 +78,7 @@ public static class DtoMapper
             Id = chatroom.Id,
             Type = chatroom.ChatRoomType,
             Name = chatroom.Name,
+            OwnerId = chatroom.OwnerId,
             MembersIds = chatroom.Members.Select(member => member.Id).ToList()
         };
     }

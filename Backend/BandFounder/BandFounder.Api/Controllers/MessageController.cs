@@ -6,11 +6,13 @@ using BandFounder.Api.WebSockets;
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Messages;
 using BandFounder.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BandFounder.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/chatrooms/{chatRoomId:guid}/messages")]
 public class MessageController : Controller
 {
