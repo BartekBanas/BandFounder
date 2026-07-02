@@ -9,6 +9,7 @@ import {getAccounts, getUser} from "../../../api/account";
 import {Account} from "../../../types/Account";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 import {LeaveChatroomModal} from "./LeaveChatroomModal";
+import {CreateGroupChatroomModal} from "./CreateGroupChatroomModal";
 import ProfilePicture from "../../profile/ProfilePicture";
 import defaultProfileImage from "../../../assets/defaultProfileImage.jpg";
 
@@ -117,14 +118,17 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
 
     return (
         <div id="mainChatroomsList">
-            <Autocomplete
-                options={otherUsers.map((user) => user.name)}
-                onChange={(event, newValue) => {
-                    handleCreateChatroom(newValue);
-                }}
-                renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined"/>}
-                style={{margin: "20px", maxWidth: "100%"}}
-            />
+            <div id="chatroomListActions">
+                <Autocomplete
+                    options={otherUsers.map((user) => user.name)}
+                    onChange={(event, newValue) => {
+                        handleCreateChatroom(newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined"/>}
+                    style={{flex: 1}}
+                />
+                <CreateGroupChatroomModal otherUsers={otherUsers}/>
+            </div>
             {
                 chatRooms.length > 0 ? <div id="chatroomsListHeading">Open Conversations</div> :
                     <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
