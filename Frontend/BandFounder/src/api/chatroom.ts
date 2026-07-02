@@ -95,6 +95,63 @@ export async function createDirectChatroom(accountId: string): Promise<ChatRoom>
     }
 }
 
+export async function createGroupChatroom(name: string): Promise<ChatRoom> {
+    try {
+        const chatRoom: ChatroomCreate = {
+            chatRoomType: 'General',
+            name: name
+        };
+
+        const response = await fetch(`${API_URL}/chatrooms`, {
+            method: 'POST',
+            headers: authorizedHeaders(),
+            body: JSON.stringify(chatRoom)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw {status: response.status, message: errorData};
+        }
+
+        return await response.json();
+    } catch (e) {
+        console.error('Error creating group chatroom:', e);
+        throw e;
+    }
+}
+
+export async function inviteToChatroom(chatRoomId: string, userId: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/chatrooms/${chatRoomId}/invite/${userId}`, {
+            method: 'POST',
+            headers: authorizedHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+    } catch (e) {
+        mantineErrorNotification('Failed to invite user to chatroom');
+        throw e;
+    }
+}
+
+export async function deleteChatroom(chatRoomId: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/chatrooms/${chatRoomId}`, {
+            method: 'DELETE',
+            headers: authorizedHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+    } catch (e) {
+        mantineErrorNotification('Failed to delete chatroom');
+        throw e;
+    }
+}
+
 export const leaveChatroom = async (chatRoomId: string): Promise<any> => {
     try {
         const response = await fetch(`${API_URL}/chatrooms/${chatRoomId}/leave`, {
