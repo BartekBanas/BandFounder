@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Security.Claims;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Exceptions;
 using BandFounder.Application.Services;
@@ -129,5 +130,165 @@ public class ChatroomServiceTests
         // Act & Assert
         Assert.ThrowsAsync<BadRequestException>(async () =>
             await _chatroomService.InviteToChatroom(chatroomId, userId));
+    }
+
+    [Test]
+    public async Task InviteToChatroom_ShouldAddMember_WhenValidRequest()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var invitedUserId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(userId);
+        var invitedAccount = CreateAccount(invitedUserId);
+
+        MockAuthorizationSuccess(userId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(
+                Arg.Any<Expression<Func<Chatroom, bool>>>(), nameof(Chatroom.Members))
+            .Returns(chatroom);
+        _accountRepositoryMock.GetOneRequiredAsync(invitedUserId).Returns(invitedAccount);
+
+        // Act
+        await _chatroomService.InviteToChatroom(chatroom.Id, invitedUserId);
+
+        // Assert
+        Assert.That(chatroom.Members.Any(member => member.Id == invitedUserId), Is.True);
+        await _chatRoomRepositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Test]
+    public void InviteToChatroom_ShouldThrowBadRequestError_WhenChatroomIsDirect()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var invitedUserId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(userId);
+        chatroom.ChatRoomType = ChatRoomType.Direct;
+
+        MockAuthorizationSuccess(userId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(
+                Arg.Any<Expression<Func<Chatroom, bool>>>(), nameof(Chatroom.Members))
+            .Returns(chatroom);
+
+        // Act & Assert
+        Assert.ThrowsAsync<BadRequestException>(async () =>
+            await _chatroomService.InviteToChatroom(chatroom.Id, invitedUserId));
+    }
+
+    [Test]
+    public void InviteToChatroom_ShouldThrowBadRequestError_WhenUserIsAlreadyMember()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var invitedUserId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(userId);
+        chatroom.Members.Add(CreateAccount(invitedUserId));
+
+        MockAuthorizationSuccess(userId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(
+                Arg.Any<Expression<Func<Chatroom, bool>>>(), nameof(Chatroom.Members))
+            .Returns(chatroom);
+
+        // Act & Assert
+        Assert.ThrowsAsync<BadRequestException>(async () =>
+            await _chatroomService.InviteToChatroom(chatroom.Id, invitedUserId));
+    }
+
+    [Test]
+    public async Task LeaveChatroom_ShouldDeleteChatroom_WhenLastMemberLeaves()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(userId);
+
+        MockAuthorizationSuccess(userId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(
+                Arg.Any<Expression<Func<Chatroom, bool>>>(), nameof(Chatroom.Members))
+            .Returns(chatroom);
+
+        // Act
+        await _chatroomService.LeaveChatroom(chatroom.Id);
+
+        // Assert
+        await _chatRoomRepositoryMock.Received(1).DeleteOneAsync(chatroom.Id);
+        await _chatRoomRepositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Test]
+    public async Task LeaveChatroom_ShouldTransferOwnership_WhenOwnerLeaves()
+    {
+        // Arrange
+        var ownerId = Guid.NewGuid();
+        var otherMemberId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(ownerId);
+        chatroom.Members.Add(CreateAccount(otherMemberId));
+
+        MockAuthorizationSuccess(ownerId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(
+                Arg.Any<Expression<Func<Chatroom, bool>>>(), nameof(Chatroom.Members))
+            .Returns(chatroom);
+
+        // Act
+        await _chatroomService.LeaveChatroom(chatroom.Id);
+
+        // Assert
+        Assert.That(chatroom.OwnerId, Is.EqualTo(otherMemberId));
+        Assert.That(chatroom.Members.Any(member => member.Id == ownerId), Is.False);
+        await _chatRoomRepositoryMock.DidNotReceive().DeleteOneAsync(chatroom.Id);
+        await _chatRoomRepositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Test]
+    public async Task DeleteChatroom_ShouldDeleteGeneralChatroom_WhenIssuerIsOwner()
+    {
+        // Arrange
+        var ownerId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(ownerId);
+        chatroom.Members.Add(CreateAccount(Guid.NewGuid()));
+
+        MockAuthorizationSuccess(ownerId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(Arg.Any<Expression<Func<Chatroom, bool>>>(),
+                nameof(Chatroom.Members), nameof(Chatroom.Messages))
+            .Returns(chatroom);
+
+        // Act
+        await _chatroomService.DeleteChatroom(chatroom.Id);
+
+        // Assert
+        await _chatRoomRepositoryMock.Received(1).DeleteOneAsync(chatroom.Id);
+        await _chatRoomRepositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    private static Account CreateAccount(Guid accountId)
+    {
+        return new Account
+        {
+            Id = accountId,
+            Name = null,
+            PasswordHash = null,
+            Email = null
+        };
+    }
+
+    private static Chatroom CreateGroupChatroom(Guid ownerId)
+    {
+        var owner = CreateAccount(ownerId);
+
+        return new Chatroom
+        {
+            Id = Guid.NewGuid(),
+            Name = "Group Chatroom",
+            ChatRoomType = ChatRoomType.General,
+            OwnerId = ownerId,
+            Owner = owner,
+            Members = [owner]
+        };
+    }
+
+    private void MockAuthorizationSuccess(Guid userId)
+    {
+        _authenticationServiceMock.GetUserId().Returns(userId);
+        _authorizationServiceMock.AuthorizeAsync(
+                Arg.Any<ClaimsPrincipal>(), Arg.Any<object?>(), Arg.Any<string>())
+            .Returns(AuthorizationResult.Success());
     }
 }
