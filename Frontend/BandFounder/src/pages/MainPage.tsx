@@ -1,35 +1,33 @@
 import React, {useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
 import UseSpotifyConnected from "../hooks/useSpotifyAccountLinked";
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../components/common/RingLoader";
 import ListingsListPublic from "../components/listing/listingPublic/listingsListPublic";
+import ListingsFilters from "../components/listing/listingPublic/ListingsFilters";
+import {useListingsFeed} from "../components/listing/listingPublic/useListingsFeed";
 import ListingTemplate from "../components/listing/listingTemplate/listingTemplate";
 import './styles/mainContainer.css'
 import '../styles/customScrollbar.css'
 
 export function MainPage() {
-    const [isConnectedToSpotify, setIsConnectedToSpotify] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
-    const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-    const navigate = useNavigate();
+    const {
+        listings,
+        loading: listingsLoading,
+        filters,
+        lastListingElementRef,
+        handleApplyFilters,
+        handleResetFilters,
+    } = useListingsFeed();
 
     useEffect(() => {
         const checkSpotifyConnection = async () => {
-            const isConnected = await UseSpotifyConnected();
-            setIsConnectedToSpotify(isConnected);
+            await UseSpotifyConnected();
             setLoading(false);
         };
 
         checkSpotifyConnection();
-    }, [navigate]);
-
-    const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-        if (event.type === 'keydown' && ((event as React.KeyboardEvent).key === 'Tab' || (event as React.KeyboardEvent).key === 'Shift')) {
-            return;
-        }
-        setDrawerOpen(open);
-    };
+    }, []);
 
     const theme = createTheme({
         components: {
@@ -51,9 +49,24 @@ export function MainPage() {
     }
 
     return (
-        <div id={'mainContainer'} className={'custom-scrollbar'}>
-            <ListingTemplate/>
-            <ListingsListPublic/>
+        <div id="mainContainer" className="custom-scrollbar">
+            <div className="feed-layout">
+                <aside className="feed-sidebar">
+                    <ListingsFilters
+                        filters={filters}
+                        onApply={handleApplyFilters}
+                        onReset={handleResetFilters}
+                    />
+                </aside>
+                <main className="feed-main">
+                    <ListingTemplate/>
+                    <ListingsListPublic
+                        listings={listings}
+                        loading={listingsLoading}
+                        lastListingElementRef={lastListingElementRef}
+                    />
+                </main>
+            </div>
         </div>
     );
 }

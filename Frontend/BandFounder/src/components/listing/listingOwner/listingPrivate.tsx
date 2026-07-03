@@ -1,32 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import './style.css';
-import './listingCreator.css';
 import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
 import {RingLoader} from "../../common/RingLoader";
-import {
-    Button,
-    Modal,
-    Box,
-    TextField,
-    Select,
-    InputLabel,
-    MenuItem,
-    IconButton,
-    Autocomplete, SelectChangeEvent
-} from "@mui/material";
-import {ListingCreate} from "../../../types/ListingCreate";
-import CloseIcon from "@mui/icons-material/Close";
-import {lengthOfGenre} from "../listingTemplate/listingTemplate";
+import {Button} from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import {getListing, updateListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import ProfilePicture from "../../profile/ProfilePicture";
 import {DeleteListingButton} from "./DeleteListingButton";
-import {formatMessageWithLinks} from "../../common/utils";
 import {MusicianSlot, SlotType} from "../../../types/MusicianSlot";
-import {castToListingType, Listing} from "../../../types/Listing";
+import {Listing} from "../../../types/Listing";
 import {ListingUpdate} from "../../../types/ListingUpdate";
+import ListingCard from "../shared/ListingCard";
+import ListingCardHeader from "../shared/ListingCardHeader";
+import ListingCardBody from "../shared/ListingCardBody";
+import AvailableRolesSection from "../shared/AvailableRolesSection";
+import ListingEditorModal from "../shared/ListingEditorModal";
 
 interface ListingPrivateProps {
     listingId: string;
@@ -38,7 +26,7 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     const [listingType, setListingType] = useState<string>('');
     const [listingGenre, setListingGenre] = useState<string>('');
     const [listingDescription, setListingDescription] = useState<string>('');
-    const [listingMusicianSlots, setListingMusicianSlots] = useState<any>([]);
+    const [listingMusicianSlots, setListingMusicianSlots] = useState<MusicianSlot[]>([]);
     const [listingName, setListingName] = useState<string>('');
     const [genres, setGenres] = useState<string[]>([]);
     const [roles, setRoles] = useState<string[]>([]);
@@ -78,61 +66,33 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
-    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (listing) {
-            listing.name = (event.target.value);
-        }
-    }
-
-    const handleEditType = (event: SelectChangeEvent): void => {
-        if (listing) {
-            const castedType = castToListingType(event.target.value);
-            if (castedType) {
-                listing.type = castedType;
-            } else {
-                console.error('Invalid listing type');
-            }
-        }
+    const handleEditSlotStatus = (slotId: string, status: string) => {
+        setListingMusicianSlots((slots) =>
+            slots.map((slot) => slot.id === slotId ? {...slot, status: status as SlotType} : slot)
+        );
     };
 
-    const handleEditSlot = (slotId: string) => {
-        const newSlots = listingMusicianSlots.map((slot: MusicianSlot) => {
-            if (slot.id === slotId) {
-                return {...slot, status: slot.status === 'Available' ? 'Filled' : 'Available'};
-            }
-            return slot;
-        });
-        setListingMusicianSlots(newSlots);
-    }
-
     const handleEditMusicianRole = (slotId: string, role: string) => {
-        const newSlots = listingMusicianSlots.map((slot: any) => {
-            if (slot.id === slotId) {
-                if (role) {
-                    return {...slot, role};
-                } else {
-                    return {...slot, role: ''};
-                }
-            }
-            return slot;
-        });
-        setListingMusicianSlots(newSlots);
-    }
+        setListingMusicianSlots((slots) =>
+            slots.map((slot) => slot.id === slotId ? {...slot, role} : slot)
+        );
+    };
 
     const handleAddNewRole = () => {
         const newSlot: MusicianSlot = {
+            id: Math.random().toString(36).substr(2, 9),
             role: '',
             status: SlotType.Available,
         };
-        setListingMusicianSlots([...listingMusicianSlots, newSlot]);
-    }
+        setListingMusicianSlots((slots) => [...slots, newSlot]);
+    };
 
     const handleUpdateListing = async () => {
         try {
             const updatedListing: ListingUpdate = {
                 name: listingName,
                 type: listingType,
-                genre: listing?.genre,
+                genre: listingGenre,
                 description: listingDescription,
                 musicianSlots: listingMusicianSlots,
             }
@@ -141,12 +101,11 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
         } catch (e) {
             console.error(e);
         }
-    }
+    };
 
     const handleDeleteRole = (slotId: string) => {
-        const newSlots = listingMusicianSlots.filter((slot: any) => slot.id !== slotId);
-        setListingMusicianSlots(newSlots);
-    }
+        setListingMusicianSlots((slots) => slots.filter((slot) => slot.id !== slotId));
+    };
 
     if (!listing) {
         const theme = createTheme({
@@ -169,178 +128,55 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
     }
 
     return (
-        <div className={'listing custom-scrollbar'}>
-            <div className={'editButton'}>
-                <Button variant={'contained'} color={'info'} onClick={handleOpen}>
-                    <span>Edit</span> <EditIcon/>
-                </Button>
-            </div>
-            <div className={'deleteButton'}>
-                <DeleteListingButton listingId={listingId}/>
-            </div>
-            <div className={'listingHeader'}>
-                <div className={'ownerListingElements'}>
-                    <ProfilePicture isMyProfile={true} accountId={listing.ownerId} size={40}/>
-                    <p>{listing?.owner?.name}</p>
-                </div>
-                <div className={'listingTitle'}>
-                    <p>{listing?.name}</p>
-                </div>
-                <div className={'listingType'}>
-                    <div className={`listingType-${listing.type}`}>
-                        <p>{listing.type === 'CollaborativeSong' ? 'Song' : listing.type}</p>
+        <ListingCard
+            className="custom-scrollbar"
+            actions={
+                <>
+                    <Button variant="contained" color="info" size="small" onClick={handleOpen}>
+                        <span>Edit</span> <EditIcon/>
+                    </Button>
+                    <DeleteListingButton listingId={listingId}/>
+                </>
+            }
+        >
+            <ListingCardHeader
+                ownerElement={
+                    <div className="owner-listing-elements">
+                        <ProfilePicture isMyProfile={true} accountId={listing.ownerId} size={40}/>
+                        <p>{listing?.owner?.name}</p>
                     </div>
-                    <p>{listing?.genre}</p>
-                </div>
-            </div>
-            <div className={'listingBody'}>
-                <p>{formatMessageWithLinks(listing?.description)}</p>
-            </div>
-            <div className={'listingFooter'}>
-                {listing?.musicianSlots.map((slot: any) => (
-                    <div key={slot.id}
-                         className={`listingRole ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
-                        <img src={defaultProfileImage} alt="Default Profile"/>
-                        <p>Role: {slot.role}</p>
-                        <p>Status: {slot.status}</p>
-                    </div>
-                ))}
-            </div>
+                }
+                title={listing.name}
+                type={listing.type}
+                genre={listing.genre}
+            />
+            <ListingCardBody description={listing.description}/>
+            <AvailableRolesSection slots={listing.musicianSlots}/>
 
-            <Modal open={open} onClose={handleClose}>
-                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()} className={'wholeEditBody'}>
-                    <div id={'saveButtonEditListing'}>
-                        <Button variant={'contained'} color={'success'} onClick={handleUpdateListing}>Post</Button>
-                        <div>
-                            <InputLabel id="typeSelectLabel" sx={{fontSize: '12px'}}>Type</InputLabel>
-                            <Select
-                                labelId="typeSelectLabel"
-                                id="typeSelectLabel"
-                                value={listingType}
-                                label="Type"
-                                onChange={handleEditType}
-                            >
-                                <MenuItem value={'CollaborativeSong'}>Song</MenuItem>
-                                <MenuItem value={'Band'}>Band</MenuItem>
-                            </Select>
-                        </div>
-                    </div>
-                    <div className={'listing-editor'}>
-                        <div className={'editorHeader'}>
-                            <TextField
-                                label={'Title'}
-                                value={listingName}
-                                onChange={handleNameChange}
-                                variant="filled"
-                                color={'info'}
-                                style={{minWidth: '50%'}}
-                                helperText={`${listingName.length}/35`}
-                                inputProps={{maxLength: 35}}
-                            />
-                            <Autocomplete
-                                options={genres}
-                                freeSolo
-                                id={'genreSelectLabel'}
-                                onInputChange={(event, value) => setListingGenre(value)}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Genre" variant="outlined" fullWidth
-                                               sx={{fontSize: '20px !important'}}/>
-                                )}
-                                sx={{
-                                    minWidth: `${lengthOfGenre(listingGenre?.length || 0) + 10}%`,
-                                    maxWidth: '40%',
-                                    marginTop: '5px',
-                                    fontSize: '12px !important',
-                                    transition: 'width 1s ease-in-out'
-                                }}
-                                value={listingGenre}
-                            />
-                        </div>
-                        <div className={'editorBody'}>
-                            <TextField
-                                label="Description"
-                                value={listingDescription}
-                                onChange={(event) => setListingDescription(event.target.value)}
-                                variant="filled"
-                                color="info"
-                                style={{minWidth: '60%'}}
-                                multiline
-                                rows={3}  // Adjust the number of rows as needed
-                                helperText={`${listingDescription.length}/220`}
-                                inputProps={{maxLength: 220}}
-                            />
-                        </div>
-                        <div className={'editorFooter'}>
-                            {listingMusicianSlots.map((slot: any) => (
-                                <div key={slot.id}
-                                     className={`listingRoleEdited ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
-                                    <div className={'kindaHeader'}>
-                                        <div>
-                                            <img src={defaultProfileImage} alt="Default Profile"/>
-                                        </div>
-                                        <IconButton
-                                            aria-label="delete"
-                                            size="small"
-                                            onClick={() => handleDeleteRole(slot.id)}
-                                            style={{}}
-                                        >
-                                            <CloseIcon fontSize="small"/>
-                                        </IconButton>
-                                    </div>
-                                    <div className={'underEditorFooter'}>
-                                        <Autocomplete
-                                            options={roles}
-                                            freeSolo
-                                            onInputChange={(event, value) => handleEditMusicianRole(slot.id, value)}
-                                            renderInput={(params) => (
-                                                <TextField {...params} label="Role" variant="outlined" fullWidth/>
-                                            )}
-                                            value={slot.role}
-                                            sx={{width: '200%'}}
-                                        />
-                                    </div>
-                                    <div className={'underEditorFooter'}>
-                                        <InputLabel id="statusSelectLabel"
-                                                    style={{fontSize: '12px', maxHeight: '35px'}}>Status</InputLabel>
-                                        <Select
-                                            labelId="statusSelectLabel"
-                                            id="statusSelectLabel"
-                                            value={slot.status}
-                                            label="Status"
-                                            onChange={() => handleEditSlot(slot.id)}
-                                            style={{fontSize: '12px', maxHeight: '35px'}}
-                                        >
-                                            <MenuItem value={SlotType.Available}>Available</MenuItem>
-                                            <MenuItem value={SlotType.Filled}>Filled</MenuItem>
-                                        </Select>
-                                    </div>
-                                </div>
-                            ))}
-
-                            <div id={'addRolesButton'}>
-                                <Button variant={'contained'} color={'info'} onClick={handleAddNewRole}>Add new
-                                    role</Button>
-                            </div>
-                        </div>
-                    </div>
-                </Box>
-            </Modal>
-        </div>
+            <ListingEditorModal
+                open={open}
+                title="Edit Listing"
+                submitLabel="Save"
+                onClose={handleClose}
+                onSubmit={handleUpdateListing}
+                listingName={listingName}
+                onListingNameChange={setListingName}
+                listingType={listingType}
+                onListingTypeChange={setListingType}
+                listingGenre={listingGenre}
+                onListingGenreChange={setListingGenre}
+                listingDescription={listingDescription}
+                onListingDescriptionChange={setListingDescription}
+                musicianSlots={listingMusicianSlots}
+                onAddRole={handleAddNewRole}
+                onDeleteRole={handleDeleteRole}
+                onEditMusicianRole={handleEditMusicianRole}
+                onEditSlotStatus={handleEditSlotStatus}
+                genres={genres}
+                roles={roles}
+            />
+        </ListingCard>
     );
-};
-
-const modalStyle = {
-    position: 'absolute',
-    display: 'block',
-    top: '50%',
-    left: '50%',
-    maxHeight: '80%',
-    transform: 'translate(-50%, -50%)',
-    width: 800,
-    bgcolor: 'background.paper',
-    borderRadius: 8,
-    boxShadow: 24,
-    padding: 4,
 };
 
 export default ListingPrivate;

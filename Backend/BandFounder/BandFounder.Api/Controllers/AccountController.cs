@@ -12,10 +12,12 @@ namespace BandFounder.Api.Controllers;
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;
+    private readonly IMusicTasteService _musicTasteService;
 
-    public AccountController(IAccountService accountService)
+    public AccountController(IAccountService accountService, IMusicTasteService musicTasteService)
     {
         _accountService = accountService;
+        _musicTasteService = musicTasteService;
     }
 
     [HttpPost]
@@ -68,6 +70,15 @@ public class AccountController : Controller
         var accountDto = (await _accountService.GetAccountAsync(accountGuid)).ToDto();
 
         return Ok(accountDto);
+    }
+
+    [Authorize]
+    [HttpGet("{accountId:guid}/commonTaste")]
+    public async Task<IActionResult> GetCommonArtistsAndGenres(Guid accountId)
+    {
+        var responseDto = await _musicTasteService.GetCommonArtistsAndGenresAsync(accountId);
+
+        return Ok(responseDto);
     }
 
     [Authorize]

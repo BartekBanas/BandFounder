@@ -1,19 +1,20 @@
 import React, {FC, useEffect} from 'react';
 import '../styles/Header.css';
 import {
-    AppBar, Autocomplete,
+    AppBar,
+    Autocomplete,
     Box,
     CssBaseline,
     IconButton,
     TextField,
     ThemeProvider,
     Toolbar,
-    Typography,
     InputAdornment
 } from '@mui/material';
 import {useNavigate} from 'react-router-dom';
 import ChatIcon from '@mui/icons-material/Chat';
 import SearchIcon from '@mui/icons-material/Search';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
 import {Account} from "../../types/Account";
@@ -39,7 +40,7 @@ export const Header: FC = () => {
         navigate('/messages');
     }
 
-    const handleSearch = async (event: React.ChangeEvent<{}>, value: string | null) => {
+    const handleSearch = async (_event: React.SyntheticEvent, value: string | null) => {
         if (value) {
             try {
                 const userId = users.find((user: Account) => user.name === value)?.id;
@@ -71,59 +72,56 @@ export const Header: FC = () => {
     return (
         <ThemeProvider theme={muiDarkTheme}>
             <CssBaseline/>
-            <Box id={'mainHeader'}>
-                <AppBar position="static" color="transparent" sx={{display: 'flex', height: '80px'}}>
-                    <Toolbar>
-                        <div id={'leftSideOfMainHeader'}>
-                            <Box
-                                component="div"
-                                sx={{display: 'flex', alignItems: 'center', mr: 2}}
-                            >
+            <Box id="mainHeader">
+                <AppBar position="static" color="transparent" elevation={0} sx={{background: 'transparent'}}>
+                    <Toolbar disableGutters sx={{minHeight: '80px'}}>
+                        <div className="header-toolbar">
+                            <div className="header-toolbar__left">
                                 <UtilityDrawer/>
-                            </Box>
-                            <Typography variant="h6" component="div" onClick={handleHomeClick} id={'appNameHeader'}>
-                                Bandfounder
-                            </Typography>
-                        </div>
+                                <div id="appNameHeader" onClick={handleHomeClick}>
+                                    <span className="header-logo-icon">
+                                        <GraphicEqIcon/>
+                                    </span>
+                                    <span>Bandfounder</span>
+                                </div>
+                            </div>
 
-                        <div id={'rightSideOfMainHeader'}>
-                            <Autocomplete
-                                options={usernames}
-                                filterOptions={(options, state) => {
-                                    const filtered = options.filter((option) =>
-                                        option.toLowerCase().includes(state.inputValue.toLowerCase())
-                                    );
-                                    return filtered.slice(0, 10);
-                                }}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Search"
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <SearchIcon/>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                )}
-                                freeSolo
-                                disableClearable
-                                onChange={handleSearch}
-                                id={'searchBarMain'}
-                            />
+                            <div className="header-toolbar__center">
+                                <Autocomplete
+                                    options={usernames}
+                                    filterOptions={(options, state) => {
+                                        return options
+                                            .filter((option) =>
+                                                option.toLowerCase().includes(state.inputValue.toLowerCase())
+                                            )
+                                            .slice(0, 10);
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            placeholder="Search musicians..."
+                                            size="small"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchIcon sx={{color: 'var(--text-muted)'}}/>
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                    freeSolo
+                                    disableClearable
+                                    onChange={handleSearch}
+                                    id="searchBarMain"
+                                />
+                            </div>
 
-                            <IconButton color="inherit" onClick={handleMessagesClick}>
-                                <ChatIcon/>
-                            </IconButton>
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}>
+                            <div className="header-toolbar__right">
+                                <IconButton color="inherit" onClick={handleMessagesClick} aria-label="Messages">
+                                    <ChatIcon/>
+                                </IconButton>
                                 <div onClick={handleProfileClick} style={{cursor: 'pointer'}}>
                                     <UserAvatar userId={getUserId()}/>
                                 </div>

@@ -1,0 +1,10 @@
+body {
+    background-color: var(--background-default);
+    color: var(--text-primary);
+}
+
+/* Keep MUI overlays in the navy family instead of default flat gray */
+.MuiBackdrop-root {
+    background-color: var(--overlay-backdrop) !important;
+    backdrop-filter: blur(6px);
+}

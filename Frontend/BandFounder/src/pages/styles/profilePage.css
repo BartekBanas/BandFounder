@@ -1,6 +1,10 @@
-.profilePageListings{
+.profilePageListings {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    margin-top: 20px;
+    width: 100%;
+    max-width: calc(1200px - 280px - 24px);
+    margin: 20px auto 0;
+    padding: 0 20px 40px;
+    box-sizing: border-box;
 }

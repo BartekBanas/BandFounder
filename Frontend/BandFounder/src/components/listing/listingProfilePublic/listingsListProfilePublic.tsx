@@ -5,6 +5,7 @@ import {ListingProfilePublic} from "./listingProfilePublic";
 import {Listing} from "../../../types/Listing";
 import {getUsersListings} from "../../../api/listing";
 import {getAccountByUsername} from "../../../api/account";
+import '../shared/listingShared.css';
 
 interface ListingsListProfilePublicProps {
     profileUsername: string;
