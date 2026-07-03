@@ -103,7 +103,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         const fetchTopArtists = async () => {
             if (guid) {
                 const result = await getTopArtists(guid);
-                setTopArtists(result);
+                setTopArtists(result ?? undefined);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using BandFounder.Infrastructure.Errors;
+﻿using BandFounder.Infrastructure.Exceptions;
 
 namespace BandFounder.Infrastructure.Spotify.Exceptions;
 

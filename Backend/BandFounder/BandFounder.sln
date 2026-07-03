@@ -6,6 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFiles", "SolutionFi
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		..\..\README.md = ..\..\README.md
+		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BandFounder.Application", "BandFounder.Application\BandFounder.Application.csproj", "{2D2DC387-52C1-4859-AE05-C9C018C590B4}"

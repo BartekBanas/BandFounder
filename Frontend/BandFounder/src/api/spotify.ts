@@ -1,6 +1,9 @@
 import {API_URL} from "../config";
-import {authorizedHeaders} from "../hooks/authentication";
+import {authorizedHeaders, getUserId} from "../hooks/authentication";
 import {mantineErrorNotification, mantineInformationNotification} from "../components/common/mantineNotification";
+
+const SPOTIFY_REAUTH_NOTIFICATION =
+    'Your Spotify connection has expired. Please link your Spotify account again.';
 
 export async function requestSpotifyAccountLinkFromCode(spotifyConnectionPageUrl: string, code: string): Promise<void> {
     const response = await fetch(`${API_URL}/spotify/tokens`, {
@@ -29,12 +32,13 @@ export async function fetchSpotifyTokens(): Promise<string | null> {
 
     if (response.ok) {
         return response.json();
-    } else if (response.status === 404) {
-        return null;
-    } else {
-        mantineErrorNotification('Failed to verify Spotify account connection');
-        throw new Error('Failed to verify Spotify account connection');
     }
+    if (response.status === 422) {
+        return null;
+    }
+
+    mantineErrorNotification('Failed to verify Spotify account connection');
+    throw new Error('Failed to verify Spotify account connection');
 }
 
 export async function fetchSpotifyAppClientId(): Promise<string> {
@@ -59,18 +63,30 @@ export interface TopArtist {
     imageUrl: string | null;
 }
 
-export async function getTopArtists(guid: string): Promise<TopArtist[]> {
+export async function getTopArtists(guid: string): Promise<TopArtist[] | null> {
     try {
         const response = await fetch(`${API_URL}/accounts/${guid}/artists/spotify/top`, {
             method: 'GET',
             headers: authorizedHeaders()
         });
-        if (!response.ok) {
-            throw new Error(await response.text());
+        if (response.ok) {
+            return await response.json();
         }
-        return await response.json();
+        if (response.status === 410) {
+            if (guid === getUserId()) {
+                mantineInformationNotification(SPOTIFY_REAUTH_NOTIFICATION);
+            }
+            return null;
+        }
+        if (response.status === 422) {
+            return null;
+        }
+        console.error('Error getting top artists:', await response.text());
+        mantineErrorNotification('Failed to load Spotify top artists');
+        return null;
     } catch (error) {
         console.error('Error getting top artists:', error);
-        return [];
+        mantineErrorNotification('Failed to load Spotify top artists');
+        return null;
     }
 }

@@ -22,12 +22,13 @@ public class SpotifyConnectionService(
     IRepository<SpotifyTokens> spotifyTokensRepository,
     IRepository<Artist> artistRepository,
     IRepository<Account> accountRepository,
-    IRepository<Genre> genreRepository)
+    IRepository<Genre> genreRepository,
+    ISpotifyAppCredentialsService spotifyAppCredentialsService)
     : ISpotifyConnectionService
 {
     public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid userId)
     {
-        var spotifyAppCredentials = await new SpotifyAppCredentialsService().LoadCredentials();
+        var spotifyAppCredentials = await spotifyAppCredentialsService.LoadCredentials();
         
         var tokensResponse = await spotifyClient.RequestAccessTokenAsync(dto, spotifyAppCredentials);
         
@@ -38,7 +39,7 @@ public class SpotifyConnectionService(
             ExpirationDate = DateTime.UtcNow.AddSeconds(tokensResponse.ExpiresIn - 10)
         };
         
-        await CreateSpotifyTokens(tokensDto, userId);
+        await UpsertSpotifyTokens(tokensDto, userId);
         await SaveRelevantArtists(userId);
     }
     
@@ -97,13 +98,56 @@ public class SpotifyConnectionService(
     
     private async Task<string> RefreshTokenAsync(Guid userId, string refreshToken)
     {
-        var spotifyAppCredentials = await new SpotifyAppCredentialsService().LoadCredentials();
-        
-        var refreshedTokens = await spotifyClient.RefreshTokenAsync(refreshToken, spotifyAppCredentials);
-        
-        await UpdateRefreshedAccessTokenAsync(userId, refreshedTokens.AccessToken, refreshedTokens.ExpiresIn);
-        
-        return refreshedTokens.AccessToken;
+        var spotifyAppCredentials = await spotifyAppCredentialsService.LoadCredentials();
+
+        try
+        {
+            var refreshedTokens = await spotifyClient.RefreshTokenAsync(refreshToken, spotifyAppCredentials);
+
+            await UpdateRefreshedAccessTokenAsync(userId, refreshedTokens.AccessToken, refreshedTokens.ExpiresIn);
+
+            if (!string.IsNullOrEmpty(refreshedTokens.RefreshToken))
+            {
+                var spotifyTokens = await spotifyTokensRepository.GetOneRequiredAsync(userId);
+                spotifyTokens.RefreshToken = refreshedTokens.RefreshToken;
+                await spotifyTokensRepository.SaveChangesAsync();
+            }
+
+            return refreshedTokens.AccessToken;
+        }
+        catch (SpotifyRefreshTokenExpiredException)
+        {
+            await spotifyTokensRepository.DeleteOneAsync(userId);
+            await spotifyTokensRepository.SaveChangesAsync();
+            throw new SpotifyReauthorizationRequiredException();
+        }
+    }
+
+    private async Task UpsertSpotifyTokens(SpotifyTokensDto spotifyTokens, Guid userId)
+    {
+        var existingTokens = await spotifyTokensRepository.GetOneAsync(userId);
+        if (existingTokens is not null)
+        {
+            existingTokens.AccessToken = spotifyTokens.AccessToken;
+            existingTokens.RefreshToken = spotifyTokens.RefreshToken;
+            existingTokens.ExpirationDate = spotifyTokens.ExpirationDate;
+            await spotifyTokensRepository.SaveChangesAsync();
+            return;
+        }
+
+        var account = await accountRepository.GetOneRequiredAsync(userId);
+
+        var newSpotifyTokens = new SpotifyTokens
+        {
+            AccountId = account.Id,
+            AccessToken = spotifyTokens.AccessToken,
+            RefreshToken = spotifyTokens.RefreshToken,
+            ExpirationDate = spotifyTokens.ExpirationDate,
+            Account = account
+        };
+
+        await spotifyTokensRepository.CreateAsync(newSpotifyTokens);
+        await spotifyTokensRepository.SaveChangesAsync();
     }
 
     private async Task UpdateRefreshedAccessTokenAsync(Guid userId, string accessToken, int duration)

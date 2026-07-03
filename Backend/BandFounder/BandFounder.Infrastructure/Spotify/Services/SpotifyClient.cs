@@ -67,10 +67,19 @@ public class SpotifyClient : ISpotifyClient
         ]);
 
         var response = await client.SendAsync(request);
-
-        response.EnsureSuccessStatusCode();
-
         var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorResponse = JsonSerializer.Deserialize<SpotifyTokenErrorResponse>(responseContent);
+            if (errorResponse?.Error == "invalid_grant")
+            {
+                throw new SpotifyRefreshTokenExpiredException();
+            }
+
+            throw new FailedToFetchSpotifyTokenException("Failed to refresh Spotify token");
+        }
+
         var spotifyTokens = JsonSerializer.Deserialize<SpotifyTokensResponse>(responseContent);
         
         if (spotifyTokens is null)
