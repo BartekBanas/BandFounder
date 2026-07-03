@@ -15,8 +15,11 @@
     overflow: hidden;
 }
 
-#mainChatroomsList .MuiAutocomplete-root{
-    margin: 4px 4px 12px !important;
+#chatroomListActions{
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 4px 4px 12px;
 }
 
 #chatroomsListHeading{
