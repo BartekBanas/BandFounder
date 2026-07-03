@@ -9,12 +9,14 @@ public class RepositoriesExtensionsTests
 {
     private IRepository<Genre> _genreRepository;
     private IRepository<MusicianRole> _musicianRoleRepository;
+    private IRepository<Artist> _artistRepository;
 
     [SetUp]
     public void SetUp()
     {
         _genreRepository = Substitute.For<IRepository<Genre>>();
         _musicianRoleRepository = Substitute.For<IRepository<MusicianRole>>();
+        _artistRepository = Substitute.For<IRepository<Artist>>();
     }
     
     [Test]
@@ -209,5 +211,63 @@ public class RepositoriesExtensionsTests
         // Assert
         Assert.That(result.Name, Is.EqualTo(normalizedRoleName));
         await _musicianRoleRepository.Received(1).CreateAsync(Arg.Is<MusicianRole>(r => r.Name == normalizedRoleName));
+    }
+
+    [Test]
+    public async Task GetOrCreateArtistAsync_ShouldReturnExistingArtist_WhenSpotifyIdExistsWithDifferentName()
+    {
+        const string spotifyId = "spotify-artist-id";
+        const string storedName = "Old Artist Name";
+        const string spotifyName = "Updated Artist Name";
+
+        var existingArtist = new Artist
+        {
+            Id = spotifyId,
+            Name = storedName,
+            Genres = []
+        };
+
+        _artistRepository
+            .GetOneAsync(Arg.Any<Expression<Func<Artist, bool>>>(), Arg.Any<string[]>())
+            .Returns(callInfo =>
+            {
+                var filter = callInfo.Arg<Expression<Func<Artist, bool>>>().Compile();
+                return filter(existingArtist) ? existingArtist : null;
+            });
+
+        var result = await _artistRepository.GetOrCreateAsync(
+            _genreRepository, spotifyName, ["rock"], 80, spotifyId);
+
+        Assert.That(result, Is.EqualTo(existingArtist));
+        Assert.That(result.Name, Is.EqualTo(spotifyName));
+        await _artistRepository.DidNotReceive().CreateAsync(Arg.Any<Artist>());
+    }
+
+    [Test]
+    public async Task GetOrCreateArtistAsync_ShouldNormalizeSpotifyUriId()
+    {
+        const string spotifyId = "spotify-artist-id";
+        const string spotifyUri = "spotify:artist:spotify-artist-id";
+
+        var existingArtist = new Artist
+        {
+            Id = spotifyId,
+            Name = "Artist Name",
+            Genres = []
+        };
+
+        _artistRepository
+            .GetOneAsync(Arg.Any<Expression<Func<Artist, bool>>>(), Arg.Any<string[]>())
+            .Returns(callInfo =>
+            {
+                var filter = callInfo.Arg<Expression<Func<Artist, bool>>>().Compile();
+                return filter(existingArtist) ? existingArtist : null;
+            });
+
+        var result = await _artistRepository.GetOrCreateAsync(
+            _genreRepository, "Artist Name", [], 0, spotifyUri);
+
+        Assert.That(result, Is.EqualTo(existingArtist));
+        await _artistRepository.DidNotReceive().CreateAsync(Arg.Any<Artist>());
     }
 }

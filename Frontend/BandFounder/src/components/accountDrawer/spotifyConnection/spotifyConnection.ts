@@ -3,8 +3,7 @@ import {mantineErrorNotification, mantineSuccessNotification} from "../../common
 import {authorizedHeaders} from "../../../hooks/authentication";
 import {fetchSpotifyAppClientId, requestSpotifyAccountLinkFromCode} from "../../../api/spotify";
 
-const BaseAppUrl = "http://localhost:3000/";
-const SpotifyConnectionPageUrl = BaseAppUrl + "spotifyConnection/callback/";
+const SpotifyConnectionPageUrl = "http://127.0.0.1:3000/spotifyConnection/callback/";
 const SpotifyAuthorizeUrl = "https://accounts.spotify.com/authorize";
 
 export async function redirectToSpotifyAuthorizationPage() {
@@ -14,7 +13,7 @@ export async function redirectToSpotifyAuthorizationPage() {
         let url = SpotifyAuthorizeUrl;
         url += "?client_id=" + spotifyClientId;
         url += "&response_type=code";
-        url += "&redirect_uri=" + encodeURI(SpotifyConnectionPageUrl);
+        url += "&redirect_uri=" + encodeURIComponent(SpotifyConnectionPageUrl);
         url += "&show_dialog=true";
         url += "&scope=user-top-read user-follow-read";
         window.location.href = url; // Show Spotify's authorization screen

@@ -78,7 +78,7 @@ public static class ServiceCollectionExtensions
     {
         var configuredOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
-        var devOrigins = new List<string> { "http://localhost:3000", "http://localhost:3001" };
+        var devOrigins = new List<string> { "http://127.0.0.1:3000", "http://127.0.0.1:3001" };
         if (configuredOrigins.Length > 0)
         {
             foreach (var origin in configuredOrigins)
