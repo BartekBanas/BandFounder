@@ -1,36 +1,19 @@
 import React, {useEffect, useState} from 'react';
-import defaultProfileImage from '../../../assets/defaultProfileImage.jpg';
-import './style.css';
-import './listingCreator.css'
-import {
-    Modal,
-    Box,
-    Button,
-    TextField,
-    InputLabel,
-    Select,
-    MenuItem,
-    IconButton,
-    Autocomplete
-} from '@mui/material';
-import CloseIcon from "@mui/icons-material/Close";
 import {ListingCreate} from "../../../types/ListingCreate";
 import {getUser} from "../../../api/account";
 import {postListing} from "../../../api/listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
-import ProfilePicture from "../../profile/ProfilePicture";
 import {getUserId} from "../../../hooks/authentication";
+import CreateListingCard from "../shared/CreateListingCard";
+import ListingEditorModal, {EditorMusicianSlot} from "../shared/ListingEditorModal";
 
-interface ListingTemplateProps {
-}
-
-const ListingTemplate: React.FC<ListingTemplateProps> = () => {
+const ListingTemplate: React.FC = () => {
     const [user, setUser] = useState<any>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [listingType, setListingType] = useState<string>('CollaborativeSong');
     const [listingGenre, setListingGenre] = useState<string>('');
     const [listingDescription, setListingDescription] = useState<string>('');
-    const [listingMusicianSlots, setListingMusicianSlots] = useState<any>([]);
+    const [listingMusicianSlots, setListingMusicianSlots] = useState<EditorMusicianSlot[]>([]);
     const [listingName, setListingName] = useState<string>('');
     const [genres, setGenres] = useState<string[]>([]);
     const [roles, setRoles] = useState<string[]>([]);
@@ -65,52 +48,36 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
     }, []);
 
     if (!user) {
-        return <div>Loading...</div>;
+        return null;
     }
 
     const handleListingClick = () => {
         setModalOpen(true);
     };
 
-    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setListingName(event.target.value);
-    }
-
-    const handleEditType = () => {
-        setListingType(prevType => prevType === 'CollaborativeSong' ? 'Band' : 'CollaborativeSong');
+    const handleEditSlotStatus = (slotId: string, status: string) => {
+        setListingMusicianSlots((slots) =>
+            slots.map((slot) => slot.id === slotId ? {...slot, status} : slot)
+        );
     };
 
-    const handleEditSlot = (slotId: string) => {
-        const newSlots = listingMusicianSlots.map((slot: any) => {
-            if (slot.id === slotId) {
-                return {...slot, status: slot.status === 'Available' ? 'Filled' : 'Available'};
-            }
-            return slot;
-        });
-        setListingMusicianSlots(newSlots);
-    }
-
     const handleEditMusicianRole = (slotId: string, role: string) => {
-        const newSlots = listingMusicianSlots.map((slot: any) => {
-            if (slot.id === slotId) {
-                return {...slot, role};
-            }
-            return slot;
-        });
-        setListingMusicianSlots(newSlots);
-    }
+        setListingMusicianSlots((slots) =>
+            slots.map((slot) => slot.id === slotId ? {...slot, role} : slot)
+        );
+    };
 
     const handleAddNewRole = () => {
-        const newSlot = {
+        const newSlot: EditorMusicianSlot = {
             id: Math.random().toString(36).substr(2, 9),
             role: '',
             status: 'Available',
         };
-        setListingMusicianSlots([...listingMusicianSlots, newSlot]);
-    }
+        setListingMusicianSlots((slots) => [...slots, newSlot]);
+    };
 
     const handleDeleteRole = (slotId: string) => {
-        setListingMusicianSlots((prevSlots: any[]) => prevSlots.filter((slot: any) => slot.id !== slotId));
+        setListingMusicianSlots((slots) => slots.filter((slot) => slot.id !== slotId));
     };
 
     const handlePostListing = async () => {
@@ -127,182 +94,35 @@ const ListingTemplate: React.FC<ListingTemplateProps> = () => {
         } catch (e) {
             console.log(e);
         }
-    }
+    };
 
     return (
-        <div className="listingContainer">
-            <div className="listingOverlay">Create your own listing!</div>
-            <div className="listingTemplate" onClick={handleListingClick}>
-                <div className="listingHeader">
-                    <div className="ownerListingElements">
-                        <ProfilePicture isMyProfile={false} accountId={user.id} size={40}/>
-                        <p>{user?.name}</p>
-                    </div>
-                    <div className="listingTitle">
-                        <p>Title</p>
-                    </div>
-                    <div className="listingType">
-                        <div className="listingType-Band">
-                            <p>Band</p>
-                        </div>
-                        <p>Genre</p>
-                    </div>
-                </div>
-                <div className="listingBody">
-                    <p>Description</p>
-                </div>
-            </div>
-            <Modal open={modalOpen}
-                   onClose={() => setModalOpen(false)}>
-                <Box sx={{...modalStyle}} onClick={(e) => e.stopPropagation()} className={'wholeEditBody'}>
-                    <div id={'saveButtonEditListing'}>
-                        <Button variant={'contained'} color={'success'} onClick={handlePostListing}>Post</Button>
-                        <div>
-                            <InputLabel id="typeSelectLabel" sx={{fontSize: '12px'}}>Type</InputLabel>
-                            <Select
-                                labelId="typeSelectLabel"
-                                id="typeSelectLabel"
-                                value={listingType}
-                                label="Type"
-                                onChange={handleEditType}
-                            >
-                                <MenuItem value={'CollaborativeSong'}>Song</MenuItem>
-                                <MenuItem value={'Band'}>Band</MenuItem>
-                            </Select>
-                        </div>
-                    </div>
-                    <div className={'listing-editor'}>
-                        <div className={'editorHeader'}>
-                            <TextField
-                                label={'Title'}
-                                value={listingName}
-                                onChange={handleNameChange}
-                                variant="filled"
-                                color={'info'}
-                                style={{minWidth: '50%'}}
-                                helperText={`${listingName.length}/35`}
-                                inputProps={{maxLength: 35}}
-                            />
-                            <Autocomplete
-                                options={genres}
-                                freeSolo
-                                id={'genreSelectLabel'}
-                                onInputChange={(event, value) => setListingGenre(value)}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Genre" variant="outlined" fullWidth
-                                               sx={{fontSize: '20px !important'}}/>
-                                )}
-                                sx={{
-                                    minWidth: `${lengthOfGenre(listingGenre.length) + 10}%`,
-                                    maxWidth: '40%',
-                                    marginTop: '5px',
-                                    fontSize: '12px !important',
-                                    transition: 'width 1s ease-in-out',
-                                }}
-                                value={listingGenre}
-                            />
-                        </div>
-                        <div className={'editorBody'}>
-                            <TextField
-                                label="Description"
-                                value={listingDescription}
-                                onChange={(event) => setListingDescription(event.target.value)}
-                                variant="filled"
-                                color="info"
-                                style={{minWidth: '60%'}}
-                                multiline
-                                rows={2}
-                                helperText={`${listingDescription.length}/220`}
-                                inputProps={{maxLength: 220}}
-                            />
-                        </div>
-                        <div className={'editorFooter'}>
-                            {listingMusicianSlots.map((slot: any) => (
-                                <div key={slot.id}
-                                     className={`listingRoleEdited ${slot.status === 'Available' ? 'status-available' : 'status-filled'}`}>
-                                    <div className={'kindaHeader'}>
-                                        <div>
-                                            <img src={defaultProfileImage} alt="Default Profile"/>
-                                        </div>
-                                        <IconButton
-                                            aria-label="delete"
-                                            size="small"
-                                            onClick={() => handleDeleteRole(slot.id)}
-                                            style={{}}
-                                        >
-                                            <CloseIcon fontSize="small"/>
-                                        </IconButton>
-                                    </div>
-                                    <div className={'underEditorFooter'}>
-                                        <Autocomplete
-                                            options={roles}
-                                            freeSolo
-                                            onInputChange={(event, value) => handleEditMusicianRole(slot.id, value)}
-                                            renderInput={(params) => (
-                                                <TextField {...params} label="Role" variant="outlined" fullWidth/>
-                                            )}
-                                            value={slot.role}
-                                            sx={{width: '200%'}}
-                                        />
-                                    </div>
-                                    <div className={'underEditorFooter'}>
-                                        <InputLabel id="statusSelectLabel"
-                                                    style={{fontSize: '12px', maxHeight: '35px'}}>Status</InputLabel>
-                                        <Select
-                                            labelId="statusSelectLabel"
-                                            id="statusSelectLabel"
-                                            value={slot.status}
-                                            label="Status"
-                                            onChange={() => handleEditSlot(slot.id)}
-                                            style={{fontSize: '12px', maxHeight: '35px'}}
-                                        >
-                                            <MenuItem value={'Available'}>Available</MenuItem>
-                                            <MenuItem value={'Filled'}>Filled</MenuItem>
-                                        </Select>
-                                    </div>
-                                </div>
-                            ))}
-
-                            <div id={'addRolesButton'}>
-                                <Button variant={'contained'} color={'info'} onClick={handleAddNewRole}>Add new
-                                    role</Button>
-                            </div>
-                        </div>
-                    </div>
-                </Box>
-            </Modal>
-        </div>
+        <>
+            <CreateListingCard onClick={handleListingClick}/>
+            <ListingEditorModal
+                open={modalOpen}
+                title="Create Listing"
+                submitLabel="Post"
+                onClose={() => setModalOpen(false)}
+                onSubmit={handlePostListing}
+                listingName={listingName}
+                onListingNameChange={setListingName}
+                listingType={listingType}
+                onListingTypeChange={setListingType}
+                listingGenre={listingGenre}
+                onListingGenreChange={setListingGenre}
+                listingDescription={listingDescription}
+                onListingDescriptionChange={setListingDescription}
+                musicianSlots={listingMusicianSlots}
+                onAddRole={handleAddNewRole}
+                onDeleteRole={handleDeleteRole}
+                onEditMusicianRole={handleEditMusicianRole}
+                onEditSlotStatus={handleEditSlotStatus}
+                genres={genres}
+                roles={roles}
+            />
+        </>
     );
-}
-
-const modalStyle = {
-    position: 'absolute',
-    display: 'block',
-    top: '50%',
-    left: '50%',
-    maxHeight: '80%',
-    transform: 'translate(-50%, -50%)',
-    width: 800,
-    bgcolor: 'background.paper',
-    borderRadius: 8,
-    boxShadow: 24,
-    padding: 4,
-    // overflow:'scroll',
-    // overflowX:'hidden',
 };
 
 export default ListingTemplate;
-
-export const lengthOfGenre = (number: number) => {
-    if (number < 5) {
-        return 15;
-    } else if (number < 10) {
-        return 15;
-    } else if (number < 15) {
-        return 20;
-    } else if (number < 20) {
-        return 25;
-    } else {
-        return 28;
-    }
-}

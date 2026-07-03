@@ -57,7 +57,13 @@ export async function fetchSpotifyAppClientId(): Promise<string> {
     return responseText;
 }
 
-export async function getTopArtists(guid: string): Promise<string[] | null> {
+export interface TopArtist {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+}
+
+export async function getTopArtists(guid: string): Promise<TopArtist[] | null> {
     try {
         const response = await fetch(`${API_URL}/accounts/${guid}/artists/spotify/top`, {
             method: 'GET',

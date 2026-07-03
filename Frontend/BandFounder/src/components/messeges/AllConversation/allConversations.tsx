@@ -1,7 +1,8 @@
 import React, {FC, useState, useEffect} from "react";
 import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {getMyChatrooms, createDirectChatroom} from "../../../api/chatroom";
-import {Autocomplete, CircularProgress, TextField} from "@mui/material";
+import {Autocomplete, Avatar, CircularProgress, TextField} from "@mui/material";
+import GroupsIcon from "@mui/icons-material/Groups";
 import './styles.css'
 import '../../../styles/customScrollbar.css'
 import {getUserId} from "../../../hooks/authentication";
@@ -9,9 +10,8 @@ import {getAccounts, getUser} from "../../../api/account";
 import {Account} from "../../../types/Account";
 import {mantineErrorNotification} from "../../common/mantineNotification";
 import {LeaveChatroomModal} from "./LeaveChatroomModal";
+import {CreateGroupChatroomModal} from "./CreateGroupChatroomModal";
 import ProfilePicture from "../../profile/ProfilePicture";
-import defaultProfileImage from "../../../assets/defaultProfileImage.jpg";
-
 interface AllConversationsProps {
     onSelectConversation: (id: string) => void;
 }
@@ -24,14 +24,16 @@ function ChatroomAvatar({chatRoom, myId}: { chatRoom: ChatRoom, myId: string }) 
                 <ProfilePicture
                     accountId={otherUserId}
                     isMyProfile={false}
-                    size={40}
+                    size={48}
                 />
             );
         }
 
-        case ChatRoomType.General: // TODO 103
+        case ChatRoomType.General:
             return (
-                <img src={defaultProfileImage} alt="Default Profile"/>
+                <Avatar sx={{width: 48, height: 48}}>
+                    <GroupsIcon/>
+                </Avatar>
             );
 
         default:
@@ -117,27 +119,30 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
 
     return (
         <div id="mainChatroomsList">
-            <Autocomplete
-                options={otherUsers.map((user) => user.name)}
-                onChange={(event, newValue) => {
-                    handleCreateChatroom(newValue);
-                }}
-                renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined"/>}
-                style={{margin: "20px", maxWidth: "100%"}}
-            />
-            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-                {
-                    chatRooms.length > 0 ? <h2>Open Conversations</h2> :
-                        <CircularProgress size={30} sx={{marginBottom: '20px'}}/>
-                }
+            <div id="chatroomListActions">
+                <Autocomplete
+                    options={otherUsers.map((user) => user.name)}
+                    onChange={(event, newValue) => {
+                        handleCreateChatroom(newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Search Users" variant="outlined"/>}
+                    style={{flex: 1}}
+                />
+                <CreateGroupChatroomModal otherUsers={otherUsers}/>
             </div>
+            {
+                chatRooms.length > 0 ? <div id="chatroomsListHeading">Open Conversations</div> :
+                    <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                        <CircularProgress size={30} sx={{marginBottom: '20px'}}/>
+                    </div>
+            }
             <ul id={'openConversationsList'} className={'custom-scrollbar'}>
                 {chatRooms.map((chatRoom) => (
                     <li className={'singleConversationShortcut'} key={chatRoom.id}
                         onClick={() => handleSelectConversation(chatRoom.id)}>
                         <ChatroomAvatar chatRoom={chatRoom} myId={myId}/>
-                        <div>{chatRoom.name}</div>
-                        <div onClick={(e) => e.stopPropagation()}>
+                        <div className={'conversationName'}>{chatRoom.name}</div>
+                        <div className={'leaveChatroomBtn'} onClick={(e) => e.stopPropagation()}>
                             <LeaveChatroomModal
                                 chatroom={chatRoom}
                                 setRefreshConversations={setRefreshConversations}

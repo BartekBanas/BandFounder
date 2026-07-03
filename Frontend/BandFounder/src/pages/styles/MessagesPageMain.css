@@ -1,7 +1,10 @@
 #messagesPageMain{
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    height: 85vh;
+    justify-content: center;
+    align-items: stretch;
+    gap: 16px;
+    height: calc(100vh - 80px);
+    padding: 20px 16px;
+    box-sizing: border-box;
 }

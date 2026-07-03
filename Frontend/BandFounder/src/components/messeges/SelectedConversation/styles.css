@@ -1,131 +1,192 @@
 #mainSelectedConversation{
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    border: 1px solid white;
-    border-radius: 10px;
-    padding: 5px;
-    margin-top: 20px;
-    margin-right: 10px;
+    background-color: var(--card-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 0;
     height: 100%;
-    width: 70%;
+    min-height: 0;
+    flex: 1;
+    min-width: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-#fullConversation{
-    border-radius: 10px;
-    padding: 5px;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-}
-
-#fullConversation > *{
-    margin-bottom: 0 !important;
-    margin-top: 2px !important;
+#emptyConversation{
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
 }
 
 #selectedConversationTitle{
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid white;
-    padding: 5px;
+    gap: 12px;
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-subtle);
+    background-color: var(--card-surface-elevated);
+}
+
+#selectedConversationTitle .conversationMemberCount{
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+#fullConversation{
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+#fullConversation > li{
+    display: flex;
 }
 
 #sendBox{
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid white;
-    padding: 5px;
-    padding-top: 15px;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--card-surface-elevated);
 }
 
-.singleMessageYou {
+#sendBox .MuiOutlinedInput-root{
+    border-radius: 16px;
+    background-color: var(--card-surface);
+}
+
+#sendBox .MuiOutlinedInput-notchedOutline{
+    border-radius: 16px;
+}
+
+#sendBox textarea.custom-scrollbar{
+    overflow-y: auto !important;
+}
+
+.messageRow{
+    width: 100%;
+    gap: 16px;
+    padding: 2px 8px;
+    margin-top: 12px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    align-items: flex-start;
+}
+
+.messageRow:hover{
+    background-color: var(--card-surface-elevated);
+}
+
+.messageRow.grouped{
+    margin-top: 0;
+    align-items: baseline;
+}
+
+.messageAvatarGutter{
+    flex: 0 0 40px;
+    width: 40px;
     display: flex;
-    justify-self: right;
-    flex-direction: row-reverse;
-    margin: 0 5px;
-    padding: 10px;
-    background-color: #35565d;
-    border: 2px solid #21363a;
-    border-radius: 15px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 70%;
-    align-self: flex-start;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    white-space: pre-wrap;
-}
-
-.singleMessageYou .messageProfilePresentation {
-    margin-left: 10px; /* Space between profile picture and message */
-}
-
-.singleMessageYou .messageContent {
-    display: flex;
-    flex-direction: column;
     justify-content: center;
-    font-size: 15px;
-    word-wrap: break-word;
+    align-items: flex-start;
+    padding-top: 2px;
 }
 
-.singleMessageThey {
-    display: flex;
-    justify-self: left;
-    flex-direction: row;
-    padding: 10px;
-    background-color: #494326;
-    border: 2px solid #33301a;
-    border-radius: 15px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 70%;
-    align-self: flex-end;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    white-space: pre-wrap;
-}
-
-.singleMessageThey .messageProfilePresentation {
-    margin-right: 10px;
-}
-
-.singleMessageYou img{
-    width: 20px;
-    height: 20px;
+.messageAvatarGutter img{
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    margin: 0;
 }
 
-.singleMessageThey img{
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    margin:0;
-}
-
-.messageProfilePresentation{
-    display: flex;
-    flex-direction: column;
-    font-size: 10px;
-}
-
-.messageContent{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    font-size: 15px;
-}
-
-.messageTime{
-    display: flex;
-    justify-content: flex-end;
-    align-items: end;
-    font-size: 8px;
-}
-
-.singleMessageYou .user-avatar-container{
+.messageAvatarGutter .user-avatar-container{
     margin: 0 !important;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.messageAvatarGutter .MuiIconButton-root{
+    padding: 0;
+}
+
+.groupedMessageTime{
+    font-size: 0.62rem;
+    line-height: 1.25rem;
+    color: var(--text-secondary);
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+    user-select: none;
+    transform: translateX(8px);
+}
+
+.messageRow.grouped:hover .groupedMessageTime{
+    opacity: 1;
+}
+
+.messageRow.grouped .messageAvatarGutter{
+    padding-top: 0;
+    justify-content: flex-end;
+}
+
+.messageBody{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.messageHeader{
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.messageHeader .senderName{
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.messageHeader .messageTime{
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.messageContent {
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+    color: var(--text-primary);
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.messageContent a{
+    color: var(--primary-main);
+    text-decoration: none;
+}
+
+.messageContent a:hover{
+    text-decoration: underline;
 }

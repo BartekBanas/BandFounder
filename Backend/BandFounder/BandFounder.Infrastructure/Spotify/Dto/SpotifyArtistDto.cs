@@ -4,11 +4,13 @@ namespace BandFounder.Infrastructure.Spotify.Dto;
 
 public class SpotifyArtistDto
 {
-    [JsonPropertyName("genres")] public required List<string> Genres { get; set; }
+    [JsonPropertyName("genres")] public List<string> Genres { get; set; } = [];
 
     [JsonPropertyName("id")] public required string Id { get; set; }
 
     [JsonPropertyName("name")] public required string Name { get; set; }
+
+    [JsonPropertyName("images")] public List<SpotifyImageDto> Images { get; set; } = [];
 
     [JsonPropertyName("popularity")] public int Popularity { get; set; }
 }

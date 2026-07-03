@@ -1,3 +1,4 @@
+using BandFounder.Application.Dtos.Listings;
 using BandFounder.Domain.Entities;
 
 namespace BandFounder.Application.Services;
@@ -6,16 +7,29 @@ public interface IMusicTasteService
 {
     Task<IEnumerable<string>> GetCommonArtists(Guid requesterId, Guid targetUserId);
     Task<IEnumerable<string>> GetCommonGenres(Guid requesterId, Guid targetUserId);
+    Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresAsync(Guid targetUserId, Guid? accountId = null);
     Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId);
 }
 
 public class MusicTasteService : IMusicTasteService
 {
     private readonly IAccountService _accountService;
+    private readonly IAuthenticationService _authenticationService;
 
-    public MusicTasteService(IAccountService accountService)
+    public MusicTasteService(IAccountService accountService, IAuthenticationService authenticationService)
     {
         _accountService = accountService;
+        _authenticationService = authenticationService;
+    }
+
+    public async Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresAsync(Guid targetUserId, Guid? accountId = null)
+    {
+        var requesterId = accountId ?? _authenticationService.GetUserId();
+
+        var commonArtists = await GetCommonArtists(requesterId, targetUserId);
+        var commonGenres = await GetCommonGenres(requesterId, targetUserId);
+
+        return new ArtistsAndGenresDto(commonArtists, commonGenres);
     }
 
     public async Task<IEnumerable<string>> GetCommonArtists(Guid requesterId, Guid targetUserId)

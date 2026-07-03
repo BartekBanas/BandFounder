@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {Account} from "../../types/Account";
 import './profile.css';
 import {
@@ -27,7 +28,7 @@ import {
     getTopGenres
 } from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
-import {getTopArtists} from "../../api/spotify";
+import {getTopArtists, TopArtist} from "../../api/spotify";
 import ProfilePicture from "./ProfilePicture";
 import {createDirectChatroom, getDirectChatroomWithUser} from "../../api/chatroom";
 
@@ -36,10 +37,43 @@ interface ProfileShowProps {
     isMyProfile: boolean;
 }
 
+const ARTIST_POPOVER_HOVER_DELAY_MS = 300;
+
 const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
     const [guid, setGuid] = useState<string | undefined>(undefined);
     const [account, setAccount] = useState<Account | undefined>(undefined);
-    const [topArtists, setTopArtists] = useState<string[] | undefined>([]);
+    const [topArtists, setTopArtists] = useState<TopArtist[] | undefined>([]);
+    const [artistPopover, setArtistPopover] = useState<{ url: string; name: string; top: number; left: number } | null>(null);
+    const artistPopoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const clearArtistPopoverTimeout = () => {
+        if (artistPopoverTimeoutRef.current !== null) {
+            clearTimeout(artistPopoverTimeoutRef.current);
+            artistPopoverTimeoutRef.current = null;
+        }
+    };
+
+    const showArtistPopover = (artist: TopArtist, target: HTMLElement) => {
+        const imageUrl = artist.imageUrl;
+        if (!imageUrl) {
+            return;
+        }
+        clearArtistPopoverTimeout();
+        artistPopoverTimeoutRef.current = setTimeout(() => {
+            const rect = target.getBoundingClientRect();
+            setArtistPopover({
+                url: imageUrl,
+                name: artist.name,
+                top: rect.top,
+                left: rect.left + rect.width / 2,
+            });
+        }, ARTIST_POPOVER_HOVER_DELAY_MS);
+    };
+
+    const hideArtistPopover = () => {
+        clearArtistPopoverTimeout();
+        setArtistPopover(null);
+    };
     const [genres, setGenres] = useState<string[] | undefined>([]);
     const [roles, setRoles] = useState<string[]>([]);
     const [myRoles, setMyRoles] = useState<string[]>([]);
@@ -55,6 +89,8 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
 
         fetchAccountId();
     }, [username]);
+
+    useEffect(() => () => clearArtistPopoverTimeout(), []);
 
     useEffect(() => {
         const fetchAccount = async () => {
@@ -155,12 +191,11 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
     };
 
     return (
-        <div className={'profileMain'}>
-            <div className={'profileLeftPart'}
-                 style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+        <div className="profileMain">
+            <div className="profileLeftPart">
                 {account && <ProfilePicture isMyProfile={isMyProfile} accountId={account.id} size={200}/>}
 
-                <div style={{display: "flex", alignItems: "center", margin: "5px"}}>
+                <div style={{display: "flex", alignItems: "center"}}>
                     <Typography variant="body1">Username:</Typography>
                     <Typography variant="body1" sx={{marginLeft: 1}}>
                         {account?.name}
@@ -179,45 +214,80 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                     </div>
                 )}
             </div>
-            <div className={'topArtists'}>
-                <p>Top Artists: </p>
-                <ul>
-                    {topArtists?.map((artist, index) => (
-                        <li key={index}>{artist}</li>
-                    ))}
-                </ul>
+
+            <div className="profileTasteGrid">
+                <section className="profile-taste-card custom-scrollbar">
+                    <h3 className="profile-taste-card__title">Top Artists</h3>
+                    <div className="profile-taste-card__tags">
+                        {topArtists && topArtists.length > 0 ? (
+                            topArtists.map((artist) => (
+                                <span
+                                    key={artist.id}
+                                    className="profile-taste-tag profile-taste-tag--artist profile-artist-tag"
+                                    onMouseEnter={(e) => showArtistPopover(artist, e.currentTarget)}
+                                    onMouseLeave={hideArtistPopover}
+                                >
+                                    {artist.name}
+                                </span>
+                            ))
+                        ) : (
+                            <span className="profile-taste-card__empty">No artists yet</span>
+                        )}
+                    </div>
+                </section>
+
+                <section className="profile-taste-card custom-scrollbar">
+                    <h3 className="profile-taste-card__title">Top Genres</h3>
+                    <div className="profile-taste-card__tags">
+                        {genres && genres.length > 0 ? (
+                            genres.map((genre, index) => (
+                                <span key={index} className="profile-taste-tag profile-taste-tag--genre">
+                                    {genre}
+                                </span>
+                            ))
+                        ) : (
+                            <span className="profile-taste-card__empty">No genres yet</span>
+                        )}
+                    </div>
+                </section>
+
+                {isMyProfile && (
+                    <section className="profile-taste-card profile-taste-card--roles custom-scrollbar">
+                        <h3 className="profile-taste-card__title">Music Roles</h3>
+                        <Box className="musicRolesList">
+                            {roles.length > 0 ? (
+                                <List>
+                                    {roles.map((role) => (
+                                        <ListItem key={role}>
+                                            <Chip
+                                                label={role}
+                                                onDelete={() => handleDeleteRole(role)}
+                                                deleteIcon={deleting === role ? <CircularProgress size={24}/> : <DeleteIcon/>}
+                                                disabled={deleting === role}
+                                                style={{margin: 0}}
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            ) : (
+                                <span className="profile-taste-card__empty">No roles added yet</span>
+                            )}
+                        </Box>
+                        <Button
+                            className="profile-taste-card__add-btn"
+                            variant="contained"
+                            color="success"
+                            size="medium"
+                            onClick={open}
+                        >
+                            Add a musician role
+                        </Button>
+                    </section>
+                )}
             </div>
-            <div className={'topGenres'} style={{display: 'flex'}}>
-                <p>Top Genres: </p>
-                <ul>
-                    {genres?.map((genre, index) => (
-                        <li key={index}>{genre}</li>
-                    ))}
-                </ul>
-            </div>
-            {isMyProfile ?
-                <div className={'musicRoles custom-scrollbar'}>
-                    <p>Music Roles: </p>
-                    <Box className={'musicRolesList'}>
-                        <List>
-                            {roles.map((role) => (
-                                <ListItem key={role}>
-                                    <Chip
-                                        label={role}
-                                        onDelete={() => handleDeleteRole(role)}
-                                        deleteIcon={deleting === role ? <CircularProgress size={24}/> : <DeleteIcon/>}
-                                        disabled={deleting === role}
-                                        color="primary"
-                                        style={{margin: 0, padding: '0 !important'}}
-                                    />
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Box>
-                    <Button variant="contained" color="success" size="large" onClick={open}>
-                        Add a musician role
-                    </Button>
-                    <Modal open={opened} onClose={close}>
+
+            {isMyProfile && (
+                <Modal open={opened} onClose={close}>
                         <Box
                             sx={{
                                 position: 'absolute',
@@ -252,8 +322,24 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                                 </Button>
                             </Stack>
                         </Box>
-                    </Modal>
-                </div> : <div></div>}
+                </Modal>
+            )}
+
+            {artistPopover && createPortal(
+                <div
+                    className="profile-artist-popover"
+                    style={{top: artistPopover.top, left: artistPopover.left}}
+                >
+                    <img
+                        className="profile-artist-popover__img"
+                        src={artistPopover.url}
+                        alt={artistPopover.name}
+                        loading="lazy"
+                        onError={hideArtistPopover}
+                    />
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

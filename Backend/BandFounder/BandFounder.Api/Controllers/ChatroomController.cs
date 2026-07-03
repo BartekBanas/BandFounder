@@ -65,4 +65,13 @@ public class ChatroomController : Controller
 
         return Ok();
     }
+
+    [Authorize]
+    [HttpDelete("{chatroomId:guid}")]
+    public async Task<IActionResult> DeleteChatroom([FromRoute] Guid chatroomId)
+    {
+        await _chatroomService.DeleteChatroom(chatroomId);
+
+        return Ok();
+    }
 }

@@ -1,4 +1,5 @@
-﻿using BandFounder.Application.Services;
+﻿using BandFounder.Application.Dtos.Accounts;
+using BandFounder.Application.Services;
 using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -77,7 +78,14 @@ public class SpotifyBrokerController : ControllerBase
     public async Task<IActionResult> GetUsersSpotifyTopArtists([FromRoute] Guid accountId)
     {
         var artistDtoList = await _spotifyConnectionService.GetTopArtistsAsync(accountId, 10);
-        var artists = artistDtoList.Select(artist => artist.Name).ToList();
+        var artists = artistDtoList.Select(artist => new TopArtistDto
+        {
+            Id = artist.Id,
+            Name = artist.Name,
+            ImageUrl = artist.Images
+                .OrderBy(image => Math.Abs((image.Width ?? 0) - 320))
+                .FirstOrDefault()?.Url
+        }).ToList();
 
         return Ok(artists);
     }
