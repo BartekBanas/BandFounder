@@ -24,7 +24,7 @@ import {
     deleteMyMusicianRole,
     getAccount,
     getAccountByUsername,
-    getMyMusicianRoles,
+    getAccountMusicianRoles,
     getTopGenres
 } from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
@@ -76,7 +76,6 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
     };
     const [genres, setGenres] = useState<string[] | undefined>([]);
     const [roles, setRoles] = useState<string[]>([]);
-    const [myRoles, setMyRoles] = useState<string[]>([]);
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [opened, {close, open}] = useDisclosure(false);
     const [allRoles, setAllRoles] = useState<string[]>([]);
@@ -117,9 +116,12 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         fetchGenres();
         fetchTopArtists();
         fetchAccount();
-        fetchMyMusicianRoles();
-        fetchMusicianRoles();
-    }, [guid]);
+        fetchProfileMusicianRoles();
+
+        if (isMyProfile) {
+            fetchMusicianRoles();
+        }
+    }, [guid, isMyProfile]);
 
     const handleMessage = async () => {
         try {
@@ -146,9 +148,13 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
         }
     };
 
-    const fetchMyMusicianRoles = async () => {
+    const fetchProfileMusicianRoles = async () => {
+        if (!guid) {
+            return;
+        }
+
         try {
-            const rolesData = await getMyMusicianRoles();
+            const rolesData = await getAccountMusicianRoles(guid);
             setRoles(rolesData);
         } catch (error) {
             console.error('Error fetching roles:', error);
@@ -172,17 +178,17 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
 
         await addMyMusicianRole(selectedRole);
 
-        fetchMyMusicianRoles();
+        fetchProfileMusicianRoles();
 
         close();
     };
-    const filteredRoles: string[] = allRoles.filter(musicianRole => !myRoles.includes(musicianRole));
+    const filteredRoles: string[] = allRoles.filter(musicianRole => !roles.includes(musicianRole));
 
     const handleDeleteRole = async (role: string) => {
         setDeleting(role);
         try {
             await deleteMyMusicianRole(role);
-            fetchMyMusicianRoles();
+            fetchProfileMusicianRoles();
         } catch (error) {
             console.error(`Error deleting role ${role}:`, error);
         } finally {
@@ -251,39 +257,53 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                     </div>
                 </section>
 
-                {isMyProfile && (
-                    <section className="profile-taste-card profile-taste-card--roles custom-scrollbar">
-                        <h3 className="profile-taste-card__title">Music Roles</h3>
-                        <Box className="musicRolesList">
+                <section className="profile-taste-card profile-taste-card--roles custom-scrollbar">
+                    <h3 className="profile-taste-card__title">Music Roles</h3>
+                    {isMyProfile ? (
+                        <>
+                            <Box className="musicRolesList">
+                                {roles.length > 0 ? (
+                                    <List>
+                                        {roles.map((role) => (
+                                            <ListItem key={role}>
+                                                <Chip
+                                                    label={role}
+                                                    onDelete={() => handleDeleteRole(role)}
+                                                    deleteIcon={deleting === role ? <CircularProgress size={24}/> : <DeleteIcon/>}
+                                                    disabled={deleting === role}
+                                                    style={{margin: 0}}
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                ) : (
+                                    <span className="profile-taste-card__empty">No roles added yet</span>
+                                )}
+                            </Box>
+                            <Button
+                                className="profile-taste-card__add-btn"
+                                variant="contained"
+                                color="success"
+                                size="medium"
+                                onClick={open}
+                            >
+                                Add a musician role
+                            </Button>
+                        </>
+                    ) : (
+                        <div className="profile-taste-card__tags">
                             {roles.length > 0 ? (
-                                <List>
-                                    {roles.map((role) => (
-                                        <ListItem key={role}>
-                                            <Chip
-                                                label={role}
-                                                onDelete={() => handleDeleteRole(role)}
-                                                deleteIcon={deleting === role ? <CircularProgress size={24}/> : <DeleteIcon/>}
-                                                disabled={deleting === role}
-                                                style={{margin: 0}}
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
+                                roles.map((role) => (
+                                    <span key={role} className="profile-taste-tag profile-taste-tag--genre">
+                                        {role}
+                                    </span>
+                                ))
                             ) : (
-                                <span className="profile-taste-card__empty">No roles added yet</span>
+                                <span className="profile-taste-card__empty">No roles yet</span>
                             )}
-                        </Box>
-                        <Button
-                            className="profile-taste-card__add-btn"
-                            variant="contained"
-                            color="success"
-                            size="medium"
-                            onClick={open}
-                        >
-                            Add a musician role
-                        </Button>
-                    </section>
-                )}
+                        </div>
+                    )}
+                </section>
             </div>
 
             {isMyProfile && (

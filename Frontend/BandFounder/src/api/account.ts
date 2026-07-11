@@ -150,18 +150,22 @@ export async function deleteMyAccount(): Promise<void> {
     }
 }
 
-export async function getMyMusicianRoles(): Promise<string[]> {
-    const response = await fetch(`${API_URL}/accounts/${getUserId()}/roles`, {
+export async function getAccountMusicianRoles(accountId: string): Promise<string[]> {
+    const response = await fetch(`${API_URL}/accounts/${accountId}/roles`, {
         method: 'GET',
         headers: authorizedHeaders()
     });
 
     if (!response.ok) {
-        mantineErrorNotification('Failed to fetch own roles');
-        throw new Error('Failed to fetch own roles');
+        mantineErrorNotification('Failed to fetch musician roles');
+        throw new Error('Failed to fetch musician roles');
     }
 
     return response.json();
+}
+
+export async function getMyMusicianRoles(): Promise<string[]> {
+    return getAccountMusicianRoles(getUserId());
 }
 
 export async function deleteMyMusicianRole(role: string): Promise<void> {
