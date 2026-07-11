@@ -1,7 +1,16 @@
-import {createTheme} from "@mui/material";
+import {alpha, createTheme} from "@mui/material";
 import {designTokens} from "./designTokens";
 
 export {designTokens} from "./designTokens";
+
+const subpixelLayer = {
+    isolation: 'isolate' as const,
+    transform: 'translateZ(0)',
+    WebkitBackfaceVisibility: 'hidden' as const,
+    backfaceVisibility: 'hidden' as const,
+};
+
+const insetRing = (color: string) => `inset 0 0 0 1px ${color}`;
 
 export const muiDarkTheme = createTheme({
     palette: {
@@ -27,6 +36,10 @@ export const muiDarkTheme = createTheme({
         },
         info: {
             main: designTokens.accentBlue,
+        },
+        error: {
+            main: designTokens.errorMain,
+            contrastText: designTokens.textOnDark,
         },
     },
     typography: {
@@ -64,6 +77,63 @@ export const muiDarkTheme = createTheme({
                     backgroundColor: designTokens.cardSurface,
                     backgroundImage: 'none',
                 },
+            },
+        },
+        MuiButtonBase: {
+            styleOverrides: {
+                root: subpixelLayer,
+            },
+        },
+        MuiButton: {
+            defaultProps: {
+                disableElevation: true,
+            },
+            styleOverrides: {
+                root: {
+                    ...subpixelLayer,
+                    '&.Mui-focusVisible': {
+                        outline: 'none',
+                    },
+                },
+                contained: {
+                    border: 'none',
+                    backgroundClip: 'padding-box',
+                    boxShadow: 'none',
+                    '&:hover': {
+                        boxShadow: 'none',
+                    },
+                    '&.Mui-focusVisible': {
+                        outline: `2px solid ${designTokens.accentBlue}`,
+                        outlineOffset: '2px',
+                    },
+                },
+                outlined: {
+                    border: 'none',
+                    backgroundClip: 'padding-box',
+                    boxShadow: insetRing(designTokens.borderSubtle),
+                    '&:hover': {
+                        border: 'none',
+                        boxShadow: insetRing(designTokens.borderStrong),
+                    },
+                    '&.Mui-focusVisible': {
+                        border: 'none',
+                        boxShadow: `${insetRing(designTokens.accentBlue)}, 0 0 0 3px ${designTokens.accentBlueGlow}`,
+                    },
+                },
+                outlinedPrimary: {
+                    border: 'none',
+                    boxShadow: insetRing(alpha(designTokens.accentBlue, 0.5)),
+                    '&:hover': {
+                        border: 'none',
+                        backgroundColor: designTokens.ctaSurfaceAccent,
+                        boxShadow: insetRing(designTokens.accentBlue),
+                    },
+                },
+            },
+        },
+        MuiIconButton: {
+            styleOverrides: {
+                root: subpixelLayer,
             },
         },
     },
