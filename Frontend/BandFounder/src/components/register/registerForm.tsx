@@ -1,11 +1,11 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import './styles.css';
+import '../../styles/auth.css';
 import {getMyAccount, registerAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
-import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
-import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
+import {Box, Button, TextField, Typography} from "@mui/material";
 
 export function LoginForm() {
     const [name, setName] = useState('');
@@ -46,30 +46,14 @@ export function LoginForm() {
     }
 
     return (
-        <ThemeProvider theme={muiDarkTheme}>
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${designTokens.authGradientStart}, ${designTokens.authGradientEnd})`,
-                }}
-            >
+        <>
+            <Box className="auth-page">
                 <Box
                     component="form"
                     onSubmit={handleSubmit}
-                    sx={{
-                        width: '100%',
-                        maxWidth: '450px',
-                        padding: '40px',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.7)',
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    }}
+                    className="auth-panel"
                 >
-                    <Typography variant="h4" align="center" gutterBottom>
+                    <Typography className="auth-panel__title" variant="h4" align="center" gutterBottom>
                         Register
                     </Typography>
 
@@ -100,13 +84,13 @@ export function LoginForm() {
                         margin="normal"
                     />
 
-                    <Box sx={{display: 'flex', justifyContent: 'space-between', marginTop: '24px'}}>
+                    <Box className="auth-panel__actions">
                         <Button
                             type="submit"
                             variant="contained"
                             color="primary"
                             fullWidth
-                            sx={{marginRight: '8px', padding: '10px 0'}}
+                            sx={{padding: '10px 0'}}
                         >
                             Register
                         </Button>
@@ -122,7 +106,7 @@ export function LoginForm() {
                     </Box>
                 </Box>
             </Box>
-        </ThemeProvider>
+        </>
     );
 };
 

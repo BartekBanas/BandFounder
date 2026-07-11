@@ -5,12 +5,13 @@
     min-height: 0;
     background-color: var(--card-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     padding: 12px;
     width: 30%;
     min-width: 280px;
     max-width: 420px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(14px);
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -59,7 +60,7 @@
 }
 
 .singleConversationShortcut:hover{
-    background-color: var(--card-surface-elevated);
+    background-color: rgba(207, 244, 255, 0.72);
 }
 
 .conversationName{
@@ -74,9 +75,21 @@
 }
 
 .singleConversationShortcut .leaveChatroomBtn{
-    opacity: 0;
+    opacity: 0.72;
     transition: opacity 0.15s ease;
     color: var(--text-secondary);
+}
+
+@media (max-width: 700px) {
+    #mainChatroomsList {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+    }
+    .singleConversationShortcut {
+        min-height: 52px;
+        padding: 10px 12px;
+    }
 }
 
 .singleConversationShortcut:hover .leaveChatroomBtn{

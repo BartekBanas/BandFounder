@@ -16,8 +16,10 @@
     padding: 20px;
     background-color: var(--card-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     width: 100%;
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(14px);
 }
 
 .listings-filters__title {
@@ -70,7 +72,7 @@
     padding: 10px 16px;
     border: none;
     border-radius: 999px;
-    background-color: var(--accent-blue);
+    background: var(--glossy-blue-gradient);
     color: var(--text-on-dark);
     font-size: 0.85rem;
     font-weight: 600;
@@ -87,7 +89,7 @@
     padding: 10px 16px;
     border: 1px solid var(--border-subtle);
     border-radius: 999px;
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.48);
     color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 600;

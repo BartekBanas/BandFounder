@@ -114,6 +114,7 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
     };
 
     const handleSelectConversation = (id: string) => {
+        onSelectConversation(id);
         window.location.href = `/messages/${id}`;
     };
 
@@ -138,8 +139,20 @@ export const AllConversations: FC<AllConversationsProps> = ({onSelectConversatio
             }
             <ul id={'openConversationsList'} className={'custom-scrollbar'}>
                 {chatRooms.map((chatRoom) => (
-                    <li className={'singleConversationShortcut'} key={chatRoom.id}
-                        onClick={() => handleSelectConversation(chatRoom.id)}>
+                    <li
+                        className={'singleConversationShortcut'}
+                        key={chatRoom.id}
+                        onClick={() => handleSelectConversation(chatRoom.id)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                handleSelectConversation(chatRoom.id);
+                            }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Open conversation with ${chatRoom.name}`}
+                    >
                         <ChatroomAvatar chatRoom={chatRoom} myId={myId}/>
                         <div className={'conversationName'}>{chatRoom.name}</div>
                         <div className={'leaveChatroomBtn'} onClick={(e) => e.stopPropagation()}>

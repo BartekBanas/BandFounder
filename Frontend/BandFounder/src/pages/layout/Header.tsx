@@ -7,7 +7,6 @@ import {
     CssBaseline,
     IconButton,
     TextField,
-    ThemeProvider,
     Toolbar,
     InputAdornment
 } from '@mui/material';
@@ -15,7 +14,6 @@ import {useNavigate} from 'react-router-dom';
 import ChatIcon from '@mui/icons-material/Chat';
 import SearchIcon from '@mui/icons-material/Search';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
 import {Account} from "../../types/Account";
 import {getAccount, getAccounts} from "../../api/account";
@@ -33,7 +31,7 @@ export const Header: FC = () => {
     }
 
     const handleHomeClick = () => {
-        window.location.href = '/home';
+        navigate('/home');
     }
 
     const handleMessagesClick = () => {
@@ -70,7 +68,7 @@ export const Header: FC = () => {
     }, []);
 
     return (
-        <ThemeProvider theme={muiDarkTheme}>
+        <>
             <CssBaseline/>
             <Box id="mainHeader">
                 <AppBar position="static" color="transparent" elevation={0} sx={{background: 'transparent'}}>
@@ -78,12 +76,12 @@ export const Header: FC = () => {
                         <div className="header-toolbar">
                             <div className="header-toolbar__left">
                                 <UtilityDrawer/>
-                                <div id="appNameHeader" onClick={handleHomeClick}>
+                                <button id="appNameHeader" onClick={handleHomeClick} type="button">
                                     <span className="header-logo-icon">
                                         <GraphicEqIcon/>
                                     </span>
                                     <span>Bandfounder</span>
-                                </div>
+                                </button>
                             </div>
 
                             <div className="header-toolbar__center">
@@ -122,14 +120,14 @@ export const Header: FC = () => {
                                 <IconButton color="inherit" onClick={handleMessagesClick} aria-label="Messages">
                                     <ChatIcon/>
                                 </IconButton>
-                                <div onClick={handleProfileClick} style={{cursor: 'pointer'}}>
+                                <button className="header-profile-button" onClick={handleProfileClick} aria-label="Open profile" type="button">
                                     <UserAvatar userId={getUserId()}/>
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </Toolbar>
                 </AppBar>
             </Box>
-        </ThemeProvider>
+        </>
     );
 };

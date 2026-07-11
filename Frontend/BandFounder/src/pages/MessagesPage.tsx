@@ -16,7 +16,7 @@ export const MessagesPage: FC<MessagesPageProps> = ({}) => {
     }, [paramId]);
 
     return (
-        <div id="mainMessagingPage">
+        <div id="mainMessagingPage" className={selectedConversationId ? 'messages-layout--thread-open' : ''}>
             <AllConversations onSelectConversation={setSelectedConversationId}/>
             <SelectedConversation id={selectedConversationId || ''}/>
         </div>

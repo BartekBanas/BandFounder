@@ -10,7 +10,7 @@ export const MessagesPageMain: FC<MessagesPageMainProps> = ({}) => {
     const [selectedConversationId, setSelectedConversationId] = useState<string>('');
 
     return (
-        <div id="messagesPageMain">
+        <div id="messagesPageMain" className={selectedConversationId ? 'messages-layout--thread-open' : ''}>
             <AllConversations onSelectConversation={setSelectedConversationId}/>
             <SelectedConversation id={selectedConversationId}/>
         </div>

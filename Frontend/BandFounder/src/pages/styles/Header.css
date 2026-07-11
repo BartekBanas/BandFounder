@@ -13,8 +13,9 @@
     flex-grow: 1;
     width: 100%;
     border-bottom: 1px solid var(--border-subtle);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(18px);
     background-color: var(--header-background) !important;
+    box-shadow: 0 3px 16px rgba(20, 112, 145, 0.1), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .header-toolbar {
@@ -56,6 +57,8 @@
     font-weight: 700;
     font-size: 1.15rem;
     letter-spacing: 0.02em;
+    border: 0;
+    background: transparent;
     color: var(--text-primary);
     cursor: pointer;
     user-select: none;
@@ -70,6 +73,7 @@
     align-items: center;
     justify-content: center;
     color: var(--accent-blue);
+    filter: drop-shadow(0 2px 1px rgba(255, 255, 255, 0.8));
 }
 
 #searchBarMain {
@@ -78,7 +82,27 @@
 
 #searchBarMain .MuiOutlinedInput-root {
     border-radius: 999px;
-    background-color: var(--card-surface-elevated);
+    background-color: rgba(255, 255, 255, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.header-profile-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+}
+
+.header-toolbar__right .MuiIconButton-root {
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--text-primary);
 }
 
 @media (max-width: 768px) {
@@ -94,5 +118,9 @@
 
     #appNameHeader span {
         display: none;
+    }
+
+    #searchBarMain .MuiInputBase-input {
+        font-size: 0.85rem;
     }
 }

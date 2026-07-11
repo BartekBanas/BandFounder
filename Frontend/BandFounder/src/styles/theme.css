@@ -1,10 +1,41 @@
+html {
+    min-height: 100%;
+    background: var(--sky-gradient);
+}
+
 body {
-    background-color: var(--background-default);
+    min-height: 100vh;
+    background: transparent;
     color: var(--text-primary);
 }
 
-/* Keep MUI overlays in the navy family instead of default flat gray */
+button, input, textarea, select {
+    font: inherit;
+}
+
+:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring) !important;
+}
+
 .MuiBackdrop-root {
     background-color: var(--overlay-backdrop) !important;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(7px);
+}
+
+.aero-glass {
+    background: var(--card-surface);
+    border: 1px solid var(--border-subtle);
+    border-top-color: var(--glass-highlight);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

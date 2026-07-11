@@ -1,8 +1,8 @@
 import React from 'react';
-import {Dialog, ThemeProvider} from '@mui/material';
+import {Dialog} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import {designTokens, muiDarkTheme} from '../../../styles/muiDarkTheme';
+import {designTokens} from '../../../styles/muiDarkTheme';
 import './listingModal.css';
 
 export interface EditorMusicianSlot {
@@ -59,8 +59,7 @@ const ListingEditorModal: React.FC<ListingEditorModalProps> = ({
     const getSlotKey = (slot: EditorMusicianSlot, index: number) => slot.id ?? `slot-${index}`;
 
     return (
-        <ThemeProvider theme={muiDarkTheme}>
-            <Dialog
+        <Dialog
                 open={open}
                 onClose={onClose}
                 className="listing-editor-modal"
@@ -221,8 +220,7 @@ const ListingEditorModal: React.FC<ListingEditorModalProps> = ({
                     {submitLabel}
                 </button>
             </footer>
-            </Dialog>
-        </ThemeProvider>
+        </Dialog>
     );
 };
 

@@ -1,5 +1,5 @@
 #mainContainer {
-    background-color: var(--background-default);
+    background-color: transparent;
     min-height: calc(100vh - 80px);
     padding: 24px 20px 40px;
 }

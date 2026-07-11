@@ -1,0 +1,66 @@
+.aero-backdrop {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--sky-gradient);
+}
+
+.aero-backdrop__sun,
+.aero-backdrop__cloud,
+.aero-backdrop__bubble,
+.aero-backdrop__horizon {
+    position: absolute;
+}
+
+.aero-backdrop__sun {
+    width: 18rem;
+    height: 18rem;
+    right: 7%;
+    top: -7rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, rgba(255, 246, 176, 0.55) 34%, transparent 70%);
+}
+
+.aero-backdrop__cloud {
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.54);
+    filter: blur(2px);
+}
+
+.aero-backdrop__cloud::before,
+.aero-backdrop__cloud::after {
+    content: '';
+    position: absolute;
+    border-radius: inherit;
+    background: inherit;
+}
+
+.aero-backdrop__cloud--one { width: 14rem; height: 3.8rem; left: 7%; top: 13%; }
+.aero-backdrop__cloud--two { width: 10rem; height: 3rem; right: 21%; top: 33%; opacity: 0.62; }
+.aero-backdrop__cloud::before { width: 5rem; height: 5rem; left: 2rem; bottom: 0.4rem; }
+.aero-backdrop__cloud::after { width: 4rem; height: 4rem; right: 1.4rem; bottom: 0.2rem; }
+
+.aero-backdrop__bubble {
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.88), rgba(119, 222, 247, 0.12) 42%, rgba(16, 151, 203, 0.08) 75%);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.82);
+}
+
+.aero-backdrop__bubble--one { width: 3.5rem; height: 3.5rem; left: 8%; bottom: 17%; }
+.aero-backdrop__bubble--two { width: 1.8rem; height: 1.8rem; right: 12%; bottom: 25%; }
+.aero-backdrop__horizon {
+    left: -10%;
+    right: -10%;
+    bottom: -4rem;
+    height: 13rem;
+    border-radius: 50% 50% 0 0;
+    background: linear-gradient(180deg, rgba(116, 218, 157, 0.5), rgba(53, 166, 103, 0.72));
+}
+
+@media (max-width: 700px), (prefers-reduced-motion: reduce) {
+    .aero-backdrop__cloud--two,
+    .aero-backdrop__bubble--two { display: none; }
+}

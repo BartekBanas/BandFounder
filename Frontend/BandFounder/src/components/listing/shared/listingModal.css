@@ -10,8 +10,8 @@
     background-color: var(--card-surface) !important;
     background-image: none !important;
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+    border-radius: var(--radius-card);
+    box-shadow: var(--glass-shadow-raised);
     overflow: hidden;
 }
 
@@ -99,13 +99,13 @@
     padding: 10px 12px;
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
-    background-color: var(--background-default);
+    background-color: rgba(255, 255, 255, 0.74);
     color: var(--text-primary);
     font-size: 0.9rem;
     font-family: inherit;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     box-sizing: border-box;
-    color-scheme: dark;
+    color-scheme: light;
 }
 
 .listing-editor-modal__select {
@@ -266,7 +266,7 @@
     padding: 10px 24px;
     border: none;
     border-radius: 10px;
-    background-color: var(--accent-blue);
+    background: var(--glossy-blue-gradient);
     color: var(--text-on-dark);
     font-size: 0.9rem;
     font-weight: 600;

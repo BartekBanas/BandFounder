@@ -4,7 +4,24 @@
     justify-content: center;
     align-items: stretch;
     gap: 16px;
-    height: calc(100vh - 81px);
+    min-height: calc(100vh - 81px);
+    height: calc(100dvh - 81px);
     padding: 20px 16px;
     box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+    #mainMessagingPage {
+        height: calc(100dvh - 73px);
+        min-height: 420px;
+        padding: 12px;
+    }
+
+    #mainMessagingPage.messages-layout--thread-open > #mainChatroomsList {
+        display: none;
+    }
+
+    #mainMessagingPage:not(.messages-layout--thread-open) > #mainSelectedConversation {
+        display: none;
+    }
 }

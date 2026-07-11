@@ -3,13 +3,14 @@
     flex-direction: column;
     background-color: var(--card-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     padding: 0;
     height: 100%;
     min-height: 0;
     flex: 1;
     min-width: 0;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(14px);
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -93,7 +94,7 @@
 }
 
 .messageRow:hover{
-    background-color: var(--card-surface-elevated);
+    background-color: rgba(217, 248, 255, 0.62);
 }
 
 .messageRow.grouped{
@@ -180,6 +181,10 @@
     overflow-wrap: break-word;
     word-break: break-word;
     white-space: pre-wrap;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgba(235, 253, 255, 0.78);
+    border: 1px solid rgba(20, 134, 180, 0.12);
 }
 
 .messageContent a{
@@ -189,4 +194,14 @@
 
 .messageContent a:hover{
     text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+    #selectedConversationTitle { padding: 14px 16px; }
+    #fullConversation { padding: 12px; }
+    #sendBox { padding: 10px 12px; }
+    .messageRow { gap: 10px; padding: 2px 0; }
+    .messageAvatarGutter { flex-basis: 34px; width: 34px; }
+    .messageAvatarGutter img { width: 34px; height: 34px; }
+    .groupedMessageTime { opacity: 0.8; transform: none; }
 }

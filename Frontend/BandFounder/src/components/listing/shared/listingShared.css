@@ -9,12 +9,13 @@
     width: 100%;
     background-color: var(--card-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     padding: 20px;
     margin-bottom: 24px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(14px);
     color: var(--text-primary);
-    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    font-family: inherit;
 }
 
 .listing-card--with-actions {
@@ -83,11 +84,12 @@
 }
 
 .listing-type-badge--band {
-    background-color: var(--band-badge);
+    background: linear-gradient(180deg, #f07a88, var(--band-badge));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.44);
 }
 
 .listing-type-badge--song {
-    background-color: var(--accent-blue);
+    background: var(--glossy-blue-gradient);
     box-shadow: 0 0 12px var(--accent-blue-glow);
 }
 
@@ -97,7 +99,7 @@
     border-radius: 999px;
     font-size: 0.75rem;
     color: var(--text-secondary);
-    background-color: var(--card-surface-elevated);
+    background-color: rgba(221, 248, 255, 0.78);
     border: 1px solid var(--border-subtle);
 }
 
@@ -166,8 +168,8 @@
     gap: 6px;
     min-width: 100px;
     padding: 12px 14px;
-    border-radius: 12px;
-    background-color: var(--card-surface-elevated);
+    border-radius: var(--radius-control);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(218, 248, 255, 0.72));
     border: 1px solid var(--border-subtle);
     color: var(--text-primary);
     text-align: center;
@@ -180,7 +182,7 @@
 }
 
 .role-slot-card--filled {
-    background-color: var(--success-main);
+    background: var(--glossy-green-gradient);
     color: var(--text-on-dark);
 }
 
@@ -219,17 +221,17 @@
     width: 100%;
     padding: 22px 24px;
     margin-bottom: 24px;
-    background: linear-gradient(135deg, var(--card-surface-elevated) 0%, var(--card-surface) 100%);
-    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(235, 253, 255, 0.92) 0%, rgba(205, 247, 255, 0.75) 100%);
+    border-radius: var(--radius-card);
     border: 1px solid var(--border-subtle);
     border-left: 3px solid var(--accent-blue);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow: var(--glass-shadow);
     cursor: pointer;
     transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
 }
 
 .create-listing-card:hover {
-    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.28), 0 0 16px var(--accent-blue-glow);
+    box-shadow: var(--glass-shadow-raised), 0 0 16px var(--accent-blue-glow);
     transform: translateY(-1px);
     border-color: var(--border-strong);
     border-left-color: var(--accent-blue);
@@ -243,7 +245,7 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background-color: var(--cta-surface-accent);
+    background: radial-gradient(circle at 35% 25%, #d5fbff, #9ce9f6 60%, #55bfdc);
     color: var(--accent-blue);
 }
 
@@ -273,7 +275,7 @@
     padding: 10px 24px;
     border: none;
     border-radius: 999px;
-    background-color: var(--accent-blue);
+    background: var(--glossy-blue-gradient);
     color: var(--text-on-dark);
     font-size: 0.85rem;
     font-weight: 700;
@@ -283,7 +285,7 @@
 }
 
 .create-listing-card__button:hover {
-    background-color: var(--accent-blue);
+    background: var(--glossy-blue-gradient);
     box-shadow: 0 0 12px var(--accent-blue-glow);
 }
 
