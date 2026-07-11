@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "test:backend": "dotnet test Backend/BandFounder/BandFounder.sln",
+    "test:frontend": "npm --prefix Frontend/BandFounder test",
+    "test": "npm run test:backend && npm run test:frontend"
+  }
+}
