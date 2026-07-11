@@ -4,21 +4,18 @@ import {SelectedConversation} from "../components/messeges/SelectedConversation/
 import {useParams} from "react-router-dom";
 import './styles/MessagesPage.css'
 
-interface MessagesPageProps {
-}
-
-export const MessagesPage: FC<MessagesPageProps> = ({}) => {
+export const MessagesPage: FC = () => {
     const {id: paramId} = useParams<{ id: string }>();
-    const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>('');
+    const [selectedConversationId, setSelectedConversationId] = useState('');
 
     useEffect(() => {
-        setSelectedConversationId(paramId);
+        setSelectedConversationId(paramId ?? '');
     }, [paramId]);
 
     return (
-        <div id="mainMessagingPage">
+        <div id="messagesPage">
             <AllConversations onSelectConversation={setSelectedConversationId}/>
-            <SelectedConversation id={selectedConversationId || ''}/>
+            <SelectedConversation id={selectedConversationId}/>
         </div>
     );
 };

@@ -128,11 +128,11 @@ export async function updateListing(listing: ListingUpdate, listingId: string): 
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const responseText = await response.text();
-        return responseText ? JSON.parse(responseText) : {};
+        return;
     } catch (e) {
         mantineErrorNotification('Failed to update listing');
         console.error('Error updating listing:', e);
+        throw e;
     }
 }
 
@@ -151,5 +151,6 @@ export async function deleteListing(listingId: string) {
     } catch (e) {
         mantineErrorNotification('Failed to delete listing');
         console.error('Error deleting listing:', e);
+        throw e;
     }
 }

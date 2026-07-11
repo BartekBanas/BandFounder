@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
 import UseSpotifyConnected from "../hooks/useSpotifyAccountLinked";
-import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
-import {RingLoader} from "../components/common/RingLoader";
+import {AppLoader} from "../components/common/AppLoader";
 import ListingsListPublic from "../components/listing/listingPublic/listingsListPublic";
 import ListingsFilters from "../components/listing/listingPublic/ListingsFilters";
 import {useListingsFeed} from "../components/listing/listingPublic/useListingsFeed";
@@ -18,6 +17,7 @@ export function MainPage() {
         lastListingElementRef,
         handleApplyFilters,
         handleResetFilters,
+        refetchListings,
     } = useListingsFeed();
 
     useEffect(() => {
@@ -29,22 +29,9 @@ export function MainPage() {
         checkSpotifyConnection();
     }, []);
 
-    const theme = createTheme({
-        components: {
-            Loader: Loader.extend({
-                defaultProps: {
-                    loaders: { ...Loader.defaultLoaders, ring: RingLoader },
-                    type: 'ring',
-                },
-            }),
-        },
-    });
-
     if (loading) {
         return <div className="App-header">
-            <MantineThemeProvider theme={theme}>
-                <Loader size={200} />
-            </MantineThemeProvider>
+            <AppLoader size={200}/>
         </div>;
     }
 
@@ -59,7 +46,7 @@ export function MainPage() {
                     />
                 </aside>
                 <main className="feed-main">
-                    <ListingTemplate/>
+                    <ListingTemplate onListingCreated={refetchListings}/>
                     <ListingsListPublic
                         listings={listings}
                         loading={listingsLoading}

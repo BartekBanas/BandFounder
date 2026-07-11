@@ -10,7 +10,6 @@ import {useIsAuthenticated} from "../hooks/authentication";
 import {ProfilePageOwner} from "./ProfilePageOwner";
 import {MessagesPage} from "./MessagesPage";
 import {RediractionPage} from "./RediractionPage";
-import {MessagesPageMain} from "./MessagesPageMain";
 
 const publicRoutes = [
     {
@@ -58,7 +57,7 @@ const privateRoutes = [{
         },
         {
             path: '/messages',
-            element: <MessagesPageMain/>
+            element: <MessagesPage/>
         },
         {
             path: '/messages/:id',

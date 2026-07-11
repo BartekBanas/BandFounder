@@ -4,6 +4,41 @@ import {ChatroomCreate} from "../types/ChatroomCreate";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {authorizedHeaders} from "../hooks/authentication";
 
+type DirectChatroomStarter = () => Promise<ChatRoom | null | undefined>;
+type ChatroomRedirect = (chatroomId: string) => void;
+
+export function getChatroomDestination(chatroomId: string): string {
+    return `/messages/${chatroomId}`;
+}
+
+export function redirectToChatroom(chatroomId: string): void {
+    window.location.href = getChatroomDestination(chatroomId);
+}
+
+export async function openDirectChatroomWithFallback(
+    accountId: string,
+    startChatroom: DirectChatroomStarter = () => createDirectChatroom(accountId),
+    redirect: ChatroomRedirect = redirectToChatroom
+): Promise<void> {
+    let chatroom: ChatRoom | null | undefined;
+
+    try {
+        chatroom = await startChatroom();
+    } catch (error) {
+        console.error('Error opening direct chatroom:', error);
+    }
+
+    if (!chatroom?.id) {
+        chatroom = await getDirectChatroomWithUser(accountId);
+    }
+
+    if (!chatroom?.id) {
+        throw new Error(`Failed to find chatroom with user ${accountId}`);
+    }
+
+    redirect(chatroom.id);
+}
+
 export async function getMyChatrooms(): Promise<ChatRoom[]> {
     try {
         const response = await fetch(`${API_URL}/chatrooms`, {

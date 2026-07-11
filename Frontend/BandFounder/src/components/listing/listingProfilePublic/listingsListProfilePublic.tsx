@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
-import {RingLoader} from "../../common/RingLoader";
-import {ListingProfilePublic} from "./listingProfilePublic";
+import {AppLoader} from '../../common/AppLoader';
+import ListingCardView from '../shared/ListingCardView';
 import {Listing} from "../../../types/Listing";
 import {getUsersListings} from "../../../api/listing";
 import {getAccountByUsername} from "../../../api/account";
+import {Account} from "../../../types/Account";
 import '../shared/listingShared.css';
 
 interface ListingsListProfilePublicProps {
@@ -13,6 +13,7 @@ interface ListingsListProfilePublicProps {
 
 const ListingsListProfilePublic: React.FC<ListingsListProfilePublicProps> = ({profileUsername}) => {
     const [listings, setListings] = useState<Listing[]>([]);
+    const [owner, setOwner] = useState<Account>();
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
@@ -20,6 +21,7 @@ const ListingsListProfilePublic: React.FC<ListingsListProfilePublicProps> = ({pr
             try {
                 const user = await getAccountByUsername(profileUsername);
                 const data = await getUsersListings(user.id);
+                setOwner(user);
                 setListings(data);
             } catch (error) {
                 console.error('Error getting listings:', error);
@@ -30,22 +32,9 @@ const ListingsListProfilePublic: React.FC<ListingsListProfilePublicProps> = ({pr
         fetchListings();
     }, [profileUsername]);
 
-    const theme = createTheme({
-        components: {
-            Loader: Loader.extend({
-                defaultProps: {
-                    loaders: {...Loader.defaultLoaders, ring: RingLoader},
-                    type: 'ring',
-                },
-            }),
-        },
-    });
-
     if (loading) {
         return <div className="App-header">
-            <MantineThemeProvider theme={theme}>
-                <Loader size={200}/>
-            </MantineThemeProvider>
+            <AppLoader size={200}/>
         </div>;
     }
 
@@ -53,7 +42,7 @@ const ListingsListProfilePublic: React.FC<ListingsListProfilePublicProps> = ({pr
         <div className={'listingsList'}>
             {listings && listings.length > 0 ? (
                 listings.map((listing) => (
-                    <ListingProfilePublic key={listing.id} listingId={listing.id}/>
+                    <ListingCardView key={listing.id} listing={listing} owner={owner}/>
                 ))
             ) : (
                 <p>No listings available</p>
