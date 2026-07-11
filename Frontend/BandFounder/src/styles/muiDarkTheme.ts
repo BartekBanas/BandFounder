@@ -45,6 +45,10 @@ export const muiDarkTheme = createTheme({
                     backgroundColor: designTokens.overlayBackdrop,
                     backdropFilter: 'blur(6px)',
                 },
+                invisible: {
+                    backgroundColor: 'transparent',
+                    backdropFilter: 'none',
+                },
             },
         },
         MuiPaper: {

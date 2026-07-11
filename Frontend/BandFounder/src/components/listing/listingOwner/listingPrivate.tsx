@@ -143,12 +143,13 @@ const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
                 ownerElement={
                     <div className="owner-listing-elements">
                         <ProfilePicture isMyProfile={true} accountId={listing.ownerId} size={40}/>
-                        <p>{listing?.owner?.name}</p>
                     </div>
                 }
                 title={listing.name}
                 type={listing.type}
                 genre={listing.genre}
+                authorName={listing?.owner?.name}
+                dateCreated={listing.dateCreated}
             />
             <ListingCardBody description={listing.description}/>
             <AvailableRolesSection slots={listing.musicianSlots}/>

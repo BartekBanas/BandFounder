@@ -16,6 +16,7 @@ interface listingProfilePublicProps {
 
 export const ListingProfilePublic: React.FC<listingProfilePublicProps> = ({listingId}) => {
     const [listing, setListing] = useState<Listing | null>(null);
+    const [authorName, setAuthorName] = useState<string>();
 
     useEffect(() => {
         const fetchListing = async () => {
@@ -23,6 +24,7 @@ export const ListingProfilePublic: React.FC<listingProfilePublicProps> = ({listi
             if (data) {
                 const owner = await getUser(data.ownerId);
                 setListing({...data, owner});
+                setAuthorName(owner?.name);
             }
         };
 
@@ -55,6 +57,8 @@ export const ListingProfilePublic: React.FC<listingProfilePublicProps> = ({listi
                 title={listing.name}
                 type={listing.type}
                 genre={listing.genre}
+                authorName={authorName}
+                dateCreated={listing.dateCreated}
             />
             <ListingCardBody description={listing.description}/>
             <AvailableRolesSection slots={listing.musicianSlots}/>

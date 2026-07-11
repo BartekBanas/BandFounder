@@ -10,18 +10,26 @@ import {Account} from "../../../types/Account";
 import {getAccount} from "../../../api/account";
 import InteractiveUserAvatar from "../../common/InteractiveUserAvatar";
 
-const OwnerListingElement = ({listing}: { listing: Listing }) => {
+interface OwnerListingElementProps {
+    listing: Listing;
+    onOwnerLoaded?: (name: string) => void;
+}
+
+const OwnerListingElement = ({listing, onOwnerLoaded}: OwnerListingElementProps) => {
     const [owner, setOwner] = useState<Account | undefined>(undefined);
 
     useEffect(() => {
         if (listing?.ownerId) {
             getAccount(listing.ownerId).then((data) => {
                 setOwner(data);
+                if (data?.name) {
+                    onOwnerLoaded?.(data.name);
+                }
             }).catch((error) => {
                 console.error(error);
             });
         }
-    }, [listing]);
+    }, [listing, onOwnerLoaded]);
 
     const handleMessageListingOwner = async () => {
         try {
@@ -68,6 +76,7 @@ const OwnerListingElement = ({listing}: { listing: Listing }) => {
             userId={listing.ownerId}
             name={owner?.name}
             size={40}
+            showName={false}
             extraActions={messageOwnerAction}
         />
     );

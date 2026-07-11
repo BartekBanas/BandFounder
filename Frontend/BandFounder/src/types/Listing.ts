@@ -8,6 +8,7 @@ export interface Listing {
     genre: string;
     type: ListingType;
     description: string;
+    dateCreated: string;
     musicianSlots: MusicianSlot[];
     owner: Account;
 }

@@ -8,3 +8,9 @@ body {
     background-color: var(--overlay-backdrop) !important;
     backdrop-filter: blur(6px);
 }
+
+/* Select/menu dropdowns use an invisible backdrop that should not blur the page */
+.MuiBackdrop-root.MuiBackdrop-invisible {
+    background-color: transparent !important;
+    backdrop-filter: none;
+}

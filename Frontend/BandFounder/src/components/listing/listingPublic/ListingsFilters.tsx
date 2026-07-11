@@ -1,8 +1,10 @@
 import React, {useState, useEffect} from 'react';
-import {TextField, MenuItem} from "@mui/material";
+import {Autocomplete, TextField, MenuItem} from "@mui/material";
 import {ListingType} from "../../../types/Listing";
 import {getGenres} from "../../../api/metadata";
 import './style.css';
+
+const MAX_GENRE_FILTER_LENGTH = 50;
 
 export interface ListingsFiltersState {
     matchMusicRole?: boolean;
@@ -43,11 +45,12 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
     }, []);
 
     const handleApply = () => {
+        const genreFilter = tempGenreFilter?.trim() || undefined;
         onApply({
             matchMusicRole: tempMatchMusicRole,
             fromLatest: tempFromLatest,
             listingType: tempListingType,
-            genreFilter: tempGenreFilter,
+            genreFilter,
         });
     };
 
@@ -98,36 +101,27 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                 </TextField>
             </div>
             <div className="listings-filters__field">
-                <TextField
-                    select
-                    label="Genre"
-                    value={tempGenreFilter || ''}
-                    onChange={(e) => setTempGenreFilter(e.target.value as string)}
+                <Autocomplete
+                    freeSolo
                     fullWidth
-                    size="small"
-                    slotProps={{
-                        select: {
-                            MenuProps: {
-                                slotProps: {
-                                    paper: {
-                                        style: {
-                                            maxHeight: '400px',
-                                        },
-                                    },
+                    options={genreOptions}
+                    value={tempGenreFilter ?? ''}
+                    onInputChange={(_, value) => setTempGenreFilter(value || undefined)}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Genre"
+                            size="small"
+                            placeholder="e.g. Dream Pop"
+                            slotProps={{
+                                htmlInput: {
+                                    ...params.inputProps,
+                                    maxLength: MAX_GENRE_FILTER_LENGTH,
                                 },
-                            },
-                        },
-                    }}
-                >
-                    <MenuItem value="">
-                        <em>None</em>
-                    </MenuItem>
-                    {genreOptions.map((genre) => (
-                        <MenuItem key={genre} value={genre}>
-                            {genre}
-                        </MenuItem>
-                    ))}
-                </TextField>
+                            }}
+                        />
+                    )}
+                />
             </div>
             <div className="listings-filters__actions">
                 <button type="button" className="listings-filters__apply" onClick={handleApply}>

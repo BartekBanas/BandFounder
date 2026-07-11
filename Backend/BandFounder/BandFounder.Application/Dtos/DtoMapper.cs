@@ -39,6 +39,7 @@ public static class DtoMapper
             Genre = listing.GenreName,
             Description = listing.Description,
             Type = listing.Type.ToString(),
+            DateCreated = listing.DateCreated,
             MusicianSlots = listing.MusicianSlots
                 .Select(slot => new MusicianSlotDto
                 {
