@@ -1,9 +1,11 @@
 using System.Linq.Expressions;
+using System.Security.Claims;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using NSubstitute;
 
@@ -204,6 +206,179 @@ public class ListingServiceTests
         var result = await service.GetListingsFeedAsync(new FeedFilterOptions { MatchRole = true });
 
         Assert.That(result.Listings, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public async Task UpdateListing_UpdatesExistingDescription()
+    {
+        var userId = Guid.NewGuid();
+        var listingId = Guid.NewGuid();
+        var listing = new Listing
+        {
+            Id = listingId,
+            Name = "Test listing",
+            OwnerId = userId,
+            Type = ListingType.Band,
+            Description = "Original description",
+            MusicianSlots = [],
+        };
+
+        var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
+        listingRepositoryMock
+            .GetOneAsync(
+                Arg.Any<Expression<Func<Listing, bool>>>(),
+                Arg.Any<string[]>())
+            .Returns(listing);
+
+        _validator.ValidateAsync(Arg.Any<Listing>())
+            .Returns(new ValidationResult());
+
+        _authorizationServiceMock
+            .AuthorizeAsync(Arg.Any<ClaimsPrincipal>(), Arg.Any<object?>(), Arg.Any<string>())
+            .Returns(AuthorizationResult.Success());
+
+        var authenticationServiceMock = Substitute.For<IAuthenticationService>();
+        authenticationServiceMock.GetUserClaims().Returns(new ClaimsPrincipal());
+
+        var service = new ListingService(
+            Substitute.For<IAccountService>(),
+            authenticationServiceMock,
+            _authorizationServiceMock,
+            Substitute.For<IMusicTasteService>(),
+            _chatroomServiceMock,
+            _validator,
+            _genreRepositoryMock,
+            _musicianRoleRepositoryMock,
+            _musicianSlotRepositoryMock,
+            listingRepositoryMock);
+
+        var updateDto = new ListingUpdateDto
+        {
+            Name = listing.Name,
+            Type = listing.Type,
+            Description = "Updated description",
+            MusicianSlots = [],
+        };
+
+        await service.UpdateListing(listingId, updateDto);
+
+        Assert.That(listing.Description, Is.EqualTo("Updated description"));
+        await listingRepositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Test]
+    public async Task UpdateListing_ClearsExistingDescription()
+    {
+        var userId = Guid.NewGuid();
+        var listingId = Guid.NewGuid();
+        var listing = new Listing
+        {
+            Id = listingId,
+            Name = "Test listing",
+            OwnerId = userId,
+            Type = ListingType.Band,
+            Description = "Original description",
+            MusicianSlots = [],
+        };
+
+        var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
+        listingRepositoryMock
+            .GetOneAsync(
+                Arg.Any<Expression<Func<Listing, bool>>>(),
+                Arg.Any<string[]>())
+            .Returns(listing);
+
+        _validator.ValidateAsync(Arg.Any<Listing>())
+            .Returns(new ValidationResult());
+
+        _authorizationServiceMock
+            .AuthorizeAsync(Arg.Any<ClaimsPrincipal>(), Arg.Any<object?>(), Arg.Any<string>())
+            .Returns(AuthorizationResult.Success());
+
+        var authenticationServiceMock = Substitute.For<IAuthenticationService>();
+        authenticationServiceMock.GetUserClaims().Returns(new ClaimsPrincipal());
+
+        var service = new ListingService(
+            Substitute.For<IAccountService>(),
+            authenticationServiceMock,
+            _authorizationServiceMock,
+            Substitute.For<IMusicTasteService>(),
+            _chatroomServiceMock,
+            _validator,
+            _genreRepositoryMock,
+            _musicianRoleRepositoryMock,
+            _musicianSlotRepositoryMock,
+            listingRepositoryMock);
+
+        var updateDto = new ListingUpdateDto
+        {
+            Name = listing.Name,
+            Type = listing.Type,
+            Description = string.Empty,
+            MusicianSlots = [],
+        };
+
+        await service.UpdateListing(listingId, updateDto);
+
+        Assert.That(listing.Description, Is.EqualTo(string.Empty));
+        await listingRepositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Test]
+    public async Task UpdateListing_SkipsDescriptionWhenDtoDescriptionIsNull()
+    {
+        var userId = Guid.NewGuid();
+        var listingId = Guid.NewGuid();
+        var listing = new Listing
+        {
+            Id = listingId,
+            Name = "Test listing",
+            OwnerId = userId,
+            Type = ListingType.Band,
+            Description = "Original description",
+            MusicianSlots = [],
+        };
+
+        var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
+        listingRepositoryMock
+            .GetOneAsync(
+                Arg.Any<Expression<Func<Listing, bool>>>(),
+                Arg.Any<string[]>())
+            .Returns(listing);
+
+        _validator.ValidateAsync(Arg.Any<Listing>())
+            .Returns(new ValidationResult());
+
+        _authorizationServiceMock
+            .AuthorizeAsync(Arg.Any<ClaimsPrincipal>(), Arg.Any<object?>(), Arg.Any<string>())
+            .Returns(AuthorizationResult.Success());
+
+        var authenticationServiceMock = Substitute.For<IAuthenticationService>();
+        authenticationServiceMock.GetUserClaims().Returns(new ClaimsPrincipal());
+
+        var service = new ListingService(
+            Substitute.For<IAccountService>(),
+            authenticationServiceMock,
+            _authorizationServiceMock,
+            Substitute.For<IMusicTasteService>(),
+            _chatroomServiceMock,
+            _validator,
+            _genreRepositoryMock,
+            _musicianRoleRepositoryMock,
+            _musicianSlotRepositoryMock,
+            listingRepositoryMock);
+
+        var updateDto = new ListingUpdateDto
+        {
+            Name = listing.Name,
+            Type = listing.Type,
+            Description = null,
+            MusicianSlots = [],
+        };
+
+        await service.UpdateListing(listingId, updateDto);
+
+        Assert.That(listing.Description, Is.EqualTo("Original description"));
     }
 
     private ListingService CreateService(

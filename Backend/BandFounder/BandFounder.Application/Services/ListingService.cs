@@ -310,7 +310,10 @@ public class ListingService : IListingService
         listing.Genre = string.IsNullOrWhiteSpace(dto.Genre) ? null : await _genreRepository.GetOrCreateAsync(dto.Genre);
         listing.GenreName = dto.Genre;
         listing.Type = dto.Type;
-        listing.Description ??= dto.Description;
+        if (dto.Description is not null)
+        {
+            listing.Description = dto.Description;
+        }
 
         for (int i = listing.MusicianSlots.Count - 1; i >= 0; i--)
         {
