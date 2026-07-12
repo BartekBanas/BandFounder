@@ -1,6 +1,7 @@
 ﻿using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Services;
+using BandFounder.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -48,7 +49,7 @@ public class AccountController : Controller
         
         if (filters.Username is not null)
         {
-            return Ok(accountDtos.First());
+            return Ok(accountDtos.FirstOrDefault() ?? throw new ItemNotFoundException("Account not found."));
         }
 
         return Ok(accountDtos);

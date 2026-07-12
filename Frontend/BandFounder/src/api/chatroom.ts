@@ -66,12 +66,16 @@ export async function getChatroom(chatroomId: string): Promise<ChatRoom> {
         });
 
         if (!response.ok) {
-            throw new Error(await response.text());
+            const error = new Error(await response.text());
+            Object.assign(error, {status: response.status});
+            throw error;
         }
 
         return await response.json() as ChatRoom;
     } catch (e) {
-        mantineErrorNotification('Failed to fetch chatroom');
+        if ((e as {status?: number}).status !== 404) {
+            mantineErrorNotification('Failed to fetch chatroom');
+        }
         throw e;
     }
 }

@@ -13,6 +13,8 @@ import {getChatroom} from "../../../api/chatroom";
 import InteractiveUserAvatar from "../../common/InteractiveUserAvatar";
 import {formatMessageWithLinks} from "../../common/utils";
 import {GroupMembersPanel} from "./GroupMembersPanel";
+import {MissingContent} from "../../common/MissingContent";
+import {AppLoader} from "../../common/AppLoader";
 
 interface SelectedConversationProps {
     id: string;
@@ -51,6 +53,7 @@ const isSameDay = (a: Date, b: Date): boolean =>
 
 export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [chatroom, setChatroom] = useState<ChatRoom>();
+    const [chatroomState, setChatroomState] = useState<"loading" | "ready" | "missing" | "error">("loading");
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
     const [chatroomName, setChatroomName] = useState<string>("");
@@ -97,36 +100,48 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         if (!id) return;
 
         const fetchChatroom = async () => {
-            const chatroom = await getChatroom(id);
-            if (chatroom.membersIds) {
-                const localParticipants: Account[] = [];
+            setChatroomState("loading");
 
-                for (const memberId of chatroom.membersIds) {
-                    const member = await getAccount(memberId);
-                    localParticipants.push(member);
-                    addParticipant(member);
+            try {
+                const chatroom = await getChatroom(id);
+                if (chatroom.membersIds) {
+                    const localParticipants: Account[] = [];
+
+                    for (const memberId of chatroom.membersIds) {
+                        const member = await getAccount(memberId);
+                        localParticipants.push(member);
+                        addParticipant(member);
+                    }
+
+                    if (chatroom.type === ChatRoomType.Direct) {
+                        const otherParticipant = localParticipants.find(
+                            (participant) => participant.id !== getUserId()
+                        );
+                        const otherParticipantName = otherParticipant ? otherParticipant.name : "Unknown User";
+                        setChatroomName(`Conversation with ${otherParticipantName}`);
+                    } else {
+                        setChatroomName(chatroom.name || "Unknown Chatroom");
+                    }
                 }
 
-                if (chatroom.type === ChatRoomType.Direct) {
-                    const otherParticipant = localParticipants.find(
-                        (participant) => participant.id !== getUserId()
-                    );
-                    const otherParticipantName = otherParticipant ? otherParticipant.name : "Unknown User";
-                    setChatroomName(`Conversation with ${otherParticipantName}`);
-                } else {
-                    setChatroomName(chatroom.name || "Unknown Chatroom");
+                setChatroom(chatroom);
+                setChatroomState("ready");
+            } catch (error) {
+                if ((error as {status?: number}).status === 404) {
+                    setChatroomState("missing");
+                    return;
                 }
+
+                console.error("Error fetching chatroom:", error);
+                setChatroomState("error");
             }
-
-            setChatroom(chatroom);
         };
 
         fetchChatroom();
     }, [id, membersVersion]);
 
     useEffect(() => {
-        if (!id) {
-            console.error("Chatroom ID is not provided");
+        if (!id || chatroomState !== "ready") {
             return;
         }
 
@@ -174,12 +189,11 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         return () => {
             ws.current?.close();
         };
-    }, [id]);
+    }, [id, chatroomState]);
 
 
     const fetchOlderMessages = async () => {
-        if (!id || !hasMore || loading) {
-            console.error("Chatroom ID is not provided or no more messages to fetch or already loading");
+        if (!id || chatroomState !== "ready" || !hasMore || loading) {
             return;
         }
 
@@ -227,7 +241,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
 
 
     useEffect(() => {
-        if (!id) return;
+        if (!id || chatroomState !== "ready") return;
 
         const conversationElement = conversationRef.current;
         if (!conversationElement) return;
@@ -252,7 +266,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         return () => {
             conversationElement.removeEventListener("scroll", handleScroll);
         };
-    }, [hasMore, loading, currentConversation]);
+    }, [chatroomState, hasMore, loading, currentConversation]);
 
 
     const handleSendMessage = async () => {
@@ -297,6 +311,36 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
             <div id="mainSelectedConversation">
                 <div id="emptyConversation">Select a chat to start messaging</div>
             </div>
+        );
+    }
+
+    if (chatroomState === "loading") {
+        return (
+            <div id="mainSelectedConversation">
+                <AppLoader size={48}/>
+            </div>
+        );
+    }
+
+    if (chatroomState === "missing") {
+        return (
+            <MissingContent
+                title="Chatroom not found"
+                description="This chatroom may have been deleted or you no longer have access to it."
+                backTo="/messages"
+                backLabel="Back to messages"
+            />
+        );
+    }
+
+    if (chatroomState === "error") {
+        return (
+            <MissingContent
+                title="Chatroom unavailable"
+                description="We couldn't load this chatroom right now. Please try again later."
+                backTo="/messages"
+                backLabel="Back to messages"
+            />
         );
     }
 
