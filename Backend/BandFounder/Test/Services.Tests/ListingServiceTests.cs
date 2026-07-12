@@ -466,6 +466,13 @@ public class ListingServiceTests
         {
             Name = "Test listing",
             OwnerId = ownerId,
+            Owner = new Account
+            {
+                Id = ownerId,
+                Name = "Test Owner",
+                Email = "owner@example.com",
+                PasswordHash = "hash"
+            },
             Type = type,
             GenreName = genreName,
             MusicianSlots =

@@ -1,4 +1,4 @@
-import React, {ReactNode} from 'react';
+import React, {ReactNode, useState} from 'react';
 import {Listing} from '../../../types/Listing';
 import {Account} from '../../../types/Account';
 import ListingCard from './ListingCard';
@@ -28,9 +28,14 @@ const ListingCardView: React.FC<ListingCardViewProps> = ({
         return null;
     }
 
+    const [loadedOwnerName, setLoadedOwnerName] = useState<string | undefined>(undefined);
     const displayOwner = owner ?? listing.owner;
     const resolvedOwnerElement = ownerElement ?? (
-        <OwnerListingElement listing={listing} owner={displayOwner}/>
+        <OwnerListingElement
+            listing={listing}
+            owner={displayOwner}
+            onOwnerLoaded={setLoadedOwnerName}
+        />
     );
 
     return (
@@ -40,7 +45,7 @@ const ListingCardView: React.FC<ListingCardViewProps> = ({
                 title={listing.name}
                 type={listing.type}
                 genre={listing.genre}
-                authorName={ownerName ?? displayOwner?.name}
+                authorName={ownerName ?? displayOwner?.name ?? loadedOwnerName}
                 dateCreated={listing.dateCreated}
             />
             <ListingCardBody description={listing.description ?? ''}/>
