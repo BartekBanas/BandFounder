@@ -119,7 +119,7 @@ export async function getAccounts(): Promise<Account[]> {
     return accounts;
 }
 
-export async function updateMyAccount(name: string | null, password: string | null, email: string | null) {
+export async function updateMyAccount(name: string | null, password: string | null, email: string | null): Promise<Account> {
     const requestBody: { name?: string; password?: string; email?: string } = {};
 
     requestBody.name = name ?? undefined;
@@ -136,7 +136,7 @@ export async function updateMyAccount(name: string | null, password: string | nu
         throw new Error(await response.text());
     }
 
-    return response;
+    return response.json();
 }
 
 export async function deleteMyAccount(): Promise<void> {

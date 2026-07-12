@@ -25,11 +25,10 @@ export function UpdateAccountButton() {
                 formValues.Email || null
             );
             mantineSuccessNotification("Account updated successfully");
+            window.location.href = '/profile';
         } catch (error) {
             mantineErrorNotification("Failed to update account");
         }
-
-        setOpened(false);
     };
 
     return (
