@@ -16,7 +16,7 @@ function App() {
     return (
         <MantineProvider theme={mantineTheme}>
             <BrowserRouter>
-                <Notifications/>
+                <Notifications zIndex={1400}/>
                 <Routing/>
             </BrowserRouter>
         </MantineProvider>
