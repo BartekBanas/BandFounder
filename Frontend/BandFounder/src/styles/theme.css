@@ -3,7 +3,33 @@ body {
     color: var(--text-primary);
 }
 
-/* Keep MUI overlays in the navy family instead of default flat gray */
+/* Rounded UI can show hairline gaps at browser zoom above 100% (fractional pixels).
+   Prefer inset box-shadow over border, and avoid opacity on rounded surfaces. */
+button {
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:focus {
+    outline: none;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* MUI buttons: physical borders hairline at non-100% zoom (backup for emotion-generated classes) */
+.MuiButton-contained {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.MuiButton-outlined {
+    border: none !important;
+}
 .MuiBackdrop-root {
     background-color: var(--overlay-backdrop) !important;
     backdrop-filter: blur(6px);

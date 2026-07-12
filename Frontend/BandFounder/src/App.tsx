@@ -6,6 +6,7 @@ applyThemeVariables();
 import {Routing} from "./pages/Routing";
 import {BrowserRouter} from "react-router-dom";
 import {MantineProvider} from "@mantine/core";
+import {mantineTheme} from './styles/mantineTheme';
 import {Notifications} from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
@@ -13,7 +14,7 @@ import '../src/pages/styles/cssReset.css';
 
 function App() {
     return (
-        <MantineProvider>
+        <MantineProvider theme={mantineTheme}>
             <BrowserRouter>
                 <Notifications/>
                 <Routing/>

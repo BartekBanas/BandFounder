@@ -7,9 +7,10 @@ import {muiDarkTheme} from "../../../styles/muiDarkTheme";
 
 interface DeleteListingButtonProps {
     listingId: string;
+    onDeleted: () => void | Promise<void>;
 }
 
-export const DeleteListingButton: React.FC<DeleteListingButtonProps> = ({listingId}) => {
+export const DeleteListingButton: React.FC<DeleteListingButtonProps> = ({listingId, onDeleted}) => {
     const [open, setOpen] = useState(false);
 
     const handleOpen = () => setOpen(true);
@@ -18,7 +19,7 @@ export const DeleteListingButton: React.FC<DeleteListingButtonProps> = ({listing
     const handleConfirmDelete = async () => {
         try {
             await deleteListing(listingId);
-            window.location.reload();
+            await onDeleted();
         } catch (error) {
             mantineErrorNotification('Failed to delete listing');
         } finally {

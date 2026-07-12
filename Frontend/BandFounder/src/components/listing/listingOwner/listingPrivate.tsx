@@ -1,183 +1,177 @@
-import React, {useEffect, useState} from 'react';
-import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
-import {RingLoader} from "../../common/RingLoader";
+import React, {useState} from 'react';
+
 import {Button} from "@mui/material";
+
 import EditIcon from '@mui/icons-material/Edit';
-import {getListing, updateListing} from "../../../api/listing";
-import {getGenres, getMusicianRoles} from "../../../api/metadata";
+
+import {updateListing} from "../../../api/listing";
+
 import ProfilePicture from "../../profile/ProfilePicture";
+
 import {DeleteListingButton} from "./DeleteListingButton";
-import {MusicianSlot, SlotType} from "../../../types/MusicianSlot";
+
 import {Listing} from "../../../types/Listing";
-import {ListingUpdate} from "../../../types/ListingUpdate";
-import ListingCard from "../shared/ListingCard";
-import ListingCardHeader from "../shared/ListingCardHeader";
-import ListingCardBody from "../shared/ListingCardBody";
-import AvailableRolesSection from "../shared/AvailableRolesSection";
+
+import ListingCardView from "../shared/ListingCardView";
+
 import ListingEditorModal from "../shared/ListingEditorModal";
 
+import {useListingEditorState} from '../shared/useListingEditorState';
+
+
+
 interface ListingPrivateProps {
-    listingId: string;
+
+    listing: Listing;
+
+    onListingChanged: () => void | Promise<void>;
+
 }
 
-const ListingPrivate: React.FC<ListingPrivateProps> = ({listingId}) => {
-    const [listing, setListing] = useState<Listing>();
+
+
+const toEditorValues = (listing: Listing) => ({
+    name: listing.name,
+    type: listing.type,
+    genre: listing.genre,
+    description: listing.description ?? '',
+    musicianSlots: listing.musicianSlots,
+});
+
+
+
+const ListingPrivate: React.FC<ListingPrivateProps> = ({listing, onListingChanged}) => {
+
     const [open, setOpen] = useState(false);
-    const [listingType, setListingType] = useState<string>('');
-    const [listingGenre, setListingGenre] = useState<string>('');
-    const [listingDescription, setListingDescription] = useState<string>('');
-    const [listingMusicianSlots, setListingMusicianSlots] = useState<MusicianSlot[]>([]);
-    const [listingName, setListingName] = useState<string>('');
-    const [genres, setGenres] = useState<string[]>([]);
-    const [roles, setRoles] = useState<string[]>([]);
 
-    useEffect(() => {
-        const fetchListing = async () => {
-            const data = await getListing(listingId);
-            if (data) {
-                setListing(data);
-                setListingType(data.type);
-                setListingGenre(data.genre);
-                setListingDescription(data.description);
-                setListingMusicianSlots(data.musicianSlots);
-                setListingName(data.name);
-            }
-        };
+    const editor = useListingEditorState(toEditorValues(listing));
 
-        const fetchGenres = async () => {
-            const genres = await getGenres();
-            if (genres) {
-                setGenres(genres);
-            }
-        }
 
-        const fetchRoles = async () => {
-            const roles = await getMusicianRoles();
-            if (roles) {
-                setRoles(roles);
-            }
-        }
 
-        fetchListing();
-        fetchGenres();
-        fetchRoles();
-    }, [listingId]);
+    const handleOpen = () => {
 
-    const handleOpen = () => setOpen(true);
+        editor.reset(toEditorValues(listing));
+
+        setOpen(true);
+
+    };
+
     const handleClose = () => setOpen(false);
 
-    const handleEditSlotStatus = (slotId: string, status: string) => {
-        setListingMusicianSlots((slots) =>
-            slots.map((slot) => slot.id === slotId ? {...slot, status: status as SlotType} : slot)
-        );
-    };
 
-    const handleEditMusicianRole = (slotId: string, role: string) => {
-        setListingMusicianSlots((slots) =>
-            slots.map((slot) => slot.id === slotId ? {...slot, role} : slot)
-        );
-    };
-
-    const handleAddNewRole = () => {
-        const newSlot: MusicianSlot = {
-            id: Math.random().toString(36).substr(2, 9),
-            role: '',
-            status: SlotType.Available,
-        };
-        setListingMusicianSlots((slots) => [...slots, newSlot]);
-    };
 
     const handleUpdateListing = async () => {
+
         try {
-            const updatedListing: ListingUpdate = {
-                name: listingName,
-                type: listingType,
-                genre: listingGenre,
-                description: listingDescription,
-                musicianSlots: listingMusicianSlots,
-            }
-            await updateListing(updatedListing, listingId);
-            window.location.reload();
+
+            await updateListing(editor.toUpdatePayload(), listing.id);
+
+            handleClose();
+
+            await onListingChanged();
+
         } catch (e) {
+
             console.error(e);
+
         }
+
     };
 
-    const handleDeleteRole = (slotId: string) => {
-        setListingMusicianSlots((slots) => slots.filter((slot) => slot.id !== slotId));
-    };
 
-    if (!listing) {
-        const theme = createTheme({
-            components: {
-                Loader: Loader.extend({
-                    defaultProps: {
-                        loaders: {...Loader.defaultLoaders, ring: RingLoader},
-                        type: 'ring',
-                    },
-                }),
-            },
-        });
-        return (
-            <div className="App-header">
-                <MantineThemeProvider theme={theme}>
-                    <Loader size={200}/>
-                </MantineThemeProvider>
-            </div>
-        );
-    }
 
     return (
-        <ListingCard
-            className="custom-scrollbar"
-            actions={
-                <>
-                    <Button variant="contained" color="info" size="small" onClick={handleOpen}>
-                        <span>Edit</span> <EditIcon/>
-                    </Button>
-                    <DeleteListingButton listingId={listingId}/>
-                </>
-            }
-        >
-            <ListingCardHeader
+
+        <>
+
+            <ListingCardView
+
+                className="custom-scrollbar"
+
+                listing={listing}
+
                 ownerElement={
+
                     <div className="owner-listing-elements">
+
                         <ProfilePicture isMyProfile={true} accountId={listing.ownerId} size={40}/>
+
                     </div>
+
                 }
-                title={listing.name}
-                type={listing.type}
-                genre={listing.genre}
-                authorName={listing?.owner?.name}
-                dateCreated={listing.dateCreated}
+
+                actions={
+
+                    <>
+
+                        <Button variant="contained" color="info" size="small" onClick={handleOpen}>
+
+                            <span>Edit</span> <EditIcon/>
+
+                        </Button>
+
+                        <DeleteListingButton listingId={listing.id} onDeleted={onListingChanged}/>
+
+                    </>
+
+                }
+
             />
-            <ListingCardBody description={listing.description}/>
-            <AvailableRolesSection slots={listing.musicianSlots}/>
+
+
 
             <ListingEditorModal
+
                 open={open}
+
                 title="Edit Listing"
+
                 submitLabel="Save"
+
                 onClose={handleClose}
+
                 onSubmit={handleUpdateListing}
-                listingName={listingName}
-                onListingNameChange={setListingName}
-                listingType={listingType}
-                onListingTypeChange={setListingType}
-                listingGenre={listingGenre}
-                onListingGenreChange={setListingGenre}
-                listingDescription={listingDescription}
-                onListingDescriptionChange={setListingDescription}
-                musicianSlots={listingMusicianSlots}
-                onAddRole={handleAddNewRole}
-                onDeleteRole={handleDeleteRole}
-                onEditMusicianRole={handleEditMusicianRole}
-                onEditSlotStatus={handleEditSlotStatus}
-                genres={genres}
-                roles={roles}
+
+                listingName={editor.listingName}
+
+                onListingNameChange={editor.setListingName}
+
+                listingType={editor.listingType}
+
+                onListingTypeChange={editor.setListingType}
+
+                listingGenre={editor.listingGenre}
+
+                onListingGenreChange={editor.setListingGenre}
+
+                listingDescription={editor.listingDescription}
+
+                onListingDescriptionChange={editor.setListingDescription}
+
+                musicianSlots={editor.listingMusicianSlots}
+
+                onAddRole={editor.addSlot}
+
+                onDeleteRole={editor.deleteSlot}
+
+                onEditMusicianRole={editor.editSlotRole}
+
+                onEditSlotStatus={editor.editSlotStatus}
+
+                genres={editor.genres}
+
+                roles={editor.roles}
+
             />
-        </ListingCard>
+
+        </>
+
     );
+
 };
 
+
+
 export default ListingPrivate;
+
+

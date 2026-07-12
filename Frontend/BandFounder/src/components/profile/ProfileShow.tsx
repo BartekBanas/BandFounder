@@ -30,7 +30,7 @@ import {
 import {getMusicianRoles} from "../../api/metadata";
 import {getTopArtists, TopArtist} from "../../api/spotify";
 import ProfilePicture from "./ProfilePicture";
-import {createDirectChatroom, getDirectChatroomWithUser} from "../../api/chatroom";
+import {openDirectChatroomWithFallback} from "../../api/chatroom";
 
 interface ProfileShowProps {
     username: string;
@@ -125,26 +125,17 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
 
     const handleMessage = async () => {
         try {
-            if (!account) {
-                setAccount(await getAccountByUsername(username));
+            let targetAccount = account;
+
+            if (!targetAccount) {
+                targetAccount = await getAccountByUsername(username);
+                setAccount(targetAccount);
             }
 
-            const targetId = account!.id;
-
-            try {
-                const response = await createDirectChatroom(targetId);
-                window.location.href = "/messages/" + response.id;
-            } catch (e) {
-                const chatRoom = await getDirectChatroomWithUser(targetId);
-                if (chatRoom?.id) {
-                    window.location.href = "/messages/" + chatRoom.id;
-                } else {
-                    mantineErrorNotification("An error occurred when trying to message " + account!.name);
-                    throw new Error("Failed to find chatroom with user " + targetId);
-                }
-            }
+            await openDirectChatroomWithFallback(targetAccount.id);
         } catch (e) {
             console.error("Error contacting profile owner:", e);
+            mantineErrorNotification("An error occurred when trying to message " + (account?.name ?? username));
         }
     };
 

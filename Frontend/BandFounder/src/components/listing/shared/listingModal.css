@@ -166,18 +166,21 @@
 
 .listing-editor-modal__add-role {
     padding: 6px 14px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 999px;
-    background: transparent;
+    border: none;
+    border-radius: 1.25rem;
+    background-color: var(--background-default);
+    box-shadow: inset 0 0 0 1px var(--border-subtle);
     color: var(--text-secondary);
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
-    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+    isolation: isolate;
+    transform: translateZ(0);
+    transition: box-shadow 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
 .listing-editor-modal__add-role:hover {
-    border-color: var(--accent-blue);
+    box-shadow: inset 0 0 0 1px var(--accent-blue);
     color: var(--accent-blue);
     background-color: var(--cta-surface-accent);
 }
@@ -196,12 +199,15 @@
     width: 200px;
     padding: 12px;
     border-radius: 12px;
-    border: 1px solid var(--border-subtle);
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--border-subtle);
     background-color: var(--background-default);
+    isolation: isolate;
+    transform: translateZ(0);
 }
 
 .listing-editor-modal__role-card--filled {
-    border-color: var(--success-border);
+    box-shadow: inset 0 0 0 1px var(--success-border);
     background-color: var(--success-surface);
 }
 
@@ -247,18 +253,21 @@
 
 .listing-editor-modal__cancel {
     padding: 10px 20px;
-    border: 1px solid var(--border-subtle);
+    border: none;
     border-radius: 10px;
     background: transparent;
+    box-shadow: inset 0 0 0 1px var(--border-subtle);
     color: var(--text-secondary);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: border-color 0.15s ease, color 0.15s ease;
+    isolation: isolate;
+    transform: translateZ(0);
+    transition: box-shadow 0.15s ease, color 0.15s ease;
 }
 
 .listing-editor-modal__cancel:hover {
-    border-color: var(--text-muted);
+    box-shadow: inset 0 0 0 1px var(--text-muted);
     color: var(--text-primary);
 }
 
@@ -271,11 +280,13 @@
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
+    isolation: isolate;
+    transform: translateZ(0);
     transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .listing-editor-modal__submit:hover {
-    background-color: var(--accent-blue);
+    background-color: color-mix(in srgb, var(--accent-blue) 88%, black);
     box-shadow: 0 0 12px var(--accent-blue-glow);
 }
 

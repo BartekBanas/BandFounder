@@ -14,7 +14,6 @@ const AvailableRolesSection: React.FC<AvailableRolesSectionProps> = ({slots}) =>
 
     return (
         <div className="available-roles-section">
-            <p className="available-roles-section__label">Available Roles</p>
             <div className="available-roles-section__row custom-scrollbar">
                 {slots.map((slot) => (
                     <RoleSlotCard

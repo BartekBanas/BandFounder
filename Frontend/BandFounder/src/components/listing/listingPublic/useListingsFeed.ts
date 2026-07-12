@@ -20,8 +20,10 @@ export function useListingsFeed() {
         genreFilter: undefined,
     });
     const [filtersLoaded, setFiltersLoaded] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const observer = useRef<IntersectionObserver | null>(null);
+    const requestId = useRef(0);
     const lastListingElementRef = useCallback((node: HTMLDivElement | null) => {
         if (loading) return;
         if (observer.current) observer.current.disconnect();
@@ -41,13 +43,19 @@ export function useListingsFeed() {
         const type = params.has('listingType') ? (params.get('listingType') as ListingType) : undefined;
         const genre = params.has('genre') ? params.get('genre') ?? undefined : undefined;
 
-        setFilters({
+        const nextFilters = {
             matchMusicRole: matchMusic,
             fromLatest: latest,
             listingType: type,
             genreFilter: genre,
-        });
+        };
 
+        requestId.current += 1;
+        setFilters(nextFilters);
+        setListings([]);
+        setPageNumber(1);
+        setHasMore(true);
+        setRefreshKey((currentRefreshKey) => currentRefreshKey + 1);
         setFiltersLoaded(true);
     }, [location.search]);
 
@@ -55,6 +63,7 @@ export function useListingsFeed() {
         if (!filtersLoaded) return;
 
         const fetchListings = async () => {
+            const currentRequestId = ++requestId.current;
             setLoading(true);
             try {
                 const feedFilters: ListingFeedFilters = {
@@ -66,23 +75,38 @@ export function useListingsFeed() {
                     pageSize: pageSize
                 };
                 const listingsFeed = await getListingFeed(feedFilters);
+                if (currentRequestId !== requestId.current) {
+                    return;
+                }
                 setListings((prevListings) => [...prevListings, ...listingsFeed.listings]);
                 setHasMore(listingsFeed.listings.length > 0);
             } catch (error) {
-                console.error('Error getting listings:', error);
+                if (currentRequestId === requestId.current) {
+                    console.error('Error getting listings:', error);
+                }
             } finally {
-                setLoading(false);
+                if (currentRequestId === requestId.current) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchListings();
-    }, [filtersLoaded, filters, pageNumber, pageSize]);
+    }, [filtersLoaded, filters, pageNumber, pageSize, refreshKey]);
+
+    useEffect(() => () => {
+        requestId.current += 1;
+    }, []);
+
+    const refetchListings = useCallback(() => {
+        requestId.current += 1;
+        setListings([]);
+        setPageNumber(1);
+        setHasMore(true);
+        setRefreshKey((currentRefreshKey) => currentRefreshKey + 1);
+    }, []);
 
     const handleApplyFilters = (newFilters: ListingsFiltersState) => {
-        setFilters(newFilters);
-        setPageNumber(1);
-        setListings([]);
-
         const params = new URLSearchParams();
         if (newFilters.matchMusicRole !== undefined) {
             params.set('matchAnyRole', newFilters.matchMusicRole.toString());
@@ -103,14 +127,6 @@ export function useListingsFeed() {
     };
 
     const handleResetFilters = () => {
-        setFilters({
-            matchMusicRole: undefined,
-            fromLatest: undefined,
-            listingType: undefined,
-            genreFilter: undefined,
-        });
-        setPageNumber(1);
-        setListings([]);
         const params = new URLSearchParams();
         navigate({search: params.toString()}, {replace: true});
     };
@@ -122,5 +138,6 @@ export function useListingsFeed() {
         lastListingElementRef,
         handleApplyFilters,
         handleResetFilters,
+        refetchListings,
     };
 }

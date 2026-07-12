@@ -1,6 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {createTheme, Loader, MantineThemeProvider} from "@mantine/core";
-import {RingLoader} from "../../common/RingLoader";
+import React, {useCallback, useEffect, useState} from 'react';
+import {AppLoader} from '../../common/AppLoader';
 import ListingPrivate from "./listingPrivate";
 import {Listing} from "../../../types/Listing";
 import {getUsersListings} from "../../../api/listing";
@@ -11,35 +10,24 @@ const ListingsListPrivate: React.FC = () => {
     const [listings, setListings] = useState<Listing[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
-    useEffect(() => {
-        const fetchListings = async () => {
-            try {
-                setListings(await getUsersListings(getUserId()));
-            } catch (error) {
-                console.error('Error getting listings:', error);
-            }
-        };
-
-        fetchListings();
-        setLoading(false);
+    const fetchListings = useCallback(async () => {
+        setLoading(true);
+        try {
+            setListings(await getUsersListings(getUserId()));
+        } catch (error) {
+            console.error('Error getting listings:', error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    if (loading) {
-        const theme = createTheme({
-            components: {
-                Loader: Loader.extend({
-                    defaultProps: {
-                        loaders: {...Loader.defaultLoaders, ring: RingLoader},
-                        type: 'ring',
-                    },
-                }),
-            },
-        });
+    useEffect(() => {
+        fetchListings();
+    }, [fetchListings]);
 
-        return <div className="App-header">
-            <MantineThemeProvider theme={theme}>
-                <Loader size={200}/>
-            </MantineThemeProvider>
+    if (loading) {
+        return <div className="App-header" data-testid="listings-loading">
+            <AppLoader size={200}/>
         </div>;
     }
 
@@ -47,7 +35,7 @@ const ListingsListPrivate: React.FC = () => {
         <div className={'listingsList'}>
             {listings && listings.length > 0 ? (
                 listings.map((listing) => (
-                    <ListingPrivate key={listing.id} listingId={listing.id}/>
+                    <ListingPrivate key={listing.id} listing={listing} onListingChanged={fetchListings}/>
                 ))
             ) : (
                 <p>No listings available</p>
