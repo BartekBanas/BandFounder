@@ -19,7 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{4959793F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services.Tests", "Test\Services.Tests\Services.Tests.csproj", "{535DD05A-2410-446E-AA3F-2AA46F6D1CE7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.Tests", "Infrastructure.Tests\Infrastructure.Tests.csproj", "{540796DD-1ABA-4F38-8005-B787F1C15748}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.Tests", "Test\Infrastructure.Tests\Infrastructure.Tests.csproj", "{540796DD-1ABA-4F38-8005-B787F1C15748}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.Tests", "Test\Domain.Tests\Domain.Tests.csproj", "{1DB35FBF-068D-4983-A8C3-BCA447ED288F}"
 EndProject
