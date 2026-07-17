@@ -4,6 +4,7 @@ export interface ChatRoom {
     name: string;
     ownerId?: string;
     membersIds: string[];
+    lastMessageSentDate?: string | null;
 }
 
 export enum ChatRoomType {

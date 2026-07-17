@@ -61,7 +61,8 @@ public class ChatroomService : IChatroomService
     public async Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(Account issuer, ChatroomFilters? filters = null)
     {
         var usersChatrooms = await _chatRoomRepository.GetAsync(
-            chatRoom => chatRoom.Members.Contains(issuer), includeProperties: nameof(Chatroom.Members));
+            chatRoom => chatRoom.Members.Contains(issuer),
+            includeProperties: [nameof(Chatroom.Members), nameof(Chatroom.Messages)]);
         
         if (filters is { ChatRoomType: not null })
         {
@@ -73,8 +74,10 @@ public class ChatroomService : IChatroomService
             var selectedUser = await _accountRepository.GetOneRequiredAsync(filters.WithUser);
             usersChatrooms = usersChatrooms.Where(chatroom => chatroom.Members.Contains(selectedUser));
         }
-        
-        return usersChatrooms.ToDto();
+
+        return usersChatrooms
+            .ToDto()
+            .OrderByDescending(chatroom => chatroom.LastMessageSentDate ?? DateTime.MinValue);
     }
 
     public async Task DeleteChatroom(Guid chatroomId)

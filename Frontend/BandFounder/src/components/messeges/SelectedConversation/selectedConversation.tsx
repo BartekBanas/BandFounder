@@ -19,6 +19,7 @@ import {API_URL} from "../../../config";
 
 interface SelectedConversationProps {
     id: string;
+    onConversationActivity?: (chatroomId: string, sentDate: string) => void;
 }
 
 interface MessageWithSenderName extends Message {
@@ -124,7 +125,7 @@ const MessageComposer: FC<MessageComposerProps> = ({onSend}) => {
     );
 };
 
-export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
+export const SelectedConversation: FC<SelectedConversationProps> = ({id, onConversationActivity}) => {
     const [chatroom, setChatroom] = useState<ChatRoom>();
     const [chatroomState, setChatroomState] = useState<"loading" | "ready" | "missing" | "error">("loading");
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
@@ -329,6 +330,11 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     return [...prev, newMessageWithSenderName];
                 });
                 shouldScrollToBottomRef.current = true;
+                if (message.sentDate) {
+                    onConversationActivity?.(id, message.sentDate);
+                } else {
+                    onConversationActivity?.(id, new Date().toISOString());
+                }
             } catch (error) {
                 console.error("Error parsing WebSocket message:", error);
             }
@@ -341,7 +347,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         return () => {
             ws.current?.close();
         };
-    }, [id, chatroomState, fetchOlderMessages, addParticipant]);
+    }, [id, chatroomState, fetchOlderMessages, addParticipant, onConversationActivity]);
 
     useEffect(() => {
         if (!id || chatroomState !== "ready") return;

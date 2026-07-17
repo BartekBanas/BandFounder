@@ -1,4 +1,4 @@
-import React, {FC, memo, useCallback, useEffect, useMemo, useState} from "react";
+import React, {FC, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
 import {createDirectChatroom, getChatroomDestination, getMyChatrooms} from "../../../api/chatroom";
@@ -16,6 +16,7 @@ import UserAvatar from "../../common/UserAvatar";
 
 interface AllConversationsProps {
     selectedId: string;
+    activity?: { chatroomId: string; sentDate: string } | null;
 }
 
 function resolveDirectChatName(chatRoom: ChatRoom, myId: string, accountsById: Map<string, Account>): string {
@@ -39,6 +40,18 @@ function withDisplayNames(chatrooms: ChatRoom[], myId: string, accountsById: Map
             membersIds: otherUserId ? [otherUserId] : chatroom.membersIds,
         };
     });
+}
+
+function lastMessageTime(chatRoom: ChatRoom): number {
+    if (!chatRoom.lastMessageSentDate) {
+        return 0;
+    }
+    const parsed = Date.parse(chatRoom.lastMessageSentDate);
+    return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function sortByLatestMessage(chatrooms: ChatRoom[]): ChatRoom[] {
+    return [...chatrooms].sort((a, b) => lastMessageTime(b) - lastMessageTime(a));
 }
 
 const ChatroomAvatar = memo(function ChatroomAvatar({chatRoom, myId}: { chatRoom: ChatRoom, myId: string }) {
@@ -78,6 +91,7 @@ const ConversationListItem = memo(function ConversationListItem({
     return (
         <li
             className={`singleConversationShortcut${isSelected ? ' active' : ''}`}
+            data-chatroom-id={chatRoom.id}
             onClick={() => onSelect(chatRoom.id)}
         >
             <ChatroomAvatar chatRoom={chatRoom} myId={myId}/>
@@ -89,14 +103,39 @@ const ConversationListItem = memo(function ConversationListItem({
     );
 });
 
-export const AllConversations: FC<AllConversationsProps> = ({selectedId}) => {
+export const AllConversations: FC<AllConversationsProps> = ({selectedId, activity}) => {
     const navigate = useNavigate();
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [otherUsers, setOtherUsers] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const myId = getUserId();
+    const listRef = useRef<HTMLUListElement>(null);
+    const previousTopsRef = useRef<Map<string, number>>(new Map());
+    const pendingFlipRef = useRef(false);
+    const chatRoomsRef = useRef<ChatRoom[]>(chatRooms);
+    chatRoomsRef.current = chatRooms;
 
     const userNameOptions = useMemo(() => otherUsers.map((user) => user.name), [otherUsers]);
+
+    const snapshotListPositions = useCallback(() => {
+        const list = listRef.current;
+        if (!list) {
+            return;
+        }
+
+        const listTop = list.getBoundingClientRect().top;
+        const tops = new Map<string, number>();
+        list.querySelectorAll<HTMLElement>('[data-chatroom-id]').forEach((item) => {
+            item.getAnimations().forEach((animation) => animation.cancel());
+            item.style.transition = 'none';
+            item.style.transform = '';
+            const id = item.dataset.chatroomId;
+            if (id) {
+                tops.set(id, item.getBoundingClientRect().top - listTop + list.scrollTop);
+            }
+        });
+        previousTopsRef.current = tops;
+    }, []);
 
     const fetchConversations = useCallback(async () => {
         setLoading(true);
@@ -104,7 +143,9 @@ export const AllConversations: FC<AllConversationsProps> = ({selectedId}) => {
             const [chatrooms, accounts] = await Promise.all([getMyChatrooms(), getAccounts()]);
             const accountsById = new Map(accounts.map((account) => [account.id, account]));
             setOtherUsers(accounts.filter((account) => account.id !== myId));
-            setChatRooms(withDisplayNames(chatrooms, myId, accountsById));
+            pendingFlipRef.current = false;
+            previousTopsRef.current = new Map();
+            setChatRooms(sortByLatestMessage(withDisplayNames(chatrooms, myId, accountsById)));
         } catch (error) {
             console.error('Error fetching conversations:', error);
         } finally {
@@ -115,6 +156,87 @@ export const AllConversations: FC<AllConversationsProps> = ({selectedId}) => {
     useEffect(() => {
         fetchConversations();
     }, [fetchConversations]);
+
+    useEffect(() => {
+        if (!activity) {
+            return;
+        }
+
+        const prev = chatRoomsRef.current;
+        const existing = prev.find((chatRoom) => chatRoom.id === activity.chatroomId);
+        if (!existing) {
+            return;
+        }
+
+        const currentTime = lastMessageTime(existing);
+        const nextTime = Date.parse(activity.sentDate);
+        if (!Number.isNaN(nextTime) && nextTime <= currentTime) {
+            return;
+        }
+
+        const nextRooms = sortByLatestMessage(
+            prev.map((chatRoom) =>
+                chatRoom.id === activity.chatroomId
+                    ? {...chatRoom, lastMessageSentDate: activity.sentDate}
+                    : chatRoom
+            )
+        );
+
+        const orderChanged = nextRooms.some((chatRoom, index) => chatRoom.id !== prev[index]?.id);
+        if (orderChanged) {
+            snapshotListPositions();
+            pendingFlipRef.current = true;
+        }
+
+        setChatRooms(nextRooms);
+    }, [activity, snapshotListPositions]);
+
+    useLayoutEffect(() => {
+        const list = listRef.current;
+        if (!list || !pendingFlipRef.current) {
+            return;
+        }
+
+        pendingFlipRef.current = false;
+        const previousTops = previousTopsRef.current;
+        const listTop = list.getBoundingClientRect().top;
+
+        list.querySelectorAll<HTMLElement>('[data-chatroom-id]').forEach((item) => {
+            const id = item.dataset.chatroomId;
+            if (!id) {
+                return;
+            }
+
+            const previousTop = previousTops.get(id);
+            if (previousTop === undefined) {
+                return;
+            }
+
+            const nextTop = item.getBoundingClientRect().top - listTop + list.scrollTop;
+            const deltaY = previousTop - nextTop;
+            if (Math.abs(deltaY) < 1) {
+                return;
+            }
+
+            item.style.transition = 'none';
+            item.style.transform = `translateY(${deltaY}px)`;
+            void item.offsetHeight;
+            item.style.transition = 'transform 0.38s cubic-bezier(0.22, 1, 0.36, 1)';
+            item.style.transform = '';
+        });
+
+        const clearInlineStyles = () => {
+            list.querySelectorAll<HTMLElement>('[data-chatroom-id]').forEach((item) => {
+                item.style.transition = '';
+                item.style.transform = '';
+            });
+        };
+
+        const timeoutId = window.setTimeout(clearInlineStyles, 420);
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [chatRooms]);
 
     const findChatroomIdByUserName = useCallback((userName: string): string => {
         const match = chatRooms.find(
@@ -192,7 +314,7 @@ export const AllConversations: FC<AllConversationsProps> = ({selectedId}) => {
             ) : (
                 <div id="chatroomsListHeading">No conversations yet</div>
             )}
-            <ul id={'openConversationsList'} className={'custom-scrollbar'}>
+            <ul id={'openConversationsList'} className={'custom-scrollbar'} ref={listRef}>
                 {!loading && chatRooms.map((chatRoom) => (
                     <ConversationListItem
                         key={chatRoom.id}
