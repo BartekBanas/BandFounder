@@ -269,11 +269,20 @@ export async function getTopGenres(guid: string, genresToReturn: number = 10): P
     }
 }
 
+const avatarCache = new Map<string, Promise<string | null>>();
+
+export function invalidateProfilePicture(accountId: string): void {
+    // Drop the cache entry so the next fetch gets a fresh image.
+    // Do not revoke the blob URL: other mounted avatars may still reference it.
+    avatarCache.delete(accountId);
+}
+
 export async function uploadProfilePicture(file: File): Promise<void> {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch(`${API_URL}/accounts/${getUserId()}/profile-picture`, {
+    const accountId = getUserId();
+    const response = await fetch(`${API_URL}/accounts/${accountId}/profile-picture`, {
         method: 'PUT',
         headers: authorizedHeader(),
         body: formData,
@@ -282,23 +291,36 @@ export async function uploadProfilePicture(file: File): Promise<void> {
     if (!response.ok) {
         throw new Error(await response.text());
     }
+
+    invalidateProfilePicture(accountId);
 }
 
-export async function getProfilePicture(accountId: string): Promise<string | null> {
-    const response = await fetch(`${API_URL}/accounts/${accountId}/profile-picture`, {
-        method: 'GET',
-        headers: authorizedHeaders(),
-    });
-
-    if (!response.ok) {
-        if (response.status === 404) {
-            return null;
-        }
-
-        mantineErrorNotification('Failed to fetch profile picture');
-        throw new Error('Failed to fetch profile picture');
+export function getProfilePicture(accountId: string): Promise<string | null> {
+    const cached = avatarCache.get(accountId);
+    if (cached) {
+        return cached;
     }
 
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
+    const promise = (async (): Promise<string | null> => {
+        const response = await fetch(`${API_URL}/accounts/${accountId}/profile-picture`, {
+            method: 'GET',
+            headers: authorizedHeaders(),
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                return null;
+            }
+
+            avatarCache.delete(accountId);
+            mantineErrorNotification('Failed to fetch profile picture');
+            throw new Error('Failed to fetch profile picture');
+        }
+
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    })();
+
+    avatarCache.set(accountId, promise);
+    return promise;
 }
