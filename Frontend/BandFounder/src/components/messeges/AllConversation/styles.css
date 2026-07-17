@@ -62,6 +62,10 @@
     background-color: var(--card-surface-elevated);
 }
 
+.singleConversationShortcut.active{
+    background-color: var(--card-surface-elevated);
+}
+
 .conversationName{
     flex: 1;
     min-width: 0;

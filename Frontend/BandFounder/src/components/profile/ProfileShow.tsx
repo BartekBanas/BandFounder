@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
+import {useNavigate} from 'react-router-dom';
 import {Account} from "../../types/Account";
 import './profile.css';
 import {
@@ -30,7 +31,7 @@ import {
 import {getMusicianRoles} from "../../api/metadata";
 import {getTopArtists, TopArtist} from "../../api/spotify";
 import ProfilePicture from "./ProfilePicture";
-import {openDirectChatroomWithFallback} from "../../api/chatroom";
+import {createDirectChatroom, openDirectChatroomWithFallback} from "../../api/chatroom";
 
 interface ProfileShowProps {
     username: string;
@@ -40,6 +41,7 @@ interface ProfileShowProps {
 const ARTIST_POPOVER_HOVER_DELAY_MS = 300;
 
 const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
+    const navigate = useNavigate();
     const [guid, setGuid] = useState<string | undefined>(undefined);
     const [account, setAccount] = useState<Account | undefined>(undefined);
     const [topArtists, setTopArtists] = useState<TopArtist[] | undefined>([]);
@@ -132,7 +134,11 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                 setAccount(targetAccount);
             }
 
-            await openDirectChatroomWithFallback(targetAccount.id);
+            await openDirectChatroomWithFallback(
+                targetAccount.id,
+                () => createDirectChatroom(targetAccount.id),
+                (chatroomId) => navigate(`/messages/${chatroomId}`)
+            );
         } catch (e) {
             console.error("Error contacting profile owner:", e);
             mantineErrorNotification("An error occurred when trying to message " + (account?.name ?? username));
