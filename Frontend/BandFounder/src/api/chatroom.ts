@@ -11,8 +11,9 @@ export function getChatroomDestination(chatroomId: string): string {
     return `/messages/${chatroomId}`;
 }
 
+/** Prefer injecting React Router's navigate; default keeps a hard redirect for non-React callers. */
 export function redirectToChatroom(chatroomId: string): void {
-    window.location.href = getChatroomDestination(chatroomId);
+    window.location.assign(getChatroomDestination(chatroomId));
 }
 
 export async function openDirectChatroomWithFallback(

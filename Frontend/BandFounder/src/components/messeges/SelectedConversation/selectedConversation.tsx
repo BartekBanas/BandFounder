@@ -1,4 +1,4 @@
-import React, {FC, useEffect, useLayoutEffect, useRef, useState} from "react";
+import React, {FC, useCallback, useEffect, useLayoutEffect, useRef, useState} from "react";
 import {Message} from "../../../types/Message";
 import {IconButton, TextField} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
@@ -15,6 +15,7 @@ import {formatMessageWithLinks} from "../../common/utils";
 import {GroupMembersPanel} from "./GroupMembersPanel";
 import {MissingContent} from "../../common/MissingContent";
 import {AppLoader} from "../../common/AppLoader";
+import {API_URL} from "../../../config";
 
 interface SelectedConversationProps {
     id: string;
@@ -51,11 +52,82 @@ const isSameDay = (a: Date, b: Date): boolean =>
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate();
 
+const GROUP_TIME_GAP_MS = 5 * 60 * 1000;
+
+function buildWebSocketUrl(chatRoomId: string): string {
+    const apiBase = API_URL.replace(/\/$/, "");
+    const wsBase = apiBase.replace(/^http/, "ws");
+    return `${wsBase}/chatrooms?chatRoomId=${chatRoomId}`;
+}
+
+function sortMessagesByDate(messages: MessageWithSenderName[]): MessageWithSenderName[] {
+    return [...messages].sort(
+        (a, b) => parseMessageDate(a.sentDate).getTime() - parseMessageDate(b.sentDate).getTime()
+    );
+}
+
+interface MessageComposerProps {
+    onSend: (content: string) => Promise<void>;
+}
+
+const MessageComposer: FC<MessageComposerProps> = ({onSend}) => {
+    const [newMessage, setNewMessage] = useState("");
+    const [sending, setSending] = useState(false);
+
+    const handleSend = async () => {
+        const trimmed = newMessage.trim();
+        if (!trimmed || sending) return;
+
+        setSending(true);
+        try {
+            await onSend(trimmed);
+            setNewMessage("");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            void handleSend();
+        }
+    };
+
+    return (
+        <div id="sendBox">
+            <TextField
+                fullWidth
+                multiline
+                maxRows={4}
+                variant="outlined"
+                label="Type a message"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                slotProps={{
+                    htmlInput: {
+                        "aria-label": "Type a message",
+                        className: "custom-scrollbar",
+                    },
+                }}
+            />
+            <IconButton
+                color="primary"
+                onClick={() => void handleSend()}
+                aria-label="Send message"
+                disabled={sending}
+            >
+                <SendIcon/>
+            </IconButton>
+        </div>
+    );
+};
+
 export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const [chatroom, setChatroom] = useState<ChatRoom>();
     const [chatroomState, setChatroomState] = useState<"loading" | "ready" | "missing" | "error">("loading");
     const [currentConversation, setCurrentConversation] = useState<MessageWithSenderName[]>([]);
-    const [newMessage, setNewMessage] = useState<string>("");
     const [chatroomName, setChatroomName] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
     const [pageNumber, setPageNumber] = useState<number>(1);
@@ -64,20 +136,41 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
     const bottomRef = useRef<HTMLDivElement>(null);
     const conversationRef = useRef<HTMLUListElement>(null);
     const ws = useRef<WebSocket | null>(null);
-    const userCache = useRef<Record<string, string>>({}); // Cache for sender names
+    const userCache = useRef<Record<string, string>>({});
     const prependScrollHeightRef = useRef<number | null>(null);
     const shouldScrollToBottomRef = useRef(false);
+    const hasMoreRef = useRef(hasMore);
+    const loadingRef = useRef(loading);
+    const pageNumberRef = useRef(pageNumber);
+    const participantsRef = useRef<Account[]>([]);
 
     const [membersVersion, setMembersVersion] = useState<number>(0);
     const [participants, setParticipants] = useState<Account[]>([]);
-    const addParticipant = (account: Account) => {
+
+    useEffect(() => {
+        hasMoreRef.current = hasMore;
+    }, [hasMore]);
+
+    useEffect(() => {
+        loadingRef.current = loading;
+    }, [loading]);
+
+    useEffect(() => {
+        pageNumberRef.current = pageNumber;
+    }, [pageNumber]);
+
+    useEffect(() => {
+        participantsRef.current = participants;
+    }, [participants]);
+
+    const addParticipant = useCallback((account: Account) => {
         setParticipants((prevParticipants) => {
             if (prevParticipants.some((participant) => participant.id === account.id)) {
                 return prevParticipants;
             }
             return [...prevParticipants, account];
         });
-    };
+    }, []);
 
     useLayoutEffect(() => {
         const conversationElement = conversationRef.current;
@@ -111,6 +204,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                         const member = await getAccount(memberId);
                         localParticipants.push(member);
                         addParticipant(member);
+                        userCache.current[member.id] = member.name;
                     }
 
                     if (chatroom.type === ChatRoomType.Direct) {
@@ -138,70 +232,23 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         };
 
         fetchChatroom();
-    }, [id, membersVersion]);
+    }, [id, membersVersion, addParticipant]);
 
-    useEffect(() => {
-        if (!id || chatroomState !== "ready") {
-            return;
-        }
-
-        const initializeChatroom = async () => {
-            await fetchOlderMessages(); // Fetch initial messages
-            shouldScrollToBottomRef.current = true;
-        };
-
-        const wsUrl = `wss://localhost:7095/api/chatrooms?chatRoomId=${id}`;
-        ws.current = new WebSocket(wsUrl);
-
-        ws.current.onmessage = async (event) => {
-            try {
-                const message = JSON.parse(event.data);
-                console.log("Received message:", message);
-                if (!message.senderId) return;
-
-                let account = participants.find((participant) => participant.id === message.senderId);
-                if (!account) {
-                    account = await getAccount(message.senderId);
-                    addParticipant(account);
-                }
-
-                const senderName = account.name;
-                const formattedSentDate = formatMessageDate(parseMessageDate(message.sentDate));
-
-                const newMessageWithSenderName: MessageWithSenderName = {
-                    ...message,
-                    senderName,
-                    formattedSentDate,
-                };
-                setCurrentConversation((prev) => [...prev, newMessageWithSenderName]);
-                shouldScrollToBottomRef.current = true;
-            } catch (error) {
-                console.error("Error parsing WebSocket message:", error);
-            }
-        };
-
-        ws.current.onclose = () => {
-            console.log("WebSocket disconnected");
-        };
-
-        initializeChatroom(); // Trigger initial message load
-
-        return () => {
-            ws.current?.close();
-        };
-    }, [id, chatroomState]);
-
-
-    const fetchOlderMessages = async () => {
-        if (!id || chatroomState !== "ready" || !hasMore || loading) {
+    const fetchOlderMessages = useCallback(async () => {
+        if (!id || chatroomState !== "ready" || !hasMoreRef.current || loadingRef.current) {
             return;
         }
 
         setLoading(true);
+        loadingRef.current = true;
         try {
-            const conversation: Message[] = await getMessagesFromChatroom(id, pageNumber, pageSize);
+            const currentPage = pageNumberRef.current;
+            const conversation: Message[] = await getMessagesFromChatroom(id, currentPage, pageSize);
 
-            if (conversation.length < pageSize) setHasMore(false);
+            if (conversation.length < pageSize) {
+                setHasMore(false);
+                hasMoreRef.current = false;
+            }
 
             const conversationWithNames = await Promise.all(
                 conversation.map(async (message) => {
@@ -227,18 +274,74 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                 })
             );
 
-            setCurrentConversation((prev) => [
-                ...conversationWithNames.reverse(),
-                ...prev,
-            ]);
-            setPageNumber((prev) => prev + 1);
+            const orderedPage = sortMessagesByDate(conversationWithNames);
+            setCurrentConversation((prev) => [...orderedPage, ...prev]);
+            setPageNumber((prev) => {
+                const next = prev + 1;
+                pageNumberRef.current = next;
+                return next;
+            });
         } catch (error) {
             console.error("Error fetching older messages:", error);
         } finally {
             setLoading(false);
+            loadingRef.current = false;
         }
-    };
+    }, [id, chatroomState, pageSize]);
 
+    useEffect(() => {
+        if (!id || chatroomState !== "ready") {
+            return;
+        }
+
+        shouldScrollToBottomRef.current = true;
+        void fetchOlderMessages();
+
+        const wsUrl = buildWebSocketUrl(id);
+        ws.current = new WebSocket(wsUrl);
+
+        ws.current.onmessage = async (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                if (!message.senderId) return;
+
+                let account = participantsRef.current.find(
+                    (participant) => participant.id === message.senderId
+                );
+                if (!account) {
+                    account = await getAccount(message.senderId);
+                    addParticipant(account);
+                }
+
+                const senderName = account.name;
+                userCache.current[message.senderId] = senderName;
+                const formattedSentDate = formatMessageDate(parseMessageDate(message.sentDate));
+
+                const newMessageWithSenderName: MessageWithSenderName = {
+                    ...message,
+                    senderName,
+                    formattedSentDate,
+                };
+                setCurrentConversation((prev) => {
+                    if (prev.some((existing) => existing.id === newMessageWithSenderName.id)) {
+                        return prev;
+                    }
+                    return [...prev, newMessageWithSenderName];
+                });
+                shouldScrollToBottomRef.current = true;
+            } catch (error) {
+                console.error("Error parsing WebSocket message:", error);
+            }
+        };
+
+        ws.current.onclose = () => {
+            console.log("WebSocket disconnected");
+        };
+
+        return () => {
+            ws.current?.close();
+        };
+    }, [id, chatroomState, fetchOlderMessages, addParticipant]);
 
     useEffect(() => {
         if (!id || chatroomState !== "ready") return;
@@ -246,17 +349,21 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         const conversationElement = conversationRef.current;
         if (!conversationElement) return;
 
-        const handleScroll = async () => {
-            if (conversationElement.scrollTop === 0 && hasMore && !loading) {
+        const handleScroll = () => {
+            if (conversationElement.scrollTop === 0 && hasMoreRef.current && !loadingRef.current) {
                 prependScrollHeightRef.current = conversationElement.scrollHeight;
-                await fetchOlderMessages();
+                void fetchOlderMessages();
             }
         };
 
-        const checkIfScrollable = async () => {
-            if (conversationElement.scrollHeight <= conversationElement.clientHeight && hasMore && !loading) {
+        const checkIfScrollable = () => {
+            if (
+                conversationElement.scrollHeight <= conversationElement.clientHeight &&
+                hasMoreRef.current &&
+                !loadingRef.current
+            ) {
                 shouldScrollToBottomRef.current = true;
-                await fetchOlderMessages();
+                void fetchOlderMessages();
             }
         };
 
@@ -266,45 +373,16 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
         return () => {
             conversationElement.removeEventListener("scroll", handleScroll);
         };
-    }, [chatroomState, hasMore, loading, currentConversation]);
+    }, [id, chatroomState, fetchOlderMessages]);
 
-
-    const handleSendMessage = async () => {
-        if (!newMessage.trim()) return;
-
+    const handleSendMessage = useCallback(async (content: string) => {
         try {
-            const trimmedMessage = newMessage.trim();
-            const userId = getUserId();
-            const messageTime = new Date();
-
-            const newMessageObject: MessageWithSenderName = {
-                id: Math.random().toString(),
-                senderId: userId,
-                content: trimmedMessage,
-                sentDate: messageTime.toISOString(),
-                senderName: "You",
-                formattedSentDate: formatMessageDate(messageTime),
-            };
-
-            // setCurrentConversation((prev) => [...prev, newMessageObject]);
-            await sendMessage(id, trimmedMessage);
-
-            if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current.send(JSON.stringify({content: trimmedMessage}));
-            }
-
-            setNewMessage("");
+            await sendMessage(id, content);
         } catch (error) {
             console.error("Error sending message:", error);
+            throw error;
         }
-    };
-
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            handleSendMessage();
-        }
-    };
+    }, [id]);
 
     if (!id) {
         return (
@@ -362,11 +440,8 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                 )}
             </h1>
             <ul id="fullConversation" ref={conversationRef} className="custom-scrollbar">
-                {[...currentConversation]
-                    .sort((a, b) => parseMessageDate(a.sentDate).getTime() - parseMessageDate(b.sentDate).getTime())
-                    .map((message, index, sortedConversation) => {
-                    const previousMessage = sortedConversation[index - 1];
-                    const GROUP_TIME_GAP_MS = 5 * 60 * 1000;
+                {currentConversation.map((message, index) => {
+                    const previousMessage = currentConversation[index - 1];
                     const messageSentDate = parseMessageDate(message.sentDate);
                     const previousMessageSentDate = previousMessage
                         ? parseMessageDate(previousMessage.sentDate)
@@ -383,7 +458,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                     );
                     return (
                         <li
-                            key={index}
+                            key={message.id}
                             className={`messageRow${isFirstInGroup ? "" : " grouped"}`}
                         >
                             <div className="messageAvatarGutter">
@@ -414,27 +489,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id}) => {
                 })}
                 <div ref={bottomRef}/>
             </ul>
-            <div id="sendBox">
-                <TextField
-                    fullWidth
-                    multiline
-                    maxRows={4}
-                    variant="outlined"
-                    label="Type a message"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    slotProps={{
-                        htmlInput: {
-                            "aria-label": "Type a message",
-                            className: "custom-scrollbar",
-                        },
-                    }}
-                />
-                <IconButton color="primary" onClick={handleSendMessage} aria-label="Send message">
-                    <SendIcon/>
-                </IconButton>
-            </div>
+            <MessageComposer onSend={handleSendMessage}/>
         </div>
     );
 };

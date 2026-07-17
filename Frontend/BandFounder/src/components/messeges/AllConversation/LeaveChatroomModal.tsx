@@ -9,16 +9,16 @@ import {ChatRoom} from "../../../types/ChatRoom";
 
 interface LeaveChatroomModalProps {
     chatroom: ChatRoom;
-    setRefreshConversations: React.Dispatch<React.SetStateAction<boolean>>;
+    onLeft: (chatroomId: string) => void;
 }
 
-export const LeaveChatroomModal: FC<LeaveChatroomModalProps> = ({chatroom, setRefreshConversations}) => {
+export const LeaveChatroomModal: FC<LeaveChatroomModalProps> = ({chatroom, onLeft}) => {
     const [opened, {close, open}] = useDisclosure(false);
 
     const handleLeaveChatroom = async () => {
         try {
             await leaveChatroom(chatroom.id);
-            window.location.href = '/messages';
+            onLeft(chatroom.id);
         } catch (error) {
             mantineErrorNotification("Failed to leave chatroom");
         }

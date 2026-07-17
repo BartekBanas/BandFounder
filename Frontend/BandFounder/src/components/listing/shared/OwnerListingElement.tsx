@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import {Button} from '@mui/material';
 import {Listing} from '../../../types/Listing';
 import {Account} from '../../../types/Account';
@@ -16,6 +17,7 @@ interface OwnerListingElementProps {
 }
 
 const OwnerListingElement = ({listing, owner: preloadedOwner, onOwnerLoaded}: OwnerListingElementProps) => {
+    const navigate = useNavigate();
     const [fetchedOwner, setFetchedOwner] = useState<Account | undefined>(undefined);
     const owner = preloadedOwner ?? fetchedOwner;
 
@@ -47,7 +49,8 @@ const OwnerListingElement = ({listing, owner: preloadedOwner, onOwnerLoaded}: Ow
             if (listing?.ownerId) {
                 await openDirectChatroomWithFallback(
                     listing.ownerId,
-                    () => contactListingOwner(listing.id)
+                    () => contactListingOwner(listing.id),
+                    (chatroomId) => navigate(`/messages/${chatroomId}`)
                 );
             }
         } catch (error) {

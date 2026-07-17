@@ -4,6 +4,7 @@ import {muiDarkTheme} from "../../../styles/muiDarkTheme";
 import {mantineErrorNotification, mantineSuccessNotification} from "../../common/mantineNotification";
 import {deleteChatroom, inviteToChatroom} from "../../../api/chatroom";
 import {FC, useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import GroupsIcon from "@mui/icons-material/Groups";
 import {Account} from "../../../types/Account";
 import {ChatRoom} from "../../../types/ChatRoom";
@@ -18,6 +19,7 @@ interface GroupMembersPanelProps {
 }
 
 export const GroupMembersPanel: FC<GroupMembersPanelProps> = ({chatroom, participants, onMembersChanged}) => {
+    const navigate = useNavigate();
     const [opened, {close, open}] = useDisclosure(false);
     const [invitableUsers, setInvitableUsers] = useState<Account[]>([]);
     const [selectedUser, setSelectedUser] = useState<Account | null>(null);
@@ -57,7 +59,8 @@ export const GroupMembersPanel: FC<GroupMembersPanelProps> = ({chatroom, partici
         setBusy(true);
         try {
             await deleteChatroom(chatroom.id);
-            window.location.href = '/messages';
+            close();
+            navigate('/messages');
         } catch (error) {
             mantineErrorNotification('Failed to delete group');
             console.error("Error deleting chatroom:", error);
