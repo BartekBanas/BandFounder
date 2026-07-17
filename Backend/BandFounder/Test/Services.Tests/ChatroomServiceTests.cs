@@ -106,7 +106,8 @@ public class ChatroomServiceTests
         };
 
         _chatRoomRepositoryMock.GetAsync(Arg.Any<Expression<Func<Chatroom, bool>>>(),
-                Arg.Any<Func<IQueryable<Chatroom>, IOrderedQueryable<Chatroom>>>(), nameof(Chatroom.Members))
+                Arg.Any<Func<IQueryable<Chatroom>, IOrderedQueryable<Chatroom>>>(),
+                nameof(Chatroom.Members), nameof(Chatroom.Messages))
             .Returns(Task.FromResult<IEnumerable<Chatroom>>(account.Chatrooms));
 
         // Act

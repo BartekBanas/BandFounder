@@ -9,4 +9,5 @@ public class ChatroomDto
     public string Name { get; init; }
     public Guid? OwnerId { get; init; }
     public required List<Guid> MembersIds { get; init; }
+    public DateTime? LastMessageSentDate { get; init; }
 }

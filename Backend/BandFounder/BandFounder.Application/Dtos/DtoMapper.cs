@@ -81,7 +81,10 @@ public static class DtoMapper
             Type = chatroom.ChatRoomType,
             Name = chatroom.Name,
             OwnerId = chatroom.OwnerId,
-            MembersIds = chatroom.Members.Select(member => member.Id).ToList()
+            MembersIds = chatroom.Members.Select(member => member.Id).ToList(),
+            LastMessageSentDate = chatroom.Messages is { Count: > 0 }
+                ? chatroom.Messages.Max(message => message.SentDate)
+                : null
         };
     }
     
