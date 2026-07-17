@@ -1,22 +1,30 @@
+html,
 .custom-scrollbar {
-    overflow: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--background-default);
 }
 
+html::-webkit-scrollbar,
 .custom-scrollbar::-webkit-scrollbar {
     width: 10px;
 }
 
+html::-webkit-scrollbar-track,
 .custom-scrollbar::-webkit-scrollbar-track {
     background: var(--background-default);
 }
 
+html::-webkit-scrollbar-thumb,
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border-radius: 5px;
 }
 
+html::-webkit-scrollbar-thumb:hover,
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
+}
+
+.custom-scrollbar {
+    overflow: auto;
 }

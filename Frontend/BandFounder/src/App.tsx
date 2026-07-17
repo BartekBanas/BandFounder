@@ -1,5 +1,6 @@
 import {applyThemeVariables} from './styles/designTokens';
 import './styles/theme.css';
+import './styles/customScrollbar.css';
 import './App.css';
 
 applyThemeVariables();
