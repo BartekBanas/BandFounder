@@ -33,5 +33,8 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.SolutionName }} --no-restore
 
+      - name: Verify Docker (required for Testcontainers)
+        run: docker info
+
       - name: Run tests
         run: dotnet test ${{ env.SolutionName }} --no-build
