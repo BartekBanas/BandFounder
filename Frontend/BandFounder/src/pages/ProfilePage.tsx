@@ -2,6 +2,7 @@ import {FC, useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
 import ProfileShow from "../components/profile/ProfileShow";
 import '../styles/customScrollbar.css'
+import ListingsListPrivate from "../components/listing/listingOwner/listingsListPrivate";
 import ListingsListProfilePublic from "../components/listing/listingProfilePublic/listingsListProfilePublic";
 import './styles/profilePage.css'
 import {getAccount, getAccountByUsername} from "../api/account";
@@ -71,7 +72,11 @@ export const ProfilePage: FC<ProfilePageProps> = () => {
         <div id='main' className={'custom-scrollbar'}>
             <ProfileShow username={username ?? "Unknown"} isMyProfile={isMyProfile}/>
             <div className={'profilePageListings'}>
-                <ListingsListProfilePublic profileUsername={`${username}`}/>
+                {isMyProfile ? (
+                    <ListingsListPrivate/>
+                ) : (
+                    <ListingsListProfilePublic profileUsername={`${username}`}/>
+                )}
             </div>
         </div>
     );
