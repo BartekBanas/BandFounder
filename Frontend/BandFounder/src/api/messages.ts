@@ -9,6 +9,13 @@ export async function getMessagesFromChatroom(chatroomId: string, pageNumber: nu
             method: 'GET',
             headers: authorizedHeaders(),
         });
+
+        if (!response.ok) {
+            const error = new Error(await response.text());
+            Object.assign(error, {status: response.status});
+            throw error;
+        }
+
         return await response.json() as Message[];
     } catch (e) {
         mantineErrorNotification('Failed to fetch messages');

@@ -15,7 +15,7 @@ export const MessagesPage: FC = () => {
     return (
         <div id="messagesPage">
             <AllConversations onSelectConversation={setSelectedConversationId}/>
-            <SelectedConversation id={selectedConversationId}/>
+            <SelectedConversation key={selectedConversationId} id={selectedConversationId}/>
         </div>
     );
 };

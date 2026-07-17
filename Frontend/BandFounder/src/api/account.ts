@@ -242,8 +242,9 @@ export async function getAccountByUsername(username: string): Promise<Account> {
     });
 
     if (!response.ok) {
-        mantineErrorNotification(`Couldn't find user ${username}`);
-        console.error(await response.text());
+        const error = new Error(await response.text());
+        Object.assign(error, {status: response.status});
+        throw error;
     }
 
     return await response.json() as Account;
