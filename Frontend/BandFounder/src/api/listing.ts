@@ -91,28 +91,27 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
 }
 
 export async function postListing(listing: ListingCreate): Promise<void> {
+    let response: Response;
     try {
-        const response = await fetch(`${API_URL}/listings`, {
+        response = await fetch(`${API_URL}/listings`, {
             method: 'POST',
             headers: authorizedHeaders(),
             body: JSON.stringify(listing),
         });
+    } catch {
+        mantineErrorNotification('Failed to create listing');
+        throw new Error('Failed to create listing');
+    }
 
-        if (response.status === 400) {
-            const errorContent = await response.text();
-            mantineErrorNotification(errorContent);
-            throw new Error(undefined);
-        }
+    if (response.status === 400) {
+        const errorContent = (await response.text()).trim();
+        mantineErrorNotification(errorContent || 'Failed to create listing');
+        throw new Error(errorContent || 'Failed to create listing');
+    }
 
-        if (!response.ok) {
-            mantineErrorNotification(`Unexpected error: ${response.status}`);
-            throw new Error(undefined);
-        }
-    } catch (e: any) {
-        if (e instanceof Error && e.message) {
-            mantineErrorNotification("Failed to create listing");
-        }
-        throw new Error(e.message);
+    if (!response.ok) {
+        mantineErrorNotification(`Unexpected error: ${response.status}`);
+        throw new Error(`Unexpected error: ${response.status}`);
     }
 }
 
