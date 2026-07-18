@@ -334,7 +334,7 @@ export const AllConversations: FC<AllConversationsProps> = ({selectedId, activit
                         chatRoom={chatRoom}
                         myId={myId}
                         isSelected={chatRoom.id === selectedId}
-                        unreadCount={unreadByRoom[chatRoom.id] ?? chatRoom.unreadCount ?? 0}
+                        unreadCount={unreadByRoom[chatRoom.id] ?? 0}
                         onSelect={handleSelectConversation}
                         onLeft={handleConversationLeft}
                     />
