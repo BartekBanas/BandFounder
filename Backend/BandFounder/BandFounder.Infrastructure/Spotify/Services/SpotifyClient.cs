@@ -9,7 +9,8 @@ public interface ISpotifyClient
 {
     Task<SpotifyTokensResponse> RequestAccessTokenAsync(SpotifyConnectionDto dto, SpotifyAppCredentials spotifyAppCredentials);
     Task<SpotifyTokensResponse> RefreshTokenAsync(string refreshToken, SpotifyAppCredentials spotifyAppCredentials);
-    Task<List<SpotifyArtistDto>> GetTopArtistsAsync(string accessToken, int limit);
+    Task<List<SpotifyArtistDto>> GetTopArtistsAsync(string accessToken, int limit, string timeRange = SpotifyTimeRange.Default);
+    Task<List<SpotifyTrackDto>> GetTopTracksAsync(string accessToken, int limit, string timeRange = SpotifyTimeRange.Default);
     Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(string accessToken);
 }
 
@@ -17,6 +18,7 @@ public class SpotifyClient : ISpotifyClient
 {
     private const string SpotifyAccessTokenUrl = "https://accounts.spotify.com/api/token";
     private const string SpotifyTopArtistsUrl = "https://api.spotify.com/v1/me/top/artists";
+    private const string SpotifyTopTracksUrl = "https://api.spotify.com/v1/me/top/tracks";
     private const string SpotifyFollowedArtistsUrl = "https://api.spotify.com/v1/me/following?type=artist";
 
     public async Task<SpotifyTokensResponse> RequestAccessTokenAsync(SpotifyConnectionDto dto, SpotifyAppCredentials spotifyAppCredentials)
@@ -26,7 +28,7 @@ public class SpotifyClient : ISpotifyClient
 
         var authHeader = Convert.ToBase64String(
             Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
-        
+
         request.Headers.Add("Authorization", $"Basic {authHeader}");
 
         request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -50,7 +52,7 @@ public class SpotifyClient : ISpotifyClient
 
         return spotifyTokens;
     }
-    
+
     public async Task<SpotifyTokensResponse> RefreshTokenAsync(string refreshToken, SpotifyAppCredentials spotifyAppCredentials)
     {
         using var client = new HttpClient();
@@ -58,7 +60,7 @@ public class SpotifyClient : ISpotifyClient
 
         var authHeader = Convert.ToBase64String(
             Encoding.UTF8.GetBytes($"{spotifyAppCredentials.ClientId}:{spotifyAppCredentials.ClientSecret}"));
-        
+
         request.Headers.Add("Authorization", $"Basic {authHeader}");
 
         request.Content = new FormUrlEncodedContent([
@@ -81,7 +83,7 @@ public class SpotifyClient : ISpotifyClient
         }
 
         var spotifyTokens = JsonSerializer.Deserialize<SpotifyTokensResponse>(responseContent);
-        
+
         if (spotifyTokens is null)
         {
             throw new FailedToFetchSpotifyTokenException("Failed to refresh Spotify token");
@@ -89,29 +91,57 @@ public class SpotifyClient : ISpotifyClient
 
         return spotifyTokens;
     }
-    
-    public async Task<List<SpotifyArtistDto>> GetTopArtistsAsync(string accessToken, int limit)
+
+    public async Task<List<SpotifyArtistDto>> GetTopArtistsAsync(
+        string accessToken,
+        int limit,
+        string timeRange = SpotifyTimeRange.Default)
     {
         using var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, SpotifyTopArtistsUrl + $"?limit={limit}");
+        var normalizedRange = SpotifyTimeRange.Normalize(timeRange);
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{SpotifyTopArtistsUrl}?limit={limit}&time_range={normalizedRange}");
         request.Headers.Add("Authorization", $"Bearer {accessToken}");
 
         var response = await client.SendAsync(request);
-        
+
         response.EnsureSuccessStatusCode();
         var responseBody = await response.Content.ReadAsStringAsync();
-        
+
         var responseDto = JsonSerializer.Deserialize<TopArtistsResponse>(responseBody) ?? throw new InvalidOperationException();
-        
+
         return responseDto.Items;
     }
-    
+
+    public async Task<List<SpotifyTrackDto>> GetTopTracksAsync(
+        string accessToken,
+        int limit,
+        string timeRange = SpotifyTimeRange.Default)
+    {
+        using var client = new HttpClient();
+        var normalizedRange = SpotifyTimeRange.Normalize(timeRange);
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{SpotifyTopTracksUrl}?limit={limit}&time_range={normalizedRange}");
+        request.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+        var response = await client.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        var responseDto = JsonSerializer.Deserialize<TopTracksResponse>(responseBody) ?? throw new InvalidOperationException();
+
+        return responseDto.Items;
+    }
+
     public async Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(string accessToken)
     {
         var url = SpotifyFollowedArtistsUrl;
         var followedArtists = new List<SpotifyArtistDto>();
         var artistIds = new HashSet<string>();
-        
+
         const int maxRequests = 10;
         var requestCount = 0;
 

@@ -17,6 +17,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {UtilityDrawer} from "../../components/accountDrawer/UtilityDrawer";
+import {ListeningDrawer} from "../../components/listeningDrawer/ListeningDrawer";
 import {Account} from "../../types/Account";
 import {getAccount, getAccounts} from "../../api/account";
 import UserAvatar from "../../components/common/UserAvatar";
@@ -119,6 +120,7 @@ export const Header: FC = () => {
                             </div>
 
                             <div className="header-toolbar__right">
+                                <ListeningDrawer/>
                                 <IconButton color="inherit" onClick={handleMessagesClick} aria-label="Messages">
                                     <ChatIcon/>
                                 </IconButton>

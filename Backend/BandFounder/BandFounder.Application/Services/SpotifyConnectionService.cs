@@ -1,5 +1,6 @@
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
+using BandFounder.Infrastructure.Spotify;
 using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Exceptions;
 using BandFounder.Infrastructure.Spotify.Services;
@@ -13,7 +14,14 @@ public interface ISpotifyConnectionService
     Task<SpotifyTokensDto> GetSpotifyTokens(Guid userId);
     Task<string> GetAccessTokenAsync(Guid userId);
     Task<List<SpotifyArtistDto>> SaveRelevantArtists(Guid userId);
-    Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId, int limit = 50);
+    Task<List<SpotifyArtistDto>> GetTopArtistsAsync(
+        Guid userId,
+        int limit = 50,
+        string timeRange = SpotifyTimeRange.Default);
+    Task<List<SpotifyTrackDto>> GetTopTracksAsync(
+        Guid userId,
+        int limit = 50,
+        string timeRange = SpotifyTimeRange.Default);
     Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(Guid userId);
 }
 
@@ -29,30 +37,30 @@ public class SpotifyConnectionService(
     public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid userId)
     {
         var spotifyAppCredentials = await spotifyAppCredentialsService.LoadCredentials();
-        
+
         var tokensResponse = await spotifyClient.RequestAccessTokenAsync(dto, spotifyAppCredentials);
-        
+
         var tokensDto = new SpotifyTokensDto
         {
             AccessToken = tokensResponse.AccessToken,
             RefreshToken = tokensResponse.RefreshToken,
             ExpirationDate = DateTime.UtcNow.AddSeconds(tokensResponse.ExpiresIn - 10)
         };
-        
+
         await UpsertSpotifyTokens(tokensDto, userId);
         await SaveRelevantArtists(userId);
     }
-    
+
     public async Task CreateSpotifyTokens(SpotifyTokensDto spotifyTokens, Guid userId)
     {
         var account = await accountRepository.GetOneRequiredAsync(userId);
-        
+
         var existingTokens = await spotifyTokensRepository.GetOneAsync(userId);
         if (existingTokens is not null)
         {
             throw new SpotifyAccountAlreadyConnectedException();
         }
-        
+
         var newSpotifyTokens = new SpotifyTokens
         {
             AccountId = account.Id,
@@ -61,11 +69,11 @@ public class SpotifyConnectionService(
             ExpirationDate = spotifyTokens.ExpirationDate,
             Account = account
         };
-        
+
         await spotifyTokensRepository.CreateAsync(newSpotifyTokens);
         await spotifyTokensRepository.SaveChangesAsync();
     }
-    
+
     public async Task<SpotifyTokensDto> GetSpotifyTokens(Guid userId)
     {
         var spotifyTokens = await spotifyTokensRepository.GetOneAsync(userId);
@@ -95,7 +103,7 @@ public class SpotifyConnectionService(
             return await RefreshTokenAsync(userId, spotifyTokens.RefreshToken);
         }
     }
-    
+
     private async Task<string> RefreshTokenAsync(Guid userId, string refreshToken)
     {
         var spotifyAppCredentials = await spotifyAppCredentialsService.LoadCredentials();
@@ -165,7 +173,7 @@ public class SpotifyConnectionService(
         var userArtists = await RetrieveSpotifyUsersArtistsAsync(userId);
         var account = await accountRepository.GetOneRequiredAsync(key: userId,
             keyPropertyName: nameof(Account.Id), includeProperties: nameof(Account.Artists));
-        
+
         var savedArtists = new List<SpotifyArtistDto>();
 
         foreach (var artistDto in userArtists)
@@ -188,14 +196,32 @@ public class SpotifyConnectionService(
     {
         var topArtists = await GetTopArtistsAsync(userId);
         var followedArtists = await GetFollowedArtistsAsync(userId);
-        
+
         return topArtists.Concat(followedArtists).DistinctBy(artist => artist.Id).ToList();
     }
 
-    public async Task<List<SpotifyArtistDto>> GetTopArtistsAsync(Guid userId, int limit = 50)
+    public async Task<List<SpotifyArtistDto>> GetTopArtistsAsync(
+        Guid userId,
+        int limit = 50,
+        string timeRange = SpotifyTimeRange.Default)
     {
         var accessToken = await GetAccessTokenAsync(userId);
-        return await spotifyClient.GetTopArtistsAsync(accessToken, limit);
+        return await spotifyClient.GetTopArtistsAsync(
+            accessToken,
+            SpotifyTimeRange.ClampLimit(limit),
+            SpotifyTimeRange.Normalize(timeRange));
+    }
+
+    public async Task<List<SpotifyTrackDto>> GetTopTracksAsync(
+        Guid userId,
+        int limit = 50,
+        string timeRange = SpotifyTimeRange.Default)
+    {
+        var accessToken = await GetAccessTokenAsync(userId);
+        return await spotifyClient.GetTopTracksAsync(
+            accessToken,
+            SpotifyTimeRange.ClampLimit(limit),
+            SpotifyTimeRange.Normalize(timeRange));
     }
 
     public async Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(Guid userId)

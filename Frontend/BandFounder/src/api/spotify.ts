@@ -61,14 +61,28 @@ export interface TopArtist {
     id: string;
     name: string;
     imageUrl: string | null;
+    genres?: string[];
 }
 
-export async function getTopArtists(guid: string): Promise<TopArtist[] | null> {
+export type SpotifyTimeRange = 'short_term' | 'medium_term' | 'long_term';
+
+export async function getTopArtists(
+    guid: string,
+    timeRange: SpotifyTimeRange = 'medium_term',
+    limit = 10
+): Promise<TopArtist[] | null> {
     try {
-        const response = await fetch(`${API_URL}/accounts/${guid}/artists/spotify/top`, {
-            method: 'GET',
-            headers: authorizedHeaders()
+        const params = new URLSearchParams({
+            timeRange,
+            limit: String(limit),
         });
+        const response = await fetch(
+            `${API_URL}/accounts/${guid}/artists/spotify/top?${params.toString()}`,
+            {
+                method: 'GET',
+                headers: authorizedHeaders()
+            }
+        );
         if (response.ok) {
             return await response.json();
         }
@@ -87,6 +101,52 @@ export async function getTopArtists(guid: string): Promise<TopArtist[] | null> {
     } catch (error) {
         console.error('Error getting top artists:', error);
         mantineErrorNotification('Failed to load Spotify top artists');
+        return null;
+    }
+}
+
+export interface TopTrack {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+    artistNames: string[];
+}
+
+export async function getTopTracks(
+    guid: string,
+    timeRange: SpotifyTimeRange = 'medium_term',
+    limit = 50
+): Promise<TopTrack[] | null> {
+    try {
+        const params = new URLSearchParams({
+            timeRange,
+            limit: String(limit),
+        });
+        const response = await fetch(
+            `${API_URL}/accounts/${guid}/tracks/spotify/top?${params.toString()}`,
+            {
+                method: 'GET',
+                headers: authorizedHeaders()
+            }
+        );
+        if (response.ok) {
+            return await response.json();
+        }
+        if (response.status === 410) {
+            if (guid === getUserId()) {
+                mantineInformationNotification(SPOTIFY_REAUTH_NOTIFICATION);
+            }
+            return null;
+        }
+        if (response.status === 422) {
+            return null;
+        }
+        console.error('Error getting top tracks:', await response.text());
+        mantineErrorNotification('Failed to load Spotify top tracks');
+        return null;
+    } catch (error) {
+        console.error('Error getting top tracks:', error);
+        mantineErrorNotification('Failed to load Spotify top tracks');
         return null;
     }
 }
