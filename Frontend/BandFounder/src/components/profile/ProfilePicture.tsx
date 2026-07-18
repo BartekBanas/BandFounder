@@ -1,10 +1,9 @@
-import React, {useState, useEffect} from "react";
-import {getProfilePicture, uploadProfilePicture} from "../../api/account";
+import React, {useState} from "react";
+import {uploadProfilePicture} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import UserAvatar from "../common/UserAvatar";
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import './styles/ProfileDrawer.css';
-import defaultProfileImage from "../../assets/defaultProfileImage.jpg";
 
 interface ProfilePictureProps {
     accountId?: string;
@@ -13,33 +12,17 @@ interface ProfilePictureProps {
 }
 
 const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile = false, size = 50}) => {
-    const [preview, setPreview] = useState<string>(defaultProfileImage);
     const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        const loadProfilePicture = async () => {
-            try {
-                const imageUrl = await getProfilePicture(accountId!);
-                if (imageUrl) {
-                    setPreview(imageUrl);
-                }
-            } catch (error) {
-                console.info("Error fetching profile picture:", error);
-            }
-        };
-        loadProfilePicture();
-    }, [accountId]);
+    const [avatarVersion, setAvatarVersion] = useState(0);
 
     const handleDrop = async (files: File[]) => {
         const uploadedFile = files[0];
-        const imagePreview = URL.createObjectURL(uploadedFile);
-        setPreview(imagePreview);
 
         setLoading(true);
         try {
             await uploadProfilePicture(uploadedFile);
             mantineSuccessNotification("Profile picture updated successfully!");
-            window.location.reload();
+            setAvatarVersion((version) => version + 1);
         } catch (error) {
             console.error(error);
             mantineErrorNotification("Failed to upload the profile picture.");
@@ -66,9 +49,15 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({accountId, isMyProfile =
                             style={{display: 'none'}}
                             id="profile-picture-upload"
                             onChange={handleFileChange}
+                            disabled={loading}
                         />
                         <label htmlFor="profile-picture-upload" style={{cursor: 'pointer', position: 'relative'}}>
-                            <UserAvatar userId={accountId} size={size} className={'avatar-hover-effect'}/>
+                            <UserAvatar
+                                key={`${accountId}-${avatarVersion}`}
+                                userId={accountId}
+                                size={size}
+                                className={'avatar-hover-effect'}
+                            />
                             <UploadFileIcon className="upload-icon"/>
                         </label>
                     </div>
