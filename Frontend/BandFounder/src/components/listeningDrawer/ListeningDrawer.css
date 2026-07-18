@@ -1,0 +1,175 @@
+.listening-drawer .MuiDrawer-paper {
+    display: flex;
+    flex-direction: column;
+    width: min(560px, 100vw);
+    background-color: var(--card-surface);
+    border-left: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.listening-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.listening-drawer__title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.listening-drawer__close {
+    color: var(--text-secondary);
+}
+
+.listening-drawer__close:hover {
+    color: var(--text-primary);
+    background-color: var(--card-surface-elevated);
+}
+
+.listening-drawer__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.listening-drawer__periods {
+    width: 100%;
+}
+
+.listening-drawer__periods .MuiToggleButton-root {
+    flex: 1;
+    text-transform: none;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
+}
+
+.listening-drawer__periods .MuiToggleButton-root.Mui-selected {
+    color: var(--text-primary);
+    background-color: var(--card-surface-elevated);
+}
+
+.listening-drawer__tabs .MuiTab-root {
+    text-transform: none;
+    min-height: 44px;
+    color: var(--text-secondary);
+}
+
+.listening-drawer__tabs .Mui-selected {
+    color: var(--text-primary);
+}
+
+.listening-drawer__tabs .MuiTabs-indicator {
+    background-color: var(--accent-blue);
+}
+
+.listening-drawer__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px 20px;
+    min-height: 0;
+}
+
+.listening-drawer__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.listening-drawer__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background-color: var(--card-surface-elevated);
+}
+
+.listening-drawer__rank {
+    flex-shrink: 0;
+    width: 1.5rem;
+    margin-top: 14px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.listening-drawer__avatar {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--card-surface);
+}
+
+.listening-drawer__avatar--cover {
+    border-radius: 6px;
+}
+
+.listening-drawer__avatar--empty {
+    border: 1px solid var(--border-subtle);
+}
+
+.listening-drawer__meta {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 2px;
+}
+
+.listening-drawer__name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.listening-drawer__secondary {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.listening-drawer__genres {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.listening-drawer__status {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.listening-drawer__status-text {
+    margin: 24px 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
