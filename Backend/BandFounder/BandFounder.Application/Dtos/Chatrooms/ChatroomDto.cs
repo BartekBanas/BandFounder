@@ -10,4 +10,5 @@ public class ChatroomDto
     public Guid? OwnerId { get; init; }
     public required List<Guid> MembersIds { get; init; }
     public DateTime? LastMessageSentDate { get; init; }
+    public int UnreadCount { get; init; }
 }

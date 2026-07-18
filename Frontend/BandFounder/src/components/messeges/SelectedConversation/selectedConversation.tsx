@@ -9,17 +9,18 @@ import {getAccount} from "../../../api/account";
 import {getUserId} from "../../../hooks/authentication";
 import {Account} from "../../../types/Account";
 import {ChatRoom, ChatRoomType} from "../../../types/ChatRoom";
-import {getChatroom} from "../../../api/chatroom";
+import {getChatroom, markChatroomRead} from "../../../api/chatroom";
 import InteractiveUserAvatar from "../../common/InteractiveUserAvatar";
 import {formatMessageWithLinks} from "../../common/utils";
 import {GroupMembersPanel} from "./GroupMembersPanel";
 import {MissingContent} from "../../common/MissingContent";
 import {AppLoader} from "../../common/AppLoader";
 import {API_URL} from "../../../config";
+import {useUnreadMessages} from "../../../hooks/useUnreadMessages";
 
 interface SelectedConversationProps {
     id: string;
-    onConversationActivity?: (chatroomId: string, sentDate: string) => void;
+    onConversationActivity?: (chatroomId: string, sentDate: string, senderId?: string) => void;
 }
 
 interface MessageWithSenderName extends Message {
@@ -144,9 +145,22 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id, onConve
     const loadingRef = useRef(loading);
     const pageNumberRef = useRef(pageNumber);
     const participantsRef = useRef<Account[]>([]);
+    const {clearRoom} = useUnreadMessages();
 
     const [membersVersion, setMembersVersion] = useState<number>(0);
     const [participants, setParticipants] = useState<Account[]>([]);
+
+    const markCurrentChatRead = useCallback(async () => {
+        if (!id) {
+            return;
+        }
+        try {
+            await markChatroomRead(id);
+            clearRoom(id);
+        } catch (error) {
+            console.error("Error marking chatroom as read:", error);
+        }
+    }, [clearRoom, id]);
 
     useEffect(() => {
         hasMoreRef.current = hasMore;
@@ -234,6 +248,13 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id, onConve
 
         fetchChatroom();
     }, [id, membersVersion, addParticipant]);
+
+    useEffect(() => {
+        if (chatroomState !== "ready" || !id) {
+            return;
+        }
+        void markCurrentChatRead();
+    }, [chatroomState, id, markCurrentChatRead]);
 
     const fetchOlderMessages = useCallback(async () => {
         if (!id || chatroomState !== "ready" || !hasMoreRef.current || loadingRef.current) {
@@ -331,9 +352,12 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id, onConve
                 });
                 shouldScrollToBottomRef.current = true;
                 if (message.sentDate) {
-                    onConversationActivity?.(id, message.sentDate);
+                    onConversationActivity?.(id, message.sentDate, message.senderId);
                 } else {
-                    onConversationActivity?.(id, new Date().toISOString());
+                    onConversationActivity?.(id, new Date().toISOString(), message.senderId);
+                }
+                if (message.senderId !== getUserId()) {
+                    void markCurrentChatRead();
                 }
             } catch (error) {
                 console.error("Error parsing WebSocket message:", error);
@@ -347,7 +371,7 @@ export const SelectedConversation: FC<SelectedConversationProps> = ({id, onConve
         return () => {
             ws.current?.close();
         };
-    }, [id, chatroomState, fetchOlderMessages, addParticipant, onConversationActivity]);
+    }, [id, chatroomState, fetchOlderMessages, addParticipant, onConversationActivity, markCurrentChatRead]);
 
     useEffect(() => {
         if (!id || chatroomState !== "ready") return;
