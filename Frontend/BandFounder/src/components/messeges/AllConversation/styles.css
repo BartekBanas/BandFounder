@@ -56,9 +56,14 @@
     padding: 8px 10px;
     cursor: pointer;
     transition: background-color 0.15s ease;
+    will-change: transform;
 }
 
 .singleConversationShortcut:hover{
+    background-color: var(--card-surface-elevated);
+}
+
+.singleConversationShortcut.active{
     background-color: var(--card-surface-elevated);
 }
 
@@ -71,6 +76,29 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.conversationName--unread{
+    font-weight: 700;
+    color: var(--text-on-dark);
+}
+
+.conversationUnreadBadge{
+    flex-shrink: 0;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 6px;
+    border-radius: 999px;
+    background-color: var(--error-main);
+    color: var(--text-on-dark);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.25rem;
+    text-align: center;
+}
+
+.singleConversationShortcut.unread{
+    background-color: var(--surface-overlay-subtle);
 }
 
 .singleConversationShortcut .leaveChatroomBtn{

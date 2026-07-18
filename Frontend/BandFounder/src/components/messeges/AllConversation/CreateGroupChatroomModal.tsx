@@ -9,9 +9,10 @@ import {Account} from "../../../types/Account";
 
 interface CreateGroupChatroomModalProps {
     otherUsers: Account[];
+    onCreated: (chatroomId: string) => void;
 }
 
-export const CreateGroupChatroomModal: FC<CreateGroupChatroomModalProps> = ({otherUsers}) => {
+export const CreateGroupChatroomModal: FC<CreateGroupChatroomModalProps> = ({otherUsers, onCreated}) => {
     const [opened, {close, open}] = useDisclosure(false);
     const [groupName, setGroupName] = useState<string>('');
     const [selectedUsers, setSelectedUsers] = useState<Account[]>([]);
@@ -38,7 +39,8 @@ export const CreateGroupChatroomModal: FC<CreateGroupChatroomModalProps> = ({oth
                 await inviteToChatroom(chatroom.id, user.id);
             }
 
-            window.location.href = `/messages/${chatroom.id}`;
+            handleClose();
+            onCreated(chatroom.id);
         } catch (error) {
             mantineErrorNotification('Failed to create group chatroom');
             console.error("Error creating group chatroom:", error);

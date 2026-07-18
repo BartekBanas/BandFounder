@@ -16,6 +16,8 @@ public class ChatroomServiceTests
     private ChatroomService _chatroomService;
     private IRepository<Chatroom> _chatRoomRepositoryMock;
     private IRepository<Account> _accountRepositoryMock;
+    private IRepository<ChatroomReadState> _readStateRepositoryMock;
+    private IRepository<Message> _messageRepositoryMock;
     private IAuthenticationService _authenticationServiceMock;
     private IAuthorizationService _authorizationServiceMock;
 
@@ -24,15 +26,28 @@ public class ChatroomServiceTests
     {
         _chatRoomRepositoryMock = Substitute.For<IRepository<Chatroom>>();
         _accountRepositoryMock = Substitute.For<IRepository<Account>>();
+        _readStateRepositoryMock = Substitute.For<IRepository<ChatroomReadState>>();
+        _messageRepositoryMock = Substitute.For<IRepository<Message>>();
         _authenticationServiceMock = Substitute.For<IAuthenticationService>();
         _authorizationServiceMock = Substitute.For<IAuthorizationService>();
 
         _chatroomService = new ChatroomService(
             _chatRoomRepositoryMock,
             _accountRepositoryMock,
+            _readStateRepositoryMock,
+            _messageRepositoryMock,
             _authenticationServiceMock,
             _authorizationServiceMock
         );
+
+        _readStateRepositoryMock.GetAsync(Arg.Any<Expression<Func<ChatroomReadState, bool>>>(),
+                Arg.Any<Func<IQueryable<ChatroomReadState>, IOrderedQueryable<ChatroomReadState>>>(),
+                Arg.Any<string[]>())
+            .Returns(Task.FromResult(Enumerable.Empty<ChatroomReadState>()));
+        _messageRepositoryMock.GetAsync(Arg.Any<Expression<Func<Message, bool>>>(),
+                Arg.Any<Func<IQueryable<Message>, IOrderedQueryable<Message>>>(),
+                Arg.Any<string[]>())
+            .Returns(Task.FromResult(Enumerable.Empty<Message>()));
     }
 
     [Test]
@@ -106,7 +121,8 @@ public class ChatroomServiceTests
         };
 
         _chatRoomRepositoryMock.GetAsync(Arg.Any<Expression<Func<Chatroom, bool>>>(),
-                Arg.Any<Func<IQueryable<Chatroom>, IOrderedQueryable<Chatroom>>>(), nameof(Chatroom.Members))
+                Arg.Any<Func<IQueryable<Chatroom>, IOrderedQueryable<Chatroom>>>(),
+                nameof(Chatroom.Members), nameof(Chatroom.Messages))
             .Returns(Task.FromResult<IEnumerable<Chatroom>>(account.Chatrooms));
 
         // Act

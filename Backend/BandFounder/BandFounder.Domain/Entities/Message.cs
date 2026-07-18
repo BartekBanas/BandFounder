@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BandFounder.Domain.Entities;
 
+[Table("Message")]
 public class Message : Entity
 {
     [Key]

@@ -1,6 +1,7 @@
 import {API_URL} from "../config";
 import {ChatRoom, ChatRoomType} from "../types/ChatRoom";
 import {ChatroomCreate} from "../types/ChatroomCreate";
+import {UnreadSummary} from "../types/UnreadSummary";
 import {mantineErrorNotification} from "../components/common/mantineNotification";
 import {authorizedHeaders} from "../hooks/authentication";
 
@@ -11,8 +12,9 @@ export function getChatroomDestination(chatroomId: string): string {
     return `/messages/${chatroomId}`;
 }
 
+/** Prefer injecting React Router's navigate; default keeps a hard redirect for non-React callers. */
 export function redirectToChatroom(chatroomId: string): void {
-    window.location.href = getChatroomDestination(chatroomId);
+    window.location.assign(getChatroomDestination(chatroomId));
 }
 
 export async function openDirectChatroomWithFallback(
@@ -55,6 +57,30 @@ export async function getMyChatrooms(): Promise<ChatRoom[]> {
     } catch (e) {
         mantineErrorNotification('Failed to fetch conversations');
         throw e;
+    }
+}
+
+export async function getUnreadSummary(): Promise<UnreadSummary> {
+    const response = await fetch(`${API_URL}/chatrooms/unread-summary`, {
+        method: 'GET',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+
+    return await response.json() as UnreadSummary;
+}
+
+export async function markChatroomRead(chatroomId: string): Promise<void> {
+    const response = await fetch(`${API_URL}/chatrooms/${chatroomId}/read`, {
+        method: 'PUT',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text());
     }
 }
 

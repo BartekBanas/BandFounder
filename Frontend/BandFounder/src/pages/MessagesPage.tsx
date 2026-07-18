@@ -1,21 +1,44 @@
-import {FC, useEffect, useState} from "react";
+import {FC, useCallback, useState} from "react";
 import {AllConversations} from "../components/messeges/AllConversation/allConversations";
 import {SelectedConversation} from "../components/messeges/SelectedConversation/selectedConversation";
 import {useParams} from "react-router-dom";
+import {useUnreadMessages} from "../hooks/useUnreadMessages";
+import {getUserId} from "../hooks/authentication";
 import './styles/MessagesPage.css'
 
 export const MessagesPage: FC = () => {
-    const {id: paramId} = useParams<{ id: string }>();
-    const [selectedConversationId, setSelectedConversationId] = useState('');
+    const {id: selectedId = ''} = useParams<{ id: string }>();
+    const [activity, setActivity] = useState<{ chatroomId: string; sentDate: string } | null>(null);
+    const {bumpRoom, clearRoom} = useUnreadMessages();
+    const myId = getUserId();
 
-    useEffect(() => {
-        setSelectedConversationId(paramId ?? '');
-    }, [paramId]);
+    const handleConversationActivity = useCallback((
+        chatroomId: string,
+        sentDate: string,
+        senderId?: string
+    ) => {
+        setActivity({chatroomId, sentDate});
+
+        if (senderId && senderId === myId) {
+            return;
+        }
+
+        if (chatroomId === selectedId) {
+            clearRoom(chatroomId);
+            return;
+        }
+
+        bumpRoom(chatroomId);
+    }, [bumpRoom, clearRoom, myId, selectedId]);
 
     return (
         <div id="messagesPage">
-            <AllConversations onSelectConversation={setSelectedConversationId}/>
-            <SelectedConversation key={selectedConversationId} id={selectedConversationId}/>
+            <AllConversations selectedId={selectedId} activity={activity}/>
+            <SelectedConversation
+                key={selectedId}
+                id={selectedId}
+                onConversationActivity={handleConversationActivity}
+            />
         </div>
     );
 };

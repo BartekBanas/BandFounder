@@ -78,7 +78,7 @@ public class SpotifyConnectionServiceTests
             ExpirationDate = DateTime.Now.AddHours(1),
         }));
 
-        _spotifyClient.GetTopArtistsAsync(testToken, Arg.Any<int>()).Returns(Task.FromResult(topArtists));
+        _spotifyClient.GetTopArtistsAsync(testToken, Arg.Any<int>(), Arg.Any<string>()).Returns(Task.FromResult(topArtists));
         _spotifyClient.GetFollowedArtistsAsync(testToken).Returns(Task.FromResult(followedArtists));
 
         // Act
@@ -135,7 +135,7 @@ public class SpotifyConnectionServiceTests
             ExpirationDate = DateTime.Now.AddHours(1),
         }));
 
-        _spotifyClient.GetTopArtistsAsync(testToken, Arg.Any<int>()).Returns(Task.FromResult(topArtists));
+        _spotifyClient.GetTopArtistsAsync(testToken, Arg.Any<int>(), Arg.Any<string>()).Returns(Task.FromResult(topArtists));
         _spotifyClient.GetFollowedArtistsAsync(testToken).Returns(Task.FromResult(followedArtists));
 
         // Act
@@ -169,7 +169,7 @@ public class SpotifyConnectionServiceTests
         Assert.That(ex!.Message, Does.Contain("expired"));
         await _spotifyTokensRepository.Received(1).DeleteOneAsync(userId);
         await _spotifyTokensRepository.Received(1).SaveChangesAsync();
-        await _spotifyClient.DidNotReceive().GetTopArtistsAsync(Arg.Any<string>(), Arg.Any<int>());
+        await _spotifyClient.DidNotReceive().GetTopArtistsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
     }
 
     [Test]
@@ -208,7 +208,7 @@ public class SpotifyConnectionServiceTests
         _spotifyTokensRepository.GetOneAsync(userId)!.Returns(Task.FromResult(existingTokens));
         _spotifyClient.RequestAccessTokenAsync(connectionDto, Arg.Any<SpotifyAppCredentials>())
             .Returns(tokenResponse);
-        _spotifyClient.GetTopArtistsAsync("new-access", Arg.Any<int>()).Returns([]);
+        _spotifyClient.GetTopArtistsAsync("new-access", Arg.Any<int>(), Arg.Any<string>()).Returns([]);
         _spotifyClient.GetFollowedArtistsAsync("new-access").Returns([]);
 
         await _spotifyConnectionService.LinkAccountToSpotify(connectionDto, userId);

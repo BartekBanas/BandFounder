@@ -42,7 +42,7 @@ describe('openDirectChatroomWithFallback', () => {
 });
 
 describe('getChatroomDestination', () => {
-    it('builds the hard-navigation destination for a chatroom', () => {
+    it('builds the messages destination for a chatroom', () => {
         expect(getChatroomDestination('chatroom-1')).toBe('/messages/chatroom-1');
     });
 });
