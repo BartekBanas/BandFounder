@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BandFounder.Domain.Entities;
 
+[Table("Account")]
 public class Account : Entity
 {
     [Key] 

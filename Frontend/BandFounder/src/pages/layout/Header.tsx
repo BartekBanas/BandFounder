@@ -3,6 +3,7 @@ import '../styles/Header.css';
 import {
     AppBar,
     Autocomplete,
+    Badge,
     Box,
     CssBaseline,
     IconButton,
@@ -23,11 +24,13 @@ import {getAccount, getAccounts} from "../../api/account";
 import UserAvatar from "../../components/common/UserAvatar";
 import {getUserId} from "../../hooks/authentication";
 import {mantineErrorNotification} from "../../components/common/mantineNotification";
+import {useUnreadMessages} from "../../hooks/useUnreadMessages";
 
 export const Header: FC = () => {
     const [users, setUsers] = React.useState<Account[]>([]);
     const [usernames, setUsernames] = React.useState<string[]>([]);
     const navigate = useNavigate();
+    const {totalUnread} = useUnreadMessages();
 
     const handleProfileClick = () => {
         navigate('/profile');
@@ -122,7 +125,14 @@ export const Header: FC = () => {
                             <div className="header-toolbar__right">
                                 <ListeningDrawer/>
                                 <IconButton color="inherit" onClick={handleMessagesClick} aria-label="Messages">
-                                    <ChatIcon/>
+                                    <Badge
+                                        badgeContent={totalUnread}
+                                        color="error"
+                                        max={99}
+                                        invisible={totalUnread <= 0}
+                                    >
+                                        <ChatIcon/>
+                                    </Badge>
                                 </IconButton>
                                 <div onClick={handleProfileClick} style={{cursor: 'pointer'}}>
                                     <UserAvatar userId={getUserId()}/>

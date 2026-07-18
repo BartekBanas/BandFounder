@@ -13,6 +13,7 @@ import {mantineErrorNotification} from "../../common/mantineNotification";
 import {LeaveChatroomModal} from "./LeaveChatroomModal";
 import {CreateGroupChatroomModal} from "./CreateGroupChatroomModal";
 import UserAvatar from "../../common/UserAvatar";
+import {useUnreadMessages} from "../../../hooks/useUnreadMessages";
 
 interface AllConversationsProps {
     selectedId: string;
@@ -77,6 +78,7 @@ interface ConversationListItemProps {
     chatRoom: ChatRoom;
     myId: string;
     isSelected: boolean;
+    unreadCount: number;
     onSelect: (id: string) => void;
     onLeft: (id: string) => void;
 }
@@ -85,17 +87,27 @@ const ConversationListItem = memo(function ConversationListItem({
     chatRoom,
     myId,
     isSelected,
+    unreadCount,
     onSelect,
     onLeft,
 }: ConversationListItemProps) {
+    const hasUnread = unreadCount > 0;
+
     return (
         <li
-            className={`singleConversationShortcut${isSelected ? ' active' : ''}`}
+            className={`singleConversationShortcut${isSelected ? ' active' : ''}${hasUnread ? ' unread' : ''}`}
             data-chatroom-id={chatRoom.id}
             onClick={() => onSelect(chatRoom.id)}
         >
             <ChatroomAvatar chatRoom={chatRoom} myId={myId}/>
-            <div className={'conversationName'}>{chatRoom.name}</div>
+            <div className={`conversationName${hasUnread ? ' conversationName--unread' : ''}`}>
+                {chatRoom.name}
+            </div>
+            {hasUnread && (
+                <span className="conversationUnreadBadge" aria-label={`${unreadCount} unread messages`}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+            )}
             <div className={'leaveChatroomBtn'} onClick={(e) => e.stopPropagation()}>
                 <LeaveChatroomModal chatroom={chatRoom} onLeft={onLeft}/>
             </div>
@@ -109,6 +121,7 @@ export const AllConversations: FC<AllConversationsProps> = ({selectedId, activit
     const [otherUsers, setOtherUsers] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const myId = getUserId();
+    const {unreadByRoom} = useUnreadMessages();
     const listRef = useRef<HTMLUListElement>(null);
     const previousTopsRef = useRef<Map<string, number>>(new Map());
     const pendingFlipRef = useRef(false);
@@ -321,6 +334,7 @@ export const AllConversations: FC<AllConversationsProps> = ({selectedId, activit
                         chatRoom={chatRoom}
                         myId={myId}
                         isSelected={chatRoom.id === selectedId}
+                        unreadCount={unreadByRoom[chatRoom.id] ?? chatRoom.unreadCount ?? 0}
                         onSelect={handleSelectConversation}
                         onLeft={handleConversationLeft}
                     />

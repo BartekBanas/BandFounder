@@ -8,7 +8,8 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Account> Accounts { get; set; }
     public DbSet<ProfilePicture> ProfilePictures { get; set; }
     public DbSet<Chatroom> Chatrooms { get; set; }
-    public DbSet<Account> Messages { get; set; }
+    public DbSet<Message> Messages { get; set; }
+    public DbSet<ChatroomReadState> ChatroomReadStates { get; set; }
     public DbSet<Artist> Artists { get; set; }
     public DbSet<Genre> Genres { get; set; }
     
@@ -91,6 +92,21 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .WithOne(message => message.Sender)
             .HasForeignKey(message => message.SenderId)
             .OnDelete(DeleteBehavior.SetNull); // When an account is deleted, their messages are not automatically deleted
+
+        modelBuilder.Entity<ChatroomReadState>()
+            .HasKey(readState => new { readState.AccountId, readState.ChatRoomId });
+
+        modelBuilder.Entity<ChatroomReadState>()
+            .HasOne(readState => readState.Account)
+            .WithMany()
+            .HasForeignKey(readState => readState.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ChatroomReadState>()
+            .HasOne(readState => readState.Chatroom)
+            .WithMany()
+            .HasForeignKey(readState => readState.ChatRoomId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         PopulateGenres(modelBuilder);
         PopulateMusicianRole(modelBuilder);

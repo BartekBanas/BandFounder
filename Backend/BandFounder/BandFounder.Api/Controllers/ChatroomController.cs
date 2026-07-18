@@ -30,12 +30,31 @@ public class ChatroomController : Controller
     }
 
     [Authorize]
+    [HttpGet("unread-summary")]
+    public async Task<IActionResult> GetUnreadSummary()
+    {
+        var issuer = await _accountService.GetDetailedAccount(includeProperties: nameof(Account.Chatrooms));
+        var summary = await _chatroomService.GetUnreadSummary(issuer);
+
+        return Ok(summary);
+    }
+
+    [Authorize]
     [HttpGet("{chatroomId:guid}")]
     public async Task<IActionResult> GetChatroom(Guid chatroomId)
     {
         var chatRoomDto = await _chatroomService.GetChatroom(chatroomId);
 
         return Ok(chatRoomDto);
+    }
+
+    [Authorize]
+    [HttpPut("{chatroomId:guid}/read")]
+    public async Task<IActionResult> MarkChatroomAsRead(Guid chatroomId)
+    {
+        await _chatroomService.MarkChatroomAsRead(chatroomId);
+
+        return Ok();
     }
 
     [Authorize]

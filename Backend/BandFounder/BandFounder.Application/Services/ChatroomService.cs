@@ -13,6 +13,8 @@ public interface IChatroomService
     Task<ChatroomDto> CreateChatroom(Account issuer, ChatroomCreateDto request);
     Task<ChatroomDto> GetChatroom(Guid chatroomId);
     Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(Account issuer, ChatroomFilters? filters = null);
+    Task<UnreadSummaryDto> GetUnreadSummary(Account issuer);
+    Task MarkChatroomAsRead(Guid chatroomId);
     Task DeleteChatroom(Guid chatroomId);
     Task InviteToChatroom(Guid chatroomId, Guid invitedUserId);
     Task LeaveChatroom(Guid chatroomId);
@@ -23,15 +25,24 @@ public class ChatroomService : IChatroomService
 {
     private readonly IRepository<Chatroom> _chatRoomRepository;
     private readonly IRepository<Account> _accountRepository;
-    
+    private readonly IRepository<ChatroomReadState> _readStateRepository;
+    private readonly IRepository<Message> _messageRepository;
+
     private readonly IAuthenticationService _authenticationService;
     private readonly IAuthorizationService _authorizationService;
 
-    public ChatroomService(IRepository<Chatroom> chatRoomRepository, IRepository<Account> accountRepository,
-        IAuthenticationService authenticationService, IAuthorizationService authorizationService)
+    public ChatroomService(
+        IRepository<Chatroom> chatRoomRepository,
+        IRepository<Account> accountRepository,
+        IRepository<ChatroomReadState> readStateRepository,
+        IRepository<Message> messageRepository,
+        IAuthenticationService authenticationService,
+        IAuthorizationService authorizationService)
     {
         _chatRoomRepository = chatRoomRepository;
         _accountRepository = accountRepository;
+        _readStateRepository = readStateRepository;
+        _messageRepository = messageRepository;
         _authenticationService = authenticationService;
         _authorizationService = authorizationService;
     }
@@ -41,6 +52,7 @@ public class ChatroomService : IChatroomService
         var newChatRoom = await CreateChatroomEntity(issuer, request);
         await _chatRoomRepository.CreateAsync(newChatRoom);
 
+        await EnsureReadStatesAsync(newChatRoom.Members.Select(member => member.Id), newChatRoom.Id, DateTime.UtcNow);
         await _chatRoomRepository.SaveChangesAsync();
 
         return newChatRoom.ToDto();
@@ -60,24 +72,91 @@ public class ChatroomService : IChatroomService
 
     public async Task<IEnumerable<ChatroomDto>> GetUsersChatrooms(Account issuer, ChatroomFilters? filters = null)
     {
-        var usersChatrooms = await _chatRoomRepository.GetAsync(
+        var usersChatrooms = (await _chatRoomRepository.GetAsync(
             chatRoom => chatRoom.Members.Contains(issuer),
-            includeProperties: [nameof(Chatroom.Members), nameof(Chatroom.Messages)]);
-        
+            includeProperties: [nameof(Chatroom.Members), nameof(Chatroom.Messages)])).ToList();
+
         if (filters is { ChatRoomType: not null })
         {
-            usersChatrooms = usersChatrooms.Where(chatroom => chatroom.ChatRoomType == filters.ChatRoomType);
+            usersChatrooms = usersChatrooms.Where(chatroom => chatroom.ChatRoomType == filters.ChatRoomType).ToList();
         }
-        
+
         if (filters is { WithUser: not null })
         {
             var selectedUser = await _accountRepository.GetOneRequiredAsync(filters.WithUser);
-            usersChatrooms = usersChatrooms.Where(chatroom => chatroom.Members.Contains(selectedUser));
+            usersChatrooms = usersChatrooms.Where(chatroom => chatroom.Members.Contains(selectedUser)).ToList();
         }
 
+        var unreadCounts = await ComputeUnreadCountsAsync(issuer.Id, usersChatrooms.Select(c => c.Id).ToList());
+
         return usersChatrooms
-            .ToDto()
+            .Select(chatroom => chatroom.ToDto(unreadCounts.GetValueOrDefault(chatroom.Id)))
             .OrderByDescending(chatroom => chatroom.LastMessageSentDate ?? DateTime.MinValue);
+    }
+
+    public async Task<UnreadSummaryDto> GetUnreadSummary(Account issuer)
+    {
+        var chatroomIds = (await _chatRoomRepository.GetAsync(
+            chatRoom => chatRoom.Members.Contains(issuer)))
+            .Select(chatroom => chatroom.Id)
+            .ToList();
+
+        var unreadCounts = await ComputeUnreadCountsAsync(issuer.Id, chatroomIds);
+
+        var rooms = unreadCounts
+            .Where(pair => pair.Value > 0)
+            .Select(pair => new ChatroomUnreadDto
+            {
+                ChatRoomId = pair.Key,
+                UnreadCount = pair.Value
+            })
+            .ToList();
+
+        return new UnreadSummaryDto
+        {
+            TotalUnread = rooms.Sum(room => room.UnreadCount),
+            Rooms = rooms
+        };
+    }
+
+    public async Task MarkChatroomAsRead(Guid chatroomId)
+    {
+        var userId = _authenticationService.GetUserId();
+        var userClaims = _authenticationService.GetUserClaims();
+
+        var chatroom = await _chatRoomRepository.GetOneRequiredAsync(
+            chatRoom => chatRoom.Id == chatroomId,
+            nameof(Chatroom.Members),
+            nameof(Chatroom.Messages));
+
+        await _authorizationService.AuthorizeRequiredAsync(userClaims, chatroom, AuthorizationPolicies.IsMemberOf);
+
+        var now = DateTime.UtcNow;
+        var latestSentDate = chatroom.Messages.Count > 0
+            ? chatroom.Messages.Max(message => message.SentDate)
+            : (DateTime?)null;
+        var lastReadAt = latestSentDate.HasValue && latestSentDate.Value > now
+            ? latestSentDate.Value
+            : now;
+
+        var existing = await _readStateRepository.GetOneAsync(
+            readState => readState.AccountId == userId && readState.ChatRoomId == chatroomId);
+
+        if (existing is null)
+        {
+            await _readStateRepository.CreateAsync(new ChatroomReadState
+            {
+                AccountId = userId,
+                ChatRoomId = chatroomId,
+                LastReadAt = lastReadAt
+            });
+        }
+        else
+        {
+            existing.LastReadAt = lastReadAt;
+        }
+
+        await _readStateRepository.SaveChangesAsync();
     }
 
     public async Task DeleteChatroom(Guid chatroomId)
@@ -109,7 +188,7 @@ public class ChatroomService : IChatroomService
         await _chatRoomRepository.DeleteOneAsync(chatroom.Id);
         await _chatRoomRepository.SaveChangesAsync();
     }
-    
+
     public async Task InviteToChatroom(Guid chatroomId, Guid invitedUserId)
     {
         var userClaims = _authenticationService.GetUserClaims();
@@ -117,10 +196,10 @@ public class ChatroomService : IChatroomService
         {
             throw new BadRequestException("You cannot invite yourself to a chatroom");
         }
-        
+
         var chatroom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == chatroomId,
             nameof(Chatroom.Members));
-        
+
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatroom, AuthorizationPolicies.IsMemberOf);
 
         if (chatroom.ChatRoomType is ChatRoomType.Direct)
@@ -136,6 +215,7 @@ public class ChatroomService : IChatroomService
         var invitedAccount = await _accountRepository.GetOneRequiredAsync(invitedUserId);
 
         chatroom.Members.Add(invitedAccount);
+        await EnsureReadStatesAsync([invitedUserId], chatroomId, DateTime.UtcNow);
 
         await _chatRoomRepository.SaveChangesAsync();
     }
@@ -160,11 +240,18 @@ public class ChatroomService : IChatroomService
                 var luckyUser = chatroom.Members.First(account => account.Id != userId);
                 chatroom.OwnerId = luckyUser.Id;
             }
-            
+
             var memberToRemove = chatroom.Members.FirstOrDefault(account => account.Id == userId);
             if (memberToRemove != null)
             {
                 chatroom.Members.Remove(memberToRemove);
+            }
+
+            var readState = await _readStateRepository.GetOneAsync(
+                state => state.AccountId == userId && state.ChatRoomId == chatroomId);
+            if (readState is not null)
+            {
+                await _readStateRepository.DeleteOneAsync(userId, chatroomId);
             }
         }
 
@@ -178,6 +265,54 @@ public class ChatroomService : IChatroomService
         {
             await LeaveChatroom(chatroom.Id);
         }
+    }
+
+    private async Task EnsureReadStatesAsync(IEnumerable<Guid> accountIds, Guid chatRoomId, DateTime lastReadAt)
+    {
+        foreach (var accountId in accountIds.Distinct())
+        {
+            var existing = await _readStateRepository.GetOneAsync(
+                state => state.AccountId == accountId && state.ChatRoomId == chatRoomId);
+            if (existing is not null)
+            {
+                continue;
+            }
+
+            await _readStateRepository.CreateAsync(new ChatroomReadState
+            {
+                AccountId = accountId,
+                ChatRoomId = chatRoomId,
+                LastReadAt = lastReadAt
+            });
+        }
+    }
+
+    private async Task<Dictionary<Guid, int>> ComputeUnreadCountsAsync(Guid accountId, List<Guid> chatroomIds)
+    {
+        var result = chatroomIds.ToDictionary(id => id, _ => 0);
+        if (chatroomIds.Count == 0)
+        {
+            return result;
+        }
+
+        var readStates = (await _readStateRepository.GetAsync(
+                state => state.AccountId == accountId && chatroomIds.Contains(state.ChatRoomId)))
+            .ToDictionary(state => state.ChatRoomId);
+
+        var messages = await _messageRepository.GetAsync(
+            message => chatroomIds.Contains(message.ChatRoomId) && message.SenderId != accountId);
+
+        foreach (var message in messages)
+        {
+            readStates.TryGetValue(message.ChatRoomId, out var readState);
+            var lastReadAt = readState?.LastReadAt;
+            if (lastReadAt is null || message.SentDate > lastReadAt)
+            {
+                result[message.ChatRoomId]++;
+            }
+        }
+
+        return result;
     }
 
     private async Task<Chatroom> CreateChatroomEntity(Account issuer, ChatroomCreateDto chatroomCreateDto)
@@ -204,19 +339,19 @@ public class ChatroomService : IChatroomService
             Owner = issuer,
             Members = [issuer]
         };
-        
+
         return chatroom;
     }
 
     private async Task<Chatroom> CreateDirectChatroom(Account issuer, ChatroomCreateDto chatroomCreateDto)
     {
         Account recipient;
-        
+
         try
         {
             recipient = await _accountRepository.GetOneRequiredAsync(chatroomCreateDto.InvitedAccountId!);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new BadRequestException("Invited account is invalid");
         }
@@ -238,7 +373,7 @@ public class ChatroomService : IChatroomService
             Owner = issuer,
             Members = [issuer, recipient]
         };
-        
+
         return chatroom;
     }
 }
