@@ -38,6 +38,9 @@ export function MainPage() {
     return (
         <div id="mainContainer" className="custom-scrollbar">
             <div className="feed-layout">
+                <div className="feed-create">
+                    <ListingTemplate onListingCreated={refetchListings}/>
+                </div>
                 <aside className="feed-sidebar">
                     <ListingsFilters
                         filters={filters}
@@ -46,7 +49,6 @@ export function MainPage() {
                     />
                 </aside>
                 <main className="feed-main">
-                    <ListingTemplate onListingCreated={refetchListings}/>
                     <ListingsListPublic
                         listings={listings}
                         loading={listingsLoading}

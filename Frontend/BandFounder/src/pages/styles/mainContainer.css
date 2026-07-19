@@ -7,18 +7,31 @@
 .feed-layout {
     display: grid;
     grid-template-columns: 280px 1fr;
+    grid-template-areas:
+        ". create"
+        "sidebar main";
     gap: 24px;
     max-width: 1200px;
     margin: 0 auto;
     align-items: start;
 }
 
+.feed-create {
+    grid-area: create;
+}
+
+.feed-create .create-listing-card {
+    margin-bottom: 0;
+}
+
 .feed-sidebar {
+    grid-area: sidebar;
     position: sticky;
     top: 96px;
 }
 
 .feed-main {
+    grid-area: main;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -28,6 +41,10 @@
 @media (max-width: 1023px) {
     .feed-layout {
         grid-template-columns: 1fr;
+        grid-template-areas:
+            "sidebar"
+            "create"
+            "main";
     }
 
     .feed-sidebar {
