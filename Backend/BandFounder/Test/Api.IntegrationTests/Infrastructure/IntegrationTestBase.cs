@@ -27,6 +27,8 @@ public abstract class IntegrationTestBase
     private Respawner _respawner = null!;
 
     protected HttpClient Client { get; private set; } = null!;
+    protected RecordingEmailSender EmailSender => _factory.EmailSender;
+    protected IServiceProvider Services => _factory.Services;
 
     [OneTimeSetUp]
     public async Task IntegrationOneTimeSetUp()
@@ -62,6 +64,7 @@ public abstract class IntegrationTestBase
     {
         await _respawner.ResetAsync(_connection);
         Client.DefaultRequestHeaders.Authorization = null;
+        EmailSender.Clear();
     }
 
     [OneTimeTearDown]
