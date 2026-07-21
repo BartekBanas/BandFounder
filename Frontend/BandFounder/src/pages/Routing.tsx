@@ -4,6 +4,8 @@ import {MainPage} from "./MainPage";
 import {SpotifyConnectionPage} from "./SpotifyConnectionPage";
 import {LoginPage} from "./LoginPage";
 import {RegisterPage} from "./RegisterPage";
+import {ForgotPasswordPage} from "./ForgotPasswordPage";
+import {ResetPasswordPage} from "./ResetPasswordPage";
 import {ProfilePage} from "./ProfilePage";
 import {Main} from "./layout/Main";
 import {useIsAuthenticated} from "../hooks/authentication";
@@ -22,6 +24,14 @@ const publicRoutes = [
             {
                 path: '/register',
                 element: <RegisterPage/>
+            },
+            {
+                path: '/forgot-password',
+                element: <ForgotPasswordPage/>
+            },
+            {
+                path: '/reset-password',
+                element: <ResetPasswordPage/>
             },
             {
                 path: '*',

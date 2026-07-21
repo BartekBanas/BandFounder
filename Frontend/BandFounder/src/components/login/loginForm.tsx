@@ -116,6 +116,18 @@ export function LoginForm() {
                         margin="normal"
                     />
 
+                    <Box sx={{display: 'flex', justifyContent: 'flex-end', marginTop: 1}}>
+                        <Button
+                            onClick={() => navigate('/forgot-password')}
+                            variant="text"
+                            color="info"
+                            size="small"
+                            sx={{textTransform: 'none', padding: 0, minWidth: 0}}
+                        >
+                            Forgot password?
+                        </Button>
+                    </Box>
+
                     <Box sx={{display: 'flex', justifyContent: 'space-between', marginTop: '24px'}}>
                         <Button
                             type="submit"

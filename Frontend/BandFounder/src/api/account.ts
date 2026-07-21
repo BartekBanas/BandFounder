@@ -62,6 +62,37 @@ export async function login(usernameOrEmail: string, password: string): Promise<
     return responseContent; // Authentication JWT
 }
 
+export async function requestPasswordReset(email: string): Promise<void> {
+    const response = await fetch(`${API_URL}/accounts/password-reset/request`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({email}),
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text() || 'Failed to request password reset');
+    }
+}
+
+export async function completePasswordReset(token: string, newPassword: string): Promise<void> {
+    const response = await fetch(`${API_URL}/accounts/password-reset/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token,
+            newPassword,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text() || 'Failed to reset password');
+    }
+}
+
 export async function getMyAccount(): Promise<Account> {
     const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'GET',
