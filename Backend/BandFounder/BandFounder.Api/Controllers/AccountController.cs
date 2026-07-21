@@ -39,6 +39,30 @@ public class AccountController : Controller
         return Ok(token);
     }
 
+    [HttpPost("password-reset/request")]
+    [EnableRateLimiting("IpRateLimiting")]
+    public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto dto)
+    {
+        await _accountService.RequestPasswordResetAsync(dto);
+
+        return Ok(new
+        {
+            message = "If an account with that email exists, a password reset link has been sent."
+        });
+    }
+
+    [HttpPost("password-reset/complete")]
+    [EnableRateLimiting("IpRateLimiting")]
+    public async Task<IActionResult> CompletePasswordReset([FromBody] CompletePasswordResetDto dto)
+    {
+        await _accountService.CompletePasswordResetAsync(dto);
+
+        return Ok(new
+        {
+            message = "Password has been reset successfully."
+        });
+    }
+
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAccounts([FromQuery] AccountFilters filters)

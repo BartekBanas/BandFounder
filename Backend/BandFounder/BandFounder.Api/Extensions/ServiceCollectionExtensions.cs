@@ -1,6 +1,10 @@
-﻿using System.Text;
+﻿using System.Security.Claims;
+using System.Text;
+using BandFounder.Application.Services;
 using BandFounder.Application.Services.Jwt;
+using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -66,9 +70,42 @@ public static class ServiceCollectionExtensions
                 ValidateIssuerSigningKey = true
             };
             
-            // Custom message for 401 Unauthorized responses
             bearerOptions.Events = new JwtBearerEvents
             {
+                OnTokenValidated = async context =>
+                {
+                    var principal = context.Principal;
+                    if (principal is null)
+                    {
+                        context.Fail("Missing principal");
+                        return;
+                    }
+
+                    var userIdClaim = principal.FindFirst(ClaimTypes.PrimarySid)?.Value;
+                    if (!Guid.TryParse(userIdClaim, out var userId))
+                    {
+                        context.Fail("Missing or invalid user id claim");
+                        return;
+                    }
+
+                    var versionClaim = principal.FindFirst(AuthClaimTypes.PasswordVersion)?.Value;
+                    // Tokens issued before PasswordVersion existed are treated as version 0.
+                    var tokenVersion = int.TryParse(versionClaim, out var parsedVersion) ? parsedVersion : 0;
+
+                    var dbContext = context.HttpContext.RequestServices
+                        .GetRequiredService<BandFounderDbContext>();
+
+                    var currentVersion = await dbContext.Accounts
+                        .AsNoTracking()
+                        .Where(account => account.Id == userId)
+                        .Select(account => (int?)account.PasswordVersion)
+                        .FirstOrDefaultAsync(context.HttpContext.RequestAborted);
+
+                    if (currentVersion is null || currentVersion.Value != tokenVersion)
+                    {
+                        context.Fail("Token has been revoked");
+                    }
+                },
                 OnChallenge = _ => throw new UnauthorizedAccessException("You need to be logged in to perform this action.")
             };
         });

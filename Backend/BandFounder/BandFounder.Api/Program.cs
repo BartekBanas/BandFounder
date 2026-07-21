@@ -7,6 +7,7 @@ using BandFounder.Application.Services;
 using BandFounder.Application.Services.Authorization;
 using BandFounder.Application.Services.Authorization.Handlers;
 using BandFounder.Application.Services.Authorization.Requirements;
+using BandFounder.Application.Services.Email;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
@@ -16,6 +17,13 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using AspNetCoreRateLimit;
+using Resend;
+
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+if (File.Exists(envPath))
+{
+    DotNetEnv.Env.Load(envPath);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -36,6 +44,52 @@ services.AddDbContext<BandFounderDbContext>(options =>
         npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
+
+var resendApiKey = configuration["RESEND_API_KEY"]
+                   ?? Environment.GetEnvironmentVariable("RESEND_API_KEY")
+                   ?? string.Empty;
+
+services.Configure<EmailOptions>(options =>
+{
+    options.FromAddress = configuration["EMAIL_FROM_ADDRESS"]
+                          ?? Environment.GetEnvironmentVariable("EMAIL_FROM_ADDRESS")
+                          ?? "noreply@bandfounder.com";
+    options.FrontendBaseUrl = configuration["FRONTEND_BASE_URL"]
+                              ?? Environment.GetEnvironmentVariable("FRONTEND_BASE_URL")
+                              ?? "http://localhost:5173";
+
+    var ttlRaw = configuration["PASSWORD_RESET_TOKEN_TTL_MINUTES"]
+                 ?? Environment.GetEnvironmentVariable("PASSWORD_RESET_TOKEN_TTL_MINUTES");
+    if (int.TryParse(ttlRaw, out var ttlMinutes) && ttlMinutes > 0)
+    {
+        options.PasswordResetTokenTtlMinutes = ttlMinutes;
+    }
+});
+
+var isDevelopmentOrTesting = builder.Environment.IsDevelopment()
+                             || builder.Environment.IsEnvironment("Testing");
+if (string.IsNullOrWhiteSpace(resendApiKey) && !isDevelopmentOrTesting)
+{
+    throw new InvalidOperationException(
+        "RESEND_API_KEY is required outside Development and Testing environments.");
+}
+
+services.AddHttpClient<ResendClient>();
+services.Configure<ResendClientOptions>(options =>
+{
+    options.ApiToken = resendApiKey;
+});
+services.AddTransient<IResend, ResendClient>();
+if (isDevelopmentOrTesting && string.IsNullOrWhiteSpace(resendApiKey))
+{
+    services.AddScoped<IEmailSender, LoggingEmailSender>();
+}
+else
+{
+    services.AddScoped<IEmailSender, ResendEmailSender>();
+}
+services.AddScoped<IPasswordResetTokenStore, PasswordResetTokenStore>();
+services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 services.AddScoped<IAuthorizationHandler, ChatRoomAuthorizationHandler>();
 services.AddScoped<IAuthorizationHandler, AccountAuthorizationHandler>();
@@ -66,6 +120,7 @@ services.AddScoped<IRepository<ChatroomReadState>, Repository<ChatroomReadState,
 services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>>();
 services.AddScoped<IRepository<Genre>, Repository<Genre, BandFounderDbContext>>();
 services.AddScoped<IRepository<SpotifyTokens>, Repository<SpotifyTokens, BandFounderDbContext>>();
+services.AddScoped<IRepository<PasswordResetToken>, Repository<PasswordResetToken, BandFounderDbContext>>();
 
 services.AddScoped<IRepository<ProfilePicture>, Repository<ProfilePicture, BandFounderDbContext>>();
 services.AddScoped<IRepository<MusicianRole>, Repository<MusicianRole, BandFounderDbContext>>();
