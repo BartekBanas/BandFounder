@@ -2,11 +2,14 @@
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Exceptions;
+using BandFounder.Application.Services.Email;
 using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BandFounder.Application.Services;
 
@@ -18,6 +21,8 @@ public interface IAccountService
     Task<IEnumerable<Account>> GetAccountsAsync(AccountFilters filters);
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
+    Task RequestPasswordResetAsync(RequestPasswordResetDto dto);
+    Task CompletePasswordResetAsync(CompletePasswordResetDto dto);
     Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
     Task<IEnumerable<MusicianRole>> GetUserMusicianRoles(Guid? accountId = null);
     Task AddMusicianRole(string role, Guid? accountId = null);
@@ -35,33 +40,51 @@ public class AccountService : IAccountService
     private readonly IRepository<Artist> _artistRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
+    private readonly IRepository<PasswordResetToken> _passwordResetTokenRepository;
+    private readonly IPasswordResetTokenStore _passwordResetTokenStore;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IChatroomService _chatroomService;
 
     private readonly IValidator<Account> _validator;
     private readonly IAuthenticationService _authenticationService;
     private readonly IHashingService _hashingService;
     private readonly IJwtService _jwtService;
+    private readonly IEmailSender _emailSender;
+    private readonly EmailOptions _emailOptions;
+    private readonly ILogger<AccountService> _logger;
 
     public AccountService(
         IRepository<Account> accountRepository, 
         IRepository<Artist> artistRepository,
         IRepository<MusicianRole> musicianRoleRepository,
         IRepository<SpotifyTokens> spotifyTokensRepository,
+        IRepository<PasswordResetToken> passwordResetTokenRepository,
+        IPasswordResetTokenStore passwordResetTokenStore,
+        IUnitOfWork unitOfWork,
         IChatroomService chatroomService,
         IValidator<Account> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
-        IJwtService jwtService)
+        IJwtService jwtService,
+        IEmailSender emailSender,
+        IOptions<EmailOptions> emailOptions,
+        ILogger<AccountService> logger)
     {
         _accountRepository = accountRepository;
         _artistRepository = artistRepository;
         _musicianRoleRepository = musicianRoleRepository;
         _spotifyTokensRepository = spotifyTokensRepository;
+        _passwordResetTokenRepository = passwordResetTokenRepository;
+        _passwordResetTokenStore = passwordResetTokenStore;
+        _unitOfWork = unitOfWork;
         _chatroomService = chatroomService;
         _validator = validator;
         _authenticationService = authenticationService;
         _hashingService = hashingService;
         _jwtService = jwtService;
+        _emailSender = emailSender;
+        _emailOptions = emailOptions.Value;
+        _logger = logger;
     }
 
     public async Task<Account> GetAccountAsync(Guid? accountId = null)
@@ -125,11 +148,12 @@ public class AccountService : IAccountService
     public async Task<string> RegisterAccountAsync(RegisterAccountDto registerDto)
     {
         var passwordHash = _hashingService.HashPassword(registerDto.Password);
+        var normalizedEmail = NormalizeEmail(registerDto.Email);
 
         var newAccount = new Account()
         {
             Id = new Guid(),
-            Email = registerDto.Email,
+            Email = normalizedEmail,
             Name = registerDto.Name,
             PasswordHash = passwordHash,
             DateCreated = DateTime.UtcNow,
@@ -152,9 +176,12 @@ public class AccountService : IAccountService
 
     public async Task<string> AuthenticateAsync(LoginDto loginDto)
     {
+        var usernameOrEmail = loginDto.UsernameOrEmail.Trim();
+        var normalizedEmail = NormalizeEmail(usernameOrEmail);
+
         var foundAccount = await _accountRepository
             .GetOneAsync(account =>
-                account.Name == loginDto.UsernameOrEmail || account.Email == loginDto.UsernameOrEmail);
+                account.Name == usernameOrEmail || account.Email.ToLower() == normalizedEmail);
 
         if (foundAccount is null)
             throw new ForbiddenException("Incorrect login details");
@@ -166,6 +193,98 @@ public class AccountService : IAccountService
 
         var token = _jwtService.GenerateSymmetricJwtToken(claims);
         return token;
+    }
+
+    public async Task RequestPasswordResetAsync(RequestPasswordResetDto dto)
+    {
+        var normalizedEmail = NormalizeEmail(dto.Email);
+        var account = await _accountRepository.GetOneAsync(a => a.Email.ToLower() == normalizedEmail);
+
+        if (account is null)
+        {
+            return;
+        }
+
+        var rawToken = PasswordResetTokenHelper.GenerateRawToken();
+        var tokenHash = PasswordResetTokenHelper.HashToken(rawToken);
+        var ttlMinutes = _emailOptions.PasswordResetTokenTtlMinutes > 0
+            ? _emailOptions.PasswordResetTokenTtlMinutes
+            : 15;
+        var utcNow = DateTime.UtcNow;
+
+        var resetToken = new PasswordResetToken
+        {
+            Id = Guid.NewGuid(),
+            AccountId = account.Id,
+            TokenHash = tokenHash,
+            CreatedAt = utcNow,
+            ExpiresAt = utcNow.AddMinutes(ttlMinutes)
+        };
+
+        await _unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await _passwordResetTokenStore.ConsumeAllForAccountAsync(account.Id, utcNow);
+            await _passwordResetTokenRepository.CreateAsync(resetToken);
+            await _passwordResetTokenRepository.SaveChangesAsync();
+        });
+
+        var frontendBaseUrl = _emailOptions.FrontendBaseUrl.TrimEnd('/');
+        var resetUrl = $"{frontendBaseUrl}/reset-password?token={Uri.EscapeDataString(rawToken)}";
+
+        try
+        {
+            await _emailSender.SendAsync(new OutgoingEmail
+            {
+                To = account.Email,
+                Subject = "Reset your BandFounder password",
+                TextBody = $"Reset your password using this link (valid for {ttlMinutes} minutes):\n\n{resetUrl}\n\nIf you did not request this, you can ignore this email.",
+                HtmlBody =
+                    $"<p>Reset your password using the link below (valid for {ttlMinutes} minutes):</p>" +
+                    $"<p><a href=\"{resetUrl}\">Reset password</a></p>" +
+                    "<p>If you did not request this, you can ignore this email.</p>"
+            });
+        }
+        catch (Exception ex)
+        {
+            await _passwordResetTokenRepository.DeleteOneAsync(resetToken.Id);
+            await _passwordResetTokenRepository.SaveChangesAsync();
+            _logger.LogError(ex, "Failed to send password reset email to {Email}", account.Email);
+            throw;
+        }
+    }
+
+    public async Task CompletePasswordResetAsync(CompletePasswordResetDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.NewPassword))
+        {
+            throw new BadRequestException("Invalid password reset request");
+        }
+
+        if (dto.NewPassword.Length < 8)
+        {
+            throw new BadRequestException("Password must be at least 8 characters long");
+        }
+
+        var tokenHash = PasswordResetTokenHelper.HashToken(dto.Token.Trim());
+        var utcNow = DateTime.UtcNow;
+
+        await _unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            var accountId = await _passwordResetTokenStore.TryConsumeAsync(tokenHash, utcNow);
+
+            if (accountId is null)
+            {
+                throw new BadRequestException("Invalid or expired password reset token");
+            }
+
+            await _passwordResetTokenStore.ConsumeAllForAccountAsync(accountId.Value, utcNow);
+
+            var account = await _accountRepository.GetOneRequiredAsync(accountId.Value);
+            account.PasswordHash = _hashingService.HashPassword(dto.NewPassword);
+            account.PasswordVersion++;
+
+            await _accountRepository.SaveChangesAsync();
+        });
     }
     
     public async Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null)
@@ -181,13 +300,15 @@ public class AccountService : IAccountService
             passwordHash = _hashingService.HashPassword(updateDto.Password);
         }
 
+        var normalizedUpdateEmail = updateDto.Email is null ? null : NormalizeEmail(updateDto.Email);
+
         var testAccount = new Account
         {
             Id = new Guid(),
             DateCreated = originalAccount.DateCreated,
 
             Name = updateDto.Name ?? "testAccountName",
-            Email = updateDto.Email ?? "testAccountEmail@email.com",
+            Email = normalizedUpdateEmail ?? "testAccountEmail@email.com",
             PasswordHash = passwordHash ?? "testAccountPassword"
         };
 
@@ -203,8 +324,11 @@ public class AccountService : IAccountService
             DateCreated = originalAccount.DateCreated,
 
             Name = updateDto.Name ?? originalAccount.Name,
-            Email = updateDto.Email ?? originalAccount.Email,
-            PasswordHash = passwordHash ?? originalAccount.PasswordHash
+            Email = normalizedUpdateEmail ?? originalAccount.Email,
+            PasswordHash = passwordHash ?? originalAccount.PasswordHash,
+            PasswordVersion = passwordHash is null
+                ? originalAccount.PasswordVersion
+                : originalAccount.PasswordVersion + 1
         };
 
         if (originalAccount.Equals(updatedAccount))
@@ -376,4 +500,6 @@ public class AccountService : IAccountService
 
         return account.ProfilePicture;
     }
+
+    private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 }

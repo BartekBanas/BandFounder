@@ -11,6 +11,11 @@ public interface IAuthenticationService
     ClaimsPrincipal GetUserClaims();
 }
 
+public static class AuthClaimTypes
+{
+    public const string PasswordVersion = "pwd_ver";
+}
+
 public class AuthenticationService : IAuthenticationService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -29,6 +34,7 @@ public class AuthenticationService : IAuthenticationService
             new(ClaimTypes.PrimarySid, account.Id.ToString()),
             new(ClaimTypes.Name, account.Name),
             new(ClaimTypes.Email, account.Email),
+            new(AuthClaimTypes.PasswordVersion, account.PasswordVersion.ToString()),
         });
     }
 
