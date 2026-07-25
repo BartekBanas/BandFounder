@@ -209,6 +209,99 @@ public class ListingServiceTests
     }
 
     [Test]
+    public async Task GetListingsFeedAsync_AvailableRoleFilter_ReturnsOnlyMatchingAvailableSlot()
+    {
+        var userId = Guid.NewGuid();
+        var drummerListing = CreateListing("Drummer", SlotStatus.Available, Guid.NewGuid());
+        var guitaristListing = CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid());
+        var listings = new List<Listing> { drummerListing, guitaristListing };
+
+        var service = CreateService(userId, [], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = false,
+            AvailableRole = "Drummer"
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(1));
+        Assert.That(result.Listings.First().Listing.Id, Is.EqualTo(drummerListing.Id));
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_AvailableRoleFilter_ExcludesFilledSlot()
+    {
+        var userId = Guid.NewGuid();
+        var listings = new List<Listing>
+        {
+            CreateListing("Drummer", SlotStatus.Filled, Guid.NewGuid())
+        };
+
+        var service = CreateService(userId, [], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = false,
+            AvailableRole = "Drummer"
+        });
+
+        Assert.That(result.Listings, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_AvailableRoleFilter_OverridesProfileRoleMatching()
+    {
+        var userId = Guid.NewGuid();
+        var drummerListing = CreateListing("Drummer", SlotStatus.Available, Guid.NewGuid());
+        var guitaristListing = CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid());
+        var listings = new List<Listing> { drummerListing, guitaristListing };
+
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true,
+            AvailableRole = "Drummer"
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(1));
+        Assert.That(result.Listings.First().Listing.Id, Is.EqualTo(drummerListing.Id));
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_AvailableRoleFilter_NormalizesRoleName()
+    {
+        var userId = Guid.NewGuid();
+        var drummerListing = CreateListing("Drummer", SlotStatus.Available, Guid.NewGuid());
+        var service = CreateService(userId, [], [drummerListing]);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = false,
+            AvailableRole = "  drummer  "
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(1));
+        Assert.That(result.Listings.First().Listing.Id, Is.EqualTo(drummerListing.Id));
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_AnyAvailableRole_DisablesProfileRoleMatching()
+    {
+        var userId = Guid.NewGuid();
+        var filledListing = CreateListing("Drummer", SlotStatus.Filled, Guid.NewGuid());
+        var guitaristListing = CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid());
+        var service = CreateService(userId, ["Guitarist"], [filledListing, guitaristListing]);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            AvailableRole = "Any"
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(2));
+    }
+
+    [Test]
     public async Task UpdateListing_UpdatesExistingDescription()
     {
         var userId = Guid.NewGuid();

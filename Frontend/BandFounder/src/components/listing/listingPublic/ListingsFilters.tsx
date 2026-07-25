@@ -1,16 +1,17 @@
 import React, {useState, useEffect} from 'react';
 import {Autocomplete, TextField, MenuItem} from "@mui/material";
 import {ListingType} from "../../../types/Listing";
-import {getGenres} from "../../../api/metadata";
+import {getGenres, getMusicianRoles} from "../../../api/metadata";
+import {ANY_ROLE_OPTION} from './roleFilter';
 import './style.css';
 
 const MAX_GENRE_FILTER_LENGTH = 50;
 
 export interface ListingsFiltersState {
-    matchMusicRole?: boolean;
     fromLatest?: boolean;
     listingType?: ListingType;
     genreFilter?: string;
+    availableRole?: string;
 }
 
 interface ListingsFiltersProps {
@@ -20,19 +21,20 @@ interface ListingsFiltersProps {
 }
 
 const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onReset}: ListingsFiltersProps) => {
-    const [tempMatchMusicRole, setTempMatchMusicRole] = useState<boolean | undefined>(filters.matchMusicRole);
     const [tempFromLatest, setTempFromLatest] = useState<boolean | undefined>(filters.fromLatest);
     const [tempListingType, setTempListingType] = useState<ListingType | undefined>(filters.listingType);
     const [tempGenreFilter, setTempGenreFilter] = useState<string | undefined>(filters.genreFilter);
+    const [tempAvailableRole, setTempAvailableRole] = useState<string | undefined>(filters.availableRole);
 
     useEffect(() => {
-        setTempMatchMusicRole(filters.matchMusicRole);
         setTempFromLatest(filters.fromLatest);
         setTempListingType(filters.listingType);
         setTempGenreFilter(filters.genreFilter);
+        setTempAvailableRole(filters.availableRole);
     }, [filters]);
 
     const [genreOptions, setGenreOptions] = useState<string[]>([]);
+    const [roleOptions, setRoleOptions] = useState<string[]>([ANY_ROLE_OPTION]);
     useEffect(() => {
         const fetchGenres = async () => {
             try {
@@ -41,24 +43,34 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                 console.error('Error fetching genres:', error);
             }
         };
+        const fetchRoles = async () => {
+            try {
+                const roles = await getMusicianRoles();
+                const specificRoles = roles.filter((role) => role !== ANY_ROLE_OPTION);
+                setRoleOptions([ANY_ROLE_OPTION, ...specificRoles]);
+            } catch (error) {
+                console.error('Error fetching roles:', error);
+            }
+        };
         fetchGenres();
+        fetchRoles();
     }, []);
 
     const handleApply = () => {
         const genreFilter = tempGenreFilter?.trim() || undefined;
         onApply({
-            matchMusicRole: tempMatchMusicRole,
             fromLatest: tempFromLatest,
             listingType: tempListingType,
             genreFilter,
+            availableRole: tempAvailableRole || undefined,
         });
     };
 
     const handleReset = () => {
-        setTempMatchMusicRole(undefined);
         setTempFromLatest(undefined);
         setTempListingType(undefined);
         setTempGenreFilter(undefined);
+        setTempAvailableRole(undefined);
         onReset();
     };
 
@@ -66,15 +78,6 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
         <div className="listings-filters">
             <h2 className="listings-filters__title">Filter Listings</h2>
             <div className="listings-filters__checkboxes">
-                <div className="listings-filters__checkbox-row">
-                    <input
-                        type="checkbox"
-                        id="matchMusicRole"
-                        checked={tempMatchMusicRole || false}
-                        onChange={() => setTempMatchMusicRole(!tempMatchMusicRole)}
-                    />
-                    <label htmlFor="matchMusicRole">Match any role</label>
-                </div>
                 <div className="listings-filters__checkbox-row">
                     <input
                         type="checkbox"
@@ -119,6 +122,24 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                                     maxLength: MAX_GENRE_FILTER_LENGTH,
                                 },
                             }}
+                        />
+                    )}
+                />
+            </div>
+            <div className="listings-filters__field">
+                <Autocomplete
+                    fullWidth
+                    options={roleOptions}
+                    value={tempAvailableRole ?? ''}
+                    onChange={(_, value) => setTempAvailableRole(value || undefined)}
+                    getOptionLabel={(option) => option === ANY_ROLE_OPTION ? 'All roles' : option}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Role"
+                            size="small"
+                            placeholder="e.g. Drummer"
+                            helperText="Leave empty to match your profile roles. Select All roles to disable role filtering."
                         />
                     )}
                 />

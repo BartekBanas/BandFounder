@@ -23,10 +23,11 @@ export interface ListingsFeedDto {
 }
 
 export interface ListingFeedFilters {
-    matchMusicRole: boolean | undefined,
+    disableProfileRoleMatching: boolean | undefined,
     fromLatest: boolean | undefined,
     listingType: ListingType | undefined,
-    genre: string | undefined
+    genre: string | undefined,
+    availableRole: string | undefined,
     pageNumber: number | undefined;
     pageSize: number | undefined;
 }

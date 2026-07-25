@@ -175,4 +175,47 @@ public class ListingTests : IntegrationTestBase
         var feed = await ReadJsonAsync<ListingsFeedDto>(feedResponse);
         Assert.That(feed.Listings.Any(item => item.Listing.Name == "Feed Listing"), Is.True);
     }
+
+    [Test]
+    public async Task GetListingsFeed_AvailableRoleFilter_ReturnsOnlyMatchingListings()
+    {
+        var ownerToken = await RegisterAsync("owner6", "owner6@example.com");
+        AuthenticateAs(ownerToken);
+
+        await Client.PostAsJsonAsync("/api/listings", new
+        {
+            name = "Needs Drummer",
+            genre = "Rock",
+            type = ListingType.Band,
+            description = "Drummer wanted",
+            musicianSlots = new[]
+            {
+                new { role = "Drummer", status = SlotStatus.Available },
+                new { role = "Guitarist", status = SlotStatus.Available }
+            }
+        });
+
+        await Client.PostAsJsonAsync("/api/listings", new
+        {
+            name = "Needs Bassist",
+            genre = "Rock",
+            type = ListingType.Band,
+            description = "Bassist wanted",
+            musicianSlots = new[]
+            {
+                new { role = "Bassist", status = SlotStatus.Available },
+                new { role = "Guitarist", status = SlotStatus.Available }
+            }
+        });
+
+        var viewerToken = await RegisterAsync("viewer2", "viewer2@example.com");
+        AuthenticateAs(viewerToken);
+
+        var feedResponse = await Client.GetAsync("/api/listings?AvailableRole=Drummer");
+        Assert.That(feedResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var feed = await ReadJsonAsync<ListingsFeedDto>(feedResponse);
+
+        Assert.That(feed.Listings, Has.Count.EqualTo(1));
+        Assert.That(feed.Listings.First().Listing.Name, Is.EqualTo("Needs Drummer"));
+    }
 }

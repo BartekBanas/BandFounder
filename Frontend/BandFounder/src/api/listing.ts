@@ -55,10 +55,8 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
     try {
         const params = new URLSearchParams();
 
-        if (ListingFeedFilters.matchMusicRole !== undefined) {
-            if(ListingFeedFilters.matchMusicRole) {
-                params.append('MatchRole', 'false');
-            }
+        if (ListingFeedFilters.disableProfileRoleMatching) {
+            params.append('MatchRole', 'false');
         }
         if (ListingFeedFilters.fromLatest !== undefined) {
             params.append('FromLatest', ListingFeedFilters.fromLatest.toString());
@@ -68,6 +66,9 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
         }
         if (ListingFeedFilters.genre !== undefined) {
             params.append('Genre', ListingFeedFilters.genre.toString());
+        }
+        if (ListingFeedFilters.availableRole !== undefined) {
+            params.append('AvailableRole', ListingFeedFilters.availableRole);
         }
         if (ListingFeedFilters.pageSize !== undefined) {
             params.append('PageSize', ListingFeedFilters.pageSize.toString());
