@@ -12,6 +12,18 @@ public sealed class PasswordResetTokenStore : IPasswordResetTokenStore
         _dbContext = dbContext;
     }
 
+    public async Task<PasswordResetTokenOwner?> GetOwnerAsync(string tokenHash, DateTime utcNow)
+    {
+        return await _dbContext.PasswordResetTokens
+            .AsNoTracking()
+            .Where(token =>
+                token.TokenHash == tokenHash &&
+                token.ConsumedAt == null &&
+                token.ExpiresAt > utcNow)
+            .Select(token => new PasswordResetTokenOwner(token.AccountId, token.ExpiresAt))
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<Guid?> TryConsumeAsync(string tokenHash, DateTime utcNow)
     {
         var rowsAffected = await _dbContext.PasswordResetTokens

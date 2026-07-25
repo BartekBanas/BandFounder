@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Api.IntegrationTests.Infrastructure;
+using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using BandFounder.Infrastructure;
@@ -341,6 +342,59 @@ public class PasswordResetTests : IntegrationTestBase
         AuthenticateAs(newJwt);
         var meWithNewJwt = await Client.GetAsync("/api/accounts/me");
         Assert.That(meWithNewJwt.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task GetPasswordResetInfo_WithValidToken_ReturnsAccountDetails()
+    {
+        await RegisterAsync("infouser", "infouser@example.com", "OldPassword123!");
+        Client.DefaultRequestHeaders.Authorization = null;
+
+        await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
+        {
+            email = "infouser@example.com"
+        });
+        var token = ExtractTokenFromEmail(EmailSender.Sent.Single().TextBody);
+
+        var response = await Client.GetAsync($"/api/accounts/password-reset/info?token={Uri.EscapeDataString(token)}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var info = await response.Content.ReadFromJsonAsync<PasswordResetTokenInfoDto>();
+        Assert.That(info, Is.Not.Null);
+        Assert.That(info!.Username, Is.EqualTo("infouser"));
+        Assert.That(info.Email, Is.EqualTo("infouser@example.com"));
+        Assert.That(info.HasProfilePicture, Is.False);
+        Assert.That(info.ExpiresAt, Is.GreaterThan(DateTime.UtcNow));
+    }
+
+    [Test]
+    public async Task GetPasswordResetInfo_WithUnknownToken_ReturnsBadRequest()
+    {
+        var response = await Client.GetAsync("/api/accounts/password-reset/info?token=not-a-real-token");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+
+    [Test]
+    public async Task GetPasswordResetInfo_AfterTokenConsumed_ReturnsBadRequest()
+    {
+        await RegisterAsync("consumedinfo", "consumedinfo@example.com", "OldPassword123!");
+        Client.DefaultRequestHeaders.Authorization = null;
+
+        await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
+        {
+            email = "consumedinfo@example.com"
+        });
+        var token = ExtractTokenFromEmail(EmailSender.Sent.Single().TextBody);
+
+        await Client.PostAsJsonAsync("/api/accounts/password-reset/complete", new
+        {
+            token,
+            newPassword = "NewPassword123!"
+        });
+
+        var response = await Client.GetAsync($"/api/accounts/password-reset/info?token={Uri.EscapeDataString(token)}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
     private static string ExtractTokenFromEmail(string textBody)

@@ -51,6 +51,15 @@ public class AccountController : Controller
         });
     }
 
+    [HttpGet("password-reset/info")]
+    [EnableRateLimiting("IpRateLimiting")]
+    public async Task<IActionResult> GetPasswordResetInfo([FromQuery] string? token)
+    {
+        var info = await _accountService.GetPasswordResetTokenInfoAsync(token);
+
+        return Ok(info);
+    }
+
     [HttpPost("password-reset/complete")]
     [EnableRateLimiting("IpRateLimiting")]
     public async Task<IActionResult> CompletePasswordReset([FromBody] CompletePasswordResetDto dto)

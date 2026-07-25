@@ -22,6 +22,7 @@ public interface IAccountService
     Task<string> RegisterAccountAsync(RegisterAccountDto registerDto);
     Task<string> AuthenticateAsync(LoginDto loginDto);
     Task RequestPasswordResetAsync(RequestPasswordResetDto dto);
+    Task<PasswordResetTokenInfoDto> GetPasswordResetTokenInfoAsync(string? token);
     Task CompletePasswordResetAsync(CompletePasswordResetDto dto);
     Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
     Task<IEnumerable<MusicianRole>> GetUserMusicianRoles(Guid? accountId = null);
@@ -253,16 +254,40 @@ public class AccountService : IAccountService
         }
     }
 
+    public async Task<PasswordResetTokenInfoDto> GetPasswordResetTokenInfoAsync(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            throw new BadRequestException("Invalid or expired password reset token");
+        }
+
+        var tokenHash = PasswordResetTokenHelper.HashToken(token.Trim());
+        var owner = await _passwordResetTokenStore.GetOwnerAsync(tokenHash, DateTime.UtcNow);
+
+        if (owner is null)
+        {
+            throw new BadRequestException("Invalid or expired password reset token");
+        }
+
+        var account = await _accountRepository.GetOneRequiredAsync(
+            key: owner.AccountId, includeProperties: nameof(Account.ProfilePicture));
+
+        return new PasswordResetTokenInfoDto
+        {
+            AccountId = account.Id,
+            Username = account.Name,
+            Email = account.Email,
+            HasProfilePicture = account.ProfilePicture is not null && account.ProfilePicture.ImageData.Length > 0,
+            MemberSince = account.DateCreated,
+            ExpiresAt = owner.ExpiresAt
+        };
+    }
+
     public async Task CompletePasswordResetAsync(CompletePasswordResetDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.NewPassword))
         {
             throw new BadRequestException("Invalid password reset request");
-        }
-
-        if (dto.NewPassword.Length < 8)
-        {
-            throw new BadRequestException("Password must be at least 8 characters long");
         }
 
         var tokenHash = PasswordResetTokenHelper.HashToken(dto.Token.Trim());
