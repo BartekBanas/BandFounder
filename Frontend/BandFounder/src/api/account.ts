@@ -10,7 +10,7 @@ import {
     mantineInformationNotification,
     mantineSuccessNotification
 } from "../components/common/mantineNotification";
-import {Account} from "../types/Account";
+import {Account, PasswordResetInfo} from "../types/Account";
 import {commonTaste} from "../types/CommonTaste";
 
 export async function registerAccount(name: string, email: string, password: string) {
@@ -74,6 +74,30 @@ export async function requestPasswordReset(email: string): Promise<void> {
     if (!response.ok) {
         throw new Error(await response.text() || 'Failed to request password reset');
     }
+}
+
+export async function getPasswordResetInfo(token: string): Promise<PasswordResetInfo> {
+    const response = await fetch(`${API_URL}/accounts/password-reset/info?token=${encodeURIComponent(token)}`, {
+        method: 'GET',
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text() || 'This password reset link is invalid or has expired');
+    }
+
+    return await response.json() as PasswordResetInfo;
+}
+
+export async function getPublicProfilePicture(accountId: string): Promise<string | null> {
+    const response = await fetch(`${API_URL}/accounts/${accountId}/profile-picture`, {
+        method: 'GET',
+    });
+
+    if (!response.ok) {
+        return null;
+    }
+
+    return URL.createObjectURL(await response.blob());
 }
 
 export async function completePasswordReset(token: string, newPassword: string): Promise<void> {
