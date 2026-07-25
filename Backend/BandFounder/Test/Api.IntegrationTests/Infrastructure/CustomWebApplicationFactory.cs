@@ -29,7 +29,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("JwtConfiguration:Audience", "Bandfounder");
         builder.UseSetting("JwtConfiguration:SecretKey", "a4336941e0769d65e0b56415d58c20c6");
         builder.UseSetting("JwtConfiguration:Expires", "60");
-        builder.UseSetting("FRONTEND_BASE_URL", "http://localhost:5173");
+        builder.UseSetting("FRONTEND_BASE_URL", "http://127.0.0.1:3000");
         builder.UseSetting("PASSWORD_RESET_TOKEN_TTL_MINUTES", "15");
         builder.UseSetting("EMAIL_FROM_ADDRESS", "noreply@bandfounder.com");
 

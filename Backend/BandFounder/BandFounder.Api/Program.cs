@@ -49,14 +49,17 @@ var resendApiKey = configuration["RESEND_API_KEY"]
                    ?? Environment.GetEnvironmentVariable("RESEND_API_KEY")
                    ?? string.Empty;
 
-services.Configure<EmailOptions>(options =>
+services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+
+services.PostConfigure<EmailOptions>(options =>
 {
     options.FromAddress = configuration["EMAIL_FROM_ADDRESS"]
                           ?? Environment.GetEnvironmentVariable("EMAIL_FROM_ADDRESS")
-                          ?? "noreply@bandfounder.com";
+                          ?? options.FromAddress;
+
     options.FrontendBaseUrl = configuration["FRONTEND_BASE_URL"]
                               ?? Environment.GetEnvironmentVariable("FRONTEND_BASE_URL")
-                              ?? "http://localhost:5173";
+                              ?? options.FrontendBaseUrl;
 
     var ttlRaw = configuration["PASSWORD_RESET_TOKEN_TTL_MINUTES"]
                  ?? Environment.GetEnvironmentVariable("PASSWORD_RESET_TOKEN_TTL_MINUTES");

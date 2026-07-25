@@ -41,7 +41,7 @@ public class PasswordResetTests : IntegrationTestBase
         var email = EmailSender.Sent[0];
         Assert.That(email.To, Is.EqualTo("resetuser@example.com"));
         Assert.That(email.Subject, Does.Contain("Reset"));
-        Assert.That(email.TextBody, Does.Contain("/reset-password?token="));
+        Assert.That(email.TextBody, Does.StartWith("http://127.0.0.1:3000/reset-password?token="));
     }
 
     [Test]
