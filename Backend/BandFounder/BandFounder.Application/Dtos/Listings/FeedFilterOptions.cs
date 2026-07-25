@@ -9,6 +9,7 @@ public class FeedFilterOptions
     public bool FromLatest { get; init; } = false;
     public ListingType? ListingType { get; init; }
     public string? Genre { get; init; }
+    public string? AvailableRole { get; init; }
     public int? PageSize { get; set; }
     public int? PageNumber { get; set; }
 }

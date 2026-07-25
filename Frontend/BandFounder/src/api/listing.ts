@@ -69,6 +69,9 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
         if (ListingFeedFilters.genre !== undefined) {
             params.append('Genre', ListingFeedFilters.genre.toString());
         }
+        if (ListingFeedFilters.availableRole !== undefined) {
+            params.append('AvailableRole', ListingFeedFilters.availableRole);
+        }
         if (ListingFeedFilters.pageSize !== undefined) {
             params.append('PageSize', ListingFeedFilters.pageSize.toString());
         }
