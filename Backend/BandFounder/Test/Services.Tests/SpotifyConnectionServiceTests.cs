@@ -1,9 +1,11 @@
 using BandFounder.Application.Services;
+using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Exceptions;
 using BandFounder.Infrastructure.Spotify.Services;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Services.Tests;
@@ -41,7 +43,8 @@ public class SpotifyConnectionServiceTests
             _artistRepository,
             _accountRepository,
             _genreRepository,
-            _spotifyAppCredentialsService);
+            _spotifyAppCredentialsService,
+            Options.Create(new TasteRefreshOptions()));
     }
 
     [Test]
@@ -170,6 +173,65 @@ public class SpotifyConnectionServiceTests
         await _spotifyTokensRepository.Received(1).DeleteOneAsync(userId);
         await _spotifyTokensRepository.Received(1).SaveChangesAsync();
         await _spotifyClient.DidNotReceive().GetTopArtistsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task RefreshTasteProfileIfDueAsync_ShouldSkip_WhenNotDue()
+    {
+        var userId = Guid.NewGuid();
+        var tokens = new SpotifyTokens
+        {
+            AccountId = userId,
+            AccessToken = "access",
+            RefreshToken = "refresh",
+            ExpirationDate = DateTime.UtcNow.AddHours(1),
+            ArtistsSyncedAt = DateTime.UtcNow.AddDays(-1),
+        };
+
+        _spotifyTokensRepository.GetOneAsync(userId)!.Returns(Task.FromResult(tokens));
+
+        var (refreshed, newlyAdded) =
+            await _spotifyConnectionService.RefreshTasteProfileIfDueAsync(userId);
+
+        Assert.That(refreshed, Is.False);
+        Assert.That(newlyAdded, Is.Empty);
+        await _spotifyClient.DidNotReceive().GetTopArtistsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task SaveRelevantArtists_ShouldStampArtistsSyncedAt()
+    {
+        var userId = Guid.NewGuid();
+        const string testToken = "testToken";
+        var tokens = new SpotifyTokens
+        {
+            AccountId = userId,
+            AccessToken = testToken,
+            RefreshToken = "",
+            ExpirationDate = DateTime.UtcNow.AddHours(1),
+        };
+        var account = new Account
+        {
+            Id = userId,
+            Artists = [],
+            Email = "test@mail",
+            Name = "test",
+            DateCreated = DateTime.Now,
+            PasswordHash = "pass"
+        };
+
+        _accountRepository.GetOneRequiredAsync(
+            Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
+        _artistRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Artist>(null!));
+        _genreRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Genre>(null!));
+        _spotifyTokensRepository.GetOneAsync(userId)!.Returns(Task.FromResult(tokens));
+        _spotifyClient.GetTopArtistsAsync(testToken, Arg.Any<int>(), Arg.Any<string>()).Returns([]);
+        _spotifyClient.GetFollowedArtistsAsync(testToken).Returns([]);
+
+        await _spotifyConnectionService.SaveRelevantArtists(userId);
+
+        Assert.That(tokens.ArtistsSyncedAt, Is.Not.Null);
+        Assert.That(tokens.ArtistsSyncedAt!.Value, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromSeconds(5)));
     }
 
     [Test]

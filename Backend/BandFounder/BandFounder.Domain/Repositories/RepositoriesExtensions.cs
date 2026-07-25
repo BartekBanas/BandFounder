@@ -117,19 +117,30 @@ public static class RepositoriesExtensions
             artist.Name = artistName;
         }
 
-        if (artist.Popularity == 0 && popularity > 0)
+        if (popularity > 0)
         {
             artist.Popularity = popularity;
         }
 
-        if (artist.Genres.Count == 0 && genres is { Count: > 0 })
+        // null = caller did not provide Spotify genres (e.g. manual add); leave existing set alone
+        if (genres is null)
         {
-            foreach (var genreName in genres)
-            {
-                var genre = await genreRepository.GetOrCreateAsync(genreName);
+            return;
+        }
 
-                artist.Genres.Add(genre);
-            }
+        var desiredGenres = new List<Genre>();
+        foreach (var genreName in genres.Where(name => !string.IsNullOrWhiteSpace(name)))
+        {
+            desiredGenres.Add(await genreRepository.GetOrCreateAsync(genreName));
+        }
+
+        var desiredNames = desiredGenres.Select(genre => genre.Name).ToHashSet(StringComparer.Ordinal);
+        artist.Genres.RemoveAll(genre => !desiredNames.Contains(genre.Name));
+
+        var existingNames = artist.Genres.Select(genre => genre.Name).ToHashSet(StringComparer.Ordinal);
+        foreach (var genre in desiredGenres.Where(genre => !existingNames.Contains(genre.Name)))
+        {
+            artist.Genres.Add(genre);
         }
     }
 

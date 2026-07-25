@@ -13,6 +13,9 @@ public class SpotifyTokens : Entity
     public required string RefreshToken { get; set; }
     
     public required DateTime ExpirationDate { get; set; }
+
+    /// <summary>UTC time of the last successful taste-profile sync (top + followed artists).</summary>
+    public DateTime? ArtistsSyncedAt { get; set; }
     
     public virtual Account Account { get; init; } = null!;
 }

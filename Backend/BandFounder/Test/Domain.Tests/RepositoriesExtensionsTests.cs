@@ -227,20 +227,79 @@ public class RepositoriesExtensionsTests
             Genres = []
         };
 
-        _artistRepository
-            .GetOneAsync(Arg.Any<Expression<Func<Artist, bool>>>(), Arg.Any<string[]>())
-            .Returns(callInfo =>
-            {
-                var filter = callInfo.Arg<Expression<Func<Artist, bool>>>().Compile();
-                return filter(existingArtist) ? existingArtist : null;
-            });
+        StubArtistLookup(existingArtist);
+        StubGenreGetOrCreate("Rock");
 
         var result = await _artistRepository.GetOrCreateAsync(
             _genreRepository, spotifyName, ["rock"], 80, spotifyId);
 
         Assert.That(result, Is.EqualTo(existingArtist));
         Assert.That(result.Name, Is.EqualTo(spotifyName));
+        Assert.That(result.Popularity, Is.EqualTo(80));
+        Assert.That(result.Genres.Select(g => g.Name), Is.EquivalentTo(new[] { "Rock" }));
         await _artistRepository.DidNotReceive().CreateAsync(Arg.Any<Artist>());
+    }
+
+    [Test]
+    public async Task GetOrCreateArtistAsync_ShouldReplaceGenres_WhenExistingArtistAlreadyHasGenres()
+    {
+        const string spotifyId = "spotify-artist-id";
+        var existingArtist = new Artist
+        {
+            Id = spotifyId,
+            Name = "Artist",
+            Popularity = 50,
+            Genres = [new Genre { Name = "Rock" }, new Genre { Name = "Metal" }]
+        };
+
+        StubArtistLookup(existingArtist);
+        StubGenreGetOrCreate("Pop");
+        StubGenreGetOrCreate("Jazz");
+
+        var result = await _artistRepository.GetOrCreateAsync(
+            _genreRepository, "Artist", ["pop", "jazz"], 90, spotifyId);
+
+        Assert.That(result.Genres.Select(g => g.Name), Is.EquivalentTo(new[] { "Pop", "Jazz" }));
+        Assert.That(result.Popularity, Is.EqualTo(90));
+    }
+
+    [Test]
+    public async Task GetOrCreateArtistAsync_ShouldClearGenres_WhenSpotifyReturnsEmptyList()
+    {
+        const string spotifyId = "spotify-artist-id";
+        var existingArtist = new Artist
+        {
+            Id = spotifyId,
+            Name = "Artist",
+            Genres = [new Genre { Name = "Rock" }]
+        };
+
+        StubArtistLookup(existingArtist);
+
+        var result = await _artistRepository.GetOrCreateAsync(
+            _genreRepository, "Artist", [], 0, spotifyId);
+
+        Assert.That(result.Genres, Is.Empty);
+        Assert.That(result.Popularity, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task GetOrCreateArtistAsync_ShouldLeaveGenresAlone_WhenGenresArgumentIsNull()
+    {
+        const string spotifyId = "spotify-artist-id";
+        var existingArtist = new Artist
+        {
+            Id = spotifyId,
+            Name = "Artist",
+            Genres = [new Genre { Name = "Rock" }]
+        };
+
+        StubArtistLookup(existingArtist);
+
+        var result = await _artistRepository.GetOrCreateAsync(
+            _genreRepository, "Artist", genres: null, popularity: 0, id: spotifyId);
+
+        Assert.That(result.Genres.Select(g => g.Name), Is.EquivalentTo(new[] { "Rock" }));
     }
 
     [Test]
@@ -256,6 +315,17 @@ public class RepositoriesExtensionsTests
             Genres = []
         };
 
+        StubArtistLookup(existingArtist);
+
+        var result = await _artistRepository.GetOrCreateAsync(
+            _genreRepository, "Artist Name", [], 0, spotifyUri);
+
+        Assert.That(result, Is.EqualTo(existingArtist));
+        await _artistRepository.DidNotReceive().CreateAsync(Arg.Any<Artist>());
+    }
+
+    private void StubArtistLookup(Artist existingArtist)
+    {
         _artistRepository
             .GetOneAsync(Arg.Any<Expression<Func<Artist, bool>>>(), Arg.Any<string[]>())
             .Returns(callInfo =>
@@ -263,11 +333,10 @@ public class RepositoriesExtensionsTests
                 var filter = callInfo.Arg<Expression<Func<Artist, bool>>>().Compile();
                 return filter(existingArtist) ? existingArtist : null;
             });
+    }
 
-        var result = await _artistRepository.GetOrCreateAsync(
-            _genreRepository, "Artist Name", [], 0, spotifyUri);
-
-        Assert.That(result, Is.EqualTo(existingArtist));
-        await _artistRepository.DidNotReceive().CreateAsync(Arg.Any<Artist>());
+    private void StubGenreGetOrCreate(string normalizedName)
+    {
+        _genreRepository.GetOneAsync(normalizedName).Returns(new Genre { Name = normalizedName });
     }
 }

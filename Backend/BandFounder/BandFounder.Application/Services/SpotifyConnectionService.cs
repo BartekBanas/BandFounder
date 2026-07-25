@@ -1,9 +1,11 @@
+using BandFounder.Application.Services.Spotify;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using BandFounder.Infrastructure.Spotify;
 using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Exceptions;
 using BandFounder.Infrastructure.Spotify.Services;
+using Microsoft.Extensions.Options;
 
 namespace BandFounder.Application.Services;
 
@@ -14,6 +16,10 @@ public interface ISpotifyConnectionService
     Task<SpotifyTokensDto> GetSpotifyTokens(Guid userId);
     Task<string> GetAccessTokenAsync(Guid userId);
     Task<List<SpotifyArtistDto>> SaveRelevantArtists(Guid userId);
+    Task<(bool Refreshed, List<SpotifyArtistDto> NewlyAdded)> RefreshTasteProfileIfDueAsync(
+        Guid userId,
+        bool force = false);
+    Task<IReadOnlyList<Guid>> GetAccountIdsDueForTasteRefreshAsync(int batchSize);
     Task<List<SpotifyArtistDto>> GetTopArtistsAsync(
         Guid userId,
         int limit = 50,
@@ -31,9 +37,12 @@ public class SpotifyConnectionService(
     IRepository<Artist> artistRepository,
     IRepository<Account> accountRepository,
     IRepository<Genre> genreRepository,
-    ISpotifyAppCredentialsService spotifyAppCredentialsService)
+    ISpotifyAppCredentialsService spotifyAppCredentialsService,
+    IOptions<TasteRefreshOptions> tasteRefreshOptions)
     : ISpotifyConnectionService
 {
+    private readonly TasteRefreshOptions _tasteRefreshOptions = tasteRefreshOptions.Value;
+
     public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid userId)
     {
         var spotifyAppCredentials = await spotifyAppCredentialsService.LoadCredentials();
@@ -189,7 +198,61 @@ public class SpotifyConnectionService(
         }
 
         await accountRepository.SaveChangesAsync();
+        await StampArtistsSyncedAtAsync(userId);
         return savedArtists;
+    }
+
+    public async Task<(bool Refreshed, List<SpotifyArtistDto> NewlyAdded)> RefreshTasteProfileIfDueAsync(
+        Guid userId,
+        bool force = false)
+    {
+        var tokens = await spotifyTokensRepository.GetOneAsync(userId);
+        if (tokens is null)
+        {
+            throw new SpotifyAccountNotLinkedException();
+        }
+
+        if (!force &&
+            !TasteRefreshSchedule.IsDue(userId, tokens.ArtistsSyncedAt, DateTime.UtcNow, _tasteRefreshOptions))
+        {
+            return (false, []);
+        }
+
+        var newlyAdded = await SaveRelevantArtists(userId);
+        return (true, newlyAdded);
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetAccountIdsDueForTasteRefreshAsync(int batchSize)
+    {
+        if (batchSize <= 0)
+        {
+            return [];
+        }
+
+        var cutoff = DateTime.UtcNow.AddDays(-_tasteRefreshOptions.MinDays);
+        var candidates = (await spotifyTokensRepository.GetAsync(
+            filter: tokens => tokens.ArtistsSyncedAt == null || tokens.ArtistsSyncedAt <= cutoff)).ToList();
+
+        var utcNow = DateTime.UtcNow;
+        return candidates
+            .Where(tokens => TasteRefreshSchedule.IsDue(
+                tokens.AccountId, tokens.ArtistsSyncedAt, utcNow, _tasteRefreshOptions))
+            .OrderBy(tokens => tokens.ArtistsSyncedAt ?? DateTime.MinValue)
+            .Take(batchSize)
+            .Select(tokens => tokens.AccountId)
+            .ToList();
+    }
+
+    private async Task StampArtistsSyncedAtAsync(Guid userId)
+    {
+        var tokens = await spotifyTokensRepository.GetOneAsync(userId);
+        if (tokens is null)
+        {
+            return;
+        }
+
+        tokens.ArtistsSyncedAt = DateTime.UtcNow;
+        await spotifyTokensRepository.SaveChangesAsync();
     }
 
     public async Task<List<SpotifyArtistDto>> RetrieveSpotifyUsersArtistsAsync(Guid userId)

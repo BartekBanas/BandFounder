@@ -65,11 +65,17 @@ public class SpotifyBrokerController : ControllerBase
     
     [Authorize]
     [HttpPost("spotify/update-artists")]
-    public async Task<IActionResult> UpdateArtistsFromSpotify()
+    public async Task<IActionResult> UpdateArtistsFromSpotify([FromQuery] bool force = false)
     {
         var userId = _authenticationService.GetUserId();
-        
-        var newlyAddedArtists = await _spotifyConnectionService.SaveRelevantArtists(userId);
+
+        var (refreshed, newlyAddedArtists) =
+            await _spotifyConnectionService.RefreshTasteProfileIfDueAsync(userId, force);
+
+        if (!refreshed)
+        {
+            return NoContent();
+        }
 
         return Ok(newlyAddedArtists);
     }

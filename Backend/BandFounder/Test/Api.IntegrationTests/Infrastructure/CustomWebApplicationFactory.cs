@@ -32,6 +32,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("FRONTEND_BASE_URL", "http://localhost:5173");
         builder.UseSetting("PASSWORD_RESET_TOKEN_TTL_MINUTES", "15");
         builder.UseSetting("EMAIL_FROM_ADDRESS", "noreply@bandfounder.com");
+        builder.UseSetting("Spotify:TasteRefresh:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {
