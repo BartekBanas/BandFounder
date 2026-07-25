@@ -23,7 +23,7 @@ export interface ListingsFeedDto {
 }
 
 export interface ListingFeedFilters {
-    matchMusicRole: boolean | undefined,
+    disableProfileRoleMatching: boolean | undefined,
     fromLatest: boolean | undefined,
     listingType: ListingType | undefined,
     genre: string | undefined,

@@ -3,8 +3,7 @@ import {useNavigate, useLocation} from 'react-router-dom';
 import {getListingFeed} from '../../../api/listing';
 import {ListingFeedFilters, ListingType, ListingWithScore} from '../../../types/Listing';
 import {ListingsFiltersState} from './ListingsFilters';
-
-const ANY_ROLE_OPTION = 'Any';
+import {ANY_ROLE_OPTION} from './roleFilter';
 
 export function useListingsFeed() {
     const navigate = useNavigate();
@@ -75,7 +74,7 @@ export function useListingsFeed() {
             try {
                 const bypassProfileRoles = filters.availableRole === ANY_ROLE_OPTION;
                 const feedFilters: ListingFeedFilters = {
-                    matchMusicRole: bypassProfileRoles ? true : undefined,
+                    disableProfileRoleMatching: bypassProfileRoles ? true : undefined,
                     fromLatest: filters.fromLatest,
                     listingType: filters.listingType,
                     genre: filters.genreFilter,

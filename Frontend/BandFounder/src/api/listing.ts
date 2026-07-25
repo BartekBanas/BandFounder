@@ -55,10 +55,8 @@ export async function getListingFeed(ListingFeedFilters: ListingFeedFilters): Pr
     try {
         const params = new URLSearchParams();
 
-        if (ListingFeedFilters.matchMusicRole !== undefined) {
-            if(ListingFeedFilters.matchMusicRole) {
-                params.append('MatchRole', 'false');
-            }
+        if (ListingFeedFilters.disableProfileRoleMatching) {
+            params.append('MatchRole', 'false');
         }
         if (ListingFeedFilters.fromLatest !== undefined) {
             params.append('FromLatest', ListingFeedFilters.fromLatest.toString());

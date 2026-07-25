@@ -2,10 +2,10 @@ import React, {useState, useEffect} from 'react';
 import {Autocomplete, TextField, MenuItem} from "@mui/material";
 import {ListingType} from "../../../types/Listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
+import {ANY_ROLE_OPTION} from './roleFilter';
 import './style.css';
 
 const MAX_GENRE_FILTER_LENGTH = 50;
-const ANY_ROLE_OPTION = 'Any';
 
 export interface ListingsFiltersState {
     fromLatest?: boolean;
@@ -132,12 +132,14 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     options={roleOptions}
                     value={tempAvailableRole ?? ''}
                     onChange={(_, value) => setTempAvailableRole(value || undefined)}
+                    getOptionLabel={(option) => option === ANY_ROLE_OPTION ? 'All roles' : option}
                     renderInput={(params) => (
                         <TextField
                             {...params}
                             label="Role"
                             size="small"
                             placeholder="e.g. Drummer"
+                            helperText="Leave empty to match your profile roles. Select All roles to disable role filtering."
                         />
                     )}
                 />
