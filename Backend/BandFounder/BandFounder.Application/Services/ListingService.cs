@@ -110,13 +110,17 @@ public class ListingService : IListingService
             filter = AndAlso(filter, listing => listing.GenreName == genre);
         }
 
-        if (filterOptions.AvailableRole is not null)
+        var availableRole = string.IsNullOrWhiteSpace(filterOptions.AvailableRole)
+            ? null
+            : filterOptions.AvailableRole.NormalizeName();
+        var bypassProfileRoleMatching = string.Equals(availableRole, "Any", StringComparison.OrdinalIgnoreCase);
+
+        if (availableRole is not null && !bypassProfileRoleMatching)
         {
-            var availableRole = filterOptions.AvailableRole;
             filter = AndAlso(filter, listing => listing.MusicianSlots.Any(
                 slot => slot.Status == SlotStatus.Available && slot.Role.Name == availableRole));
         }
-        else if (filterOptions.MatchRole && userAccount.MusicianRoles.Count > 0)
+        else if (!bypassProfileRoleMatching && filterOptions.MatchRole && userAccount.MusicianRoles.Count > 0)
         {
             var roleNames = userAccount.MusicianRoles.Select(r => r.Name).ToList();
             if (roleNames.Contains("Any"))
