@@ -455,8 +455,10 @@ $RECYCLE.BIN/
 
 Desktop.ini
 
-# File for storing spotif app credentials
+# Files for secrets
 /BandFounder.Api/spotifyAppCredentials.json
+/BandFounder.Api/emailCredentials.json
+/BandFounder.Api/.env
 
 # Live Spotify test credentials (copy from spotifyLiveTestCredentials.example.json)
 /Test/Infrastructure.Tests/spotifyLiveTestCredentials.json

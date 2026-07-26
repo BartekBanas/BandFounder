@@ -14,6 +14,11 @@ public class Account : Entity
 
     public required string PasswordHash { get; set; }
 
+    /// <summary>
+    /// Incremented whenever the password changes. Embedded in JWTs so old tokens can be rejected.
+    /// </summary>
+    public int PasswordVersion { get; set; }
+
     [EmailAddress]
     public required string Email { get; set; }
     

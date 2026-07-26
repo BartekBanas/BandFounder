@@ -54,8 +54,9 @@ public class AccountValidator : AbstractValidator<Account>
     
     private async Task ValidateUniqueEmail(Account account, ValidationContext<Account> context, CancellationToken token)
     {
+        var normalizedEmail = account.Email.ToLower();
         var matchingAccounts = await _accountRepository
-            .GetAsync(foundAccount => foundAccount.Email == account.Email);
+            .GetAsync(foundAccount => foundAccount.Email.ToLower() == normalizedEmail);
 
         if (matchingAccounts.Any())
         {

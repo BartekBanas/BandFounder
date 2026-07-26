@@ -18,6 +18,7 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<MusicianRole> MusicianRoles { get; set; }
     
     public DbSet<SpotifyTokens> SpotifyTokens { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -106,6 +107,16 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .HasOne(readState => readState.Chatroom)
             .WithMany()
             .HasForeignKey(readState => readState.ChatRoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PasswordResetToken>()
+            .HasIndex(token => token.TokenHash)
+            .IsUnique();
+
+        modelBuilder.Entity<PasswordResetToken>()
+            .HasOne(token => token.Account)
+            .WithMany()
+            .HasForeignKey(token => token.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
         
         PopulateGenres(modelBuilder);
