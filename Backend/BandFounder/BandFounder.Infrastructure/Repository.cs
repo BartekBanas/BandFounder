@@ -22,6 +22,12 @@ public class Repository<TEntity, TDbContext> : IRepository<TEntity>
         _saveChangesAsyncDelegate = async () => { await dbContext.SaveChangesAsync(); };
     }
 
+    public virtual async Task<List<TResult>> QueryAsync<TResult>(
+        Func<IQueryable<TEntity>, IQueryable<TResult>> query)
+    {
+        return await query(_dbSet.AsNoTracking()).ToListAsync();
+    }
+
     public virtual async Task<TEntity?> GetOneAsync(params object[] keys)
     {
         if (keys.Length == 0)

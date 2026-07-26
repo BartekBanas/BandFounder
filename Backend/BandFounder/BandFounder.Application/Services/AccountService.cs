@@ -53,6 +53,7 @@ public class AccountService : IAccountService
     private readonly IEmailSender _emailSender;
     private readonly EmailOptions _emailOptions;
     private readonly ILogger<AccountService> _logger;
+    private readonly IMusicProfileProvider? _musicProfileProvider;
 
     public AccountService(
         IRepository<Account> accountRepository, 
@@ -69,7 +70,8 @@ public class AccountService : IAccountService
         IJwtService jwtService,
         IEmailSender emailSender,
         IOptions<EmailOptions> emailOptions,
-        ILogger<AccountService> logger)
+        ILogger<AccountService> logger,
+        IMusicProfileProvider? musicProfileProvider = null)
     {
         _accountRepository = accountRepository;
         _artistRepository = artistRepository;
@@ -86,6 +88,7 @@ public class AccountService : IAccountService
         _emailSender = emailSender;
         _emailOptions = emailOptions.Value;
         _logger = logger;
+        _musicProfileProvider = musicProfileProvider;
     }
 
     public async Task<Account> GetAccountAsync(Guid? accountId = null)
@@ -450,6 +453,7 @@ public class AccountService : IAccountService
         account.Artists.Clear();
         
         await _accountRepository.SaveChangesAsync();
+        _musicProfileProvider?.Invalidate(accountId.Value);
     }
 
     public async Task AddArtist(Guid accountId, string artistName)
@@ -478,6 +482,7 @@ public class AccountService : IAccountService
         account.Artists.Add(artist);
 
         await _accountRepository.SaveChangesAsync();
+        _musicProfileProvider?.Invalidate(accountId);
     }
     
     public async Task UpdateProfilePicture(Guid accountId, IFormFile file)

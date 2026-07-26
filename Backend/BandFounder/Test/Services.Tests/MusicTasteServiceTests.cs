@@ -11,7 +11,10 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(
+            accountService,
+            Substitute.For<IAuthenticationService>(),
+            Substitute.For<IMusicProfileProvider>());
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -97,7 +100,10 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(
+            accountService,
+            Substitute.For<IAuthenticationService>(),
+            Substitute.For<IMusicProfileProvider>());
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -161,7 +167,10 @@ public class MusicTasteServiceTests
     public void GetWagedGenres_ShouldReturnGenresWithCorrectWeights()
     {
         // Arrange
-        var musicTasteService = new MusicTasteService(Substitute.For<IAccountService>(), Substitute.For<IAuthenticationService>());
+        var musicTasteService = new MusicTasteService(
+            Substitute.For<IAccountService>(),
+            Substitute.For<IAuthenticationService>(),
+            Substitute.For<IMusicProfileProvider>());
 
         var user = new Account
         {
@@ -228,7 +237,11 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
+        var musicProfileProvider = Substitute.For<IMusicProfileProvider>();
+        var musicTasteService = new MusicTasteService(
+            accountService,
+            Substitute.For<IAuthenticationService>(),
+            musicProfileProvider);
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -292,6 +305,16 @@ public class MusicTasteServiceTests
 
         accountService.GetDetailedAccount(requesterId).Returns(user1);
         accountService.GetDetailedAccount(targetUserId).Returns(user2);
+        musicProfileProvider.GetProfilesAsync(Arg.Any<IReadOnlyCollection<Guid>>())
+            .Returns(new Dictionary<Guid, MusicProfile>
+            {
+                [requesterId] = new(
+                    new HashSet<string> { "Artist1" },
+                    new Dictionary<string, int> { ["Rock"] = 1, ["Jazz"] = 1 }),
+                [targetUserId] = new(
+                    new HashSet<string> { "Artist1" },
+                    new Dictionary<string, int> { ["Rock"] = 1, ["Classical"] = 1 })
+            });
 
         // Act
         var result = await musicTasteService.CompareMusicTasteAsync(requesterId, targetUserId);
