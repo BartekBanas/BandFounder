@@ -31,7 +31,8 @@ public class SpotifyConnectionService(
     IRepository<Artist> artistRepository,
     IRepository<Account> accountRepository,
     IRepository<Genre> genreRepository,
-    ISpotifyAppCredentialsService spotifyAppCredentialsService)
+    ISpotifyAppCredentialsService spotifyAppCredentialsService,
+    IMusicProfileProvider? musicProfileProvider = null)
     : ISpotifyConnectionService
 {
     public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid userId)
@@ -189,6 +190,7 @@ public class SpotifyConnectionService(
         }
 
         await accountRepository.SaveChangesAsync();
+        musicProfileProvider?.Invalidate(userId);
         return savedArtists;
     }
 

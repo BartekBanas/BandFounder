@@ -8,8 +8,11 @@ using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace BandFounder.Application.Services;
+
+public sealed record FeedCandidate(Guid Id, Guid OwnerId, DateTime DateCreated);
 
 public interface IListingService
 {
@@ -88,7 +91,7 @@ public class ListingService : IListingService
     {
         // Build a database-side filter to reduce the number of loaded listings
         var userId = _authenticationService.GetUserId();
-        var userAccount = await _accountService.GetDetailedAccount(userId);
+        var userAccount = await _accountService.GetDetailedAccount(userId, nameof(Account.MusicianRoles));
 
         // Start with a predicate that's always true and add conditions
         Expression<Func<Listing, bool>> filter = listing => true;
@@ -134,44 +137,63 @@ public class ListingService : IListingService
             }
         }
 
-        // Fetch all listings matching the filter. Paging is applied after similarity scoring below,
-        // because the feed is ranked by music-taste match rather than date or insertion order.
-        var includeProperties = new[] { nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role" };
+        var candidates = await _listingRepository.QueryAsync(listings =>
+            listings
+                .Where(filter)
+                .Select(listing => new FeedCandidate(
+                    listing.Id,
+                    listing.OwnerId,
+                    listing.DateCreated)));
 
-        Func<IQueryable<Listing>, IOrderedQueryable<Listing>>? orderBy = null;
+        if (candidates.Count == 0)
+        {
+            return new ListingsFeedDto();
+        }
+
+        var scoresByOwnerId = await _musicTasteService.CompareMusicTasteManyAsync(
+            userId,
+            candidates.Select(candidate => candidate.OwnerId).Distinct().ToArray());
+
+        var pageSize = filterOptions.PageSize ?? 100;
+        var pageNumber = filterOptions.PageNumber ?? 1;
+        pageSize = Math.Max(pageSize, 1);
+        pageNumber = Math.Max(pageNumber, 1);
+
+        var orderedCandidates = candidates
+            .OrderByDescending(candidate => scoresByOwnerId[candidate.OwnerId]);
+
         if (filterOptions.FromLatest)
         {
-            orderBy = q => q.OrderByDescending(l => l.DateCreated);
+            orderedCandidates = orderedCandidates.ThenByDescending(candidate => candidate.DateCreated);
         }
 
-        var listingsList = (await _listingRepository.GetAsync(
-            filter: filter,
-            orderBy: orderBy,
-            includeProperties: includeProperties)).ToList();
-
-        var listingsWithScores = new List<ListingWithScore>();
-
-        foreach (var listing in listingsList)
-        {
-            var similarityScore = await _musicTasteService.CompareMusicTasteAsync(userId, listing.OwnerId);
-            listingsWithScores.Add(new ListingWithScore()
-            {
-                Listing = listing.ToDto(),
-                SimilarityScore = similarityScore
-            });
-        }
-        
-        listingsWithScores = listingsWithScores
-            .OrderByDescending(listing => listing.SimilarityScore)
+        var pageCandidateIds = orderedCandidates
+            .ThenBy(candidate => candidate.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(candidate => candidate.Id)
             .ToList();
-        
-        if (filterOptions is { PageNumber: not null, PageSize: not null })
-        {
-            listingsWithScores = listingsWithScores
-                .Skip((filterOptions.PageNumber.Value - 1) * filterOptions.PageSize.Value)
-                .Take(filterOptions.PageSize.Value)
-                .ToList();
-        }
+
+        var listingsById = (await _listingRepository.QueryAsync(listings =>
+                listings
+                    .Where(listing => pageCandidateIds.Contains(listing.Id))
+                    .Include(listing => listing.Owner)
+                    .Include(listing => listing.MusicianSlots)
+                    .ThenInclude(slot => slot.Role)
+                    .AsSplitQuery()))
+            .ToDictionary(listing => listing.Id);
+
+        var listingsWithScores = pageCandidateIds
+            .Select(listingId =>
+            {
+                var listing = listingsById[listingId];
+                return new ListingWithScore
+                {
+                    Listing = listing.ToDto(),
+                    SimilarityScore = scoresByOwnerId[listing.OwnerId]
+                };
+            })
+            .ToList();
         
         return new ListingsFeedDto
         {

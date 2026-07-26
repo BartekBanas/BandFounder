@@ -6,6 +6,8 @@ public interface IRepository;
 
 public interface IRepository<TEntity> : IRepository where TEntity : Entity
 {
+    Task<List<TResult>> QueryAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query);
+    
     Task<IEnumerable<TEntity>> GetAsync(
         Expression<Func<TEntity, bool>>? filter = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,

@@ -496,14 +496,21 @@ public class ListingServiceTests
         };
 
         authenticationServiceMock.GetUserId().Returns(userId);
-        accountServiceMock.GetDetailedAccount(userId).Returns(userAccount);
+        accountServiceMock
+            .GetDetailedAccount(userId, Arg.Any<string[]>())
+            .Returns(userAccount);
         SetupListingRepositoryWithFilter(listingRepositoryMock, listings);
 
-        musicTasteServiceMock.CompareMusicTasteAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+        musicTasteServiceMock.CompareMusicTasteManyAsync(
+                Arg.Any<Guid>(),
+                Arg.Any<IReadOnlyCollection<Guid>>())
             .Returns(callInfo =>
             {
-                var ownerId = callInfo.ArgAt<Guid>(1);
-                return similarityScores?.GetValueOrDefault(ownerId, 1) ?? 1;
+                var ownerIds = callInfo.ArgAt<IReadOnlyCollection<Guid>>(1);
+                return Task.FromResult<IReadOnlyDictionary<Guid, int>>(
+                    ownerIds.ToDictionary(
+                        ownerId => ownerId,
+                        ownerId => similarityScores?.GetValueOrDefault(ownerId, 1) ?? 1));
             });
 
         return new ListingService(
@@ -523,6 +530,24 @@ public class ListingServiceTests
         IRepository<Listing> listingRepositoryMock,
         List<Listing> listings)
     {
+        listingRepositoryMock
+            .QueryAsync<FeedCandidate>(
+                Arg.Any<Func<IQueryable<Listing>, IQueryable<FeedCandidate>>>())
+            .Returns(callInfo =>
+            {
+                var query = callInfo.ArgAt<Func<IQueryable<Listing>, IQueryable<FeedCandidate>>>(0);
+                return Task.FromResult(query(listings.AsQueryable()).ToList());
+            });
+
+        listingRepositoryMock
+            .QueryAsync<Listing>(
+                Arg.Any<Func<IQueryable<Listing>, IQueryable<Listing>>>())
+            .Returns(callInfo =>
+            {
+                var query = callInfo.ArgAt<Func<IQueryable<Listing>, IQueryable<Listing>>>(0);
+                return Task.FromResult(query(listings.AsQueryable()).ToList());
+            });
+
         listingRepositoryMock
             .GetAsync(
                 Arg.Any<Expression<Func<Listing, bool>>>(),
@@ -557,6 +582,7 @@ public class ListingServiceTests
     {
         return new Listing
         {
+            Id = Guid.NewGuid(),
             Name = "Test listing",
             OwnerId = ownerId,
             Owner = new Account
