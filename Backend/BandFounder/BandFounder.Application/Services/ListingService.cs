@@ -154,10 +154,15 @@ public class ListingService : IListingService
             candidates.Select(candidate => candidate.OwnerId).Distinct().ToArray());
 
         // Omitting paging returns the first page with a bounded default size.
-        var pageSize = filterOptions.PageSize ?? 100;
-        var pageNumber = filterOptions.PageNumber ?? 1;
-        pageSize = Math.Max(pageSize, 1);
-        pageNumber = Math.Max(pageNumber, 1);
+        const int defaultPageSize = 100;
+        const int maxPageSize = 100;
+        var pageSize = Math.Clamp(filterOptions.PageSize ?? defaultPageSize, 1, maxPageSize);
+        var pageNumber = Math.Max(filterOptions.PageNumber ?? 1, 1);
+        var skip = (long)(pageNumber - 1) * pageSize;
+        if (skip > int.MaxValue)
+        {
+            return new ListingsFeedDto();
+        }
 
         var orderedCandidates = candidates
             .OrderByDescending(candidate => scoresByOwnerId[candidate.OwnerId]);
@@ -169,7 +174,7 @@ public class ListingService : IListingService
 
         var pageCandidateIds = orderedCandidates
             .ThenBy(candidate => candidate.Id)
-            .Skip((pageNumber - 1) * pageSize)
+            .Skip((int)skip)
             .Take(pageSize)
             .Select(candidate => candidate.Id)
             .ToList();

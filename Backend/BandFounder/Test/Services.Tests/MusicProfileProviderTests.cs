@@ -74,4 +74,45 @@ public class MusicProfileProviderTests
         Assert.That(cache.TryGetValue($"music-profile:{firstAccountId}", out _), Is.False);
         Assert.That(cache.TryGetValue($"music-profile:{secondAccountId}", out _), Is.False);
     }
+
+    [Test]
+    public async Task GetProfilesAsync_ShouldNotCacheWhenInvalidatedDuringLoad()
+    {
+        var accountId = Guid.NewGuid();
+        var accountRepository = Substitute.For<IRepository<Account>>();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var provider = new MusicProfileProvider(accountRepository, cache);
+        var loadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowLoadToFinish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        accountRepository
+            .QueryAsync<MusicProfileArtistRow>(
+                Arg.Any<Func<IQueryable<Account>, IQueryable<MusicProfileArtistRow>>>())
+            .Returns(async _ =>
+            {
+                loadStarted.TrySetResult();
+                await allowLoadToFinish.Task;
+                return
+                [
+                    new MusicProfileArtistRow(accountId, "artist-1")
+                ];
+            });
+        accountRepository
+            .QueryAsync<MusicProfileGenreWeightRow>(
+                Arg.Any<Func<IQueryable<Account>, IQueryable<MusicProfileGenreWeightRow>>>())
+            .Returns(
+            [
+                new MusicProfileGenreWeightRow(accountId, "Rock", 1)
+            ]);
+
+        var loadTask = provider.GetProfilesAsync([accountId]);
+        await loadStarted.Task;
+        provider.Invalidate(accountId);
+        allowLoadToFinish.TrySetResult();
+
+        var profiles = await loadTask;
+
+        Assert.That(profiles[accountId].ArtistIds, Is.EquivalentTo(new[] { "artist-1" }));
+        Assert.That(cache.TryGetValue($"music-profile:{accountId}", out _), Is.False);
+    }
 }

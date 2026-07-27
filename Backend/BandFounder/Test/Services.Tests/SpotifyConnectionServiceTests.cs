@@ -21,6 +21,7 @@ public class SpotifyConnectionServiceTests
     private IRepository<Account> _accountRepository;
     private IRepository<Genre> _genreRepository;
     private IMusicProfileProvider _musicProfileProvider;
+    private IUnitOfWork _unitOfWork;
 
     [SetUp]
     public void Setup()
@@ -40,6 +41,9 @@ public class SpotifyConnectionServiceTests
         _musicProfileProvider
             .InvalidateForArtistsAsync(Arg.Any<IReadOnlyCollection<string>>())
             .Returns(Task.CompletedTask);
+        _unitOfWork = Substitute.For<IUnitOfWork>();
+        _unitOfWork.ExecuteInTransactionAsync(Arg.Any<Func<Task>>())
+            .Returns(callInfo => callInfo.ArgAt<Func<Task>>(0)());
 
         _spotifyConnectionService = new SpotifyConnectionService(
             _spotifyClient,
@@ -48,7 +52,8 @@ public class SpotifyConnectionServiceTests
             _accountRepository,
             _genreRepository,
             _spotifyAppCredentialsService,
-            _musicProfileProvider);
+            _musicProfileProvider,
+            _unitOfWork);
     }
 
     [Test]
@@ -147,6 +152,31 @@ public class SpotifyConnectionServiceTests
         await _musicProfileProvider.Received(1)
             .InvalidateForArtistsAsync(Arg.Is<IReadOnlyCollection<string>>(ids =>
                 ids.SequenceEqual(new[] { "artist-1" })));
+    }
+
+    [Test]
+    public async Task SaveRelevantArtists_ShouldNotInvalidateWhenTransactionFails()
+    {
+        var userId = Guid.NewGuid();
+        _spotifyTokensRepository.GetOneAsync(userId).Returns(new SpotifyTokens
+        {
+            AccountId = userId,
+            AccessToken = "token",
+            RefreshToken = "",
+            ExpirationDate = DateTime.UtcNow.AddHours(1)
+        });
+        _spotifyClient.GetTopArtistsAsync("token", Arg.Any<int>(), Arg.Any<string>())
+            .Returns([new SpotifyArtistDto { Id = "artist-1", Name = "Artist 1", Genres = ["Rock"] }]);
+        _spotifyClient.GetFollowedArtistsAsync("token").Returns([]);
+        _unitOfWork.ExecuteInTransactionAsync(Arg.Any<Func<Task>>())
+            .Returns<Task>(_ => throw new InvalidOperationException("boom"));
+
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _spotifyConnectionService.SaveRelevantArtists(userId));
+
+        _musicProfileProvider.DidNotReceive().Invalidate(Arg.Any<Guid>());
+        await _musicProfileProvider.DidNotReceive()
+            .InvalidateForArtistsAsync(Arg.Any<IReadOnlyCollection<string>>());
     }
 
     [Test]
