@@ -32,7 +32,7 @@ public class SpotifyConnectionService(
     IRepository<Account> accountRepository,
     IRepository<Genre> genreRepository,
     ISpotifyAppCredentialsService spotifyAppCredentialsService,
-    IMusicProfileProvider? musicProfileProvider = null)
+    IMusicProfileProvider musicProfileProvider)
     : ISpotifyConnectionService
 {
     public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid userId)
@@ -176,11 +176,18 @@ public class SpotifyConnectionService(
             keyPropertyName: nameof(Account.Id), includeProperties: nameof(Account.Artists));
 
         var savedArtists = new List<SpotifyArtistDto>();
+        var enrichedArtistIds = new HashSet<string>();
 
         foreach (var artistDto in userArtists)
         {
-            var artistEntity = await artistRepository.GetOrCreateAsync(genreRepository,
+            var upsertResult = await artistRepository.GetOrCreateWithEnrichmentAsync(genreRepository,
                 artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
+            var artistEntity = upsertResult.Artist;
+
+            if (upsertResult.GenresAdded)
+            {
+                enrichedArtistIds.Add(artistEntity.Id);
+            }
 
             if (account.Artists.All(artist => artist.Id != artistEntity.Id))
             {
@@ -190,7 +197,12 @@ public class SpotifyConnectionService(
         }
 
         await accountRepository.SaveChangesAsync();
-        musicProfileProvider?.Invalidate(userId);
+        musicProfileProvider.Invalidate(userId);
+        if (enrichedArtistIds.Count > 0)
+        {
+            await musicProfileProvider.InvalidateForArtistsAsync(enrichedArtistIds);
+        }
+
         return savedArtists;
     }
 

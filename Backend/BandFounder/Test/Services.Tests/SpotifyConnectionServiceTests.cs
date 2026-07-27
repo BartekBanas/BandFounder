@@ -5,6 +5,7 @@ using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Exceptions;
 using BandFounder.Infrastructure.Spotify.Services;
 using NSubstitute;
+using System.Linq.Expressions;
 
 namespace Services.Tests;
 
@@ -19,6 +20,7 @@ public class SpotifyConnectionServiceTests
     private IRepository<Artist> _artistRepository;
     private IRepository<Account> _accountRepository;
     private IRepository<Genre> _genreRepository;
+    private IMusicProfileProvider _musicProfileProvider;
 
     [SetUp]
     public void Setup()
@@ -34,6 +36,10 @@ public class SpotifyConnectionServiceTests
         _artistRepository = Substitute.For<IRepository<Artist>>();
         _accountRepository = Substitute.For<IRepository<Account>>();
         _genreRepository = Substitute.For<IRepository<Genre>>();
+        _musicProfileProvider = Substitute.For<IMusicProfileProvider>();
+        _musicProfileProvider
+            .InvalidateForArtistsAsync(Arg.Any<IReadOnlyCollection<string>>())
+            .Returns(Task.CompletedTask);
 
         _spotifyConnectionService = new SpotifyConnectionService(
             _spotifyClient,
@@ -41,7 +47,8 @@ public class SpotifyConnectionServiceTests
             _artistRepository,
             _accountRepository,
             _genreRepository,
-            _spotifyAppCredentialsService);
+            _spotifyAppCredentialsService,
+            _musicProfileProvider);
     }
 
     [Test]
@@ -89,6 +96,57 @@ public class SpotifyConnectionServiceTests
         await _artistRepository.Received(2).CreateAsync(Arg.Any<Artist>()); // Ensure two artists are created
         await _genreRepository.Received(2).CreateAsync(Arg.Any<Genre>()); // Ensure two genres are created
         await _accountRepository.Received(1).SaveChangesAsync(); // Ensure changes are saved
+        _musicProfileProvider.Received(1).Invalidate(userId);
+    }
+
+    [Test]
+    public async Task SaveRelevantArtists_ShouldInvalidateProfilesForEnrichedSharedArtist()
+    {
+        var userId = Guid.NewGuid();
+        var sharedArtist = new Artist
+        {
+            Id = "artist-1",
+            Name = "Artist 1",
+            Genres = []
+        };
+        var account = new Account
+        {
+            Id = userId,
+            Artists = [sharedArtist],
+            Email = "test@mail",
+            Name = "test",
+            DateCreated = DateTime.UtcNow,
+            PasswordHash = "pass"
+        };
+
+        _accountRepository.GetOneRequiredAsync(
+            Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
+        _artistRepository.GetOneAsync(
+                Arg.Any<Expression<Func<Artist, bool>>>(),
+                Arg.Any<string[]>())
+            .Returns(sharedArtist);
+        _genreRepository.GetOneAsync(Arg.Any<object>()).Returns((Genre?)null);
+        _spotifyTokensRepository.GetOneAsync(userId).Returns(new SpotifyTokens
+        {
+            AccountId = userId,
+            AccessToken = "token",
+            RefreshToken = "",
+            ExpirationDate = DateTime.UtcNow.AddHours(1)
+        });
+        _spotifyClient.GetTopArtistsAsync("token", Arg.Any<int>(), Arg.Any<string>())
+            .Returns([new SpotifyArtistDto
+            {
+                Id = "artist-1",
+                Name = "Artist 1",
+                Genres = ["Rock"]
+            }]);
+        _spotifyClient.GetFollowedArtistsAsync("token").Returns([]);
+
+        await _spotifyConnectionService.SaveRelevantArtists(userId);
+
+        await _musicProfileProvider.Received(1)
+            .InvalidateForArtistsAsync(Arg.Is<IReadOnlyCollection<string>>(ids =>
+                ids.SequenceEqual(new[] { "artist-1" })));
     }
 
     [Test]
