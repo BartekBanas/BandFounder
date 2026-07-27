@@ -8,7 +8,6 @@ using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 
 namespace BandFounder.Application.Services;
 
@@ -35,14 +34,14 @@ public class ListingService : IListingService
     private readonly IAuthorizationService _authorizationService;
     private readonly IMusicTasteService _musicTasteService;
     private readonly IChatroomService _chatroomService;
-    
+
     private readonly IValidator<Listing> _listingValidator;
-    
+
     private readonly IRepository<Genre> _genreRepository;
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IRepository<MusicianSlot> _musicianSlotRepository;
     private readonly IRepository<Listing> _listingRepository;
-    
+
     private Guid CurrentUserId => _authenticationService.GetUserId();
 
     public ListingService(
@@ -75,10 +74,10 @@ public class ListingService : IListingService
             filter: listing => listing.Id == listingId,
             includeProperties:
             [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
-        
+
         return listing;
     }
-    
+
     public async Task<IEnumerable<Listing>> GetListingsAsync()
     {
         var listings = await _listingRepository.GetAsync(includeProperties:
@@ -86,7 +85,7 @@ public class ListingService : IListingService
 
         return listings;
     }
-    
+
     public async Task<ListingsFeedDto> GetListingsFeedAsync(FeedFilterOptions filterOptions)
     {
         // Build a database-side filter to reduce the number of loaded listings
@@ -154,6 +153,7 @@ public class ListingService : IListingService
             userId,
             candidates.Select(candidate => candidate.OwnerId).Distinct().ToArray());
 
+        // Omitting paging returns the first page with a bounded default size.
         var pageSize = filterOptions.PageSize ?? 100;
         var pageNumber = filterOptions.PageNumber ?? 1;
         pageSize = Math.Max(pageSize, 1);
@@ -174,16 +174,14 @@ public class ListingService : IListingService
             .Select(candidate => candidate.Id)
             .ToList();
 
-        var listingsById = (await _listingRepository.QueryAsync(listings =>
-                listings
-                    .Where(listing => pageCandidateIds.Contains(listing.Id))
-                    .Include(listing => listing.Owner)
-                    .Include(listing => listing.MusicianSlots)
-                    .ThenInclude(slot => slot.Role)
-                    .AsSplitQuery()))
+        var listingsById = (await _listingRepository.GetAsync(
+                filter: listing => pageCandidateIds.Contains(listing.Id),
+                includeProperties:
+                [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]))
             .ToDictionary(listing => listing.Id);
 
         var listingsWithScores = pageCandidateIds
+            .Where(listingsById.ContainsKey)
             .Select(listingId =>
             {
                 var listing = listingsById[listingId];
@@ -194,17 +192,17 @@ public class ListingService : IListingService
                 };
             })
             .ToList();
-        
+
         return new ListingsFeedDto
         {
             Listings = listingsWithScores
         };
     }
-    
+
     public async Task<IEnumerable<Listing>> GetUserListingsAsync(Guid? accountId = null)
     {
         accountId ??= CurrentUserId;
-        
+
         var myListings = await _listingRepository.GetAsync(
             filter: listing => listing.OwnerId == accountId,
             includeProperties: [nameof(Listing.Owner), nameof(Listing.MusicianSlots), "MusicianSlots.Role"]);
@@ -249,7 +247,7 @@ public class ListingService : IListingService
 
             listing.MusicianSlots.Add(musicianSlot);
         }
-        
+
         var validationResult = await _listingValidator.ValidateAsync(listing);
         if (validationResult.IsValid is false)
         {
@@ -270,9 +268,9 @@ public class ListingService : IListingService
 
         var userClaims = _authenticationService.GetUserClaims();
         await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
-        
+
         musicianSlot.Status = slotStatus;
-        
+
         await _musicianSlotRepository.SaveChangesAsync();
     }
 
@@ -281,18 +279,18 @@ public class ListingService : IListingService
         var musicianSlot = await _musicianSlotRepository.GetOneRequiredAsync(slotId);
         var listing = await _listingRepository.GetOneRequiredAsync
             (listing => listing.Id == musicianSlot.ListingId);
-        
+
         var userClaims = _authenticationService.GetUserClaims();
         await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
-        
+
         var invitedAccount = await _accountService.GetAccountAsync(accountId);
         if (invitedAccount == null)
         {
             throw new NotFoundException("Assignee account not found");
         }
-        
+
         musicianSlot.AssigneeId = invitedAccount.Id;
-        
+
         await _musicianSlotRepository.SaveChangesAsync();
     }
 
@@ -300,7 +298,7 @@ public class ListingService : IListingService
     {
         var issuer = await _accountService.GetAccountAsync(_authenticationService.GetUserId());
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
-        
+
         var chatroomCreateDto = new ChatroomCreateDto()
         {
             ChatRoomType = ChatRoomType.Direct,
@@ -313,10 +311,10 @@ public class ListingService : IListingService
     public async Task DeleteListing(Guid listingId)
     {
         var listing = await _listingRepository.GetOneRequiredAsync(listingId);
-        
+
         var userClaims = _authenticationService.GetUserClaims();
         await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
-        
+
         await _listingRepository.DeleteOneAsync(listing.Id);
         await _listingRepository.SaveChangesAsync();
     }
@@ -328,10 +326,10 @@ public class ListingService : IListingService
         {
             throw new NotFoundException("Listing not found");
         }
-        
+
         var userClaims = _authenticationService.GetUserClaims();
         await _authorizationService.AuthorizeRequiredAsync(userClaims, listing, AuthorizationPolicies.IsOwnerOf);
-        
+
         if (HasDuplicateSlots(dto))
         {
             throw new BadRequestException("Slots' IDs must be unique");
@@ -387,7 +385,7 @@ public class ListingService : IListingService
         var duplicateSlot = listingUpdateDto.MusicianSlots
             .GroupBy(slot => slot.Id)
             .FirstOrDefault(group => group.Count() > 1);
-        
+
         return duplicateSlot != null;
     }
 
