@@ -30,7 +30,8 @@ public class MusicProfileProviderTests
             ]);
 
         using var cache = new MemoryCache(new MemoryCacheOptions());
-        var provider = new MusicProfileProvider(accountRepository, cache);
+        var provider = new MusicProfileProvider(
+            accountRepository, cache, new MusicProfileVersionRegistry());
 
         var first = await provider.GetProfilesAsync([accountId]);
         var cached = await provider.GetProfilesAsync([accountId]);
@@ -67,7 +68,8 @@ public class MusicProfileProviderTests
         cache.Set(
             $"music-profile:{secondAccountId}",
             new MusicProfile(new HashSet<string>(), new Dictionary<string, int>()));
-        var provider = new MusicProfileProvider(accountRepository, cache);
+        var provider = new MusicProfileProvider(
+            accountRepository, cache, new MusicProfileVersionRegistry());
 
         await provider.InvalidateForArtistsAsync(["artist-1"]);
 
@@ -81,7 +83,8 @@ public class MusicProfileProviderTests
         var accountId = Guid.NewGuid();
         var accountRepository = Substitute.For<IRepository<Account>>();
         using var cache = new MemoryCache(new MemoryCacheOptions());
-        var provider = new MusicProfileProvider(accountRepository, cache);
+        var provider = new MusicProfileProvider(
+            accountRepository, cache, new MusicProfileVersionRegistry());
         var loadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var allowLoadToFinish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -113,6 +116,48 @@ public class MusicProfileProviderTests
         var profiles = await loadTask;
 
         Assert.That(profiles[accountId].ArtistIds, Is.EquivalentTo(new[] { "artist-1" }));
+        Assert.That(cache.TryGetValue($"music-profile:{accountId}", out _), Is.False);
+    }
+
+    [Test]
+    public async Task GetProfilesAsync_ShouldNotCacheWhenAnotherScopeInvalidatesDuringLoad()
+    {
+        var accountId = Guid.NewGuid();
+        var readerRepository = Substitute.For<IRepository<Account>>();
+        var writerRepository = Substitute.For<IRepository<Account>>();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+
+        // Two scoped provider instances sharing the singleton cache and registry, as two concurrent requests would.
+        var versions = new MusicProfileVersionRegistry();
+        var reader = new MusicProfileProvider(readerRepository, cache, versions);
+        var writer = new MusicProfileProvider(writerRepository, cache, versions);
+
+        var loadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowLoadToFinish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        readerRepository
+            .QueryAsync<MusicProfileArtistRow>(
+                Arg.Any<Func<IQueryable<Account>, IQueryable<MusicProfileArtistRow>>>())
+            .Returns(async _ =>
+            {
+                loadStarted.TrySetResult();
+                await allowLoadToFinish.Task;
+                return
+                [
+                    new MusicProfileArtistRow(accountId, "stale-artist")
+                ];
+            });
+        readerRepository
+            .QueryAsync<MusicProfileGenreWeightRow>(
+                Arg.Any<Func<IQueryable<Account>, IQueryable<MusicProfileGenreWeightRow>>>())
+            .Returns([]);
+
+        var loadTask = reader.GetProfilesAsync([accountId]);
+        await loadStarted.Task;
+        writer.Invalidate(accountId);
+        allowLoadToFinish.TrySetResult();
+        await loadTask;
+
         Assert.That(cache.TryGetValue($"music-profile:{accountId}", out _), Is.False);
     }
 }
