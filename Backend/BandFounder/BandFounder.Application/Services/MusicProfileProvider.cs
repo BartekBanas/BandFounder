@@ -8,10 +8,14 @@ public sealed record MusicProfile(
     IReadOnlySet<string> ArtistIds,
     IReadOnlyDictionary<string, int> GenreWeights);
 
+public sealed record MusicProfileArtistRow(Guid AccountId, string ArtistId);
+public sealed record MusicProfileGenreWeightRow(Guid AccountId, string GenreName, int Weight);
+
 public interface IMusicProfileProvider
 {
     Task<IReadOnlyDictionary<Guid, MusicProfile>> GetProfilesAsync(IReadOnlyCollection<Guid> accountIds);
     void Invalidate(Guid accountId);
+    Task InvalidateForArtistsAsync(IReadOnlyCollection<string> artistIds);
 }
 
 public sealed class MusicProfileProvider(
@@ -48,7 +52,7 @@ public sealed class MusicProfileProvider(
             accounts
                 .Where(account => missingAccountIds.Contains(account.Id))
                 .SelectMany(account => account.Artists.Select(artist =>
-                    new ArtistProfileRow(account.Id, artist.Id))));
+                    new MusicProfileArtistRow(account.Id, artist.Id))));
 
         var genreRows = await accountRepository.QueryAsync(accounts =>
             accounts
@@ -56,7 +60,7 @@ public sealed class MusicProfileProvider(
                 .SelectMany(account => account.Artists.SelectMany(artist => artist.Genres)
                     .Select(genre => new { AccountId = account.Id, GenreName = genre.Name }))
                 .GroupBy(row => new { row.AccountId, row.GenreName })
-                .Select(group => new GenreWeightProfileRow(
+                .Select(group => new MusicProfileGenreWeightRow(
                     group.Key.AccountId,
                     group.Key.GenreName,
                     group.Count())));
@@ -84,9 +88,25 @@ public sealed class MusicProfileProvider(
         cache.Remove(GetCacheKey(accountId));
     }
 
+    public async Task InvalidateForArtistsAsync(IReadOnlyCollection<string> artistIds)
+    {
+        var distinctArtistIds = artistIds.Distinct().ToArray();
+        if (distinctArtistIds.Length == 0)
+        {
+            return;
+        }
+
+        var accountIds = await accountRepository.QueryAsync(accounts =>
+            accounts
+                .Where(account => account.Artists.Any(artist => distinctArtistIds.Contains(artist.Id)))
+                .Select(account => account.Id));
+
+        foreach (var accountId in accountIds)
+        {
+            Invalidate(accountId);
+        }
+    }
+
     private static string GetCacheKey(Guid accountId) => $"music-profile:{accountId}";
 
-    private sealed record ArtistProfileRow(Guid AccountId, string ArtistId);
-    private sealed record GenreProfileRow(Guid AccountId, string GenreName);
-    private sealed record GenreWeightProfileRow(Guid AccountId, string GenreName, int Weight);
 }
