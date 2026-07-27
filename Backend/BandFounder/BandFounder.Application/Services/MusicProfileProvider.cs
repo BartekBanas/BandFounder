@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using Microsoft.Extensions.Caching.Memory;
@@ -21,10 +20,10 @@ public interface IMusicProfileProvider
 
 public sealed class MusicProfileProvider(
     IRepository<Account> accountRepository,
-    IMemoryCache cache) : IMusicProfileProvider
+    IMemoryCache cache,
+    IMusicProfileVersionRegistry versions) : IMusicProfileProvider
 {
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(10);
-    private readonly ConcurrentDictionary<Guid, long> _versions = new();
 
     public async Task<IReadOnlyDictionary<Guid, MusicProfile>> GetProfilesAsync(
         IReadOnlyCollection<Guid> accountIds)
@@ -52,7 +51,7 @@ public sealed class MusicProfileProvider(
 
         var versionsAtReadStart = missingAccountIds.ToDictionary(
             accountId => accountId,
-            accountId => _versions.GetValueOrDefault(accountId));
+            versions.GetVersion);
 
         var artistRows = await accountRepository.QueryAsync(accounts =>
             accounts
@@ -83,7 +82,7 @@ public sealed class MusicProfileProvider(
                     .ToDictionary(row => row.GenreName, row => row.Weight));
 
             // Skip caching if Invalidate ran while we were loading; still return the snapshot for this request.
-            if (_versions.GetValueOrDefault(accountId) == versionsAtReadStart[accountId])
+            if (versions.GetVersion(accountId) == versionsAtReadStart[accountId])
             {
                 cache.Set(GetCacheKey(accountId), profile, CacheLifetime);
             }
@@ -96,7 +95,7 @@ public sealed class MusicProfileProvider(
 
     public void Invalidate(Guid accountId)
     {
-        _versions.AddOrUpdate(accountId, 1, static (_, version) => version + 1);
+        versions.Bump(accountId);
         cache.Remove(GetCacheKey(accountId));
     }
 
