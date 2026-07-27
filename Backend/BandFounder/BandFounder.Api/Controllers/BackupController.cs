@@ -20,11 +20,12 @@ public class BackupController : Controller
     private readonly IListingService _listingService;
     private readonly IHashingService _hashingService;
     private readonly IMusicProfileProvider _musicProfileProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public BackupController(IAccountService accountService, IRepository<Artist> artistRepository, 
         IRepository<Genre> genreRepository, IRepository<Account> accountRepository, IHashingService hashingService, 
         IRepository<MusicianRole> musicianRoleRepository, IListingService listingService,
-        IMusicProfileProvider musicProfileProvider)
+        IMusicProfileProvider musicProfileProvider, IUnitOfWork unitOfWork)
     {
         _accountService = accountService;
         _artistRepository = artistRepository;
@@ -34,6 +35,7 @@ public class BackupController : Controller
         _musicianRoleRepository = musicianRoleRepository;
         _listingService = listingService;
         _musicProfileProvider = musicProfileProvider;
+        _unitOfWork = unitOfWork;
     }
 
     [HttpGet]
@@ -88,10 +90,15 @@ public class BackupController : Controller
     [HttpPost]
     public async Task<IActionResult> RestoreBackup([FromBody] BackupDto backupDto)
     {
-        var enrichedArtistIds = await RestoreArtists(backupDto.Artists);
-        await RestoreAccounts(backupDto.Accounts);
+        IReadOnlyCollection<string> enrichedArtistIds = [];
 
-        await _accountRepository.SaveChangesAsync();
+        await _unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            enrichedArtistIds = await RestoreArtists(backupDto.Artists);
+            await RestoreAccounts(backupDto.Accounts);
+            await _accountRepository.SaveChangesAsync();
+        });
+
         await _musicProfileProvider.InvalidateForArtistsAsync(enrichedArtistIds);
 
         return Ok();

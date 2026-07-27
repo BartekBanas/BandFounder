@@ -192,6 +192,45 @@ public class ListingServiceTests
     }
 
     [Test]
+    public async Task GetListingsFeedAsync_PageSizeAboveMax_IsClamped()
+    {
+        var userId = Guid.NewGuid();
+        var listings = Enumerable.Range(0, 101)
+            .Select(_ => CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid()))
+            .ToList();
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true,
+            PageNumber = 1,
+            PageSize = int.MaxValue
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(100));
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_OverflowingSkip_ReturnsEmptyPage()
+    {
+        var userId = Guid.NewGuid();
+        var listings = new List<Listing>
+        {
+            CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid())
+        };
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true,
+            PageNumber = int.MaxValue,
+            PageSize = 100
+        });
+
+        Assert.That(result.Listings, Is.Empty);
+    }
+
+    [Test]
     public async Task GetListingsFeedAsync_NoMusicianRoles_DoesNotFilterByRole()
     {
         var userId = Guid.NewGuid();
