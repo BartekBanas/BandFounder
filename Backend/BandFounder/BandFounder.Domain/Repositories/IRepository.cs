@@ -23,6 +23,7 @@ public interface IRepository<TEntity> : IRepository where TEntity : Entity
     Task<TEntity> GetOneRequiredAsync(object key, string keyPropertyName, params string[] includeProperties);
     Task<TEntity> GetOneRequiredAsync(object key, params string[] includeProperties);
     Task<TEntity> GetOneRequiredAsync(params object[] keys);
+    Task<int> CountAsync(Expression<Func<TEntity, bool>>? filter = null);
     Task DeleteOneAsync(params object[] keys);
     Task<TEntity> CreateAsync(TEntity entity);
     Task<TEntity> UpdateAsync(object update, params object[] keys);

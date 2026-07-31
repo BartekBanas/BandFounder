@@ -3,6 +3,7 @@ using BandFounder.Application.Services.Authorization;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace BandFounder.Application.Services;
 
@@ -19,14 +20,20 @@ public class MessageService : IMessageService
 
     private readonly IAuthenticationService _authenticationService;
     private readonly IAuthorizationService _authorizationService;
+    private readonly IMessageEmailNotificationService _messageEmailNotificationService;
+    private readonly ILogger<MessageService> _logger;
 
     public MessageService(IRepository<Chatroom> chatRoomRepository, IRepository<Message> messageRepository,
-        IAuthenticationService authenticationService, IAuthorizationService authorizationService)
+        IAuthenticationService authenticationService, IAuthorizationService authorizationService,
+        IMessageEmailNotificationService messageEmailNotificationService,
+        ILogger<MessageService> logger)
     {
         _chatRoomRepository = chatRoomRepository;
         _messageRepository = messageRepository;
         _authenticationService = authenticationService;
         _authorizationService = authorizationService;
+        _messageEmailNotificationService = messageEmailNotificationService;
+        _logger = logger;
     }
 
     public async Task<Message> SendMessage(SendMessageDto dto)
@@ -35,7 +42,8 @@ public class MessageService : IMessageService
         var userId = _authenticationService.GetUserId();
 
         var chatRoom = await _chatRoomRepository.GetOneRequiredAsync(chatRoom => chatRoom.Id == dto.ChatRoomId, 
-            nameof(Chatroom.Members));
+            nameof(Chatroom.Members),
+            $"{nameof(Chatroom.Members)}.{nameof(Account.NotificationPreferences)}");
 
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatRoom, AuthorizationPolicies.IsMemberOf);
 
@@ -48,8 +56,19 @@ public class MessageService : IMessageService
         };
 
         chatRoom.Messages.Add(newMessage);
-
         await _messageRepository.SaveChangesAsync();
+
+        try
+        {
+            await _messageEmailNotificationService.QueueAsync(chatRoom, newMessage, userId);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "Failed to queue email notification for message in chatroom {ChatRoomId}",
+                chatRoom.Id);
+        }
 
         return newMessage;
     }

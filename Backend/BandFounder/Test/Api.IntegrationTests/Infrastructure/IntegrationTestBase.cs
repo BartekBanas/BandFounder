@@ -28,6 +28,7 @@ public abstract class IntegrationTestBase
 
     protected HttpClient Client { get; private set; } = null!;
     protected RecordingEmailSender EmailSender => _factory.EmailSender;
+    protected QueueFailureGate QueueFailureGate => _factory.QueueFailureGate;
     protected IServiceProvider Services => _factory.Services;
 
     [OneTimeSetUp]
@@ -65,6 +66,7 @@ public abstract class IntegrationTestBase
         await _respawner.ResetAsync(_connection);
         Client.DefaultRequestHeaders.Authorization = null;
         EmailSender.Clear();
+        QueueFailureGate.Clear();
     }
 
     [OneTimeTearDown]

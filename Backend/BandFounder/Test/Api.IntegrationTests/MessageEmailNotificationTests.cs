@@ -1,0 +1,443 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using Api.IntegrationTests.Infrastructure;
+using BandFounder.Application.Dtos.Accounts;
+using BandFounder.Application.Dtos.Chatrooms;
+using BandFounder.Application.Services;
+using BandFounder.Application.Services.Email;
+using BandFounder.Domain.Entities;
+using BandFounder.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+
+namespace Api.IntegrationTests;
+
+[TestFixture]
+public class MessageEmailNotificationTests : IntegrationTestBase
+{
+    [Test]
+    public async Task SendMessage_QueuesOneNotificationForEachRecipientAndNotSender()
+    {
+        var (ownerToken, chatroom, _, member) = await CreateRoomWithMemberAsync("queue");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "A message for the member");
+
+        var outbox = await GetOutboxAsync();
+
+        Assert.That(outbox, Has.Count.EqualTo(1));
+        Assert.That(outbox[0].RecipientAccountId, Is.EqualTo(Guid.Parse(member.Id)));
+        Assert.That(outbox[0].ChatRoomId, Is.EqualTo(chatroom.Id));
+        Assert.That(outbox[0].Status, Is.EqualTo(EmailNotificationStatus.Pending));
+        Assert.That(outbox[0].LatestSenderName, Is.EqualTo("queueowner"));
+        Assert.That(member.Email, Is.EqualTo("queuemember@example.com"));
+    }
+
+    [Test]
+    public async Task SendMessage_WithEmailPreferenceDisabled_DoesNotQueueNotification()
+    {
+        var (ownerToken, chatroom, memberToken, _) = await CreateRoomWithMemberAsync("disabled");
+
+        AuthenticateAs(memberToken);
+        var updateResponse = await Client.PatchAsJsonAsync("/api/accounts/me", new
+        {
+            emailOnNewMessage = false
+        });
+        Assert.That(updateResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "This should not create email work");
+
+        Assert.That(await GetOutboxAsync(), Is.Empty);
+    }
+
+    [Test]
+    public async Task ProcessDueNotification_AfterRecipientReadsConversation_CancelsWithoutSending()
+    {
+        var (ownerToken, chatroom, memberToken, _) = await CreateRoomWithMemberAsync("cancel");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Read this in the site");
+
+        AuthenticateAs(memberToken);
+        var markReadResponse = await Client.PutAsync($"/api/chatrooms/{chatroom.Id}/read", null);
+        Assert.That(markReadResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox.Single().Status, Is.EqualTo(EmailNotificationStatus.Cancelled));
+        Assert.That(EmailSender.Sent, Is.Empty);
+    }
+
+    [Test]
+    public async Task ProcessDueNotification_WhenStillUnread_SendsOneSafeEmail()
+    {
+        var (ownerToken, chatroom, _, member) = await CreateRoomWithMemberAsync("send");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "<script>alert('private')</script>");
+
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox.Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        Assert.That(EmailSender.Sent[0].To, Is.EqualTo(member.Email));
+        Assert.That(EmailSender.Sent[0].TextBody, Does.Contain($"/messages/{chatroom.Id}"));
+        Assert.That(EmailSender.Sent[0].HtmlBody, Does.Contain("&lt;script&gt;"));
+        Assert.That(EmailSender.Sent[0].HtmlBody, Does.Not.Contain("<script>"));
+
+        await ProcessDueAsync();
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public async Task SendMessageTwice_BeforeDelivery_DeduplicatesPendingWork()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("dedupe");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "First message");
+        await SendMessageAsync(chatroom.Id, "Second message");
+
+        var outbox = await GetOutboxAsync();
+
+        Assert.That(outbox, Has.Count.EqualTo(1));
+        Assert.That(outbox[0].UnreadCountHint, Is.EqualTo(2));
+        Assert.That(outbox[0].Snippet, Is.EqualTo("Second message"));
+        Assert.That(outbox[0].Status, Is.EqualTo(EmailNotificationStatus.Pending));
+    }
+
+    [Test]
+    public async Task FiveUnreadMessages_GroupIntoOneEmailWithLatestSnippet()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("group");
+
+        AuthenticateAs(ownerToken);
+        for (var index = 1; index <= 5; index++)
+        {
+            await SendMessageAsync(chatroom.Id, $"Message {index}");
+        }
+
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox, Has.Count.EqualTo(1));
+        Assert.That(outbox.Single().UnreadCountHint, Is.EqualTo(5));
+        Assert.That(outbox.Single().Snippet, Is.EqualTo("Message 5"));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        Assert.That(EmailSender.Sent.Single().TextBody, Does.Contain("5 unread message(s)"));
+        Assert.That(EmailSender.Sent.Single().TextBody, Does.Contain("Message 5"));
+    }
+
+    [Test]
+    public async Task ReadingBeforeAnotherMessage_OnlyCountsTheNewUnreadMessage()
+    {
+        var (ownerToken, chatroom, memberToken, _) = await CreateRoomWithMemberAsync("readstate");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Read this first");
+
+        AuthenticateAs(memberToken);
+        var markReadResponse = await Client.PutAsync($"/api/chatrooms/{chatroom.Id}/read", null);
+        Assert.That(markReadResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Only this one is unread");
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox, Has.Count.EqualTo(1));
+        Assert.That(outbox.Single().UnreadCountHint, Is.EqualTo(1));
+        Assert.That(outbox.Single().Snippet, Is.EqualTo("Only this one is unread"));
+    }
+
+    [Test]
+    public async Task ProcessDueNotification_WhenProviderFails_RetriesAndEventuallySends()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("retry");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Retry this notification");
+        await MakeOutboxDueAsync();
+
+        EmailSender.ThrowOnSend = true;
+        await ProcessDueAsync();
+
+        var failedAttempt = (await GetOutboxAsync()).Single();
+        Assert.That(failedAttempt.Status, Is.EqualTo(EmailNotificationStatus.Pending));
+        Assert.That(failedAttempt.AttemptCount, Is.EqualTo(1));
+        Assert.That(EmailSender.Sent, Is.Empty);
+
+        EmailSender.ThrowOnSend = false;
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        Assert.That((await GetOutboxAsync()).Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ProcessDueNotification_WhenProviderKeepsFailing_ReachesConfiguredFailureState()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("failed");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "This will fail");
+        await MakeOutboxDueAsync();
+
+        EmailSender.ThrowOnSend = true;
+        await ProcessDueAsync();
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        var outbox = (await GetOutboxAsync()).Single();
+        Assert.That(outbox.Status, Is.EqualTo(EmailNotificationStatus.Failed));
+        Assert.That(outbox.AttemptCount, Is.EqualTo(2));
+        Assert.That(EmailSender.Sent, Is.Empty);
+    }
+
+    [Test]
+    public async Task LeaveChatroom_CancelsPendingNotificationWithoutSending()
+    {
+        var (ownerToken, chatroom, memberToken, _) = await CreateRoomWithMemberAsync("leave");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "You will leave before this emails");
+
+        AuthenticateAs(memberToken);
+        var leaveResponse = await Client.PostAsync($"/api/chatrooms/{chatroom.Id}/leave", null);
+        Assert.That(leaveResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox.Single().Status, Is.EqualTo(EmailNotificationStatus.Cancelled));
+        Assert.That(EmailSender.Sent, Is.Empty);
+    }
+
+    [Test]
+    public async Task SendMessage_WhenQueueFails_StillPersistsMessage()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("queuefail");
+
+        QueueFailureGate.ThrowOnQueue = true;
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Message must survive queue failure");
+
+        Assert.That(await GetOutboxAsync(), Is.Empty);
+
+        var messagesResponse = await Client.GetAsync($"/api/chatrooms/{chatroom.Id}/messages");
+        Assert.That(messagesResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var messages = await ReadJsonAsync<List<JsonElement>>(messagesResponse);
+        Assert.That(messages, Has.Count.EqualTo(1));
+        Assert.That(messages[0].GetProperty("content").GetString(), Is.EqualTo("Message must survive queue failure"));
+    }
+
+    [Test]
+    public void MessageNotificationOptions_AreBoundAndValidatedConfigurationIsAvailable()
+    {
+        var options = Services.GetRequiredService<IOptions<MessageEmailNotificationOptions>>().Value;
+
+        Assert.That(options.PollIntervalSeconds, Is.EqualTo(1));
+        Assert.That(options.MaxAttempts, Is.EqualTo(2));
+        Assert.That(options.MaxSnippetLength, Is.EqualTo(160));
+        Assert.That(options.StaleClaimMinutes, Is.EqualTo(15));
+    }
+
+    [Test]
+    public async Task NotificationDelayAndSnippetLength_UseConfiguredValues()
+    {
+        var (ownerToken, chatroom, memberToken, _) = await CreateRoomWithMemberAsync("config");
+        AuthenticateAs(memberToken);
+        var preferenceResponse = await Client.PatchAsJsonAsync("/api/accounts/me", new
+        {
+            emailUnreadDelayMinutes = 5
+        });
+        Assert.That(preferenceResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        AuthenticateAs(ownerToken);
+        var beforeSend = DateTime.UtcNow;
+        await SendMessageAsync(chatroom.Id, new string('x', 161));
+
+        var outbox = (await GetOutboxAsync()).Single();
+        Assert.That(outbox.NotBeforeUtc, Is.GreaterThan(beforeSend.AddMinutes(4)));
+        Assert.That(outbox.Snippet.Length, Is.EqualTo(161));
+        Assert.That(outbox.Snippet.EndsWith('…'), Is.True);
+        Assert.That(outbox.Snippet[..160], Is.EqualTo(new string('x', 160)));
+    }
+
+    [Test]
+    public async Task StaleProcessingRow_IsRecoveredAndDelivered()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("stale");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Recover this notification");
+
+        using (var scope = Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var outbox = await dbContext.EmailNotificationOutboxes.SingleAsync();
+            outbox.Status = EmailNotificationStatus.Processing;
+            outbox.AttemptCount = 1;
+            outbox.LastAttemptAt = DateTime.UtcNow.AddMinutes(-16);
+            await dbContext.SaveChangesAsync();
+        }
+
+        await ProcessDueAsync();
+
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        Assert.That((await GetOutboxAsync()).Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+    }
+
+    [Test]
+    public async Task ConcurrentProcessing_OnlyOneWorkerClaimsAndSendsTheRow()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("claim");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Claim this once");
+        await MakeOutboxDueAsync();
+
+        await Task.WhenAll(ProcessDueOnceAsync(), ProcessDueOnceAsync());
+
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        Assert.That((await GetOutboxAsync()).Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+    }
+
+    [Test]
+    public async Task EnqueueWhileSending_CreatesSuccessorWorkWithoutLosingNewMessage()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("successor");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "First message");
+        await MakeOutboxDueAsync();
+
+        var sendStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowSend = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        EmailSender.SendStarted = sendStarted;
+        EmailSender.AllowSend = allowSend;
+
+        var firstProcessing = ProcessDueOnceAsync();
+        await sendStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Newer message");
+
+        allowSend.SetResult(true);
+        await firstProcessing;
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(2));
+        Assert.That(EmailSender.Sent.Any(email => email.TextBody.Contains("Newer message")), Is.True);
+        Assert.That((await GetOutboxAsync()).Count(outbox => outbox.Status == EmailNotificationStatus.Sent), Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task UpdateAccount_EmailPreferencesAreReturnedAndDelayIsValidated()
+    {
+        var token = await RegisterAsync("settingsuser", "settingsuser@example.com");
+        AuthenticateAs(token);
+
+        var updateResponse = await Client.PatchAsJsonAsync("/api/accounts/me", new
+        {
+            emailOnNewMessage = false,
+            emailUnreadDelayMinutes = 60
+        });
+
+        Assert.That(updateResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var updated = await ReadJsonAsync<AccountSettingsDto>(updateResponse);
+        Assert.That(updated.EmailOnNewMessage, Is.False);
+        Assert.That(updated.EmailUnreadDelayMinutes, Is.EqualTo(60));
+
+        var invalidResponse = await Client.PatchAsJsonAsync("/api/accounts/me", new
+        {
+            emailUnreadDelayMinutes = 30
+        });
+
+        Assert.That(invalidResponse.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+
+    private async Task<(string OwnerToken, ChatroomDto Chatroom, string MemberToken, AccountDto Member)>
+        CreateRoomWithMemberAsync(string prefix)
+    {
+        var ownerToken = await RegisterAsync($"{prefix}owner", $"{prefix}owner@example.com");
+        AuthenticateAs(ownerToken);
+
+        var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
+        {
+            chatRoomType = ChatRoomType.General,
+            name = $"{prefix} room"
+        });
+        var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
+
+        var memberToken = await RegisterAsync($"{prefix}member", $"{prefix}member@example.com");
+        AuthenticateAs(memberToken);
+        var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
+
+        AuthenticateAs(ownerToken);
+        var inviteResponse = await Client.PostAsync(
+            $"/api/chatrooms/{chatroom.Id}/invite/{member.Id}", null);
+        Assert.That(inviteResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        return (ownerToken, chatroom, memberToken, member);
+    }
+
+    private async Task SendMessageAsync(Guid chatroomId, string content)
+    {
+        var sendContent = new StringContent(
+            JsonSerializer.Serialize(content),
+            Encoding.UTF8,
+            "application/json");
+        var response = await Client.PostAsync($"/api/chatrooms/{chatroomId}/messages", sendContent);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    private async Task<List<EmailNotificationOutbox>> GetOutboxAsync()
+    {
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        return await dbContext.EmailNotificationOutboxes.AsNoTracking().ToListAsync();
+    }
+
+    private async Task MakeOutboxDueAsync()
+    {
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        var outbox = await dbContext.EmailNotificationOutboxes.ToListAsync();
+        foreach (var notification in outbox)
+        {
+            notification.NotBeforeUtc = DateTime.UtcNow.AddMinutes(-1);
+        }
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task ProcessDueAsync()
+    {
+        using var scope = Services.CreateScope();
+        var notificationService = scope.ServiceProvider
+            .GetRequiredService<IMessageEmailNotificationService>();
+        while (await notificationService.ProcessDueAsync())
+        {
+        }
+    }
+
+    private async Task ProcessDueOnceAsync()
+    {
+        using var scope = Services.CreateScope();
+        var notificationService = scope.ServiceProvider
+            .GetRequiredService<IMessageEmailNotificationService>();
+        await notificationService.ProcessDueAsync();
+    }
+}

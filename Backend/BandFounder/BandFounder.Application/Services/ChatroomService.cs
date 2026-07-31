@@ -27,6 +27,7 @@ public class ChatroomService : IChatroomService
     private readonly IRepository<Account> _accountRepository;
     private readonly IRepository<ChatroomReadState> _readStateRepository;
     private readonly IRepository<Message> _messageRepository;
+    private readonly IEmailNotificationOutboxRepository _emailNotificationOutboxRepository;
 
     private readonly IAuthenticationService _authenticationService;
     private readonly IAuthorizationService _authorizationService;
@@ -36,6 +37,7 @@ public class ChatroomService : IChatroomService
         IRepository<Account> accountRepository,
         IRepository<ChatroomReadState> readStateRepository,
         IRepository<Message> messageRepository,
+        IEmailNotificationOutboxRepository emailNotificationOutboxRepository,
         IAuthenticationService authenticationService,
         IAuthorizationService authorizationService)
     {
@@ -43,6 +45,7 @@ public class ChatroomService : IChatroomService
         _accountRepository = accountRepository;
         _readStateRepository = readStateRepository;
         _messageRepository = messageRepository;
+        _emailNotificationOutboxRepository = emailNotificationOutboxRepository;
         _authenticationService = authenticationService;
         _authorizationService = authorizationService;
     }
@@ -228,6 +231,8 @@ public class ChatroomService : IChatroomService
             filter: chatRoom => chatRoom.Id == chatroomId, includeProperties: nameof(Chatroom.Members));
 
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatroom, AuthorizationPolicies.IsMemberOf);
+
+        await _emailNotificationOutboxRepository.CancelForRecipientChatroomAsync(userId, chatroomId);
 
         if (chatroom.Members.Count == 1)
         {

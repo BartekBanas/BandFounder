@@ -16,6 +16,7 @@ namespace BandFounder.Application.Services;
 public interface IAccountService
 {
     Task<Account> GetAccountAsync(Guid? accountId = null);
+    Task<AccountSettingsDto> GetAccountSettingsAsync(Guid? accountId = null);
     Task<Account> GetDetailedAccount(Guid? accountId = null, params string[] includeProperties);
     Task<IEnumerable<Account>> GetAccountsAsync();
     Task<IEnumerable<Account>> GetAccountsAsync(AccountFilters filters);
@@ -24,7 +25,7 @@ public interface IAccountService
     Task RequestPasswordResetAsync(RequestPasswordResetDto dto);
     Task<PasswordResetTokenInfoDto> GetPasswordResetTokenInfoAsync(string? token);
     Task CompletePasswordResetAsync(CompletePasswordResetDto dto);
-    Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
+    Task<AccountSettingsDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null);
     Task<IEnumerable<MusicianRole>> GetUserMusicianRoles(Guid? accountId = null);
     Task AddMusicianRole(string role, Guid? accountId = null);
     Task DeleteAccountAsync(Guid? accountId = null);
@@ -96,6 +97,16 @@ public class AccountService : IAccountService
         return account;
     }
 
+    public async Task<AccountSettingsDto> GetAccountSettingsAsync(Guid? accountId = null)
+    {
+        accountId ??= _authenticationService.GetUserId();
+        var account = await _accountRepository.GetOneRequiredAsync(
+            key: accountId,
+            includeProperties: nameof(Account.NotificationPreferences));
+
+        return account.ToSettingsDto();
+    }
+
     public async Task<Account> GetDetailedAccount(Guid? accountId = null, params string[] includeProperties)
     {
         accountId ??= _authenticationService.GetUserId();
@@ -151,13 +162,18 @@ public class AccountService : IAccountService
         var passwordHash = _hashingService.HashPassword(registerDto.Password);
         var normalizedEmail = NormalizeEmail(registerDto.Email);
 
+        var newAccountId = Guid.NewGuid();
         var newAccount = new Account()
         {
-            Id = new Guid(),
+            Id = newAccountId,
             Email = normalizedEmail,
             Name = registerDto.Name,
             PasswordHash = passwordHash,
             DateCreated = DateTime.UtcNow,
+            NotificationPreferences = new AccountNotificationPreferences
+            {
+                AccountId = newAccountId
+            }
         };
         
         var validationResult = await _validator.ValidateAsync(newAccount);
@@ -312,11 +328,13 @@ public class AccountService : IAccountService
         });
     }
     
-    public async Task<AccountDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null)
+    public async Task<AccountSettingsDto> UpdateAccountAsync(UpdateAccountDto updateDto, Guid? accountId = null)
     {
         accountId ??= _authenticationService.GetUserId();
         
-        var originalAccount = _accountRepository.GetOneRequiredAsync(accountId).Result;
+        var originalAccount = await _accountRepository.GetOneRequiredAsync(
+            key: accountId,
+            includeProperties: nameof(Account.NotificationPreferences));
 
         string? passwordHash = null;
         
@@ -326,6 +344,13 @@ public class AccountService : IAccountService
         }
 
         var normalizedUpdateEmail = updateDto.Email is null ? null : NormalizeEmail(updateDto.Email);
+
+        if (updateDto.EmailUnreadDelayMinutes.HasValue &&
+            !MessageEmailNotificationOptions.AllowedDelayMinutes.Contains(updateDto.EmailUnreadDelayMinutes.Value))
+        {
+            throw new BadRequestException(
+                $"Email notification delay must be one of: {string.Join(", ", MessageEmailNotificationOptions.AllowedDelayMinutes.OrderBy(value => value))} minutes.");
+        }
 
         var testAccount = new Account
         {
@@ -343,30 +368,22 @@ public class AccountService : IAccountService
             throw new ValidationException(validationResult.Errors);
         }
         
-        var updatedAccount = new Account
+        originalAccount.Name = updateDto.Name ?? originalAccount.Name;
+        originalAccount.Email = normalizedUpdateEmail ?? originalAccount.Email;
+        originalAccount.PasswordHash = passwordHash ?? originalAccount.PasswordHash;
+        if (passwordHash is not null)
         {
-            Id = originalAccount.Id,
-            DateCreated = originalAccount.DateCreated,
-
-            Name = updateDto.Name ?? originalAccount.Name,
-            Email = normalizedUpdateEmail ?? originalAccount.Email,
-            PasswordHash = passwordHash ?? originalAccount.PasswordHash,
-            PasswordVersion = passwordHash is null
-                ? originalAccount.PasswordVersion
-                : originalAccount.PasswordVersion + 1
-        };
-
-        if (originalAccount.Equals(updatedAccount))
-        {
-            throw new BadRequestException("Updated account is indifferent to the original");
+            originalAccount.PasswordVersion++;
         }
 
-        await _accountRepository.UpdateAsync(updatedAccount, accountId);
+        originalAccount.NotificationPreferences.EmailOnNewMessage =
+            updateDto.EmailOnNewMessage ?? originalAccount.NotificationPreferences.EmailOnNewMessage;
+        originalAccount.NotificationPreferences.EmailUnreadDelayMinutes =
+            updateDto.EmailUnreadDelayMinutes ?? originalAccount.NotificationPreferences.EmailUnreadDelayMinutes;
+
         await _accountRepository.SaveChangesAsync();
 
-        var dto = updatedAccount.ToDto();
-
-        return dto;
+        return originalAccount.ToSettingsDto();
     }
 
     public async Task AddMusicianRole(string role, Guid? accountId = null)

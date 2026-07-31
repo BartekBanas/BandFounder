@@ -177,6 +177,18 @@ public class Repository<TEntity, TDbContext> : IRepository<TEntity>
         return entity;
     }
 
+    public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? filter = null)
+    {
+        IQueryable<TEntity> query = _dbSet;
+
+        if (filter != null)
+        {
+            query = query.Where(filter);
+        }
+
+        return await query.CountAsync();
+    }
+
     public virtual async Task DeleteOneAsync(params object[] keys)
     {
         var entity = await GetOneRequiredAsync(keys);

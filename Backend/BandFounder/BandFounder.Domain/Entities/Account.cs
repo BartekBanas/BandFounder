@@ -23,6 +23,8 @@ public class Account : Entity
     public required string Email { get; set; }
     
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+
+    public virtual AccountNotificationPreferences NotificationPreferences { get; set; } = new();
     
     public virtual SpotifyTokens? SpotifyTokens { get; set; }
     

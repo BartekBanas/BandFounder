@@ -1,4 +1,5 @@
 using AspNetCoreRateLimit;
+using BandFounder.Application.Services;
 using BandFounder.Application.Services.Email;
 using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -14,6 +15,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString;
     public RecordingEmailSender EmailSender { get; } = new();
+    public QueueFailureGate QueueFailureGate { get; } = new();
 
     public CustomWebApplicationFactory(string connectionString)
     {
@@ -32,18 +34,26 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("FRONTEND_BASE_URL", "http://127.0.0.1:3000");
         builder.UseSetting("PASSWORD_RESET_TOKEN_TTL_MINUTES", "15");
         builder.UseSetting("EMAIL_FROM_ADDRESS", "noreply@bandfounder.com");
+        builder.UseSetting("MessageEmailNotifications:PollIntervalSeconds", "1");
+        builder.UseSetting("MessageEmailNotifications:MaxAttempts", "2");
+        builder.UseSetting("MessageEmailNotifications:MaxSnippetLength", "160");
+        builder.UseSetting("MessageEmailNotifications:StaleClaimMinutes", "15");
 
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll(typeof(DbContextOptions<BandFounderDbContext>));
             services.RemoveAll(typeof(BandFounderDbContext));
             services.RemoveAll(typeof(IEmailSender));
+            services.RemoveAll(typeof(IMessageEmailNotificationService));
 
             services.AddDbContext<BandFounderDbContext>(options =>
                 options.UseNpgsql(_connectionString,
                     npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
             services.AddSingleton<IEmailSender>(EmailSender);
+            services.AddSingleton(QueueFailureGate);
+            services.AddScoped<MessageEmailNotificationService>();
+            services.AddScoped<IMessageEmailNotificationService, ControllableMessageEmailNotificationService>();
 
             services.Configure<IpRateLimitOptions>(options =>
             {

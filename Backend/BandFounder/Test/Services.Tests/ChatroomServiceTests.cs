@@ -18,6 +18,7 @@ public class ChatroomServiceTests
     private IRepository<Account> _accountRepositoryMock;
     private IRepository<ChatroomReadState> _readStateRepositoryMock;
     private IRepository<Message> _messageRepositoryMock;
+    private IEmailNotificationOutboxRepository _emailNotificationOutboxRepositoryMock;
     private IAuthenticationService _authenticationServiceMock;
     private IAuthorizationService _authorizationServiceMock;
 
@@ -28,6 +29,7 @@ public class ChatroomServiceTests
         _accountRepositoryMock = Substitute.For<IRepository<Account>>();
         _readStateRepositoryMock = Substitute.For<IRepository<ChatroomReadState>>();
         _messageRepositoryMock = Substitute.For<IRepository<Message>>();
+        _emailNotificationOutboxRepositoryMock = Substitute.For<IEmailNotificationOutboxRepository>();
         _authenticationServiceMock = Substitute.For<IAuthenticationService>();
         _authorizationServiceMock = Substitute.For<IAuthorizationService>();
 
@@ -36,6 +38,7 @@ public class ChatroomServiceTests
             _accountRepositoryMock,
             _readStateRepositoryMock,
             _messageRepositoryMock,
+            _emailNotificationOutboxRepositoryMock,
             _authenticationServiceMock,
             _authorizationServiceMock
         );

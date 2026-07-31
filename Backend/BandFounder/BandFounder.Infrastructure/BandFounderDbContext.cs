@@ -19,6 +19,8 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
     
     public DbSet<SpotifyTokens> SpotifyTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<AccountNotificationPreferences> AccountNotificationPreferences { get; set; }
+    public DbSet<EmailNotificationOutbox> EmailNotificationOutboxes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -118,6 +120,48 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .WithMany()
             .HasForeignKey(token => token.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Account>()
+            .HasOne(account => account.NotificationPreferences)
+            .WithOne(preferences => preferences.Account)
+            .HasForeignKey<AccountNotificationPreferences>(preferences => preferences.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AccountNotificationPreferences>()
+            .Property(preferences => preferences.EmailOnNewMessage)
+            .HasDefaultValue(true);
+
+        modelBuilder.Entity<AccountNotificationPreferences>()
+            .Property(preferences => preferences.EmailUnreadDelayMinutes)
+            .HasDefaultValue(1440);
+
+        modelBuilder.Entity<EmailNotificationOutbox>()
+            .HasOne(outbox => outbox.RecipientAccount)
+            .WithMany()
+            .HasForeignKey(outbox => outbox.RecipientAccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EmailNotificationOutbox>()
+            .HasOne(outbox => outbox.Chatroom)
+            .WithMany()
+            .HasForeignKey(outbox => outbox.ChatRoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EmailNotificationOutbox>()
+            .HasIndex(outbox => new
+            {
+                outbox.RecipientAccountId,
+                outbox.ChatRoomId
+            })
+            .IsUnique()
+            .HasFilter("\"Status\" = 'Pending'");
+
+        modelBuilder.Entity<EmailNotificationOutbox>()
+            .HasIndex(outbox => new
+            {
+                outbox.Status,
+                outbox.NotBeforeUtc
+            });
         
         PopulateGenres(modelBuilder);
         PopulateMusicianRole(modelBuilder);
