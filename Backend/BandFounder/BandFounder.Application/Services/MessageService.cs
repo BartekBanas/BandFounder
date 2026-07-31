@@ -4,7 +4,6 @@ using BandFounder.Application.Services.Email;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace BandFounder.Application.Services;
@@ -25,18 +24,14 @@ public class MessageService : IMessageService
     private readonly IAuthenticationService _authenticationService;
     private readonly IAuthorizationService _authorizationService;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMessageEmailNotificationService _messageEmailNotificationService;
     private readonly MessageEmailNotificationOptions _notificationOptions;
-    private readonly ILogger<MessageService> _logger;
 
     public MessageService(IRepository<Chatroom> chatRoomRepository, IRepository<Message> messageRepository,
         IRepository<ChatroomReadState> readStateRepository,
         IEmailNotificationOutboxRepository outboxRepository,
         IAuthenticationService authenticationService, IAuthorizationService authorizationService,
         IUnitOfWork unitOfWork,
-        IMessageEmailNotificationService messageEmailNotificationService,
-        IOptions<MessageEmailNotificationOptions> notificationOptions,
-        ILogger<MessageService> logger)
+        IOptions<MessageEmailNotificationOptions> notificationOptions)
     {
         _chatRoomRepository = chatRoomRepository;
         _messageRepository = messageRepository;
@@ -45,9 +40,7 @@ public class MessageService : IMessageService
         _authenticationService = authenticationService;
         _authorizationService = authorizationService;
         _unitOfWork = unitOfWork;
-        _messageEmailNotificationService = messageEmailNotificationService;
         _notificationOptions = notificationOptions.Value;
-        _logger = logger;
     }
 
     public async Task<Message> SendMessage(SendMessageDto dto)
@@ -76,18 +69,6 @@ public class MessageService : IMessageService
             await EnsureNotificationIntentAsync(chatRoom, newMessage, userId);
             await _outboxRepository.SaveChangesAsync();
         });
-
-        try
-        {
-            await _messageEmailNotificationService.QueueAsync(chatRoom, newMessage, userId);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(
-                exception,
-                "Failed to queue email notification for message in chatroom {ChatRoomId}",
-                chatRoom.Id);
-        }
 
         return newMessage;
     }

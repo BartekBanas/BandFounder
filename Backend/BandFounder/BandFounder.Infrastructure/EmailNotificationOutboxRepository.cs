@@ -101,10 +101,52 @@ public sealed class EmailNotificationOutboxRepository
         return affectedRows == 1;
     }
 
+    public async Task<bool> TryMarkSentAsync(
+        Guid id,
+        int attemptCount,
+        DateTime processedAt,
+        CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.EmailNotificationOutboxes
+            .Where(outbox =>
+                outbox.Id == id &&
+                outbox.Status == EmailNotificationStatus.Processing &&
+                outbox.AttemptCount == attemptCount)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(outbox => outbox.Status, EmailNotificationStatus.Sent)
+                    .SetProperty(outbox => outbox.ProcessedAt, processedAt)
+                    .SetProperty(outbox => outbox.LastError, (string?)null),
+                cancellationToken);
+
+        return affectedRows == 1;
+    }
+
+    public async Task<bool> TryMarkCancelledAsync(
+        Guid id,
+        int attemptCount,
+        DateTime processedAt,
+        CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.EmailNotificationOutboxes
+            .Where(outbox =>
+                outbox.Id == id &&
+                outbox.Status == EmailNotificationStatus.Processing &&
+                outbox.AttemptCount == attemptCount)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(outbox => outbox.Status, EmailNotificationStatus.Cancelled)
+                    .SetProperty(outbox => outbox.ProcessedAt, processedAt),
+                cancellationToken);
+
+        return affectedRows == 1;
+    }
+
     public async Task<bool> TryRecoverStaleAsync(
         Guid id,
         DateTime staleBeforeUtc,
         DateTime now,
+        int maxAttempts,
         CancellationToken cancellationToken = default)
     {
         var stale = await _dbContext.EmailNotificationOutboxes
@@ -117,7 +159,8 @@ public sealed class EmailNotificationOutboxRepository
             {
                 outbox.RecipientAccountId,
                 outbox.ChatRoomId,
-                outbox.CreatedAt
+                outbox.CreatedAt,
+                outbox.AttemptCount
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -142,6 +185,7 @@ public sealed class EmailNotificationOutboxRepository
                 stale.CreatedAt,
                 cancellationToken);
             var recoveredStatus = hasSupersedingSuccessor
+                || stale.AttemptCount >= maxAttempts
                 ? EmailNotificationStatus.Failed
                 : EmailNotificationStatus.Pending;
 
@@ -196,7 +240,8 @@ public sealed class EmailNotificationOutboxRepository
             var affectedRows = await _dbContext.EmailNotificationOutboxes
                 .Where(outbox =>
                     outbox.Id == id &&
-                    outbox.Status == EmailNotificationStatus.Processing)
+                    outbox.Status == EmailNotificationStatus.Processing &&
+                    outbox.AttemptCount == attemptCount)
                 .ExecuteUpdateAsync(
                     setters => setters
                         .SetProperty(outbox => outbox.Status, nextStatus)

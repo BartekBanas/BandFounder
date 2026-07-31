@@ -257,26 +257,26 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task SendMessage_WhenQueueFails_PersistsMessageAndRetryableNotificationIntent()
+    public async Task SendMessage_PersistsMessageAndPendingNotificationIntentThatCanLaterBeDelivered()
     {
-        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("queuefail");
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("durable");
 
-        QueueFailureGate.ThrowOnQueue = true;
         AuthenticateAs(ownerToken);
-        await SendMessageAsync(chatroom.Id, "Message must survive queue failure");
+        await SendMessageAsync(chatroom.Id, "Message with durable notification intent");
 
         var queuedIntent = (await GetOutboxAsync()).Single();
         Assert.That(queuedIntent.Status, Is.EqualTo(EmailNotificationStatus.Pending));
         Assert.That(queuedIntent.ChatRoomId, Is.EqualTo(chatroom.Id));
-        Assert.That(queuedIntent.Snippet, Is.EqualTo("Message must survive queue failure"));
+        Assert.That(queuedIntent.Snippet, Is.EqualTo("Message with durable notification intent"));
 
         var messagesResponse = await Client.GetAsync($"/api/chatrooms/{chatroom.Id}/messages");
         Assert.That(messagesResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         var messages = await ReadJsonAsync<List<JsonElement>>(messagesResponse);
         Assert.That(messages, Has.Count.EqualTo(1));
-        Assert.That(messages[0].GetProperty("content").GetString(), Is.EqualTo("Message must survive queue failure"));
+        Assert.That(
+            messages[0].GetProperty("content").GetString(),
+            Is.EqualTo("Message with durable notification intent"));
 
-        QueueFailureGate.Clear();
         await MakeOutboxDueAsync();
         await ProcessDueAsync();
 
@@ -285,11 +285,10 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task SendMessage_WhenQueueFailsAcrossMultipleMessages_PreservesUnreadCountHint()
+    public async Task SendMessageAcrossMultipleMessages_PreservesUnreadCountHint()
     {
-        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("queuefailcount");
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("durablecount");
 
-        QueueFailureGate.ThrowOnQueue = true;
         AuthenticateAs(ownerToken);
         await SendMessageAsync(chatroom.Id, "Unread one");
         await SendMessageAsync(chatroom.Id, "Unread two");
@@ -300,7 +299,6 @@ public class MessageEmailNotificationTests : IntegrationTestBase
         Assert.That(queuedIntent.UnreadCountHint, Is.EqualTo(3));
         Assert.That(queuedIntent.Snippet, Is.EqualTo("Unread three"));
 
-        QueueFailureGate.Clear();
         await MakeOutboxDueAsync();
         await ProcessDueAsync();
 
@@ -364,6 +362,32 @@ public class MessageEmailNotificationTests : IntegrationTestBase
 
         Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
         Assert.That((await GetOutboxAsync()).Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+    }
+
+    [Test]
+    public async Task StaleProcessingRow_AtMaxAttempts_IsFailedWithoutSending()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("stalemax");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Do not resend this notification");
+
+        using (var scope = Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var outbox = await dbContext.EmailNotificationOutboxes.SingleAsync();
+            outbox.Status = EmailNotificationStatus.Processing;
+            outbox.AttemptCount = 2;
+            outbox.LastAttemptAt = DateTime.UtcNow.AddMinutes(-16);
+            await dbContext.SaveChangesAsync();
+        }
+
+        await ProcessDueAsync();
+
+        var recovered = (await GetOutboxAsync()).Single();
+        Assert.That(recovered.Status, Is.EqualTo(EmailNotificationStatus.Failed));
+        Assert.That(recovered.AttemptCount, Is.EqualTo(2));
+        Assert.That(EmailSender.Sent, Is.Empty);
     }
 
     [Test]

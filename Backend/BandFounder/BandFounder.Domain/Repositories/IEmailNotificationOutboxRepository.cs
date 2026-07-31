@@ -27,10 +27,23 @@ public interface IEmailNotificationOutboxRepository : IRepository<EmailNotificat
 
     Task<bool> TryClaimAsync(Guid id, DateTime now, CancellationToken cancellationToken = default);
 
+    Task<bool> TryMarkSentAsync(
+        Guid id,
+        int attemptCount,
+        DateTime processedAt,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> TryMarkCancelledAsync(
+        Guid id,
+        int attemptCount,
+        DateTime processedAt,
+        CancellationToken cancellationToken = default);
+
     Task<bool> TryRecoverStaleAsync(
         Guid id,
         DateTime staleBeforeUtc,
         DateTime now,
+        int maxAttempts,
         CancellationToken cancellationToken = default);
 
     Task<EmailNotificationStatus?> TryTransitionAfterSendFailureAsync(

@@ -2,7 +2,6 @@ using System.Text.Encodings.Web;
 using BandFounder.Application.Services.Email;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -10,7 +9,6 @@ namespace BandFounder.Application.Services;
 
 public interface IMessageEmailNotificationService
 {
-    Task QueueAsync(Chatroom chatroom, Message message, Guid senderId);
     Task<bool> ProcessDueAsync(CancellationToken cancellationToken = default);
 }
 
@@ -28,7 +26,6 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
     private readonly IRepository<ChatroomReadState> _readStateRepository;
     private readonly IRepository<Message> _messageRepository;
     private readonly IEmailSender _emailSender;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly EmailOptions _emailOptions;
     private readonly MessageEmailNotificationOptions _notificationOptions;
     private readonly ILogger<MessageEmailNotificationService> _logger;
@@ -38,7 +35,6 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         IRepository<ChatroomReadState> readStateRepository,
         IRepository<Message> messageRepository,
         IEmailSender emailSender,
-        IUnitOfWork unitOfWork,
         IOptions<EmailOptions> emailOptions,
         IOptions<MessageEmailNotificationOptions> notificationOptions,
         ILogger<MessageEmailNotificationService> logger)
@@ -47,84 +43,9 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         _readStateRepository = readStateRepository;
         _messageRepository = messageRepository;
         _emailSender = emailSender;
-        _unitOfWork = unitOfWork;
         _emailOptions = emailOptions.Value;
         _notificationOptions = notificationOptions.Value;
         _logger = logger;
-    }
-
-    public async Task QueueAsync(Chatroom chatroom, Message message, Guid senderId)
-    {
-        await _unitOfWork.ExecuteInTransactionAsync(async () =>
-        {
-            var senderName = chatroom.Members
-                .FirstOrDefault(member => member.Id == senderId)?.Name ?? "Someone";
-            var now = DateTime.UtcNow;
-
-            foreach (var recipient in chatroom.Members.Where(member => member.Id != senderId))
-            {
-                if (!recipient.NotificationPreferences.EmailOnNewMessage)
-                {
-                    continue;
-                }
-
-                await _outboxRepository.AcquireQueueLockAsync(recipient.Id, chatroom.Id);
-
-                var notBefore = now.AddMinutes(
-                    GetDelayMinutes(recipient.NotificationPreferences.EmailUnreadDelayMinutes));
-                var unreadCount = await GetUnreadMessageCountAsync(recipient.Id, chatroom.Id);
-                var snippet = Truncate(message.Content);
-
-                if (await TryRefreshPendingAsync(
-                        recipient.Id,
-                        chatroom.Id,
-                        notBefore,
-                        senderName,
-                        chatroom.Name,
-                        snippet,
-                        unreadCount))
-                {
-                    continue;
-                }
-
-                var created = new EmailNotificationOutbox
-                {
-                    Id = Guid.NewGuid(),
-                    RecipientAccountId = recipient.Id,
-                    ChatRoomId = chatroom.Id,
-                    Status = EmailNotificationStatus.Pending,
-                    NotBeforeUtc = notBefore,
-                    CreatedAt = now,
-                    LatestSenderName = senderName,
-                    ChatroomName = chatroom.Name,
-                    Snippet = snippet,
-                    UnreadCountHint = unreadCount
-                };
-
-                await _outboxRepository.CreateAsync(created);
-
-                try
-                {
-                    await _outboxRepository.SaveChangesAsync();
-                }
-                catch (DbUpdateException exception) when (IsUniqueViolation(exception))
-                {
-                    await _outboxRepository.DiscardAsync(created);
-
-                    if (!await TryRefreshPendingAsync(
-                            recipient.Id,
-                            chatroom.Id,
-                            notBefore,
-                            senderName,
-                            chatroom.Name,
-                            snippet,
-                            unreadCount))
-                    {
-                        throw;
-                    }
-                }
-            }
-        });
     }
 
     public async Task<bool> ProcessDueAsync(CancellationToken cancellationToken = default)
@@ -144,6 +65,7 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
                 stale.Id,
                 now.AddMinutes(-_notificationOptions.StaleClaimMinutes),
                 now,
+                _notificationOptions.MaxAttempts,
                 cancellationToken);
         }
 
@@ -172,28 +94,36 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         {
             if (!due.Chatroom.Members.Any(member => member.Id == due.RecipientAccountId))
             {
-                due.Status = EmailNotificationStatus.Cancelled;
-                due.ProcessedAt = DateTime.UtcNow;
-                await _outboxRepository.SaveChangesAsync();
+                await _outboxRepository.TryMarkCancelledAsync(
+                    due.Id,
+                    due.AttemptCount,
+                    DateTime.UtcNow,
+                    cancellationToken);
+                await _outboxRepository.DiscardAsync(due);
                 return true;
             }
 
             if (!due.RecipientAccount.NotificationPreferences.EmailOnNewMessage ||
                 !await HasUnreadMessageAsync(due))
             {
-                due.Status = EmailNotificationStatus.Cancelled;
-                due.ProcessedAt = DateTime.UtcNow;
-                await _outboxRepository.SaveChangesAsync();
+                await _outboxRepository.TryMarkCancelledAsync(
+                    due.Id,
+                    due.AttemptCount,
+                    DateTime.UtcNow,
+                    cancellationToken);
+                await _outboxRepository.DiscardAsync(due);
                 return true;
             }
 
             var email = BuildEmail(due);
             await _emailSender.SendAsync(email, cancellationToken);
 
-            due.Status = EmailNotificationStatus.Sent;
-            due.ProcessedAt = DateTime.UtcNow;
-            due.LastError = null;
-            await _outboxRepository.SaveChangesAsync();
+            await _outboxRepository.TryMarkSentAsync(
+                due.Id,
+                due.AttemptCount,
+                DateTime.UtcNow,
+                cancellationToken);
+            await _outboxRepository.DiscardAsync(due);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -223,46 +153,6 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         }
 
         return true;
-    }
-
-    private async Task<bool> TryRefreshPendingAsync(
-        Guid recipientAccountId,
-        Guid chatRoomId,
-        DateTime notBeforeUtc,
-        string latestSenderName,
-        string chatroomName,
-        string snippet,
-        int unreadCountHint)
-    {
-        var candidates = (await _outboxRepository.GetAsync(outbox =>
-            outbox.RecipientAccountId == recipientAccountId &&
-            outbox.ChatRoomId == chatRoomId &&
-            (outbox.Status == EmailNotificationStatus.Pending ||
-             outbox.Status == EmailNotificationStatus.Processing))).ToList();
-        var pending = candidates.FirstOrDefault(
-            outbox => outbox.Status == EmailNotificationStatus.Pending);
-
-        return pending is not null &&
-               await _outboxRepository.TryUpdatePendingAsync(
-                   pending.Id,
-                   notBeforeUtc,
-                   latestSenderName,
-                   chatroomName,
-                   snippet,
-                   unreadCountHint);
-    }
-
-    private static bool IsUniqueViolation(DbUpdateException exception)
-    {
-        for (var inner = exception.InnerException; inner is not null; inner = inner.InnerException)
-        {
-            if (inner.Message.Contains("23505", StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        return exception.GetBaseException().Message.Contains("23505", StringComparison.Ordinal);
     }
 
     private async Task<int> GetUnreadMessageCountAsync(Guid recipientAccountId, Guid chatRoomId)
@@ -324,13 +214,6 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
                 $"<p>{escapedSnippet}</p>" +
                 $"<p><a href=\"{HtmlEncoder.Default.Encode(messagesUrl)}\">Open the conversation</a></p>"
         };
-    }
-
-    private static int GetDelayMinutes(int configuredDelayMinutes)
-    {
-        return MessageEmailNotificationOptions.AllowedDelayMinutes.Contains(configuredDelayMinutes)
-            ? configuredDelayMinutes
-            : MessageEmailNotificationOptions.DefaultDelayMinutes;
     }
 
     private string Truncate(string content)
