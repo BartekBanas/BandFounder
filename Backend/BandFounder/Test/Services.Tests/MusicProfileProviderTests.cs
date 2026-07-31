@@ -160,4 +160,42 @@ public class MusicProfileProviderTests
 
         Assert.That(cache.TryGetValue($"music-profile:{accountId}", out _), Is.False);
     }
+
+    [Test]
+    public async Task VersionRegistry_ShouldSerializeCacheWriteAndInvalidation()
+    {
+        var accountId = Guid.NewGuid();
+        var versions = new MusicProfileVersionRegistry();
+        var cacheWriteStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowCacheWriteToFinish = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var cacheWriteTask = Task.Run(() => versions.TryRunIfCurrent(
+            accountId,
+            0,
+            () =>
+            {
+                cacheWriteStarted.TrySetResult();
+                allowCacheWriteToFinish.Task.GetAwaiter().GetResult();
+            }));
+
+        await cacheWriteStarted.Task;
+
+        var invalidationTask = Task.Run(() => versions.Bump(accountId));
+        try
+        {
+            var completedTask = await Task.WhenAny(invalidationTask, Task.Delay(100));
+
+            Assert.That(completedTask, Is.Not.SameAs(invalidationTask));
+        }
+        finally
+        {
+            allowCacheWriteToFinish.TrySetResult();
+        }
+
+        Assert.That(await cacheWriteTask, Is.True);
+        await invalidationTask;
+        Assert.That(versions.GetVersion(accountId), Is.EqualTo(1));
+    }
 }

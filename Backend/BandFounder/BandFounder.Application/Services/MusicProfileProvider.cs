@@ -82,10 +82,10 @@ public sealed class MusicProfileProvider(
                     .ToDictionary(row => row.GenreName, row => row.Weight));
 
             // Skip caching if Invalidate ran while we were loading; still return the snapshot for this request.
-            if (versions.GetVersion(accountId) == versionsAtReadStart[accountId])
-            {
-                cache.Set(GetCacheKey(accountId), profile, CacheLifetime);
-            }
+            versions.TryRunIfCurrent(
+                accountId,
+                versionsAtReadStart[accountId],
+                () => cache.Set(GetCacheKey(accountId), profile, CacheLifetime));
 
             profiles[accountId] = profile;
         }
@@ -95,8 +95,7 @@ public sealed class MusicProfileProvider(
 
     public void Invalidate(Guid accountId)
     {
-        versions.Bump(accountId);
-        cache.Remove(GetCacheKey(accountId));
+        versions.BumpAndRun(accountId, () => cache.Remove(GetCacheKey(accountId)));
     }
 
     public async Task InvalidateForArtistsAsync(IReadOnlyCollection<string> artistIds)
