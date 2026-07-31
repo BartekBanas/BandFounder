@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useState} from 'react';
 import {useDisclosure} from "@mantine/hooks";
-import {Button, Drawer, IconButton, Typography} from "@mui/material";
+import {Button, Drawer, FormControlLabel, IconButton, Switch, Typography} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import {DeleteAccountButton} from "./DeleteAccountButton";
@@ -13,8 +13,9 @@ import '../../styles/customScrollbar.css';
 import {Account} from "../../types/Account";
 import {getTopArtists, TopArtist} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
-import {getAccount} from "../../api/account";
+import {getMyAccount, updateMyAccount} from "../../api/account";
 import ProfilePicture from "../profile/ProfilePicture";
+import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 
 interface UtilityDrawerProps {
 }
@@ -24,6 +25,7 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     const [user, setUser] = useState<Account>();
     const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
     const [topGenres, setTopGenres] = useState<string[]>([]);
+    const [updatingEmailNotifications, setUpdatingEmailNotifications] = useState(false);
 
     const handleLogout = () => {
         removeAuthToken();
@@ -31,9 +33,34 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
         window.location.reload();
     };
 
+    const handleEmailNotificationChange = async (enabled: boolean) => {
+        if (!user) {
+            return;
+        }
+
+        const previousUser = user;
+        setUser({...user, emailOnNewMessage: enabled});
+        setUpdatingEmailNotifications(true);
+
+        try {
+            const updatedUser = await updateMyAccount(null, null, null, enabled);
+            setUser(updatedUser);
+            mantineSuccessNotification(
+                enabled
+                    ? 'Email notifications for unread messages enabled'
+                    : 'Email notifications for unread messages disabled'
+            );
+        } catch {
+            setUser(previousUser);
+            mantineErrorNotification('Failed to update email notification preference');
+        } finally {
+            setUpdatingEmailNotifications(false);
+        }
+    };
+
     useEffect(() => {
         const getUser = async () => {
-            const user = await getAccount(getUserId());
+            const user = await getMyAccount();
             setUser(user);
         };
 
@@ -126,6 +153,21 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                         <div className="utility-drawer__section-actions">
                             <SpotifyConnectionButton/>
                         </div>
+                    </section>
+
+                    <section className="utility-drawer__section">
+                        <h3 className="utility-drawer__section-label">Notifications</h3>
+                        <FormControlLabel
+                            className="utility-drawer__notification-toggle"
+                            control={
+                                <Switch
+                                    checked={user?.emailOnNewMessage ?? true}
+                                    disabled={!user || updatingEmailNotifications}
+                                    onChange={(_, checked) => handleEmailNotificationChange(checked)}
+                                />
+                            }
+                            label="Email me about unread messages"
+                        />
                     </section>
 
                     <section className="utility-drawer__section">

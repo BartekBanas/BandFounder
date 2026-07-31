@@ -142,6 +142,11 @@
     width: 100%;
 }
 
+.utility-drawer__notification-toggle {
+    margin: 0 !important;
+    color: var(--text-primary) !important;
+}
+
 .utility-drawer__footer {
     flex-shrink: 0;
     padding: 16px 20px;
