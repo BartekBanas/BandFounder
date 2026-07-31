@@ -32,4 +32,16 @@ public interface IEmailNotificationOutboxRepository : IRepository<EmailNotificat
         DateTime staleBeforeUtc,
         DateTime now,
         CancellationToken cancellationToken = default);
+
+    Task<EmailNotificationStatus?> TryTransitionAfterSendFailureAsync(
+        Guid id,
+        Guid recipientAccountId,
+        Guid chatRoomId,
+        DateTime createdAtUtc,
+        int attemptCount,
+        int maxAttempts,
+        DateTime retryAtUtc,
+        DateTime processedAtUtc,
+        string lastError,
+        CancellationToken cancellationToken = default);
 }

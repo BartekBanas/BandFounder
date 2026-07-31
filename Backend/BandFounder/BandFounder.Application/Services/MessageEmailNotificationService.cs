@@ -140,15 +140,11 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
 
         foreach (var stale in staleProcessing)
         {
-            if (await _outboxRepository.TryRecoverStaleAsync(
-                    stale.Id,
-                    now.AddMinutes(-_notificationOptions.StaleClaimMinutes),
-                    now,
-                    cancellationToken))
-            {
-                stale.Status = EmailNotificationStatus.Pending;
-                stale.NotBeforeUtc = now;
-            }
+            await _outboxRepository.TryRecoverStaleAsync(
+                stale.Id,
+                now.AddMinutes(-_notificationOptions.StaleClaimMinutes),
+                now,
+                cancellationToken);
         }
 
         var candidate = await _outboxRepository.GetOneAsync(
@@ -205,17 +201,19 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         }
         catch (Exception exception)
         {
-            due.Status = due.AttemptCount >= _notificationOptions.MaxAttempts
-                ? EmailNotificationStatus.Failed
-                : EmailNotificationStatus.Pending;
-            due.NotBeforeUtc = DateTime.UtcNow.AddMinutes(5 * due.AttemptCount);
-            due.LastError = exception.Message;
-            if (due.Status == EmailNotificationStatus.Failed)
-            {
-                due.ProcessedAt = DateTime.UtcNow;
-            }
-
-            await _outboxRepository.SaveChangesAsync();
+            var failedAt = DateTime.UtcNow;
+            await _outboxRepository.TryTransitionAfterSendFailureAsync(
+                due.Id,
+                due.RecipientAccountId,
+                due.ChatRoomId,
+                due.CreatedAt,
+                due.AttemptCount,
+                _notificationOptions.MaxAttempts,
+                failedAt.AddMinutes(5 * due.AttemptCount),
+                failedAt,
+                exception.Message,
+                cancellationToken);
+            await _outboxRepository.DiscardAsync(due);
             _logger.LogError(
                 exception,
                 "Failed to send message notification email for {ChatRoomId} to {RecipientAccountId}; attempt {AttemptCount}",

@@ -107,17 +107,129 @@ public sealed class EmailNotificationOutboxRepository
         DateTime now,
         CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.EmailNotificationOutboxes
+        var stale = await _dbContext.EmailNotificationOutboxes
+            .AsNoTracking()
             .Where(outbox =>
                 outbox.Id == id &&
                 outbox.Status == EmailNotificationStatus.Processing &&
                 outbox.LastAttemptAt < staleBeforeUtc)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(outbox => outbox.Status, EmailNotificationStatus.Pending)
-                    .SetProperty(outbox => outbox.NotBeforeUtc, now),
+            .Select(outbox => new
+            {
+                outbox.RecipientAccountId,
+                outbox.ChatRoomId,
+                outbox.CreatedAt
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (stale is null)
+        {
+            return false;
+        }
+
+        return await _dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+                cancellationToken);
+            await AcquireQueueLockAsync(
+                stale.RecipientAccountId,
+                stale.ChatRoomId,
                 cancellationToken);
 
-        return affectedRows == 1;
+            var hasSupersedingSuccessor = await HasSupersedingSuccessorAsync(
+                id,
+                stale.RecipientAccountId,
+                stale.ChatRoomId,
+                stale.CreatedAt,
+                cancellationToken);
+            var recoveredStatus = hasSupersedingSuccessor
+                ? EmailNotificationStatus.Failed
+                : EmailNotificationStatus.Pending;
+
+            var affectedRows = await _dbContext.EmailNotificationOutboxes
+                .Where(outbox =>
+                    outbox.Id == id &&
+                    outbox.Status == EmailNotificationStatus.Processing &&
+                    outbox.LastAttemptAt < staleBeforeUtc)
+                .ExecuteUpdateAsync(
+                    setters => setters
+                        .SetProperty(outbox => outbox.Status, recoveredStatus)
+                        .SetProperty(outbox => outbox.NotBeforeUtc, now)
+                        .SetProperty(
+                            outbox => outbox.ProcessedAt,
+                            recoveredStatus == EmailNotificationStatus.Failed ? now : null),
+                    cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return affectedRows == 1;
+        });
+    }
+
+    public async Task<EmailNotificationStatus?> TryTransitionAfterSendFailureAsync(
+        Guid id,
+        Guid recipientAccountId,
+        Guid chatRoomId,
+        DateTime createdAtUtc,
+        int attemptCount,
+        int maxAttempts,
+        DateTime retryAtUtc,
+        DateTime processedAtUtc,
+        string lastError,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Database.CreateExecutionStrategy()
+            .ExecuteAsync<EmailNotificationStatus?>(async () =>
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+                cancellationToken);
+            await AcquireQueueLockAsync(recipientAccountId, chatRoomId, cancellationToken);
+
+            var hasSupersedingSuccessor = await HasSupersedingSuccessorAsync(
+                id,
+                recipientAccountId,
+                chatRoomId,
+                createdAtUtc,
+                cancellationToken);
+            var nextStatus = hasSupersedingSuccessor || attemptCount >= maxAttempts
+                ? EmailNotificationStatus.Failed
+                : EmailNotificationStatus.Pending;
+
+            var affectedRows = await _dbContext.EmailNotificationOutboxes
+                .Where(outbox =>
+                    outbox.Id == id &&
+                    outbox.Status == EmailNotificationStatus.Processing)
+                .ExecuteUpdateAsync(
+                    setters => setters
+                        .SetProperty(outbox => outbox.Status, nextStatus)
+                        .SetProperty(outbox => outbox.NotBeforeUtc, retryAtUtc)
+                        .SetProperty(
+                            outbox => outbox.ProcessedAt,
+                            nextStatus == EmailNotificationStatus.Failed ? processedAtUtc : null)
+                        .SetProperty(outbox => outbox.LastError, lastError),
+                    cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return affectedRows == 1 ? nextStatus : null;
+        });
+    }
+
+    private Task<bool> HasSupersedingSuccessorAsync(
+        Guid id,
+        Guid recipientAccountId,
+        Guid chatRoomId,
+        DateTime originalCreatedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.EmailNotificationOutboxes
+            .AsNoTracking()
+            .AnyAsync(
+                outbox =>
+                    outbox.Id != id &&
+                    outbox.RecipientAccountId == recipientAccountId &&
+                    outbox.ChatRoomId == chatRoomId &&
+                    outbox.CreatedAt > originalCreatedAtUtc &&
+                    (outbox.Status == EmailNotificationStatus.Pending ||
+                     outbox.Status == EmailNotificationStatus.Processing ||
+                     outbox.Status == EmailNotificationStatus.Sent),
+                cancellationToken);
     }
 }
