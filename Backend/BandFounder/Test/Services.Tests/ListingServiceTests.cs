@@ -189,6 +189,48 @@ public class ListingServiceTests
         Assert.That(result.Listings, Has.Count.EqualTo(1));
         Assert.That(result.Listings.First().Listing.Id, Is.EqualTo(midScoreListing.Id));
         Assert.That(result.Listings.First().SimilarityScore, Is.EqualTo(5));
+        Assert.That(result.TotalCount, Is.EqualTo(3));
+        Assert.That(result.HasMore, Is.True);
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_OmittedPaging_ReturnsDefaultPageWithTotalCount()
+    {
+        var userId = Guid.NewGuid();
+        var listings = Enumerable.Range(0, 101)
+            .Select(_ => CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid()))
+            .ToList();
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(100));
+        Assert.That(result.TotalCount, Is.EqualTo(101));
+        Assert.That(result.HasMore, Is.True);
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_LastPage_HasMoreIsFalse()
+    {
+        var userId = Guid.NewGuid();
+        var listings = Enumerable.Range(0, 3)
+            .Select(_ => CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid()))
+            .ToList();
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true,
+            PageNumber = 2,
+            PageSize = 2
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(1));
+        Assert.That(result.TotalCount, Is.EqualTo(3));
+        Assert.That(result.HasMore, Is.False);
     }
 
     [Test]
@@ -208,6 +250,8 @@ public class ListingServiceTests
         });
 
         Assert.That(result.Listings, Has.Count.EqualTo(100));
+        Assert.That(result.TotalCount, Is.EqualTo(101));
+        Assert.That(result.HasMore, Is.True);
     }
 
     [Test]
@@ -228,6 +272,8 @@ public class ListingServiceTests
         });
 
         Assert.That(result.Listings, Is.Empty);
+        Assert.That(result.TotalCount, Is.EqualTo(1));
+        Assert.That(result.HasMore, Is.False);
     }
 
     [Test]

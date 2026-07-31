@@ -70,16 +70,21 @@ public sealed class MusicProfileProvider(
                     group.Key.GenreName,
                     group.Count())));
 
+        var artistIdsByAccount = artistRows
+            .GroupBy(row => row.AccountId)
+            .ToDictionary(group => group.Key, group => (IReadOnlySet<string>)group.Select(row => row.ArtistId).ToHashSet());
+
+        var genreWeightsByAccount = genreRows
+            .GroupBy(row => row.AccountId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyDictionary<string, int>)group.ToDictionary(row => row.GenreName, row => row.Weight));
+
         foreach (var accountId in missingAccountIds)
         {
             var profile = new MusicProfile(
-                artistRows
-                    .Where(row => row.AccountId == accountId)
-                    .Select(row => row.ArtistId)
-                    .ToHashSet(),
-                genreRows
-                    .Where(row => row.AccountId == accountId)
-                    .ToDictionary(row => row.GenreName, row => row.Weight));
+                artistIdsByAccount.GetValueOrDefault(accountId, new HashSet<string>()),
+                genreWeightsByAccount.GetValueOrDefault(accountId, new Dictionary<string, int>()));
 
             // Skip caching if Invalidate ran while we were loading; still return the snapshot for this request.
             versions.TryRunIfCurrent(
