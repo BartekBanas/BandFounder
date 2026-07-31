@@ -161,7 +161,11 @@ public class ListingService : IListingService
         var skip = (long)(pageNumber - 1) * pageSize;
         if (skip > int.MaxValue)
         {
-            return new ListingsFeedDto();
+            return new ListingsFeedDto
+            {
+                TotalCount = candidates.Count,
+                HasMore = false
+            };
         }
 
         var orderedCandidates = candidates
@@ -200,7 +204,9 @@ public class ListingService : IListingService
 
         return new ListingsFeedDto
         {
-            Listings = listingsWithScores
+            Listings = listingsWithScores,
+            TotalCount = candidates.Count,
+            HasMore = skip + pageSize < candidates.Count
         };
     }
 
