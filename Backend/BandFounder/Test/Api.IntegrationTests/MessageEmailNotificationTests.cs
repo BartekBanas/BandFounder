@@ -184,6 +184,39 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ProcessDueNotification_WhenProviderFailsAfterEarlierNotificationWasSent_Retries()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("retryafterprevious");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Earlier notification");
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Retry this notification");
+        await MakeOutboxDueAsync();
+
+        EmailSender.ThrowOnSend = true;
+        await ProcessDueAsync();
+
+        var failedAttempt = (await GetOutboxAsync())
+            .Single(outbox => outbox.Snippet == "Retry this notification");
+        Assert.That(failedAttempt.Status, Is.EqualTo(EmailNotificationStatus.Pending));
+        Assert.That(failedAttempt.AttemptCount, Is.EqualTo(1));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+
+        EmailSender.ThrowOnSend = false;
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        Assert.That(
+            (await GetOutboxAsync()).Single(outbox => outbox.Snippet == "Retry this notification").Status,
+            Is.EqualTo(EmailNotificationStatus.Sent));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(2));
+    }
+
+    [Test]
     public async Task ProcessDueNotification_WhenProviderKeepsFailing_ReachesConfiguredFailureState()
     {
         var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("failed");
@@ -224,7 +257,7 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task SendMessage_WhenQueueFails_StillPersistsMessage()
+    public async Task SendMessage_WhenQueueFails_PersistsMessageAndRetryableNotificationIntent()
     {
         var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("queuefail");
 
@@ -232,13 +265,48 @@ public class MessageEmailNotificationTests : IntegrationTestBase
         AuthenticateAs(ownerToken);
         await SendMessageAsync(chatroom.Id, "Message must survive queue failure");
 
-        Assert.That(await GetOutboxAsync(), Is.Empty);
+        var queuedIntent = (await GetOutboxAsync()).Single();
+        Assert.That(queuedIntent.Status, Is.EqualTo(EmailNotificationStatus.Pending));
+        Assert.That(queuedIntent.ChatRoomId, Is.EqualTo(chatroom.Id));
+        Assert.That(queuedIntent.Snippet, Is.EqualTo("Message must survive queue failure"));
 
         var messagesResponse = await Client.GetAsync($"/api/chatrooms/{chatroom.Id}/messages");
         Assert.That(messagesResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         var messages = await ReadJsonAsync<List<JsonElement>>(messagesResponse);
         Assert.That(messages, Has.Count.EqualTo(1));
         Assert.That(messages[0].GetProperty("content").GetString(), Is.EqualTo("Message must survive queue failure"));
+
+        QueueFailureGate.Clear();
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        Assert.That((await GetOutboxAsync()).Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public async Task SendMessage_WhenQueueFailsAcrossMultipleMessages_PreservesUnreadCountHint()
+    {
+        var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("queuefailcount");
+
+        QueueFailureGate.ThrowOnQueue = true;
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Unread one");
+        await SendMessageAsync(chatroom.Id, "Unread two");
+        await SendMessageAsync(chatroom.Id, "Unread three");
+
+        var queuedIntent = (await GetOutboxAsync()).Single();
+        Assert.That(queuedIntent.Status, Is.EqualTo(EmailNotificationStatus.Pending));
+        Assert.That(queuedIntent.UnreadCountHint, Is.EqualTo(3));
+        Assert.That(queuedIntent.Snippet, Is.EqualTo("Unread three"));
+
+        QueueFailureGate.Clear();
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        Assert.That((await GetOutboxAsync()).Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        Assert.That(EmailSender.Sent.Single().TextBody, Does.Contain("3 unread message(s)"));
     }
 
     [Test]
