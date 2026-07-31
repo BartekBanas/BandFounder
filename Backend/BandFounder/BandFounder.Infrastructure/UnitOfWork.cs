@@ -1,4 +1,5 @@
 using BandFounder.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace BandFounder.Infrastructure;
 
@@ -13,17 +14,21 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public async Task ExecuteInTransactionAsync(Func<Task> action)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        try
-        {
-            await action();
-            await transaction.CommitAsync();
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+            try
+            {
+                await action();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 }
