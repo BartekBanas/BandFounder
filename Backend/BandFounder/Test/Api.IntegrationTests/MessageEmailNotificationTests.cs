@@ -257,6 +257,37 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task LeaveChatroom_WhileClaimed_DoesNotSendEmail()
+    {
+        var (ownerToken, chatroom, memberToken, _) = await CreateRoomWithMemberAsync("leavewhileclaimed");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Leave before this is emailed");
+        await MakeOutboxDueAsync();
+
+        var eligibilityStarted = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowEligibility = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        NotificationGate.EligibilityStarted = eligibilityStarted;
+        NotificationGate.AllowEligibility = allowEligibility;
+
+        var processing = ProcessDueOnceAsync();
+        await eligibilityStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        AuthenticateAs(memberToken);
+        var leaveResponse = await Client.PostAsync($"/api/chatrooms/{chatroom.Id}/leave", null);
+        Assert.That(leaveResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        allowEligibility.SetResult(true);
+        await processing;
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox.Single().Status, Is.EqualTo(EmailNotificationStatus.Cancelled));
+        Assert.That(EmailSender.Sent, Is.Empty);
+    }
+
+    [Test]
     public async Task SendMessage_PersistsMessageAndPendingNotificationIntentThatCanLaterBeDelivered()
     {
         var (ownerToken, chatroom, _, _) = await CreateRoomWithMemberAsync("durable");

@@ -26,6 +26,7 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
     private readonly IRepository<ChatroomReadState> _readStateRepository;
     private readonly IRepository<Message> _messageRepository;
     private readonly IEmailSender _emailSender;
+    private readonly IMessageEmailNotificationGate _notificationGate;
     private readonly EmailOptions _emailOptions;
     private readonly MessageEmailNotificationOptions _notificationOptions;
     private readonly ILogger<MessageEmailNotificationService> _logger;
@@ -35,6 +36,7 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         IRepository<ChatroomReadState> readStateRepository,
         IRepository<Message> messageRepository,
         IEmailSender emailSender,
+        IMessageEmailNotificationGate notificationGate,
         IOptions<EmailOptions> emailOptions,
         IOptions<MessageEmailNotificationOptions> notificationOptions,
         ILogger<MessageEmailNotificationService> logger)
@@ -43,6 +45,7 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         _readStateRepository = readStateRepository;
         _messageRepository = messageRepository;
         _emailSender = emailSender;
+        _notificationGate = notificationGate;
         _emailOptions = emailOptions.Value;
         _notificationOptions = notificationOptions.Value;
         _logger = logger;
@@ -86,9 +89,25 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
             return true;
         }
 
-        var due = await _outboxRepository.GetOneRequiredAsync(
-            outbox => outbox.Id == candidateId,
+        var claimed = await _outboxRepository.GetOneRequiredAsync(
+            outbox => outbox.Id == candidateId);
+        var attemptCount = claimed.AttemptCount;
+        await _outboxRepository.DiscardAsync(claimed);
+
+        await _notificationGate.WaitBeforeSendEligibilityAsync(cancellationToken);
+
+        // Re-load claim + membership/prefs from the database so concurrent leave/cancel/disable
+        // cannot be missed by a stale in-memory snapshot from the original claim load.
+        var due = await _outboxRepository.GetOneAsync(
+            outbox => outbox.Id == candidateId &&
+                      outbox.Status == EmailNotificationStatus.Processing &&
+                      outbox.AttemptCount == attemptCount,
             OutboxProcessIncludes);
+
+        if (due is null)
+        {
+            return true;
+        }
 
         try
         {
@@ -155,25 +174,6 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         return true;
     }
 
-    private async Task<int> GetUnreadMessageCountAsync(Guid recipientAccountId, Guid chatRoomId)
-    {
-        var readState = await _readStateRepository.GetOneAsync(
-            state => state.AccountId == recipientAccountId &&
-                     state.ChatRoomId == chatRoomId);
-
-        if (readState?.LastReadAt is DateTime lastReadAt)
-        {
-            return await _messageRepository.CountAsync(message =>
-                message.ChatRoomId == chatRoomId &&
-                message.SenderId != recipientAccountId &&
-                message.SentDate > lastReadAt);
-        }
-
-        return await _messageRepository.CountAsync(message =>
-            message.ChatRoomId == chatRoomId &&
-            message.SenderId != recipientAccountId);
-    }
-
     private async Task<bool> HasUnreadMessageAsync(EmailNotificationOutbox outbox)
     {
         var readState = await _readStateRepository.GetOneAsync(
@@ -214,14 +214,6 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
                 $"<p>{escapedSnippet}</p>" +
                 $"<p><a href=\"{HtmlEncoder.Default.Encode(messagesUrl)}\">Open the conversation</a></p>"
         };
-    }
-
-    private string Truncate(string content)
-    {
-        var normalized = content.Trim();
-        return normalized.Length <= _notificationOptions.MaxSnippetLength
-            ? normalized
-            : $"{normalized[.._notificationOptions.MaxSnippetLength]}…";
     }
 
     private static string CleanSubjectPart(string value)
