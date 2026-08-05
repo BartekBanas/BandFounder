@@ -1,4 +1,5 @@
 using AspNetCoreRateLimit;
+using BandFounder.Application.Services;
 using BandFounder.Application.Services.Email;
 using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -14,6 +15,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString;
     public RecordingEmailSender EmailSender { get; } = new();
+    public ControllableMessageEmailNotificationGate NotificationGate { get; } = new();
 
     public CustomWebApplicationFactory(string connectionString)
     {
@@ -42,12 +44,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll(typeof(DbContextOptions<BandFounderDbContext>));
             services.RemoveAll(typeof(BandFounderDbContext));
             services.RemoveAll(typeof(IEmailSender));
+            services.RemoveAll(typeof(IMessageEmailNotificationGate));
 
             services.AddDbContext<BandFounderDbContext>(options =>
                 options.UseNpgsql(_connectionString,
                     npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
             services.AddSingleton<IEmailSender>(EmailSender);
+            services.AddSingleton<IMessageEmailNotificationGate>(NotificationGate);
 
             services.Configure<IpRateLimitOptions>(options =>
             {

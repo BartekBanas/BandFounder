@@ -169,6 +169,7 @@ services.AddScoped<IHashingService, HashingService>();
 
 services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<IMessageService, MessageService>();
+services.AddSingleton<IMessageEmailNotificationGate, NoOpMessageEmailNotificationGate>();
 services.AddScoped<IMessageEmailNotificationService, MessageEmailNotificationService>();
 services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
