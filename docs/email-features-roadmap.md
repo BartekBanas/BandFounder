@@ -99,12 +99,13 @@ than sending an email inline for every message.
 - Email secrets are externalized and no real credentials are committed.
 - Password reset is enumeration-resistant, rate-limited, expiring, single-use, and tested end to end.
 - Message emails are optional, delayed/grouped, based on durable unread state, and cannot block message posting.
-- Provider failures are observable and retryable without duplicate emails.
+- Provider failures are observable and retryable; delivery is at-least-once and may duplicate on the
+  crash-after-accept window described in section 4.
 
 ## Implementation todos
 
-- [ ] Implement provider-independent email delivery, externalized configuration, templates, tests, and migration
+- [x] Implement provider-independent email delivery, externalized configuration, templates, tests, and migration
   readiness.
-- [ ] Add secure opaque reset tokens, backend endpoints, frontend flows, rate limits, and end-to-end tests.
+- [x] Add secure opaque reset tokens, backend endpoints, frontend flows, rate limits, and end-to-end tests.
 - [x] Add email preferences and durable per-chat read state with account and messaging APIs.
 - [x] Add durable, delayed, deduplicated message-email processing and recipient-selection tests.
