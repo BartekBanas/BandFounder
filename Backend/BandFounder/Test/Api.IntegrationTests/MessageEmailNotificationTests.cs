@@ -76,6 +76,95 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task DeletedSender_UnreadMessage_StillDeliversNotification()
+    {
+        var (ownerToken, chatroom, _, member) = await CreateRoomWithMemberAsync("deletesender");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Message before sender deletes");
+
+        var queued = (await GetOutboxAsync()).Single();
+        Assert.That(queued.Status, Is.EqualTo(EmailNotificationStatus.Pending));
+        Assert.That(queued.UnreadCountHint, Is.EqualTo(1));
+        Assert.That(queued.RecipientAccountId, Is.EqualTo(Guid.Parse(member.Id)));
+
+        AuthenticateAs(ownerToken);
+        var deleteResponse = await Client.DeleteAsync("/api/accounts/me");
+        Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        using (var scope = Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var message = await dbContext.Messages.SingleAsync(m => m.ChatRoomId == chatroom.Id);
+            Assert.That(message.SenderId, Is.Null);
+        }
+
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox.Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        Assert.That(EmailSender.Sent[0].To, Is.EqualTo(member.Email));
+        Assert.That(EmailSender.Sent[0].TextBody, Does.Contain("1 unread message(s)"));
+    }
+
+    [Test]
+    public async Task DeletedSender_UnreadMessage_IsIncludedInUnreadCountHintOnUpdate()
+    {
+        var (ownerToken, chatroom, memberToken, member) = await CreateRoomWithMemberAsync("deletecount");
+
+        AuthenticateAs(memberToken);
+        var markReadResponse = await Client.PutAsync($"/api/chatrooms/{chatroom.Id}/read", null);
+        Assert.That(markReadResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "From sender who will delete");
+
+        var afterFirst = (await GetOutboxAsync()).Single();
+        Assert.That(afterFirst.RecipientAccountId, Is.EqualTo(Guid.Parse(member.Id)));
+        Assert.That(afterFirst.UnreadCountHint, Is.EqualTo(1));
+
+        AuthenticateAs(ownerToken);
+        var deleteResponse = await Client.DeleteAsync("/api/accounts/me");
+        Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        using (var scope = Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var orphaned = await dbContext.Messages.SingleAsync(
+                m => m.ChatRoomId == chatroom.Id && m.Content == "From sender who will delete");
+            Assert.That(orphaned.SenderId, Is.Null);
+        }
+
+        var thirdToken = await RegisterAsync("deletecountthird", "deletecountthird@example.com");
+        AuthenticateAs(thirdToken);
+        var third = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
+
+        AuthenticateAs(memberToken);
+        var inviteResponse = await Client.PostAsync(
+            $"/api/chatrooms/{chatroom.Id}/invite/{third.Id}", null);
+        Assert.That(inviteResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        AuthenticateAs(thirdToken);
+        await SendMessageAsync(chatroom.Id, "From remaining member");
+
+        var updated = (await GetOutboxAsync())
+            .Single(row => row.RecipientAccountId == Guid.Parse(member.Id));
+        Assert.That(updated.Status, Is.EqualTo(EmailNotificationStatus.Pending));
+        Assert.That(updated.UnreadCountHint, Is.EqualTo(2));
+        Assert.That(updated.Snippet, Is.EqualTo("From remaining member"));
+
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        Assert.That(
+            (await GetOutboxAsync()).Single(row => row.RecipientAccountId == Guid.Parse(member.Id)).Status,
+            Is.EqualTo(EmailNotificationStatus.Sent));
+        Assert.That(EmailSender.Sent.Any(email => email.To == member.Email), Is.True);
+    }
+
+    [Test]
     public async Task ProcessDueNotification_WhenStillUnread_SendsOneSafeEmail()
     {
         var (ownerToken, chatroom, _, member) = await CreateRoomWithMemberAsync("send");

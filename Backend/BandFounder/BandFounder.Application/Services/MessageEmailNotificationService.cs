@@ -184,13 +184,13 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
         {
             return await _messageRepository.GetOneAsync(message =>
                 message.ChatRoomId == outbox.ChatRoomId &&
-                message.SenderId != outbox.RecipientAccountId &&
+                (message.SenderId == null || message.SenderId != outbox.RecipientAccountId) &&
                 message.SentDate > lastReadAt) is not null;
         }
 
         return await _messageRepository.GetOneAsync(message =>
             message.ChatRoomId == outbox.ChatRoomId &&
-            message.SenderId != outbox.RecipientAccountId) is not null;
+            (message.SenderId == null || message.SenderId != outbox.RecipientAccountId)) is not null;
     }
 
     private OutgoingEmail BuildEmail(EmailNotificationOutbox outbox)

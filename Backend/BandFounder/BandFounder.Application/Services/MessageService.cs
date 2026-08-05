@@ -134,13 +134,13 @@ public class MessageService : IMessageService
         {
             return await _messageRepository.CountAsync(message =>
                 message.ChatRoomId == chatRoomId &&
-                message.SenderId != recipientAccountId &&
+                (message.SenderId == null || message.SenderId != recipientAccountId) &&
                 message.SentDate > lastReadAt);
         }
 
         return await _messageRepository.CountAsync(message =>
             message.ChatRoomId == chatRoomId &&
-            message.SenderId != recipientAccountId);
+            (message.SenderId == null || message.SenderId != recipientAccountId));
     }
 
     private int GetDelayMinutes(int configuredDelayMinutes)
