@@ -28,19 +28,27 @@ public sealed class MessageEmailNotificationWorker(
         }
     }
 
-    private async Task ProcessDueNotificationsAsync(CancellationToken cancellationToken)
+    internal async Task ProcessDueNotificationsAsync(CancellationToken cancellationToken)
     {
         try
         {
-            using var scope = scopeFactory.CreateScope();
-            var notificationService = scope.ServiceProvider
-                .GetRequiredService<IMessageEmailNotificationService>();
             var processedCount = 0;
+            bool processed;
 
-            while (await notificationService.ProcessDueAsync(cancellationToken))
+            do
             {
-                processedCount++;
+                // One scope (and DbContext) per attempt so eligibility re-reads cannot
+                // reuse Account / prefs / membership / read state tracked from earlier items.
+                using var scope = scopeFactory.CreateScope();
+                var notificationService = scope.ServiceProvider
+                    .GetRequiredService<IMessageEmailNotificationService>();
+                processed = await notificationService.ProcessDueAsync(cancellationToken);
+                if (processed)
+                {
+                    processedCount++;
+                }
             }
+            while (processed);
 
             logger.LogInformation(
                 "Processed {ProcessedCount} message email notifications in worker cycle",

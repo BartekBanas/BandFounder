@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Api.IntegrationTests.Infrastructure;
+using BandFounder.Api.BackgroundServices;
 using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Application.Dtos.Chatrooms;
 using BandFounder.Application.Services;
@@ -434,6 +435,68 @@ public class MessageEmailNotificationTests : IntegrationTestBase
 
         Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
         Assert.That((await GetOutboxAsync()).Single().Status, Is.EqualTo(EmailNotificationStatus.Sent));
+    }
+
+    [Test]
+    public async Task WorkerCycle_TwoDueRoomsForSameRecipient_HonorsMidCycleEmailOptOut()
+    {
+        var ownerToken = await RegisterAsync("scopesowner", "scopesowner@example.com");
+        AuthenticateAs(ownerToken);
+
+        var room1 = await ReadJsonAsync<ChatroomDto>(await Client.PostAsJsonAsync("/api/chatrooms", new
+        {
+            chatRoomType = ChatRoomType.General,
+            name = "scopes room 1"
+        }));
+        var room2 = await ReadJsonAsync<ChatroomDto>(await Client.PostAsJsonAsync("/api/chatrooms", new
+        {
+            chatRoomType = ChatRoomType.General,
+            name = "scopes room 2"
+        }));
+
+        var memberToken = await RegisterAsync("scopesmember", "scopesmember@example.com");
+        AuthenticateAs(memberToken);
+        var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
+
+        AuthenticateAs(ownerToken);
+        Assert.That(
+            (await Client.PostAsync($"/api/chatrooms/{room1.Id}/invite/{member.Id}", null)).StatusCode,
+            Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(
+            (await Client.PostAsync($"/api/chatrooms/{room2.Id}/invite/{member.Id}", null)).StatusCode,
+            Is.EqualTo(HttpStatusCode.OK));
+
+        await SendMessageAsync(room1.Id, "First room due notification");
+        await SendMessageAsync(room2.Id, "Second room due notification");
+        await MakeOutboxDueAsync();
+        Assert.That(await GetOutboxAsync(), Has.Count.EqualTo(2));
+
+        var sendStarted = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowSend = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        EmailSender.SendStarted = sendStarted;
+        EmailSender.AllowSend = allowSend;
+
+        var worker = ActivatorUtilities.CreateInstance<MessageEmailNotificationWorker>(Services);
+        var cycleTask = worker.ProcessDueNotificationsAsync(CancellationToken.None);
+
+        await sendStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        AuthenticateAs(memberToken);
+        var optOutResponse = await Client.PatchAsJsonAsync("/api/accounts/me", new
+        {
+            emailOnNewMessage = false
+        });
+        Assert.That(optOutResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        allowSend.SetResult(true);
+        await cycleTask.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox.Count(row => row.Status == EmailNotificationStatus.Sent), Is.EqualTo(1));
+        Assert.That(outbox.Count(row => row.Status == EmailNotificationStatus.Cancelled), Is.EqualTo(1));
     }
 
     [Test]
