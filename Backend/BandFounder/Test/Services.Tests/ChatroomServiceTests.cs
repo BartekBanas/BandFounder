@@ -257,6 +257,57 @@ public class ChatroomServiceTests
     }
 
     [Test]
+    public async Task LeaveChatroom_ShouldPersistBeforeCancellingNotification_WhenLeaveSucceeds()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var otherMemberId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(userId);
+        chatroom.Members.Add(CreateAccount(otherMemberId));
+
+        MockAuthorizationSuccess(userId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(
+                Arg.Any<Expression<Func<Chatroom, bool>>>(), nameof(Chatroom.Members))
+            .Returns(chatroom);
+
+        // Act
+        await _chatroomService.LeaveChatroom(chatroom.Id);
+
+        // Assert — cancellation must follow successful persistence (fails under pre-M3 order)
+        Received.InOrder(() =>
+        {
+            _chatRoomRepositoryMock.SaveChangesAsync();
+            _emailNotificationOutboxRepositoryMock.CancelForRecipientChatroomAsync(
+                userId, chatroom.Id, Arg.Any<CancellationToken>());
+        });
+    }
+
+    [Test]
+    public async Task LeaveChatroom_ShouldNotCancelNotification_WhenSaveChangesFails()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var otherMemberId = Guid.NewGuid();
+        var chatroom = CreateGroupChatroom(userId);
+        chatroom.Members.Add(CreateAccount(otherMemberId));
+
+        MockAuthorizationSuccess(userId);
+        _chatRoomRepositoryMock.GetOneRequiredAsync(
+                Arg.Any<Expression<Func<Chatroom, bool>>>(), nameof(Chatroom.Members))
+            .Returns(chatroom);
+        _chatRoomRepositoryMock.SaveChangesAsync()
+            .Returns(Task.FromException(new InvalidOperationException("Save failed")));
+
+        // Act & Assert
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _chatroomService.LeaveChatroom(chatroom.Id));
+
+        await _emailNotificationOutboxRepositoryMock.DidNotReceive()
+            .CancelForRecipientChatroomAsync(
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Test]
     public async Task DeleteChatroom_ShouldDeleteGeneralChatroom_WhenIssuerIsOwner()
     {
         // Arrange

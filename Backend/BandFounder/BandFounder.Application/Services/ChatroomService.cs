@@ -232,8 +232,6 @@ public class ChatroomService : IChatroomService
 
         await _authorizationService.AuthorizeRequiredAsync(userClaims, chatroom, AuthorizationPolicies.IsMemberOf);
 
-        await _emailNotificationOutboxRepository.CancelForRecipientChatroomAsync(userId, chatroomId);
-
         if (chatroom.Members.Count == 1)
         {
             await _chatRoomRepository.DeleteOneAsync(chatroom.Id);
@@ -261,6 +259,7 @@ public class ChatroomService : IChatroomService
         }
 
         await _chatRoomRepository.SaveChangesAsync();
+        await _emailNotificationOutboxRepository.CancelForRecipientChatroomAsync(userId, chatroomId);
     }
 
     public async Task LeaveAllChatrooms(Account account)
