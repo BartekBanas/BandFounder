@@ -11,6 +11,8 @@ public class SpotifyTrackDto
     [JsonPropertyName("album")] public SpotifyAlbumDto? Album { get; set; }
 
     [JsonPropertyName("artists")] public List<SpotifySimplifiedArtistDto> Artists { get; set; } = [];
+
+    [JsonPropertyName("is_local")] public bool IsLocal { get; set; }
 }
 
 public class SpotifyAlbumDto

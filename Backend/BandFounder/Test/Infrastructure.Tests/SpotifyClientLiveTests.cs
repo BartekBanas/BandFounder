@@ -69,6 +69,19 @@ public class SpotifyClientLiveTests
         Assert.That(artists.All(HasValidArtistIdentity), Is.True);
     }
 
+    [Test]
+    public async Task GetSavedTracks_ReturnsDeserializableTracks()
+    {
+        var tokens = await RefreshAccessTokenAsync();
+
+        var result = await _client.GetSavedTracksAsync(tokens.AccessToken, maxPages: 1);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Tracks, Is.Not.Null);
+        Assert.That(result.Tracks.All(track =>
+            !string.IsNullOrWhiteSpace(track.Id) && !string.IsNullOrWhiteSpace(track.Name)), Is.True);
+    }
+
     private async Task<SpotifyTokensResponse> RefreshAccessTokenAsync()
     {
         try

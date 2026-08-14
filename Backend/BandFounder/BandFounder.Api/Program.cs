@@ -47,6 +47,7 @@ services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).As
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+services.AddRequestTimeouts();
 services.AddEndpointsApiExplorer();
 services.AddHttpContextAccessor();
 services.AddSwaggerGen();
@@ -241,6 +242,7 @@ if (!isTesting)
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRequestTimeouts();
 
 app.MapControllers();
 

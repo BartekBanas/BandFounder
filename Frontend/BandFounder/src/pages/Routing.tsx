@@ -12,6 +12,7 @@ import {useIsAuthenticated} from "../hooks/authentication";
 import {ProfilePageOwner} from "./ProfilePageOwner";
 import {MessagesPage} from "./MessagesPage";
 import {RediractionPage} from "./RediractionPage";
+import {SpotifyUtilsPage} from "./SpotifyUtilsPage";
 
 const publicRoutes = [
     {
@@ -64,6 +65,10 @@ const privateRoutes = [{
         {
             path: '/spotifyConnection/callback/',
             element: <SpotifyConnectionPage/>
+        },
+        {
+            path: '/spotify-utils',
+            element: <SpotifyUtilsPage/>
         },
         {
             path: '/messages',

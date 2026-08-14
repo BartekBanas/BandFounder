@@ -49,6 +49,14 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await HandleErrorAsync(context, StatusCodes.Status410Gone, ex.Message);
         }
+        catch (Exception ex) when (ex is SpotifyInsufficientScopeException)
+        {
+            await HandleErrorAsync(context, StatusCodes.Status403Forbidden, ex.Message);
+        }
+        catch (Exception ex) when (ex is SpotifyRateLimitExceededException)
+        {
+            await HandleErrorAsync(context, StatusCodes.Status429TooManyRequests, ex.Message);
+        }
         catch (Exception ex) when (ex is SpotifyAccountNotLinkedException)
         {
             await HandleErrorAsync(context, StatusCodes.Status422UnprocessableEntity, ex.Message);
