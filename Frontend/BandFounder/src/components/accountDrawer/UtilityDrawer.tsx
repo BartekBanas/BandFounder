@@ -1,6 +1,6 @@
-import React, {FC, useEffect, useState} from 'react';
+import React, {FC, useEffect, useRef, useState} from 'react';
 import {useDisclosure} from "@mantine/hooks";
-import {Button, Drawer, FormControlLabel, IconButton, Switch, Typography} from "@mui/material";
+import {Button, Drawer, IconButton, Typography} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import {DeleteAccountButton} from "./DeleteAccountButton";
@@ -15,7 +15,8 @@ import {getTopArtists, TopArtist} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
 import {getMyAccount, updateMyAccount} from "../../api/account";
 import ProfilePicture from "../profile/ProfilePicture";
-import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
+import {EmailNotificationCard} from "./EmailNotificationCard";
+import {resolveEmailUnreadDelayMinutes} from "../../constants/emailNotifications";
 
 interface UtilityDrawerProps {
 }
@@ -25,7 +26,8 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     const [user, setUser] = useState<Account>();
     const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
     const [topGenres, setTopGenres] = useState<string[]>([]);
-    const [updatingEmailNotifications, setUpdatingEmailNotifications] = useState(false);
+    const emailNotificationRequestId = useRef(0);
+    const emailDelayRequestId = useRef(0);
 
     const handleLogout = () => {
         removeAuthToken();
@@ -34,27 +36,50 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     };
 
     const handleEmailNotificationChange = async (enabled: boolean) => {
-        if (!user) {
+        if (!user || user.emailOnNewMessage === enabled) {
             return;
         }
 
-        const previousUser = user;
+        const previousEnabled = user.emailOnNewMessage;
+        const requestId = ++emailNotificationRequestId.current;
         setUser({...user, emailOnNewMessage: enabled});
-        setUpdatingEmailNotifications(true);
 
         try {
-            const updatedUser = await updateMyAccount(null, null, null, enabled);
-            setUser(updatedUser);
-            mantineSuccessNotification(
-                enabled
-                    ? 'Email notifications for unread messages enabled'
-                    : 'Email notifications for unread messages disabled'
-            );
+            await updateMyAccount(null, null, null, enabled);
         } catch {
-            setUser(previousUser);
-            mantineErrorNotification('Failed to update email notification preference');
-        } finally {
-            setUpdatingEmailNotifications(false);
+            if (requestId !== emailNotificationRequestId.current) {
+                return;
+            }
+
+            setUser((currentUser) =>
+                currentUser
+                    ? {...currentUser, emailOnNewMessage: previousEnabled}
+                    : currentUser
+            );
+        }
+    };
+
+    const handleEmailDelayChange = async (minutes: number) => {
+        if (!user || user.emailUnreadDelayMinutes === minutes) {
+            return;
+        }
+
+        const previousDelay = user.emailUnreadDelayMinutes;
+        const requestId = ++emailDelayRequestId.current;
+        setUser({...user, emailUnreadDelayMinutes: minutes});
+
+        try {
+            await updateMyAccount(null, null, null, undefined, minutes);
+        } catch {
+            if (requestId !== emailDelayRequestId.current) {
+                return;
+            }
+
+            setUser((currentUser) =>
+                currentUser
+                    ? {...currentUser, emailUnreadDelayMinutes: previousDelay}
+                    : currentUser
+            );
         }
     };
 
@@ -157,16 +182,12 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
 
                     <section className="utility-drawer__section">
                         <h3 className="utility-drawer__section-label">Notifications</h3>
-                        <FormControlLabel
-                            className="utility-drawer__notification-toggle"
-                            control={
-                                <Switch
-                                    checked={user?.emailOnNewMessage ?? true}
-                                    disabled={!user || updatingEmailNotifications}
-                                    onChange={(_, checked) => handleEmailNotificationChange(checked)}
-                                />
-                            }
-                            label="Email me about unread messages"
+                        <EmailNotificationCard
+                            enabled={user?.emailOnNewMessage ?? true}
+                            delayMinutes={resolveEmailUnreadDelayMinutes(user?.emailUnreadDelayMinutes)}
+                            disabled={!user}
+                            onEnabledChange={handleEmailNotificationChange}
+                            onDelayChange={handleEmailDelayChange}
                         />
                     </section>
 

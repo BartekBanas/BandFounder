@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {
     Modal,
     Box,
@@ -6,50 +6,21 @@ import {
     Button,
     Stack,
     Typography,
-    Divider,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
-    SelectChangeEvent
 } from "@mui/material";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
-import {getMyAccount, updateMyAccount} from "../../api/account";
+import {updateMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 
 export function UpdateAccountButton() {
     const [opened, setOpened] = useState(false);
-    const [loadingPreferences, setLoadingPreferences] = useState(false);
-    const [preferencesReady, setPreferencesReady] = useState(false);
     const [formValues, setFormValues] = useState({
         Name: "",
         Password: "",
         Email: "",
     });
-    const [emailUnreadDelayMinutes, setEmailUnreadDelayMinutes] = useState(1440);
-
-    useEffect(() => {
-        if (!opened) {
-            return;
-        }
-
-        setLoadingPreferences(true);
-        setPreferencesReady(false);
-        getMyAccount()
-            .then((account) => {
-                setEmailUnreadDelayMinutes(account.emailUnreadDelayMinutes ?? 1440);
-                setPreferencesReady(true);
-            })
-            .catch(() => {
-                mantineErrorNotification("Failed to fetch email preferences");
-            })
-            .finally(() => setLoadingPreferences(false));
-    }, [opened]);
 
     const handleClose = () => {
         setOpened(false);
-        setPreferencesReady(false);
-        setEmailUnreadDelayMinutes(1440);
         setFormValues({Name: "", Password: "", Email: ""});
     };
 
@@ -58,23 +29,14 @@ export function UpdateAccountButton() {
         setFormValues((prev) => ({...prev, [name]: value}));
     };
 
-    const handleDelayChange = (event: SelectChangeEvent<number>) => {
-        setEmailUnreadDelayMinutes(Number(event.target.value));
-    };
-
     const handleUpdateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!preferencesReady) {
-            return;
-        }
 
         try {
             await updateMyAccount(
                 formValues.Name || null,
                 formValues.Password || null,
                 formValues.Email || null,
-                undefined,
-                emailUnreadDelayMinutes
             );
             mantineSuccessNotification("Account updated successfully");
             window.location.href = '/profile';
@@ -133,31 +95,11 @@ export function UpdateAccountButton() {
                                 onChange={handleInputChange}
                             />
 
-                            <Divider sx={{my: 3}}/>
-
-                            <Typography variant="subtitle1">
-                                Email notifications
-                            </Typography>
-                            <FormControl fullWidth disabled={loadingPreferences || !preferencesReady}>
-                                <InputLabel id="email-notification-delay-label">Notify after</InputLabel>
-                                <Select<number>
-                                    labelId="email-notification-delay-label"
-                                    value={emailUnreadDelayMinutes}
-                                    label="Notify after"
-                                    onChange={handleDelayChange}
-                                >
-                                    <MenuItem value={5}>5 minutes</MenuItem>
-                                    <MenuItem value={60}>1 hour</MenuItem>
-                                    <MenuItem value={1440}>1 day</MenuItem>
-                                </Select>
-                            </FormControl>
-
                             <Button
                                 variant="contained"
                                 fullWidth
                                 color="success"
                                 type="submit"
-                                disabled={loadingPreferences || !preferencesReady}
                             >
                                 Update Account
                             </Button>
@@ -167,4 +109,4 @@ export function UpdateAccountButton() {
             </Modal>
         </>
     );
-}
+};

@@ -172,7 +172,9 @@ public class AccountService : IAccountService
             DateCreated = DateTime.UtcNow,
             NotificationPreferences = new AccountNotificationPreferences
             {
-                AccountId = newAccountId
+                AccountId = newAccountId,
+                EmailOnNewMessage = true,
+                EmailUnreadDelayMinutes = MessageEmailNotificationOptions.DefaultDelayMinutes
             }
         };
         
