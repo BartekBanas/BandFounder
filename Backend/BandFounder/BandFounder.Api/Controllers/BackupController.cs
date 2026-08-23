@@ -45,7 +45,8 @@ public class BackupController : Controller
             var propertiesToBackup = new List<string>
             {
                 nameof(Account.Artists), "Artists.Genres", nameof(Account.Chatrooms), 
-                nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens)
+                nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens),
+                nameof(Account.NotificationPreferences)
             };
             
             if (profilePictures is true)
@@ -139,7 +140,13 @@ public class BackupController : Controller
                     }
                     : null,
                 PasswordHash = _hashingService.HashPassword(accountBackup.Name),
-                DateCreated = DateTime.UtcNow
+                DateCreated = DateTime.UtcNow,
+                NotificationPreferences = new AccountNotificationPreferences
+                {
+                    AccountId = id,
+                    EmailOnNewMessage = accountBackup.EmailOnNewMessage,
+                    EmailUnreadDelayMinutes = accountBackup.EmailUnreadDelayMinutes
+                }
             };
             
             // Restoring account's artists

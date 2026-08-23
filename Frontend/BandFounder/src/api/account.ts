@@ -174,12 +174,26 @@ export async function getAccounts(): Promise<Account[]> {
     return accounts;
 }
 
-export async function updateMyAccount(name: string | null, password: string | null, email: string | null): Promise<Account> {
-    const requestBody: { name?: string; password?: string; email?: string } = {};
+export async function updateMyAccount(
+    name: string | null,
+    password: string | null,
+    email: string | null,
+    emailOnNewMessage?: boolean,
+    emailUnreadDelayMinutes?: number
+): Promise<Account> {
+    const requestBody: {
+        name?: string;
+        password?: string;
+        email?: string;
+        emailOnNewMessage?: boolean;
+        emailUnreadDelayMinutes?: number;
+    } = {};
 
     requestBody.name = name ?? undefined;
     requestBody.password = password ?? undefined;
     requestBody.email = email ?? undefined;
+    requestBody.emailOnNewMessage = emailOnNewMessage;
+    requestBody.emailUnreadDelayMinutes = emailUnreadDelayMinutes;
 
     const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'PATCH',

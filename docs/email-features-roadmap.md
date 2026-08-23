@@ -14,16 +14,27 @@ Sub-issues:
 |---|---|
 | Provider | Resend (API key in `BandFounder.Api/.env`) |
 | Password-reset token TTL | 15 minutes |
-| `EmailOnNewMessage` preferences | Deferred — do not build yet |
-| Message email debounce | 5 minutes |
+| `EmailOnNewMessage` preferences | Default ON with an account-settings toggle |
+| Message email delay | User-configurable: 5 minutes, 1 hour, or 1 day; default 1 day |
 | Background worker | EF outbox table + `BackgroundService` (no Hangfire) |
-| Scope for now | `#170` foundation + `#90` password reset; `#171` later |
+| Scope for now | `#170` foundation, `#90` password reset, and `#171` message notifications |
+
+### Message notification worker configuration
+
+The worker supports these environment-variable overrides:
+
+- `MESSAGE_EMAIL_POLL_INTERVAL_SECONDS` — polling interval, default `60`
+- `MESSAGE_EMAIL_MAX_ATTEMPTS` — delivery attempts before `Failed`, default `3`
+
+`MaxSnippetLength` and `StaleClaimMinutes` are configured in the
+`MessageEmailNotifications` application-configuration section. Delay is always selected per account and is never
+configured globally.
 
 ## Assessment
 
 The parent issue is a reasonable dependency grouping: build email delivery first, then password reset, then message
-notifications. The main adjustment is to treat message-email notifications as a larger feature and split it into read
-state, preferences, and queued/debounced delivery rather than sending an email inline for every message.
+notifications. Message-email notifications now use durable unread state, account preferences, and queued delivery rather
+than sending an email inline for every message.
 
 ## Recommended issue structure and order
 
@@ -64,39 +75,37 @@ state, preferences, and queued/debounced delivery rather than sending an email i
 
 ## 3. Model notification intent before sending mail
 
-- Add per-user notification preferences, at minimum `EmailOnNewMessage`, exposed through account settings.
-- Add a per-member chat read state such as `LastReadMessageId` or `LastReadAt`, plus an authenticated mark-read endpoint
-  called when a conversation is viewed. This is required because [
-  `Backend/BandFounder/BandFounder.Application/Services/MessageService.cs`](../Backend/BandFounder/BandFounder.Application/Services/MessageService.cs)
-  currently knows only that a message was saved, not whether recipients have read it.
-- Fix the incorrect `DbSet<Account> Messages` declaration in [
-  `Backend/BandFounder/BandFounder.Infrastructure/BandFounderDbContext.cs`](../Backend/BandFounder/BandFounder.Infrastructure/BandFounderDbContext.cs)
-  while introducing the schema changes.
+- Per-user `EmailOnNewMessage` and `EmailUnreadDelayMinutes` preferences are exposed through account settings.
+- The existing per-member `ChatroomReadState.LastReadAt` and authenticated mark-read endpoint provide durable unread
+  state for delivery decisions.
 
 ## 4. Deliver useful, non-spammy message notifications
 
 - After a message is successfully persisted in `MessageService.SendMessage`, publish/enqueue one notification candidate
   per recipient except the sender; do not send SMTP inline in the HTTP request.
 - Process candidates in a background worker with durable storage/outbox semantics. Delay and deduplicate by
-  recipient/chatroom (for example 5–10 minutes), then send only if the conversation is still unread and the recipient
-  has email notifications enabled.
+  recipient/chatroom, using the recipient's configured 5-minute, 1-hour, or 1-day delay, then send only if the
+  conversation is still unread and email notifications remain enabled.
 - Send one summary email with sender/chat name, a safe text snippet, and a configurable deep link to
   `/messages/{chatRoomId}`. Escape user-generated content and avoid placing full sensitive messages in email by default.
 - Test recipient selection, sender exclusion, preferences, read-before-delay suppression, grouping, retries, and
   idempotency. Treat authenticated WebSocket presence as a later optimization; the current WebSocket path runs before
   authentication and tracks chatrooms rather than users.
+- Delivery is at-least-once if the process crashes after the provider accepts an email but before the outbox row is
+  marked `Sent`; the outbox identity is retained for future provider idempotency support.
 
 ## Definition of done
 
 - Email secrets are externalized and no real credentials are committed.
 - Password reset is enumeration-resistant, rate-limited, expiring, single-use, and tested end to end.
 - Message emails are optional, delayed/grouped, based on durable unread state, and cannot block message posting.
-- Provider failures are observable and retryable without duplicate emails.
+- Provider failures are observable and retryable; delivery is at-least-once and may duplicate on the
+  crash-after-accept window described in section 4.
 
 ## Implementation todos
 
-- [ ] Implement provider-independent email delivery, externalized configuration, templates, tests, and migration
+- [x] Implement provider-independent email delivery, externalized configuration, templates, tests, and migration
   readiness.
-- [ ] Add secure opaque reset tokens, backend endpoints, frontend flows, rate limits, and end-to-end tests.
-- [ ] Add email preferences and durable per-chat read state with account and messaging APIs.
-- [ ] Add durable, delayed, deduplicated message-email processing and recipient-selection tests.
+- [x] Add secure opaque reset tokens, backend endpoints, frontend flows, rate limits, and end-to-end tests.
+- [x] Add email preferences and durable per-chat read state with account and messaging APIs.
+- [x] Add durable, delayed, deduplicated message-email processing and recipient-selection tests.

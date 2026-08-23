@@ -17,6 +17,8 @@ public static class BackupDtoMapper
         {
             Name = account.Name,
             Email = account.Email,
+            EmailOnNewMessage = account.NotificationPreferences.EmailOnNewMessage,
+            EmailUnreadDelayMinutes = account.NotificationPreferences.EmailUnreadDelayMinutes,
             ProfilePicture = account.ProfilePicture?.ToBackupDto(),
             SpotifyTokens = account.SpotifyTokens is not null ? new SpotifyTokensDto()
             {

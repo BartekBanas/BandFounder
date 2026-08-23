@@ -19,6 +19,18 @@ public static class DtoMapper
         };
     }
 
+    public static AccountSettingsDto ToSettingsDto(this Account account)
+    {
+        return new AccountSettingsDto
+        {
+            Id = account.Id.ToString(),
+            Name = account.Name,
+            Email = account.Email,
+            EmailOnNewMessage = account.NotificationPreferences.EmailOnNewMessage,
+            EmailUnreadDelayMinutes = account.NotificationPreferences.EmailUnreadDelayMinutes
+        };
+    }
+
     public static IEnumerable<AccountDto> ToDto(this IEnumerable<Account> accounts)
     {
         return accounts.Select(account => account.ToDto());

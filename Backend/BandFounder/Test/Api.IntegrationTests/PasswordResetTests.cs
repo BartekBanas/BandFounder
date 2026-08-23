@@ -186,16 +186,13 @@ public class PasswordResetTests : IntegrationTestBase
         });
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
+        Assert.That(EmailSender.Sent, Is.Empty);
 
-        var failedToken = ExtractTokenFromEmail(EmailSender.Sent.Single().TextBody);
-
-        var completeResponse = await Client.PostAsJsonAsync("/api/accounts/password-reset/complete", new
+        using (var scope = Services.CreateScope())
         {
-            token = failedToken,
-            newPassword = "ShouldFail123!"
-        });
-        Assert.That(completeResponse.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            Assert.That(db.PasswordResetTokens, Is.Empty);
+        }
 
         EmailSender.ThrowOnSend = false;
         EmailSender.Clear();

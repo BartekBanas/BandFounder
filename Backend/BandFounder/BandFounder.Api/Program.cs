@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using BandFounder.Api.BackgroundServices;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
 using BandFounder.Api.Middlewares;
@@ -31,6 +32,17 @@ var configuration = builder.Configuration;
 // Add services to the container.
 var services = builder.Services;
 
+static int ApplyEnvironmentOverride(IConfiguration configuration, string name, int currentValue)
+{
+    var rawValue = configuration[name] ?? Environment.GetEnvironmentVariable(name);
+    if (rawValue is null)
+    {
+        return currentValue;
+    }
+
+    return int.TryParse(rawValue, out var parsedValue) ? parsedValue : 0;
+}
+
 services.AddControllers().AddApplicationPart(typeof(ControllerAssemblyMarker).Assembly).AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -50,6 +62,27 @@ var resendApiKey = configuration["RESEND_API_KEY"]
                    ?? string.Empty;
 
 services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+
+services.AddOptions<MessageEmailNotificationOptions>()
+    .Bind(configuration.GetSection(MessageEmailNotificationOptions.SectionName))
+    .PostConfigure(options =>
+    {
+        options.PollIntervalSeconds = ApplyEnvironmentOverride(
+            configuration,
+            "MESSAGE_EMAIL_POLL_INTERVAL_SECONDS",
+            options.PollIntervalSeconds);
+        options.MaxAttempts = ApplyEnvironmentOverride(
+            configuration,
+            "MESSAGE_EMAIL_MAX_ATTEMPTS",
+            options.MaxAttempts);
+    })
+    .Validate(
+        options => options.PollIntervalSeconds > 0 &&
+                   options.MaxAttempts > 0 &&
+                   options.MaxSnippetLength > 0 &&
+                   options.StaleClaimMinutes > 0,
+        "Message email notification worker values must all be positive.")
+    .ValidateOnStart();
 
 services.PostConfigure<EmailOptions>(options =>
 {
@@ -124,6 +157,8 @@ services.AddScoped<IRepository<Artist>, Repository<Artist, BandFounderDbContext>
 services.AddScoped<IRepository<Genre>, Repository<Genre, BandFounderDbContext>>();
 services.AddScoped<IRepository<SpotifyTokens>, Repository<SpotifyTokens, BandFounderDbContext>>();
 services.AddScoped<IRepository<PasswordResetToken>, Repository<PasswordResetToken, BandFounderDbContext>>();
+services.AddScoped<IRepository<AccountNotificationPreferences>, Repository<AccountNotificationPreferences, BandFounderDbContext>>();
+services.AddScoped<IEmailNotificationOutboxRepository, EmailNotificationOutboxRepository>();
 
 services.AddScoped<IRepository<ProfilePicture>, Repository<ProfilePicture, BandFounderDbContext>>();
 services.AddScoped<IRepository<MusicianRole>, Repository<MusicianRole, BandFounderDbContext>>();
@@ -134,6 +169,8 @@ services.AddScoped<IHashingService, HashingService>();
 
 services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<IMessageService, MessageService>();
+services.AddSingleton<IMessageEmailNotificationGate, NoOpMessageEmailNotificationGate>();
+services.AddScoped<IMessageEmailNotificationService, MessageEmailNotificationService>();
 services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
 services.AddScoped<ISpotifyClient, SpotifyClient>();
@@ -141,6 +178,10 @@ services.AddScoped<ISpotifyAppCredentialsService, SpotifyAppCredentialsService>(
 services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 services.AddScoped<IContentService, ContentService>();
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    services.AddHostedService<MessageEmailNotificationWorker>();
+}
 
 services.AddSingleton<WebSocketConnectionManager>();
 

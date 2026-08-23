@@ -1,5 +1,12 @@
 import React, {useState} from "react";
-import {Modal, Box, TextField, Button, Stack, Typography, Divider} from "@mui/material";
+import {
+    Modal,
+    Box,
+    TextField,
+    Button,
+    Stack,
+    Typography,
+} from "@mui/material";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {updateMyAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
@@ -12,17 +19,24 @@ export function UpdateAccountButton() {
         Email: "",
     });
 
+    const handleClose = () => {
+        setOpened(false);
+        setFormValues({Name: "", Password: "", Email: ""});
+    };
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const {name, value} = e.target;
         setFormValues((prev) => ({...prev, [name]: value}));
     };
 
-    const handleUpdateAccount = async () => {
+    const handleUpdateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
         try {
             await updateMyAccount(
                 formValues.Name || null,
                 formValues.Password || null,
-                formValues.Email || null
+                formValues.Email || null,
             );
             mantineSuccessNotification("Account updated successfully");
             window.location.href = '/profile';
@@ -37,7 +51,7 @@ export function UpdateAccountButton() {
                 Update Account
             </Button>
 
-            <Modal open={opened} onClose={() => setOpened(false)}>
+            <Modal open={opened} onClose={handleClose}>
                 <Box
                     sx={{
                         position: "absolute",
@@ -55,7 +69,7 @@ export function UpdateAccountButton() {
                     <Typography variant="h5" align="center" sx={{mb: 3}}>
                         Update your account
                     </Typography>
-                    <form>
+                    <form onSubmit={handleUpdateAccount}>
                         <Stack spacing={3}>
                             <TextField
                                 label="Username"
@@ -81,9 +95,12 @@ export function UpdateAccountButton() {
                                 onChange={handleInputChange}
                             />
 
-                            <Divider sx={{my: 3}}/>
-
-                            <Button variant="contained" fullWidth color="success" onClick={handleUpdateAccount}>
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                color="success"
+                                type="submit"
+                            >
                                 Update Account
                             </Button>
                         </Stack>
@@ -92,4 +109,4 @@ export function UpdateAccountButton() {
             </Modal>
         </>
     );
-}
+};

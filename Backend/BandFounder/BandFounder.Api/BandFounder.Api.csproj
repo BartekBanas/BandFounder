@@ -33,4 +33,8 @@
       <ProjectReference Include="..\BandFounder.Infrastructure\BandFounder.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Api.IntegrationTests" />
+    </ItemGroup>
+
 </Project>

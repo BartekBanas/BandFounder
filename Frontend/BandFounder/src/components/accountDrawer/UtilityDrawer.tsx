@@ -1,4 +1,4 @@
-import React, {FC, useEffect, useState} from 'react';
+import React, {FC, useEffect, useRef, useState} from 'react';
 import {useDisclosure} from "@mantine/hooks";
 import {Button, Drawer, IconButton, Typography} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -13,8 +13,10 @@ import '../../styles/customScrollbar.css';
 import {Account} from "../../types/Account";
 import {getTopArtists, TopArtist} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
-import {getAccount} from "../../api/account";
+import {getMyAccount, updateMyAccount} from "../../api/account";
 import ProfilePicture from "../profile/ProfilePicture";
+import {EmailNotificationCard} from "./EmailNotificationCard";
+import {resolveEmailUnreadDelayMinutes} from "../../constants/emailNotifications";
 
 interface UtilityDrawerProps {
 }
@@ -24,6 +26,8 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     const [user, setUser] = useState<Account>();
     const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
     const [topGenres, setTopGenres] = useState<string[]>([]);
+    const emailNotificationRequestId = useRef(0);
+    const emailDelayRequestId = useRef(0);
 
     const handleLogout = () => {
         removeAuthToken();
@@ -31,9 +35,57 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
         window.location.reload();
     };
 
+    const handleEmailNotificationChange = async (enabled: boolean) => {
+        if (!user || user.emailOnNewMessage === enabled) {
+            return;
+        }
+
+        const previousEnabled = user.emailOnNewMessage;
+        const requestId = ++emailNotificationRequestId.current;
+        setUser({...user, emailOnNewMessage: enabled});
+
+        try {
+            await updateMyAccount(null, null, null, enabled);
+        } catch {
+            if (requestId !== emailNotificationRequestId.current) {
+                return;
+            }
+
+            setUser((currentUser) =>
+                currentUser
+                    ? {...currentUser, emailOnNewMessage: previousEnabled}
+                    : currentUser
+            );
+        }
+    };
+
+    const handleEmailDelayChange = async (minutes: number) => {
+        if (!user || user.emailUnreadDelayMinutes === minutes) {
+            return;
+        }
+
+        const previousDelay = user.emailUnreadDelayMinutes;
+        const requestId = ++emailDelayRequestId.current;
+        setUser({...user, emailUnreadDelayMinutes: minutes});
+
+        try {
+            await updateMyAccount(null, null, null, undefined, minutes);
+        } catch {
+            if (requestId !== emailDelayRequestId.current) {
+                return;
+            }
+
+            setUser((currentUser) =>
+                currentUser
+                    ? {...currentUser, emailUnreadDelayMinutes: previousDelay}
+                    : currentUser
+            );
+        }
+    };
+
     useEffect(() => {
         const getUser = async () => {
-            const user = await getAccount(getUserId());
+            const user = await getMyAccount();
             setUser(user);
         };
 
@@ -126,6 +178,17 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                         <div className="utility-drawer__section-actions">
                             <SpotifyConnectionButton/>
                         </div>
+                    </section>
+
+                    <section className="utility-drawer__section">
+                        <h3 className="utility-drawer__section-label">Notifications</h3>
+                        <EmailNotificationCard
+                            enabled={user?.emailOnNewMessage ?? true}
+                            delayMinutes={resolveEmailUnreadDelayMinutes(user?.emailUnreadDelayMinutes)}
+                            disabled={!user}
+                            onEnabledChange={handleEmailNotificationChange}
+                            onDelayChange={handleEmailDelayChange}
+                        />
                     </section>
 
                     <section className="utility-drawer__section">

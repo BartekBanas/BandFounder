@@ -92,7 +92,7 @@ public class AccountController : Controller
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
-        var accountDto = (await _accountService.GetAccountAsync()).ToDto();
+        var accountDto = await _accountService.GetAccountSettingsAsync();
         
         return Ok(accountDto);
     }
