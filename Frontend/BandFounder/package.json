@@ -17,7 +17,7 @@
     "@mantine/notifications": "^7.17.3",
     "@mui/icons-material": "^7.0.1",
     "@mui/material": "^7.0.1",
-    "js-cookie": "^3.0.5",
+    "js-cookie": "^3.0.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
