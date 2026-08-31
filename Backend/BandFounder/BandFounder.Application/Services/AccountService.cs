@@ -224,8 +224,8 @@ public class AccountService : IAccountService
             return;
         }
 
-        var rawToken = PasswordResetTokenHelper.GenerateRawToken();
-        var tokenHash = PasswordResetTokenHelper.HashToken(rawToken);
+        var rawToken = SecureTokenHelper.GenerateRawToken();
+        var tokenHash = SecureTokenHelper.HashToken(rawToken);
         var ttlMinutes = _emailOptions.PasswordResetTokenTtlMinutes > 0
             ? _emailOptions.PasswordResetTokenTtlMinutes
             : 15;
@@ -279,7 +279,7 @@ public class AccountService : IAccountService
             throw new BadRequestException("Invalid or expired password reset token");
         }
 
-        var tokenHash = PasswordResetTokenHelper.HashToken(token.Trim());
+        var tokenHash = SecureTokenHelper.HashToken(token.Trim());
         var owner = await _passwordResetTokenStore.GetOwnerAsync(tokenHash, DateTime.UtcNow);
 
         if (owner is null)
@@ -308,7 +308,7 @@ public class AccountService : IAccountService
             throw new BadRequestException("Invalid password reset request");
         }
 
-        var tokenHash = PasswordResetTokenHelper.HashToken(dto.Token.Trim());
+        var tokenHash = SecureTokenHelper.HashToken(dto.Token.Trim());
         var utcNow = DateTime.UtcNow;
 
         await _unitOfWork.ExecuteInTransactionAsync(async () =>

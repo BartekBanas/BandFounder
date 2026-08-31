@@ -231,12 +231,12 @@ public class PasswordResetTests : IntegrationTestBase
         using (var scope = Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
-            secondToken = PasswordResetTokenHelper.GenerateRawToken();
+            secondToken = SecureTokenHelper.GenerateRawToken();
             db.PasswordResetTokens.Add(new PasswordResetToken
             {
                 Id = Guid.NewGuid(),
                 AccountId = db.PasswordResetTokens.Single().AccountId,
-                TokenHash = PasswordResetTokenHelper.HashToken(secondToken),
+                TokenHash = SecureTokenHelper.HashToken(secondToken),
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(15)
             });
