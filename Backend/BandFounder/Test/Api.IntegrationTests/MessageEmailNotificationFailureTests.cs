@@ -109,7 +109,7 @@ public class MessageEmailNotificationFailureTests : IntegrationTestBase
             await dbContext.SaveChangesAsync();
         }
 
-        EmailSender.Clear();
+        EmailSender.ClearSent();
         await ProcessDueAsync();
 
         var outbox = await GetOutboxAsync();
@@ -158,7 +158,7 @@ public class MessageEmailNotificationFailureTests : IntegrationTestBase
             await dbContext.SaveChangesAsync();
         }
 
-        EmailSender.Clear();
+        EmailSender.ClearSent();
         await ProcessDueAsync();
 
         var outbox = await GetOutboxAsync();
@@ -241,7 +241,7 @@ public class MessageEmailNotificationFailureTests : IntegrationTestBase
     private async Task<(string OwnerToken, ChatroomDto Chatroom)> CreateRoomWithMemberAsync(
         string prefix)
     {
-        var ownerToken = await RegisterAsync($"{prefix}owner", $"{prefix}owner@example.com");
+        var ownerToken = await RegisterVerifiedAsync($"{prefix}owner", $"{prefix}owner@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -251,7 +251,7 @@ public class MessageEmailNotificationFailureTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var memberToken = await RegisterAsync($"{prefix}member", $"{prefix}member@example.com");
+        var memberToken = await RegisterVerifiedAsync($"{prefix}member", $"{prefix}member@example.com");
         AuthenticateAs(memberToken);
         var memberResponse = await Client.GetAsync("/api/accounts/me");
         var member = await memberResponse.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);

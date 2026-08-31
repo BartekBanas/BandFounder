@@ -28,7 +28,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task RequestPasswordReset_KnownEmail_SendsResetLink()
     {
-        await RegisterAsync("resetuser", "resetuser@example.com");
+        await RegisterVerifiedAsync("resetuser", "resetuser@example.com");
         Client.DefaultRequestHeaders.Authorization = null;
 
         var response = await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -48,7 +48,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task CompletePasswordReset_WithValidToken_AllowsLoginWithNewPassword()
     {
-        await RegisterAsync("validreset", "validreset@example.com", "OldPassword123!");
+        await RegisterVerifiedAsync("validreset", "validreset@example.com", "OldPassword123!");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -80,7 +80,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task CompletePasswordReset_ReuseToken_ReturnsBadRequest()
     {
-        await RegisterAsync("reusereset", "reusereset@example.com");
+        await RegisterVerifiedAsync("reusereset", "reusereset@example.com");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -108,7 +108,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task CompletePasswordReset_ExpiredToken_ReturnsBadRequest()
     {
-        await RegisterAsync("expiredreset", "expiredreset@example.com");
+        await RegisterVerifiedAsync("expiredreset", "expiredreset@example.com");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -138,7 +138,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task RequestPasswordReset_InvalidatesPreviousActiveToken()
     {
-        await RegisterAsync("invalidate", "invalidate@example.com");
+        await RegisterVerifiedAsync("invalidate", "invalidate@example.com");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -147,7 +147,7 @@ public class PasswordResetTests : IntegrationTestBase
         });
         var firstToken = ExtractTokenFromEmail(EmailSender.Sent.Single().TextBody);
 
-        EmailSender.Clear();
+        EmailSender.ClearSent();
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
         {
@@ -175,7 +175,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task RequestPasswordReset_EmailSendFails_ReturnsErrorAndAllowsRetry()
     {
-        await RegisterAsync("sendfail", "sendfail@example.com");
+        await RegisterVerifiedAsync("sendfail", "sendfail@example.com");
         Client.DefaultRequestHeaders.Authorization = null;
 
         EmailSender.ThrowOnSend = true;
@@ -195,7 +195,7 @@ public class PasswordResetTests : IntegrationTestBase
         }
 
         EmailSender.ThrowOnSend = false;
-        EmailSender.Clear();
+        EmailSender.ClearSent();
 
         var retryResponse = await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
         {
@@ -217,7 +217,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task CompletePasswordReset_ConsumesSiblingActiveTokens()
     {
-        await RegisterAsync("siblingreset", "siblingreset@example.com", "OldPassword123!");
+        await RegisterVerifiedAsync("siblingreset", "siblingreset@example.com", "OldPassword123!");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -264,7 +264,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task CompletePasswordReset_TrimsTokenWhitespace()
     {
-        await RegisterAsync("trimreset", "trimreset@example.com", "OldPassword123!");
+        await RegisterVerifiedAsync("trimreset", "trimreset@example.com", "OldPassword123!");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -289,7 +289,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task CompletePasswordReset_InvalidatesExistingJwt()
     {
-        var jwt = await RegisterAsync("jwtrevoke", "jwtrevoke@example.com", "OldPassword123!");
+        var jwt = await RegisterVerifiedAsync("jwtrevoke", "jwtrevoke@example.com", "OldPassword123!");
         AuthenticateAs(jwt);
 
         var meBefore = await Client.GetAsync("/api/accounts/me");
@@ -322,7 +322,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task UpdateMyAccount_PasswordChange_InvalidatesExistingJwt()
     {
-        var jwt = await RegisterAsync("pwdupdate", "pwdupdate@example.com", "OldPassword123!");
+        var jwt = await RegisterVerifiedAsync("pwdupdate", "pwdupdate@example.com", "OldPassword123!");
         AuthenticateAs(jwt);
 
         var updateResponse = await Client.PatchAsJsonAsync("/api/accounts/me", new
@@ -344,7 +344,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task GetPasswordResetInfo_WithValidToken_ReturnsAccountDetails()
     {
-        await RegisterAsync("infouser", "infouser@example.com", "OldPassword123!");
+        await RegisterVerifiedAsync("infouser", "infouser@example.com", "OldPassword123!");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new
@@ -375,7 +375,7 @@ public class PasswordResetTests : IntegrationTestBase
     [Test]
     public async Task GetPasswordResetInfo_AfterTokenConsumed_ReturnsBadRequest()
     {
-        await RegisterAsync("consumedinfo", "consumedinfo@example.com", "OldPassword123!");
+        await RegisterVerifiedAsync("consumedinfo", "consumedinfo@example.com", "OldPassword123!");
         Client.DefaultRequestHeaders.Authorization = null;
 
         await Client.PostAsJsonAsync("/api/accounts/password-reset/request", new

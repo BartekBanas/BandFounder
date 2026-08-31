@@ -122,7 +122,8 @@ public sealed class MessageEmailNotificationService : IMessageEmailNotificationS
                 return true;
             }
 
-            if (!due.RecipientAccount.NotificationPreferences.EmailOnNewMessage ||
+            if (due.RecipientAccount.EmailVerifiedAt is null ||
+                !due.RecipientAccount.NotificationPreferences.EmailOnNewMessage ||
                 !await HasUnreadMessageAsync(due))
             {
                 await _outboxRepository.TryMarkCancelledAsync(

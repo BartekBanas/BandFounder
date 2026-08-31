@@ -16,7 +16,7 @@ public class ChatroomMessageTests : IntegrationTestBase
     [Test]
     public async Task CreateGeneralChatroom_ThenGet_ReturnsChatroom()
     {
-        var token = await RegisterAsync("chatowner", "chatowner@example.com");
+        var token = await RegisterVerifiedAsync("chatowner", "chatowner@example.com");
         AuthenticateAs(token);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -39,7 +39,7 @@ public class ChatroomMessageTests : IntegrationTestBase
     [Test]
     public async Task InviteMember_ThenSendAndGetMessages()
     {
-        var ownerToken = await RegisterAsync("msgowner", "msgowner@example.com");
+        var ownerToken = await RegisterVerifiedAsync("msgowner", "msgowner@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -49,7 +49,7 @@ public class ChatroomMessageTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var memberToken = await RegisterAsync("msgmember", "msgmember@example.com");
+        var memberToken = await RegisterVerifiedAsync("msgmember", "msgmember@example.com");
         AuthenticateAs(memberToken);
         var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
 
@@ -77,7 +77,7 @@ public class ChatroomMessageTests : IntegrationTestBase
     [Test]
     public async Task GetChatroom_AsNonMember_ReturnsForbidden()
     {
-        var ownerToken = await RegisterAsync("privateowner", "privateowner@example.com");
+        var ownerToken = await RegisterVerifiedAsync("privateowner", "privateowner@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -87,7 +87,7 @@ public class ChatroomMessageTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var outsiderToken = await RegisterAsync("outsider", "outsider@example.com");
+        var outsiderToken = await RegisterVerifiedAsync("outsider", "outsider@example.com");
         AuthenticateAs(outsiderToken);
 
         var getResponse = await Client.GetAsync($"/api/chatrooms/{chatroom.Id}");
@@ -97,7 +97,7 @@ public class ChatroomMessageTests : IntegrationTestBase
     [Test]
     public async Task SendMessage_AsNonMember_ReturnsForbiddenOrServerError()
     {
-        var ownerToken = await RegisterAsync("msgowner2", "msgowner2@example.com");
+        var ownerToken = await RegisterVerifiedAsync("msgowner2", "msgowner2@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -107,7 +107,7 @@ public class ChatroomMessageTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var outsiderToken = await RegisterAsync("msgoutsider", "msgoutsider@example.com");
+        var outsiderToken = await RegisterVerifiedAsync("msgoutsider", "msgoutsider@example.com");
         AuthenticateAs(outsiderToken);
 
         var sendContent = new StringContent(
@@ -124,7 +124,7 @@ public class ChatroomMessageTests : IntegrationTestBase
     [Test]
     public async Task LeaveChatroom_RemovesMembership()
     {
-        var ownerToken = await RegisterAsync("leaveowner", "leaveowner@example.com");
+        var ownerToken = await RegisterVerifiedAsync("leaveowner", "leaveowner@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -134,7 +134,7 @@ public class ChatroomMessageTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var memberToken = await RegisterAsync("leavemember", "leavemember@example.com");
+        var memberToken = await RegisterVerifiedAsync("leavemember", "leavemember@example.com");
         AuthenticateAs(memberToken);
         var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
 

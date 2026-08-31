@@ -1,4 +1,5 @@
 ﻿using BandFounder.Application.Exceptions;
+using BandFounder.Application.Dtos.Accounts;
 using BandFounder.Domain.Exceptions;
 using BandFounder.Infrastructure.Spotify.Exceptions;
 using FluentValidation;
@@ -24,6 +25,17 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             var validationFailure = ex.Errors.FirstOrDefault();
             await HandleErrorAsync(context, StatusCodes.Status400BadRequest, validationFailure!.ErrorMessage);
+        }
+        catch (EmailVerificationResendCooldownException ex)
+        {
+            var retryAfterSeconds = Math.Max(
+                1, (int)Math.Ceiling((ex.ResendAvailableAt - DateTime.UtcNow).TotalSeconds));
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            context.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
+            await context.Response.WriteAsJsonAsync(new EmailVerificationResendDto
+            {
+                ResendAvailableAt = ex.ResendAvailableAt
+            });
         }
         catch (Exception ex) when (ex is BadRequestException or CustomValidationException)
         {

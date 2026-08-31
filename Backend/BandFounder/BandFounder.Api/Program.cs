@@ -100,6 +100,20 @@ services.PostConfigure<EmailOptions>(options =>
     {
         options.PasswordResetTokenTtlMinutes = ttlMinutes;
     }
+
+    var verificationTtlRaw = configuration["EMAIL_VERIFICATION_TOKEN_TTL_MINUTES"]
+                             ?? Environment.GetEnvironmentVariable("EMAIL_VERIFICATION_TOKEN_TTL_MINUTES");
+    if (int.TryParse(verificationTtlRaw, out var verificationTtlMinutes) && verificationTtlMinutes > 0)
+    {
+        options.EmailVerificationTokenTtlMinutes = verificationTtlMinutes;
+    }
+
+    var cooldownRaw = configuration["EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS"]
+                      ?? Environment.GetEnvironmentVariable("EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS");
+    if (int.TryParse(cooldownRaw, out var cooldownSeconds) && cooldownSeconds > 0)
+    {
+        options.EmailVerificationResendCooldownSeconds = cooldownSeconds;
+    }
 });
 
 var isDevelopmentOrTesting = builder.Environment.IsDevelopment()
@@ -125,6 +139,7 @@ else
     services.AddScoped<IEmailSender, ResendEmailSender>();
 }
 services.AddScoped<IPasswordResetTokenStore, PasswordResetTokenStore>();
+services.AddScoped<IEmailVerificationStore, EmailVerificationTokenStore>();
 services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 services.AddScoped<IAuthorizationHandler, ChatRoomAuthorizationHandler>();
@@ -171,6 +186,7 @@ services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<IMessageService, MessageService>();
 services.AddSingleton<IMessageEmailNotificationGate, NoOpMessageEmailNotificationGate>();
 services.AddScoped<IMessageEmailNotificationService, MessageEmailNotificationService>();
+services.AddScoped<IEmailVerificationService, EmailVerificationService>();
 services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
 services.AddScoped<ISpotifyClient, SpotifyClient>();

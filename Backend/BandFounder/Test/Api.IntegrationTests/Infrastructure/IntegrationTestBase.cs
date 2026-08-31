@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BandFounder.Domain.Repositories;
 using BandFounder.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -65,7 +66,7 @@ public abstract class IntegrationTestBase
     {
         await _respawner.ResetAsync(_connection);
         Client.DefaultRequestHeaders.Authorization = null;
-        EmailSender.Clear();
+        EmailSender.Reset();
         NotificationGate.Clear();
     }
 
@@ -82,7 +83,10 @@ public abstract class IntegrationTestBase
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    protected async Task<string> RegisterAsync(string name, string email, string password = "Password123!")
+    protected async Task<string> RegisterAsync(
+        string name,
+        string email,
+        string password = "Password123!")
     {
         var response = await Client.PostAsJsonAsync("/api/accounts", new
         {
@@ -96,6 +100,40 @@ public abstract class IntegrationTestBase
             $"Register failed ({response.StatusCode}): {body}");
         var token = UnwrapToken(body);
         Assert.That(token, Is.Not.Null.And.Not.Empty);
+
+        return token;
+    }
+
+    protected async Task<string> RegisterVerifiedAsync(
+        string name,
+        string email,
+        string password = "Password123!")
+    {
+        var emailsBeforeRegistration = EmailSender.Sent.ToHashSet(
+            ReferenceEqualityComparer.Instance);
+        var token = await RegisterAsync(name, email, password);
+
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        var verificationStore =
+            scope.ServiceProvider.GetRequiredService<IEmailVerificationStore>();
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var account = await dbContext.Accounts.SingleAsync(
+            account => account.Email == normalizedEmail);
+        var verifiedAt = DateTime.UtcNow;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        account.EmailVerifiedAt = verifiedAt;
+        await verificationStore.CancelAllForAccountAsync(account.Id, verifiedAt);
+        await dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        var registrationEmails = EmailSender.Sent.Where(sent =>
+            !emailsBeforeRegistration.Contains(sent) &&
+            string.Equals(sent.To, normalizedEmail, StringComparison.OrdinalIgnoreCase) &&
+            sent.Subject == "Verify your BandFounder email");
+        EmailSender.RemoveSent(registrationEmails);
+
         return token;
     }
 

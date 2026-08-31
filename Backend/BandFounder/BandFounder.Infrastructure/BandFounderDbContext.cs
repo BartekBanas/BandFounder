@@ -19,6 +19,7 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
     
     public DbSet<SpotifyTokens> SpotifyTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
     public DbSet<AccountNotificationPreferences> AccountNotificationPreferences { get; set; }
     public DbSet<EmailNotificationOutbox> EmailNotificationOutboxes { get; set; }
 
@@ -120,6 +121,23 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
             .WithMany()
             .HasForeignKey(token => token.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EmailVerificationToken>()
+            .HasIndex(token => token.TokenHash)
+            .IsUnique();
+
+        modelBuilder.Entity<EmailVerificationToken>()
+            .HasOne(token => token.Account)
+            .WithMany()
+            .HasForeignKey(token => token.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EmailVerificationToken>()
+            .HasIndex(token => new
+            {
+                token.DeliveryStatus,
+                token.DeliveryNotBeforeUtc
+            });
 
         modelBuilder.Entity<Account>()
             .HasOne(account => account.NotificationPreferences)

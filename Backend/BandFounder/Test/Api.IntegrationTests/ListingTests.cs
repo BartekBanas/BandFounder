@@ -13,7 +13,7 @@ public class ListingTests : IntegrationTestBase
     [Test]
     public async Task CreateListing_ThenGetById_ReturnsListing()
     {
-        var token = await RegisterAsync("owner1", "owner1@example.com");
+        var token = await RegisterVerifiedAsync("owner1", "owner1@example.com");
         AuthenticateAs(token);
 
         var createResponse = await Client.PostAsJsonAsync("/api/listings", new
@@ -47,7 +47,7 @@ public class ListingTests : IntegrationTestBase
     [Test]
     public async Task DeleteListing_AsNonOwner_ReturnsForbidden()
     {
-        var ownerToken = await RegisterAsync("owner2", "owner2@example.com");
+        var ownerToken = await RegisterVerifiedAsync("owner2", "owner2@example.com");
         AuthenticateAs(ownerToken);
 
         await Client.PostAsJsonAsync("/api/listings", new
@@ -66,7 +66,7 @@ public class ListingTests : IntegrationTestBase
         var myListings = await ReadJsonAsync<List<ListingDto>>(await Client.GetAsync("/api/listings/me"));
         var listingId = myListings[0].Id;
 
-        var otherToken = await RegisterAsync("intruder", "intruder@example.com");
+        var otherToken = await RegisterVerifiedAsync("intruder", "intruder@example.com");
         AuthenticateAs(otherToken);
 
         var deleteResponse = await Client.DeleteAsync($"/api/listings/{listingId}");
@@ -76,7 +76,7 @@ public class ListingTests : IntegrationTestBase
     [Test]
     public async Task ContactOwner_CreatesDirectChatroom()
     {
-        var ownerToken = await RegisterAsync("owner3", "owner3@example.com");
+        var ownerToken = await RegisterVerifiedAsync("owner3", "owner3@example.com");
         AuthenticateAs(ownerToken);
 
         await Client.PostAsJsonAsync("/api/listings", new
@@ -95,7 +95,7 @@ public class ListingTests : IntegrationTestBase
         var ownerListings = await ReadJsonAsync<List<ListingDto>>(await Client.GetAsync("/api/listings/me"));
         var listingId = ownerListings[0].Id;
 
-        var seekerToken = await RegisterAsync("seeker", "seeker@example.com");
+        var seekerToken = await RegisterVerifiedAsync("seeker", "seeker@example.com");
         AuthenticateAs(seekerToken);
 
         var contactResponse = await Client.PostAsync($"/api/listings/{listingId}/contact", null);
@@ -108,7 +108,7 @@ public class ListingTests : IntegrationTestBase
     [Test]
     public async Task UpdateListing_AsOwner_Succeeds()
     {
-        var token = await RegisterAsync("owner4", "owner4@example.com");
+        var token = await RegisterVerifiedAsync("owner4", "owner4@example.com");
         AuthenticateAs(token);
 
         await Client.PostAsJsonAsync("/api/listings", new
@@ -151,7 +151,7 @@ public class ListingTests : IntegrationTestBase
     [Test]
     public async Task GetListingsFeed_ReturnsCreatedListing()
     {
-        var token = await RegisterAsync("owner5", "owner5@example.com");
+        var token = await RegisterVerifiedAsync("owner5", "owner5@example.com");
         AuthenticateAs(token);
 
         await Client.PostAsJsonAsync("/api/listings", new
@@ -167,7 +167,7 @@ public class ListingTests : IntegrationTestBase
             }
         });
 
-        var otherToken = await RegisterAsync("viewer", "viewer@example.com");
+        var otherToken = await RegisterVerifiedAsync("viewer", "viewer@example.com");
         AuthenticateAs(otherToken);
 
         var feedResponse = await Client.GetAsync("/api/listings");
@@ -179,7 +179,7 @@ public class ListingTests : IntegrationTestBase
     [Test]
     public async Task GetListingsFeed_AvailableRoleFilter_ReturnsOnlyMatchingListings()
     {
-        var ownerToken = await RegisterAsync("owner6", "owner6@example.com");
+        var ownerToken = await RegisterVerifiedAsync("owner6", "owner6@example.com");
         AuthenticateAs(ownerToken);
 
         await Client.PostAsJsonAsync("/api/listings", new
@@ -208,7 +208,7 @@ public class ListingTests : IntegrationTestBase
             }
         });
 
-        var viewerToken = await RegisterAsync("viewer2", "viewer2@example.com");
+        var viewerToken = await RegisterVerifiedAsync("viewer2", "viewer2@example.com");
         AuthenticateAs(viewerToken);
 
         var feedResponse = await Client.GetAsync("/api/listings?AvailableRole=Drummer");

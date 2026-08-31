@@ -13,11 +13,19 @@ namespace BandFounder.Api.Controllers;
 public class AccountController : Controller
 {
     private readonly IAccountService _accountService;
+    private readonly IEmailVerificationService _emailVerificationService;
+    private readonly IAuthenticationService _authenticationService;
     private readonly IMusicTasteService _musicTasteService;
 
-    public AccountController(IAccountService accountService, IMusicTasteService musicTasteService)
+    public AccountController(
+        IAccountService accountService,
+        IEmailVerificationService emailVerificationService,
+        IAuthenticationService authenticationService,
+        IMusicTasteService musicTasteService)
     {
         _accountService = accountService;
+        _emailVerificationService = emailVerificationService;
+        _authenticationService = authenticationService;
         _musicTasteService = musicTasteService;
     }
 
@@ -70,6 +78,29 @@ public class AccountController : Controller
         {
             message = "Password has been reset successfully."
         });
+    }
+
+    [HttpPost("email-verification/confirm")]
+    [EnableRateLimiting("IpRateLimiting")]
+    public async Task<IActionResult> ConfirmEmailVerification([FromBody] ConfirmEmailVerificationDto dto)
+    {
+        await _emailVerificationService.ConfirmAsync(dto);
+
+        return Ok(new
+        {
+            message = "Email has been verified successfully."
+        });
+    }
+
+    [Authorize]
+    [HttpPost("email-verification/resend")]
+    [EnableRateLimiting("IpRateLimiting")]
+    public async Task<IActionResult> ResendEmailVerification()
+    {
+        var result = await _emailVerificationService.ResendAsync(
+            _authenticationService.GetUserId());
+
+        return Ok(result);
     }
 
     [Authorize]

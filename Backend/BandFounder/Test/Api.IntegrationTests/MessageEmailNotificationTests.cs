@@ -137,7 +137,7 @@ public class MessageEmailNotificationTests : IntegrationTestBase
             Assert.That(orphaned.SenderId, Is.Null);
         }
 
-        var thirdToken = await RegisterAsync("deletecountthird", "deletecountthird@example.com");
+        var thirdToken = await RegisterVerifiedAsync("deletecountthird", "deletecountthird@example.com");
         AuthenticateAs(thirdToken);
         var third = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
 
@@ -529,7 +529,7 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     [Test]
     public async Task WorkerCycle_TwoDueRoomsForSameRecipient_HonorsMidCycleEmailOptOut()
     {
-        var ownerToken = await RegisterAsync("scopesowner", "scopesowner@example.com");
+        var ownerToken = await RegisterVerifiedAsync("scopesowner", "scopesowner@example.com");
         AuthenticateAs(ownerToken);
 
         var room1 = await ReadJsonAsync<ChatroomDto>(await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -543,7 +543,7 @@ public class MessageEmailNotificationTests : IntegrationTestBase
             name = "scopes room 2"
         }));
 
-        var memberToken = await RegisterAsync("scopesmember", "scopesmember@example.com");
+        var memberToken = await RegisterVerifiedAsync("scopesmember", "scopesmember@example.com");
         AuthenticateAs(memberToken);
         var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
 
@@ -621,7 +621,7 @@ public class MessageEmailNotificationTests : IntegrationTestBase
     [Test]
     public async Task UpdateAccount_EmailPreferencesAreReturnedAndDelayIsValidated()
     {
-        var token = await RegisterAsync("settingsuser", "settingsuser@example.com");
+        var token = await RegisterVerifiedAsync("settingsuser", "settingsuser@example.com");
         AuthenticateAs(token);
 
         var updateResponse = await Client.PatchAsJsonAsync("/api/accounts/me", new
@@ -643,10 +643,65 @@ public class MessageEmailNotificationTests : IntegrationTestBase
         Assert.That(invalidResponse.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
+    [Test]
+    public async Task SendMessage_UnverifiedRecipient_DoesNotQueueNotification()
+    {
+        var ownerToken = await RegisterVerifiedAsync("unverifiedowner", "unverifiedowner@example.com");
+        AuthenticateAs(ownerToken);
+
+        var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
+        {
+            chatRoomType = ChatRoomType.General,
+            name = "unverified room"
+        });
+        var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
+
+        var memberToken = await RegisterAsync(
+            "unverifiedmember",
+            "unverifiedmember@example.com");
+        AuthenticateAs(memberToken);
+        var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
+
+        AuthenticateAs(ownerToken);
+        var inviteResponse = await Client.PostAsync(
+            $"/api/chatrooms/{chatroom.Id}/invite/{member.Id}", null);
+        Assert.That(inviteResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        await SendMessageAsync(chatroom.Id, "Should not notify unverified member");
+
+        Assert.That(await GetOutboxAsync(), Is.Empty);
+    }
+
+    [Test]
+    public async Task ProcessDueNotification_WhenRecipientBecomesUnverified_CancelsWithoutSending()
+    {
+        var (ownerToken, chatroom, _, member) = await CreateRoomWithMemberAsync("clearedverify");
+
+        AuthenticateAs(ownerToken);
+        await SendMessageAsync(chatroom.Id, "Queued before verification was cleared");
+        Assert.That(await GetOutboxAsync(), Has.Count.EqualTo(1));
+
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var account = await db.Accounts.SingleAsync(a => a.Id == Guid.Parse(member.Id));
+            account.EmailVerifiedAt = null;
+            await db.SaveChangesAsync();
+        }
+
+        EmailSender.ClearSent();
+        await MakeOutboxDueAsync();
+        await ProcessDueAsync();
+
+        var outbox = await GetOutboxAsync();
+        Assert.That(outbox.Single().Status, Is.EqualTo(EmailNotificationStatus.Cancelled));
+        Assert.That(EmailSender.Sent, Is.Empty);
+    }
+
     private async Task<(string OwnerToken, ChatroomDto Chatroom, string MemberToken, AccountDto Member)>
         CreateRoomWithMemberAsync(string prefix)
     {
-        var ownerToken = await RegisterAsync($"{prefix}owner", $"{prefix}owner@example.com");
+        var ownerToken = await RegisterVerifiedAsync($"{prefix}owner", $"{prefix}owner@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -656,7 +711,7 @@ public class MessageEmailNotificationTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var memberToken = await RegisterAsync($"{prefix}member", $"{prefix}member@example.com");
+        var memberToken = await RegisterVerifiedAsync($"{prefix}member", $"{prefix}member@example.com");
         AuthenticateAs(memberToken);
         var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
 
