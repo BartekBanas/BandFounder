@@ -17,6 +17,7 @@ public static class BackupDtoMapper
         {
             Name = account.Name,
             Email = account.Email,
+            EmailVerifiedAt = account.EmailVerifiedAt,
             EmailOnNewMessage = account.NotificationPreferences.EmailOnNewMessage,
             EmailUnreadDelayMinutes = account.NotificationPreferences.EmailUnreadDelayMinutes,
             ProfilePicture = account.ProfilePicture?.ToBackupDto(),

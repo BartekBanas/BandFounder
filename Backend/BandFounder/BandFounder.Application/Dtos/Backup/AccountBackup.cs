@@ -7,6 +7,7 @@ public class AccountBackup
 {
     public string Name { get; init; }
     public string Email { get; init; }
+    public DateTime? EmailVerifiedAt { get; init; }
     public bool EmailOnNewMessage { get; init; } = true;
     public int EmailUnreadDelayMinutes { get; init; } = 1440;
     public SpotifyTokensDto? SpotifyTokens { get; set; }

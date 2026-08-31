@@ -3,6 +3,7 @@ using BandFounder.Api.BackgroundServices;
 using BandFounder.Api.Controllers;
 using BandFounder.Api.Extensions;
 using BandFounder.Api.Middlewares;
+using BandFounder.Api.Options;
 using BandFounder.Api.WebSockets;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Authorization;
@@ -56,6 +57,7 @@ services.AddDbContext<BandFounderDbContext>(options =>
         npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
 
 services.Configure<JwtConfiguration>(configuration.GetSection(nameof(JwtConfiguration)));
+services.Configure<BackupOptions>(configuration.GetSection(BackupOptions.SectionName));
 
 var resendApiKey = configuration["RESEND_API_KEY"]
                    ?? Environment.GetEnvironmentVariable("RESEND_API_KEY")

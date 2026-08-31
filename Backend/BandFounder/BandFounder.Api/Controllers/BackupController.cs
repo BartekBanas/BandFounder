@@ -2,9 +2,11 @@ using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
+using BandFounder.Api.Options;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace BandFounder.Api.Controllers;
 
@@ -19,10 +21,12 @@ public class BackupController : Controller
     private readonly IRepository<MusicianRole> _musicianRoleRepository;
     private readonly IListingService _listingService;
     private readonly IHashingService _hashingService;
+    private readonly BackupOptions _backupOptions;
 
     public BackupController(IAccountService accountService, IRepository<Artist> artistRepository, 
         IRepository<Genre> genreRepository, IRepository<Account> accountRepository, IHashingService hashingService, 
-        IRepository<MusicianRole> musicianRoleRepository, IListingService listingService)
+        IRepository<MusicianRole> musicianRoleRepository, IListingService listingService,
+        IOptions<BackupOptions> backupOptions)
     {
         _accountService = accountService;
         _artistRepository = artistRepository;
@@ -31,11 +35,17 @@ public class BackupController : Controller
         _hashingService = hashingService;
         _musicianRoleRepository = musicianRoleRepository;
         _listingService = listingService;
+        _backupOptions = backupOptions.Value;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetBackup([FromQuery] bool? profilePictures = false)
     {
+        if (!_backupOptions.TrustedMaintenanceEnabled)
+        {
+            return NotFound();
+        }
+
         var artists = (await _artistRepository.GetAsync()).ToBackupDto();
         
         List<AccountBackup> accountsBackup = [];
@@ -86,6 +96,11 @@ public class BackupController : Controller
     [HttpPost]
     public async Task<IActionResult> RestoreBackup([FromBody] BackupDto backupDto)
     {
+        if (!_backupOptions.TrustedMaintenanceEnabled)
+        {
+            return NotFound();
+        }
+
         await RestoreArtists(backupDto.Artists);
         await RestoreAccounts(backupDto.Accounts);
 
@@ -141,6 +156,7 @@ public class BackupController : Controller
                     : null,
                 PasswordHash = _hashingService.HashPassword(accountBackup.Name),
                 DateCreated = DateTime.UtcNow,
+                EmailVerifiedAt = accountBackup.EmailVerifiedAt,
                 NotificationPreferences = new AccountNotificationPreferences
                 {
                     AccountId = id,

@@ -31,11 +31,14 @@ public abstract class IntegrationTestBase
     protected RecordingEmailSender EmailSender => _factory.EmailSender;
     protected ControllableMessageEmailNotificationGate NotificationGate => _factory.NotificationGate;
     protected IServiceProvider Services => _factory.Services;
+    protected virtual bool TrustedBackupMaintenanceEnabled => false;
 
     [OneTimeSetUp]
     public async Task IntegrationOneTimeSetUp()
     {
-        _factory = new CustomWebApplicationFactory(PostgresFixture.ConnectionString);
+        _factory = new CustomWebApplicationFactory(
+            PostgresFixture.ConnectionString,
+            TrustedBackupMaintenanceEnabled);
         Client = _factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
