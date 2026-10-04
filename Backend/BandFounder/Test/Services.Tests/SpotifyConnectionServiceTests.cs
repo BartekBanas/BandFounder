@@ -367,6 +367,218 @@ public class SpotifyConnectionServiceTests
             Arg.Is<IEnumerable<string>>(ids => ids.SequenceEqual(new[] { "a2" })));
     }
 
+    private const string PlaylistToken = "playlistToken";
+    private const string SourceId = "source";
+    private const string TargetId = "target";
+
+    private Guid ArrangePlaylistUser()
+    {
+        var userId = Guid.NewGuid();
+        _spotifyTokensRepository.GetOneAsync(userId)!.Returns(Task.FromResult(new SpotifyTokens
+        {
+            AccountId = userId,
+            AccessToken = PlaylistToken,
+            RefreshToken = "",
+            ExpirationDate = DateTime.UtcNow.AddHours(1),
+        }));
+        _spotifyClient.GetCurrentUserAsync(PlaylistToken, Arg.Any<CancellationToken>())
+            .Returns(new SpotifyUserDto { Id = "me", DisplayName = "Me Myself" });
+        _spotifyClient.GetPlaylistAsync(PlaylistToken, SourceId, Arg.Any<CancellationToken>())
+            .Returns(new SpotifyPlaylistDto
+            {
+                Id = SourceId,
+                Name = "Road Trip",
+                Collaborative = true,
+                Owner = new SpotifyUserDto { Id = "owner", DisplayName = "Olivia" }
+            });
+        return userId;
+    }
+
+    private void ArrangePlaylistItems(string playlistId, params PlaylistTracksPage[] pages)
+    {
+        _spotifyClient.GetPlaylistTracksPagesAsync(PlaylistToken, playlistId, Arg.Any<CancellationToken>())
+            .Returns(_ => AsAsyncEnumerable(pages));
+    }
+
+    private static PlaylistTracksPage Page(int totalAvailable, int scannedItemCount, params PlaylistTrackEntry[] entries)
+    {
+        return new PlaylistTracksPage
+        {
+            Entries = entries.ToList(),
+            ScannedItemCount = scannedItemCount,
+            TotalAvailable = totalAvailable,
+        };
+    }
+
+    private static PlaylistTrackEntry Entry(string trackId, string name, string artist, string? addedBy)
+    {
+        return new PlaylistTrackEntry
+        {
+            Track = CreateTrack(trackId, name, $"artist-{artist}", artist),
+            AddedById = addedBy
+        };
+    }
+
+    [Test]
+    public async Task PreviewPlaylistContributorsAsync_CountsTracksPerContributor_AndNamesKnownUsers()
+    {
+        var userId = ArrangePlaylistUser();
+        ArrangePlaylistItems(
+            SourceId,
+            Page(6, 4,
+                Entry("t1", "One", "A", "owner"),
+                Entry("t2", "Two", "A", "me"),
+                Entry("t3", "Three", "B", "stranger1")),
+            Page(6, 2,
+                Entry("t4", "Four", "B", "owner"),
+                Entry("t5", "Five", "C", "stranger2")));
+        _spotifyClient.TryGetUserProfileAsync(PlaylistToken, Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SpotifyUserDto?)null);
+
+        var preview = await _spotifyConnectionService.PreviewPlaylistContributorsAsync(userId, SourceId);
+
+        Assert.That(preview.TrackCount, Is.EqualTo(5));
+        Assert.That(preview.SkippedItemCount, Is.EqualTo(1));
+        Assert.That(preview.Playlist.Name, Is.EqualTo("Road Trip"));
+        Assert.That(preview.Playlist.TrackCount, Is.EqualTo(6));
+        Assert.That(preview.Contributors[0].Id, Is.EqualTo("owner"));
+        Assert.That(preview.Contributors[0].DisplayName, Is.EqualTo("Olivia"));
+        Assert.That(preview.Contributors[0].TrackCount, Is.EqualTo(2));
+
+        var me = preview.Contributors.Single(contributor => contributor.Id == "me");
+        Assert.That(me.IsCurrentUser, Is.True);
+        Assert.That(me.DisplayName, Is.EqualTo("Me Myself"));
+
+        var stranger = preview.Contributors.Single(contributor => contributor.Id == "stranger2");
+        Assert.That(stranger.DisplayName, Is.EqualTo("stranger2"));
+
+        // The first failed lookup disables the rest.
+        await _spotifyClient.Received(1)
+            .TryGetUserProfileAsync(PlaylistToken, Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Test]
+    public async Task StreamPlaylistCopyAsync_CreatesPlaylist_WithSelectedContributorsSongsOnce()
+    {
+        var userId = ArrangePlaylistUser();
+        ArrangePlaylistItems(
+            SourceId,
+            Page(4, 4,
+                Entry("t1", "Song", "A", "alice"),
+                Entry("t2", "  song ", "a", "bob"),
+                Entry("t3", "Other", "B", "carol"),
+                Entry("t4", "Third", "C", null)));
+        _spotifyClient.CreatePlaylistAsync(PlaylistToken, "Copy", Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new SpotifyPlaylistDto { Id = "new", Name = "Copy", Owner = new SpotifyUserDto { Id = "me" } });
+
+        var updates = await CollectAsync(_spotifyConnectionService.StreamPlaylistCopyAsync(
+            userId, SourceId, ["alice", "bob", SpotifyConnectionService.UnknownContributorId], null, "Copy"));
+
+        var complete = updates[^1];
+        Assert.That(complete.Type, Is.EqualTo("complete"));
+        Assert.That(complete.SelectedTrackCount, Is.EqualTo(3));
+        Assert.That(complete.AddedCount, Is.EqualTo(2));
+        Assert.That(complete.SkippedDuplicateCount, Is.EqualTo(1));
+        Assert.That(complete.CreatedTarget, Is.True);
+        Assert.That(complete.TargetPlaylist!.Id, Is.EqualTo("new"));
+        Assert.That(complete.TargetPlaylist.OwnedByMe, Is.True);
+        Assert.That(complete.FailureMessage, Is.Null);
+        Assert.That(updates.Select(update => update.Phase), Does.Contain(PlaylistCopyPhase.Adding));
+
+        await _spotifyClient.Received(1).AddTracksToPlaylistAsync(
+            PlaylistToken,
+            "new",
+            Arg.Is<IReadOnlyCollection<string>>(uris =>
+                uris.SequenceEqual(new[] { "spotify:track:t1", "spotify:track:t4" })),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Test]
+    public async Task StreamPlaylistCopyAsync_SkipsSongsAlreadyInExistingTarget()
+    {
+        var userId = ArrangePlaylistUser();
+        _spotifyClient.GetPlaylistAsync(PlaylistToken, TargetId, Arg.Any<CancellationToken>())
+            .Returns(new SpotifyPlaylistDto { Id = TargetId, Name = "Mine", Owner = new SpotifyUserDto { Id = "me" } });
+        ArrangePlaylistItems(
+            SourceId,
+            Page(2, 2,
+                Entry("t1", "Song", "A", "alice"),
+                Entry("t2", "Fresh", "B", "alice")));
+        ArrangePlaylistItems(
+            TargetId,
+            Page(1, 1, Entry("other-id", "SONG", "a", "me")));
+
+        var updates = await CollectAsync(_spotifyConnectionService.StreamPlaylistCopyAsync(
+            userId, SourceId, ["alice"], TargetId, null));
+
+        var complete = updates[^1];
+        Assert.That(complete.AddedCount, Is.EqualTo(1));
+        Assert.That(complete.SkippedDuplicateCount, Is.EqualTo(1));
+        Assert.That(complete.CreatedTarget, Is.False);
+        Assert.That(complete.TargetPlaylist!.TrackCount, Is.EqualTo(2));
+        Assert.That(updates.Select(update => update.Phase), Does.Contain(PlaylistCopyPhase.ReadingTarget));
+        await _spotifyClient.DidNotReceive().CreatePlaylistAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        await _spotifyClient.Received(1).AddTracksToPlaylistAsync(
+            PlaylistToken,
+            TargetId,
+            Arg.Is<IReadOnlyCollection<string>>(uris => uris.SequenceEqual(new[] { "spotify:track:t2" })),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Test]
+    public async Task StreamPlaylistCopyAsync_ReportsPartialResult_WhenSpotifyStopsMidway()
+    {
+        var userId = ArrangePlaylistUser();
+        var entries = Enumerable.Range(0, 150)
+            .Select(i => Entry($"t{i}", $"Song {i}", "A", "alice"))
+            .ToArray();
+        ArrangePlaylistItems(SourceId, Page(150, 150, entries));
+        _spotifyClient.CreatePlaylistAsync(PlaylistToken, "Copy", Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new SpotifyPlaylistDto { Id = "new", Name = "Copy" });
+        var calls = 0;
+        _spotifyClient.AddTracksToPlaylistAsync(
+                PlaylistToken, "new", Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
+            .Returns(_ => ++calls == 1
+                ? Task.CompletedTask
+                : Task.FromException(new SpotifyRequestFailedException("Spotify said: Playlist size limit reached")));
+
+        var updates = await CollectAsync(_spotifyConnectionService.StreamPlaylistCopyAsync(
+            userId, SourceId, ["alice"], null, "Copy"));
+
+        var complete = updates[^1];
+        Assert.That(complete.Type, Is.EqualTo("complete"));
+        Assert.That(complete.AddedCount, Is.EqualTo(100));
+        Assert.That(complete.FailureMessage, Does.Contain("size limit"));
+        Assert.That(complete.TargetPlaylist!.Id, Is.EqualTo("new"));
+    }
+
+    [Test]
+    public async Task StreamPlaylistCopyAsync_DoesNotCreatePlaylist_WhenNothingMatches()
+    {
+        var userId = ArrangePlaylistUser();
+        ArrangePlaylistItems(SourceId, Page(1, 1, Entry("t1", "Song", "A", "alice")));
+
+        var updates = await CollectAsync(_spotifyConnectionService.StreamPlaylistCopyAsync(
+            userId, SourceId, ["nobody"], null, "Copy"));
+
+        Assert.That(updates[^1].Type, Is.EqualTo("complete"));
+        Assert.That(updates[^1].TargetPlaylist, Is.Null);
+        await _spotifyClient.DidNotReceive().CreatePlaylistAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
+    private static async Task<List<T>> CollectAsync<T>(IAsyncEnumerable<T> source)
+    {
+        var items = new List<T>();
+        await foreach (var item in source)
+        {
+            items.Add(item);
+        }
+
+        return items;
+    }
+
     private static SpotifyTrackDto CreateTrack(
         string id,
         string name,
@@ -381,8 +593,7 @@ public class SpotifyConnectionServiceTests
         };
     }
 
-    private static async IAsyncEnumerable<SavedTracksPage> AsAsyncEnumerable(
-        IEnumerable<SavedTracksPage> pages)
+    private static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(IEnumerable<T> pages)
     {
         foreach (var page in pages)
         {

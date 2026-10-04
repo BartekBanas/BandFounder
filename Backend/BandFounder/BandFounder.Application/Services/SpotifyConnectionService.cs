@@ -6,6 +6,7 @@ using BandFounder.Infrastructure.Spotify.Dto;
 using BandFounder.Infrastructure.Spotify.Exceptions;
 using BandFounder.Infrastructure.Spotify.Services;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
 namespace BandFounder.Application.Services;
 
@@ -30,6 +31,20 @@ public interface ISpotifyConnectionService
         Guid userId,
         string genre,
         CancellationToken cancellationToken = default);
+    Task<List<SpotifyPlaylistSummaryDto>> GetEditablePlaylistsAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+    Task<PlaylistContributorsPreviewDto> PreviewPlaylistContributorsAsync(
+        Guid userId,
+        string playlistId,
+        CancellationToken cancellationToken = default);
+    IAsyncEnumerable<PlaylistCopyProgressUpdate> StreamPlaylistCopyAsync(
+        Guid userId,
+        string sourcePlaylistId,
+        IReadOnlyCollection<string> contributorIds,
+        string? targetPlaylistId,
+        string? newPlaylistName,
+        CancellationToken cancellationToken = default);
 }
 
 public class SpotifyConnectionService(
@@ -41,6 +56,9 @@ public class SpotifyConnectionService(
     ISpotifyAppCredentialsService spotifyAppCredentialsService)
     : ISpotifyConnectionService
 {
+    public const string UnknownContributorId = "";
+    private const int MaxContributorProfileLookups = 25;
+
     public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid userId)
     {
         var spotifyAppCredentials = await spotifyAppCredentialsService.LoadCredentials();
@@ -363,6 +381,329 @@ public class SpotifyConnectionService(
             TotalAvailable = totalAvailable,
             FoundMatchCount = matchingTracks.Count,
             Truncated = truncated
+        };
+    }
+
+    public async Task<List<SpotifyPlaylistSummaryDto>> GetEditablePlaylistsAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var accessToken = await GetAccessTokenAsync(userId);
+        var currentUser = await spotifyClient.GetCurrentUserAsync(accessToken, cancellationToken);
+        var playlists = await spotifyClient.GetCurrentUserPlaylistsAsync(accessToken, cancellationToken);
+
+        return playlists
+            .Where(playlist => playlist.Collaborative || IsOwnedBy(playlist, currentUser))
+            .Select(playlist => ToPlaylistSummary(playlist, currentUser))
+            .ToList();
+    }
+
+    public async Task<PlaylistContributorsPreviewDto> PreviewPlaylistContributorsAsync(
+        Guid userId,
+        string playlistId,
+        CancellationToken cancellationToken = default)
+    {
+        var accessToken = await GetAccessTokenAsync(userId);
+        var currentUser = await spotifyClient.GetCurrentUserAsync(accessToken, cancellationToken);
+        var playlist = await spotifyClient.GetPlaylistAsync(accessToken, playlistId, cancellationToken);
+
+        var trackCountByContributor = new Dictionary<string, int>(StringComparer.Ordinal);
+        var trackCount = 0;
+        var skippedItemCount = 0;
+
+        await foreach (var page in spotifyClient.GetPlaylistTracksPagesAsync(
+                           accessToken,
+                           playlistId,
+                           cancellationToken))
+        {
+            trackCount += page.Entries.Count;
+            skippedItemCount += page.ScannedItemCount - page.Entries.Count;
+
+            foreach (var entry in page.Entries)
+            {
+                var contributorId = entry.AddedById ?? UnknownContributorId;
+                trackCountByContributor[contributorId] = trackCountByContributor.GetValueOrDefault(contributorId) + 1;
+            }
+        }
+
+        var displayNames = await ResolveContributorNamesAsync(
+            accessToken,
+            trackCountByContributor.Keys,
+            currentUser,
+            playlist.Owner,
+            cancellationToken);
+
+        var contributors = trackCountByContributor
+            .Select(pair => new PlaylistContributorDto
+            {
+                Id = pair.Key,
+                DisplayName = displayNames[pair.Key],
+                IsCurrentUser = pair.Key == currentUser.Id,
+                TrackCount = pair.Value
+            })
+            .OrderByDescending(contributor => contributor.TrackCount)
+            .ThenBy(contributor => contributor.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new PlaylistContributorsPreviewDto
+        {
+            Playlist = ToPlaylistSummary(playlist, currentUser, trackCount + skippedItemCount),
+            Contributors = contributors,
+            TrackCount = trackCount,
+            SkippedItemCount = skippedItemCount
+        };
+    }
+
+    public async IAsyncEnumerable<PlaylistCopyProgressUpdate> StreamPlaylistCopyAsync(
+        Guid userId,
+        string sourcePlaylistId,
+        IReadOnlyCollection<string> contributorIds,
+        string? targetPlaylistId,
+        string? newPlaylistName,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var accessToken = await GetAccessTokenAsync(userId);
+        var currentUser = await spotifyClient.GetCurrentUserAsync(accessToken, cancellationToken);
+        var selectedContributors = contributorIds.ToHashSet(StringComparer.Ordinal);
+
+        // Fetch both playlists' metadata up front so a bad link fails before any reading or writing.
+        var source = await spotifyClient.GetPlaylistAsync(accessToken, sourcePlaylistId, cancellationToken);
+        var existingTarget = targetPlaylistId is null
+            ? null
+            : await spotifyClient.GetPlaylistAsync(accessToken, targetPlaylistId, cancellationToken);
+
+        var tracksToCopy = new List<(string Key, string Uri)>();
+        var seenKeys = new HashSet<string>(StringComparer.Ordinal);
+        var selectedTrackCount = 0;
+        var scannedSourceItems = 0;
+
+        await foreach (var page in spotifyClient.GetPlaylistTracksPagesAsync(
+                           accessToken,
+                           sourcePlaylistId,
+                           cancellationToken))
+        {
+            scannedSourceItems += page.ScannedItemCount;
+
+            foreach (var entry in page.Entries)
+            {
+                if (!selectedContributors.Contains(entry.AddedById ?? UnknownContributorId))
+                {
+                    continue;
+                }
+
+                selectedTrackCount++;
+                var key = CreateDedupKey(entry.Track);
+                if (seenKeys.Add(key))
+                {
+                    tracksToCopy.Add((key, $"spotify:track:{entry.Track.Id}"));
+                }
+            }
+
+            yield return new PlaylistCopyProgressUpdate
+            {
+                Type = "progress",
+                Phase = PlaylistCopyPhase.ReadingSource,
+                Processed = scannedSourceItems,
+                Total = Math.Max(page.TotalAvailable, scannedSourceItems),
+                SelectedTrackCount = selectedTrackCount
+            };
+        }
+
+        var existingTargetKeys = new HashSet<string>(StringComparer.Ordinal);
+        var scannedTargetItems = 0;
+
+        if (existingTarget is not null)
+        {
+            await foreach (var page in spotifyClient.GetPlaylistTracksPagesAsync(
+                               accessToken,
+                               existingTarget.Id,
+                               cancellationToken))
+            {
+                scannedTargetItems += page.ScannedItemCount;
+                foreach (var entry in page.Entries)
+                {
+                    existingTargetKeys.Add(CreateDedupKey(entry.Track));
+                }
+
+                yield return new PlaylistCopyProgressUpdate
+                {
+                    Type = "progress",
+                    Phase = PlaylistCopyPhase.ReadingTarget,
+                    Processed = scannedTargetItems,
+                    Total = Math.Max(page.TotalAvailable, scannedTargetItems),
+                    SelectedTrackCount = selectedTrackCount
+                };
+            }
+        }
+
+        var urisToAdd = tracksToCopy
+            .Where(track => !existingTargetKeys.Contains(track.Key))
+            .Select(track => track.Uri)
+            .ToList();
+        var skippedDuplicateCount = selectedTrackCount - urisToAdd.Count;
+
+        if (existingTarget is null && urisToAdd.Count == 0)
+        {
+            yield return new PlaylistCopyProgressUpdate
+            {
+                Type = "complete",
+                SelectedTrackCount = selectedTrackCount,
+                SkippedDuplicateCount = skippedDuplicateCount
+            };
+            yield break;
+        }
+
+        var target = existingTarget ?? await spotifyClient.CreatePlaylistAsync(
+            accessToken,
+            newPlaylistName!,
+            $"Songs copied from \"{source.Name}\".",
+            cancellationToken);
+        var createdTarget = existingTarget is null;
+        var addedCount = 0;
+
+        PlaylistCopyProgressUpdate CreateComplete(string? failureMessage) => new()
+        {
+            Type = "complete",
+            SelectedTrackCount = selectedTrackCount,
+            AddedCount = addedCount,
+            SkippedDuplicateCount = skippedDuplicateCount,
+            TargetPlaylist = ToPlaylistSummary(target, currentUser, scannedTargetItems + addedCount),
+            CreatedTarget = createdTarget,
+            FailureMessage = failureMessage
+        };
+
+        foreach (var batch in urisToAdd.Chunk(SpotifyClient.PlaylistAddBatchSize))
+        {
+            Exception? failure = null;
+            try
+            {
+                await spotifyClient.AddTracksToPlaylistAsync(accessToken, target.Id, batch, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                failure = ex;
+            }
+
+            if (failure is not null)
+            {
+                // Nothing has changed in Spotify yet, so surface it as a normal error (e.g. reconnect prompts).
+                if (addedCount == 0 && !createdTarget)
+                {
+                    ExceptionDispatchInfo.Capture(failure).Throw();
+                }
+
+                yield return CreateComplete(DescribeCopyFailure(failure));
+                yield break;
+            }
+
+            addedCount += batch.Length;
+            yield return new PlaylistCopyProgressUpdate
+            {
+                Type = "progress",
+                Phase = PlaylistCopyPhase.Adding,
+                Processed = addedCount,
+                Total = urisToAdd.Count,
+                SelectedTrackCount = selectedTrackCount,
+                AddedCount = addedCount,
+                SkippedDuplicateCount = skippedDuplicateCount,
+                TargetPlaylist = ToPlaylistSummary(target, currentUser, scannedTargetItems + addedCount),
+                CreatedTarget = createdTarget
+            };
+        }
+
+        yield return CreateComplete(null);
+    }
+
+    private async Task<Dictionary<string, string>> ResolveContributorNamesAsync(
+        string accessToken,
+        IEnumerable<string> contributorIds,
+        SpotifyUserDto currentUser,
+        SpotifyUserDto? playlistOwner,
+        CancellationToken cancellationToken)
+    {
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
+        var lookupsLeft = MaxContributorProfileLookups;
+        var profileLookupWorks = true;
+
+        foreach (var contributorId in contributorIds)
+        {
+            if (contributorId == UnknownContributorId)
+            {
+                names[contributorId] = "Unknown contributor";
+                continue;
+            }
+
+            if (contributorId == currentUser.Id)
+            {
+                names[contributorId] = NonBlankOr(currentUser.DisplayName, contributorId);
+                continue;
+            }
+
+            if (contributorId == playlistOwner?.Id && !string.IsNullOrWhiteSpace(playlistOwner.DisplayName))
+            {
+                names[contributorId] = playlistOwner.DisplayName;
+                continue;
+            }
+
+            string? displayName = null;
+            if (profileLookupWorks && lookupsLeft > 0)
+            {
+                lookupsLeft--;
+                var profile = await spotifyClient.TryGetUserProfileAsync(accessToken, contributorId, cancellationToken);
+                // One failure means the endpoint is unavailable for this app; skip the remaining lookups.
+                profileLookupWorks = profile is not null;
+                displayName = profile?.DisplayName;
+            }
+
+            names[contributorId] = NonBlankOr(displayName, contributorId);
+        }
+
+        return names;
+    }
+
+    private static string DescribeCopyFailure(Exception exception)
+    {
+        return exception is SpotifyRequestFailedException
+            or SpotifyResourceUnavailableException
+            or SpotifyRateLimitExceededException
+            or SpotifyInsufficientScopeException
+            or SpotifyReauthorizationRequiredException
+            ? exception.Message
+            : "Spotify stopped accepting songs partway through.";
+    }
+
+    private static string CreateDedupKey(SpotifyTrackDto track)
+    {
+        return SpotifyTrackDedupKey.Create(track.Name, track.Artists.Select(artist => artist.Name));
+    }
+
+    private static bool IsOwnedBy(SpotifyPlaylistDto playlist, SpotifyUserDto user)
+    {
+        return playlist.Owner?.Id is { } ownerId && ownerId == user.Id;
+    }
+
+    private static string NonBlankOr(string? value, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
+    private static SpotifyPlaylistSummaryDto ToPlaylistSummary(
+        SpotifyPlaylistDto playlist,
+        SpotifyUserDto currentUser,
+        int? trackCount = null)
+    {
+        return new SpotifyPlaylistSummaryDto
+        {
+            Id = playlist.Id,
+            Name = playlist.Name,
+            ImageUrl = playlist.Images?
+                .OrderBy(image => Math.Abs((image.Width ?? 300) - 300))
+                .FirstOrDefault()?.Url,
+            OwnerName = playlist.Owner?.DisplayName ?? playlist.Owner?.Id,
+            OwnedByMe = IsOwnedBy(playlist, currentUser),
+            Collaborative = playlist.Collaborative,
+            TrackCount = trackCount ?? playlist.ItemCount,
+            Url = playlist.ExternalUrls?.Spotify ?? $"https://open.spotify.com/playlist/{playlist.Id}"
         };
     }
 

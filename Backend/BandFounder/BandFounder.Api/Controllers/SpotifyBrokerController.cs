@@ -17,6 +17,11 @@ public class SpotifyBrokerController : ControllerBase
 {
     private const int MaxGenreQueryLength = 50;
     private const int GenreScanTimeoutMilliseconds = 600_000;
+    private const int PlaylistCopyTimeoutMilliseconds = 600_000;
+    private const int MaxPlaylistNameLength = 100;
+    private const int MaxSelectedContributors = 200;
+    private const string InvalidPlaylistLinkMessage =
+        "That doesn't look like a Spotify playlist link. Paste a link like https://open.spotify.com/playlist/…";
     private static readonly JsonSerializerOptions StreamJsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly ISpotifyConnectionService _spotifyConnectionService;
@@ -141,7 +146,113 @@ public class SpotifyBrokerController : ControllerBase
         }
         catch (Exception ex) when (Response.HasStarted)
         {
-            var error = CreateStreamError(ex);
+            var error = CreateStreamError(ex, "Something went wrong while scanning liked songs.");
+            await WriteStreamMessageAsync(error);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("spotify/playlists/mine")]
+    public async Task<IActionResult> GetMyEditablePlaylists()
+    {
+        var userId = _authenticationService.GetUserId();
+        var playlists = await _spotifyConnectionService.GetEditablePlaylistsAsync(userId, HttpContext.RequestAborted);
+        return Ok(playlists);
+    }
+
+    [Authorize]
+    [HttpGet("spotify/playlists/preview")]
+    [RequestTimeout(PlaylistCopyTimeoutMilliseconds)]
+    public async Task<IActionResult> PreviewPlaylistContributors([FromQuery] string? playlistId)
+    {
+        if (!SpotifyPlaylistId.TryParse(playlistId, out var parsedPlaylistId))
+        {
+            throw new BadRequestException(InvalidPlaylistLinkMessage);
+        }
+
+        var userId = _authenticationService.GetUserId();
+        var preview = await _spotifyConnectionService.PreviewPlaylistContributorsAsync(
+            userId,
+            parsedPlaylistId,
+            HttpContext.RequestAborted);
+        return Ok(preview);
+    }
+
+    [Authorize]
+    [HttpPost("spotify/playlists/copy/stream")]
+    [RequestTimeout(PlaylistCopyTimeoutMilliseconds)]
+    public async Task CopyPlaylistContributorsStream([FromBody] PlaylistCopyRequestDto? request)
+    {
+        if (!SpotifyPlaylistId.TryParse(request?.SourcePlaylistId, out var sourcePlaylistId))
+        {
+            throw new BadRequestException(InvalidPlaylistLinkMessage);
+        }
+
+        var contributorIds = (request!.ContributorIds ?? [])
+            .Select(id => id?.Trim() ?? string.Empty)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (contributorIds.Count == 0)
+        {
+            throw new BadRequestException("Pick at least one contributor.");
+        }
+
+        if (contributorIds.Count > MaxSelectedContributors)
+        {
+            throw new BadRequestException($"Pick at most {MaxSelectedContributors} contributors.");
+        }
+
+        string? targetPlaylistId = null;
+        var newPlaylistName = request.NewPlaylistName?.Trim();
+        if (!string.IsNullOrWhiteSpace(request.TargetPlaylistId))
+        {
+            if (!SpotifyPlaylistId.TryParse(request.TargetPlaylistId, out targetPlaylistId))
+            {
+                throw new BadRequestException("The target playlist id isn't valid.");
+            }
+
+            if (targetPlaylistId == sourcePlaylistId)
+            {
+                throw new BadRequestException("Pick a target that's different from the source playlist.");
+            }
+
+            newPlaylistName = null;
+        }
+        else if (string.IsNullOrWhiteSpace(newPlaylistName))
+        {
+            throw new BadRequestException("Name the new playlist or pick an existing one.");
+        }
+        else if (newPlaylistName.Length > MaxPlaylistNameLength)
+        {
+            throw new BadRequestException($"Playlist names can be at most {MaxPlaylistNameLength} characters.");
+        }
+
+        Response.StatusCode = StatusCodes.Status200OK;
+        Response.ContentType = "application/x-ndjson";
+        Response.Headers["Cache-Control"] = "no-cache";
+        Response.Headers["X-Accel-Buffering"] = "no";
+
+        try
+        {
+            var userId = _authenticationService.GetUserId();
+            await foreach (var update in _spotifyConnectionService.StreamPlaylistCopyAsync(
+                               userId,
+                               sourcePlaylistId,
+                               contributorIds,
+                               targetPlaylistId,
+                               newPlaylistName,
+                               HttpContext.RequestAborted))
+            {
+                await WriteStreamMessageAsync(update);
+            }
+        }
+        catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            // The client stopped the copy or navigated away.
+        }
+        catch (Exception ex) when (Response.HasStarted)
+        {
+            var error = CreateStreamError(ex, "Something went wrong while copying songs.");
             await WriteStreamMessageAsync(error);
         }
     }
@@ -214,7 +325,7 @@ public class SpotifyBrokerController : ControllerBase
         await Response.Body.FlushAsync(HttpContext.RequestAborted);
     }
 
-    private static object CreateStreamError(Exception exception)
+    private static object CreateStreamError(Exception exception, string fallbackMessage)
     {
         var status = exception switch
         {
@@ -222,11 +333,13 @@ public class SpotifyBrokerController : ControllerBase
             SpotifyInsufficientScopeException => StatusCodes.Status403Forbidden,
             SpotifyRateLimitExceededException => StatusCodes.Status429TooManyRequests,
             SpotifyAccountNotLinkedException => StatusCodes.Status422UnprocessableEntity,
+            SpotifyResourceUnavailableException => StatusCodes.Status404NotFound,
+            SpotifyRequestFailedException => StatusCodes.Status502BadGateway,
             _ => StatusCodes.Status500InternalServerError
         };
 
         var message = status == StatusCodes.Status500InternalServerError
-            ? "Something went wrong while scanning liked songs."
+            ? fallbackMessage
             : exception.Message;
 
         return new
