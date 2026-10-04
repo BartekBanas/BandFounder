@@ -22,6 +22,32 @@ public interface ISpotifyClient
         int maxTracks = SpotifyClient.MaxSavedTracks,
         CancellationToken cancellationToken = default);
     Task<List<SpotifyArtistDto>> GetArtistsByIdsAsync(string accessToken, IEnumerable<string> artistIds);
+    Task<SpotifyUserDto> GetCurrentUserAsync(string accessToken, CancellationToken cancellationToken = default);
+    Task<SpotifyUserDto?> TryGetUserProfileAsync(
+        string accessToken,
+        string userId,
+        CancellationToken cancellationToken = default);
+    Task<SpotifyPlaylistDto> GetPlaylistAsync(
+        string accessToken,
+        string playlistId,
+        CancellationToken cancellationToken = default);
+    IAsyncEnumerable<PlaylistTracksPage> GetPlaylistTracksPagesAsync(
+        string accessToken,
+        string playlistId,
+        CancellationToken cancellationToken = default);
+    Task<List<SpotifyPlaylistDto>> GetCurrentUserPlaylistsAsync(
+        string accessToken,
+        CancellationToken cancellationToken = default);
+    Task<SpotifyPlaylistDto> CreatePlaylistAsync(
+        string accessToken,
+        string name,
+        string? description,
+        CancellationToken cancellationToken = default);
+    Task AddTracksToPlaylistAsync(
+        string accessToken,
+        string playlistId,
+        IReadOnlyCollection<string> trackUris,
+        CancellationToken cancellationToken = default);
 }
 
 public class SpotifyClient : ISpotifyClient
@@ -32,12 +58,30 @@ public class SpotifyClient : ISpotifyClient
     private const string SpotifyFollowedArtistsUrl = "https://api.spotify.com/v1/me/following?type=artist";
     private const string SpotifySavedTracksUrl = "https://api.spotify.com/v1/me/tracks";
     private const string SpotifySeveralArtistsUrl = "https://api.spotify.com/v1/artists";
+    private const string SpotifyCurrentUserUrl = "https://api.spotify.com/v1/me";
+    private const string SpotifyCurrentUserPlaylistsUrl = "https://api.spotify.com/v1/me/playlists";
+    private const string SpotifyUsersUrl = "https://api.spotify.com/v1/users";
+    private const string SpotifyPlaylistsUrl = "https://api.spotify.com/v1/playlists";
 
     private const int MaxRateLimitRetries = 5;
     private const int SavedTracksPageSize = 50;
     private const int ArtistsBatchSize = 50;
+    private const int PlaylistItemsPageSize = 50;
+    private const int CurrentUserPlaylistsPageSize = 50;
+    private const int MaxCurrentUserPlaylists = 1000;
     public const int MaxSavedTracks = 7000;
     public const int DefaultSavedTracksMaxPages = MaxSavedTracks / SavedTracksPageSize;
+    public const int MaxPlaylistItems = 10_000;
+    public const int PlaylistAddBatchSize = 100;
+
+    private const string PlaylistNotFoundMessage =
+        "Spotify couldn't find that playlist. Check the link, or make sure the playlist isn't private to someone else.";
+    private const string PlaylistItemsForbiddenMessage =
+        "Spotify only shares the songs of playlists you own or collaborate on. Ask the owner to invite you as a collaborator, then try again.";
+    private const string PlaylistEditForbiddenMessage =
+        "You can't add songs to that playlist. Pick one you own or collaborate on.";
+    private const string CreatePlaylistFailedMessage =
+        "Spotify wouldn't create the playlist.";
 
     public async Task<SpotifyTokensResponse> RequestAccessTokenAsync(SpotifyConnectionDto dto, SpotifyAppCredentials spotifyAppCredentials)
     {
@@ -279,16 +323,220 @@ public class SpotifyClient : ISpotifyClient
         return artists;
     }
 
-    private static async Task<string> SendAuthorizedGetAsync(
+    public async Task<SpotifyUserDto> GetCurrentUserAsync(
+        string accessToken,
+        CancellationToken cancellationToken = default)
+    {
+        using var client = new HttpClient();
+        var responseBody = await SendAuthorizedGetAsync(client, SpotifyCurrentUserUrl, accessToken, cancellationToken);
+        return JsonSerializer.Deserialize<SpotifyUserDto>(responseBody) ?? throw new InvalidOperationException();
+    }
+
+    public async Task<SpotifyUserDto?> TryGetUserProfileAsync(
+        string accessToken,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        // Spotify removed GET /users/{id} for development-mode apps in February 2026, so this
+        // makes a single attempt with no rate-limit retries and treats any failure as "unknown".
+        try
+        {
+            using var client = new HttpClient();
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{SpotifyUsersUrl}/{Uri.EscapeDataString(userId)}");
+            request.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<SpotifyUserDto>(responseBody);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<SpotifyPlaylistDto> GetPlaylistAsync(
+        string accessToken,
+        string playlistId,
+        CancellationToken cancellationToken = default)
+    {
+        using var client = new HttpClient();
+        var responseBody = await SendAuthorizedAsync(
+            client,
+            HttpMethod.Get,
+            $"{SpotifyPlaylistsUrl}/{playlistId}?fields=id,name,collaborative,images,owner(id,display_name),external_urls",
+            accessToken,
+            unavailableMessage: PlaylistNotFoundMessage,
+            cancellationToken: cancellationToken);
+
+        return JsonSerializer.Deserialize<SpotifyPlaylistDto>(responseBody) ?? throw new InvalidOperationException();
+    }
+
+    public async IAsyncEnumerable<PlaylistTracksPage> GetPlaylistTracksPagesAsync(
+        string accessToken,
+        string playlistId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var url = $"{SpotifyPlaylistsUrl}/{playlistId}/items?limit={PlaylistItemsPageSize}";
+        var scannedItemCount = 0;
+
+        using var client = new HttpClient();
+        do
+        {
+            var responseBody = await SendAuthorizedAsync(
+                client,
+                HttpMethod.Get,
+                url,
+                accessToken,
+                unavailableMessage: PlaylistItemsForbiddenMessage,
+                cancellationToken: cancellationToken);
+            var responseDto = JsonSerializer.Deserialize<SpotifyPagingResponse<SpotifyPlaylistItemDto?>>(responseBody)
+                              ?? throw new InvalidOperationException();
+
+            scannedItemCount += responseDto.Items.Count;
+
+            var entries = responseDto.Items
+                .Where(item =>
+                    item?.Content is { } track
+                    && !item.IsLocal
+                    && !track.IsLocal
+                    && (track.Type is null || track.Type == "track")
+                    && !string.IsNullOrWhiteSpace(track.Id))
+                .Select(item => new PlaylistTrackEntry
+                {
+                    Track = item!.Content!,
+                    AddedById = string.IsNullOrWhiteSpace(item.AddedBy?.Id) ? null : item.AddedBy.Id
+                })
+                .ToList();
+
+            var hasMore = !string.IsNullOrEmpty(responseDto.Next) && scannedItemCount < MaxPlaylistItems;
+
+            yield return new PlaylistTracksPage
+            {
+                Entries = entries,
+                ScannedItemCount = responseDto.Items.Count,
+                TotalAvailable = Math.Min(responseDto.Total, MaxPlaylistItems),
+                HasMore = hasMore
+            };
+
+            if (!hasMore)
+            {
+                break;
+            }
+
+            url = responseDto.Next!;
+        } while (true);
+    }
+
+    public async Task<List<SpotifyPlaylistDto>> GetCurrentUserPlaylistsAsync(
+        string accessToken,
+        CancellationToken cancellationToken = default)
+    {
+        var url = $"{SpotifyCurrentUserPlaylistsUrl}?limit={CurrentUserPlaylistsPageSize}";
+        var playlists = new List<SpotifyPlaylistDto>();
+        var playlistIds = new HashSet<string>(StringComparer.Ordinal);
+
+        using var client = new HttpClient();
+        do
+        {
+            var responseBody = await SendAuthorizedGetAsync(client, url, accessToken, cancellationToken);
+            var responseDto = JsonSerializer.Deserialize<SpotifyPagingResponse<SpotifyPlaylistDto?>>(responseBody)
+                              ?? throw new InvalidOperationException();
+
+            playlists.AddRange(responseDto.Items
+                .Where(playlist => playlist is not null && playlistIds.Add(playlist.Id))
+                .Select(playlist => playlist!));
+
+            url = responseDto.Next;
+        } while (!string.IsNullOrEmpty(url) && playlists.Count < MaxCurrentUserPlaylists);
+
+        return playlists;
+    }
+
+    public async Task<SpotifyPlaylistDto> CreatePlaylistAsync(
+        string accessToken,
+        string name,
+        string? description,
+        CancellationToken cancellationToken = default)
+    {
+        using var client = new HttpClient();
+        var responseBody = await SendAuthorizedAsync(
+            client,
+            HttpMethod.Post,
+            SpotifyCurrentUserPlaylistsUrl,
+            accessToken,
+            new { name, description, @public = false, collaborative = false },
+            CreatePlaylistFailedMessage,
+            cancellationToken);
+
+        return JsonSerializer.Deserialize<SpotifyPlaylistDto>(responseBody) ?? throw new InvalidOperationException();
+    }
+
+    public async Task AddTracksToPlaylistAsync(
+        string accessToken,
+        string playlistId,
+        IReadOnlyCollection<string> trackUris,
+        CancellationToken cancellationToken = default)
+    {
+        if (trackUris.Count is 0 or > PlaylistAddBatchSize)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(trackUris),
+                $"Spotify accepts between 1 and {PlaylistAddBatchSize} tracks per request.");
+        }
+
+        using var client = new HttpClient();
+        await SendAuthorizedAsync(
+            client,
+            HttpMethod.Post,
+            $"{SpotifyPlaylistsUrl}/{playlistId}/items",
+            accessToken,
+            new { uris = trackUris },
+            PlaylistEditForbiddenMessage,
+            cancellationToken);
+    }
+
+    private static Task<string> SendAuthorizedGetAsync(
         HttpClient client,
         string url,
         string accessToken,
         CancellationToken cancellationToken = default)
     {
+        return SendAuthorizedAsync(client, HttpMethod.Get, url, accessToken, cancellationToken: cancellationToken);
+    }
+
+    /// <param name="unavailableMessage">
+    /// When set, a 404 or a non-scope 403 becomes <see cref="SpotifyResourceUnavailableException"/> with this
+    /// message, and other Spotify errors become <see cref="SpotifyRequestFailedException"/> carrying Spotify's reason.
+    /// When null, a 403 always means missing scopes and other errors throw <see cref="HttpRequestException"/>.
+    /// </param>
+    private static async Task<string> SendAuthorizedAsync(
+        HttpClient client,
+        HttpMethod method,
+        string url,
+        string accessToken,
+        object? jsonBody = null,
+        string? unavailableMessage = null,
+        CancellationToken cancellationToken = default)
+    {
         for (var attempt = 0; attempt <= MaxRateLimitRetries; attempt++)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            using var request = new HttpRequestMessage(method, url);
             request.Headers.Add("Authorization", $"Bearer {accessToken}");
+            if (jsonBody is not null)
+            {
+                request.Content = new StringContent(
+                    JsonSerializer.Serialize(jsonBody),
+                    Encoding.UTF8,
+                    "application/json");
+            }
 
             var response = await client.SendAsync(request, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -315,19 +563,57 @@ public class SpotifyClient : ISpotifyClient
                 continue;
             }
 
-            if (response.StatusCode == HttpStatusCode.Forbidden)
+            if (response.IsSuccessStatusCode)
             {
-                throw new SpotifyInsufficientScopeException();
+                return responseBody;
             }
 
-            if (!response.IsSuccessStatusCode)
+            var spotifyMessage = ReadSpotifyErrorMessage(responseBody);
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                var isScopeProblem = spotifyMessage?.Contains("scope", StringComparison.OrdinalIgnoreCase) ?? false;
+                if (unavailableMessage is null || isScopeProblem)
+                {
+                    throw new SpotifyInsufficientScopeException();
+                }
+
+                throw new SpotifyResourceUnavailableException(unavailableMessage);
+            }
+
+            if (unavailableMessage is null)
             {
                 response.EnsureSuccessStatusCode();
             }
 
-            return responseBody;
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new SpotifyResourceUnavailableException(unavailableMessage!);
+            }
+
+            throw new SpotifyRequestFailedException(string.IsNullOrWhiteSpace(spotifyMessage)
+                ? $"Spotify returned an error ({(int)response.StatusCode})."
+                : $"Spotify said: {spotifyMessage}");
         }
 
         throw new SpotifyRateLimitExceededException();
+    }
+
+    private static string? ReadSpotifyErrorMessage(string responseBody)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            return document.RootElement.TryGetProperty("error", out var error)
+                   && error.ValueKind == JsonValueKind.Object
+                   && error.TryGetProperty("message", out var message)
+                   && message.ValueKind == JsonValueKind.String
+                ? message.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }
