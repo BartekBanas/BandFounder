@@ -197,7 +197,10 @@ export const ContributorRow: React.FC<{
                         <span style={{width: `${share}%`}}/>
                     </span>
                 </span>
-                <span className="playlist-copy-contributor__count">{songs(contributor.trackCount)}</span>
+                <span className="playlist-copy-contributor__count">
+                    {songs(contributor.trackCount)}
+                    <span className="playlist-copy-contributor__share">{share}% of playlist</span>
+                </span>
             </label>
         </li>
     );
