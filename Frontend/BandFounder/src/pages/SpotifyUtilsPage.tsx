@@ -1,5 +1,6 @@
 import React from 'react';
 import GenreLikedSongsTool from '../components/spotifyUtils/GenreLikedSongsTool';
+import PlaylistContributorCopyTool from '../components/spotifyUtils/PlaylistContributorCopyTool';
 import '../components/spotifyUtils/spotifyUtils.css';
 
 export function SpotifyUtilsPage() {
@@ -13,6 +14,7 @@ export function SpotifyUtilsPage() {
                     </p>
                 </div>
                 <GenreLikedSongsTool/>
+                <PlaylistContributorCopyTool/>
             </div>
         </div>
     );
