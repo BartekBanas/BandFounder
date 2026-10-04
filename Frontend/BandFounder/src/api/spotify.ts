@@ -180,14 +180,9 @@ export async function getLikedTracksByGenre(
         throw new SpotifyUtilsApiError(500, 'The scan did not return a readable progress stream.');
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
     let completedResult: LikedTracksByGenreResult | null = null;
 
-    const processMessage = (line: string) => {
-        const message = JSON.parse(line) as LikedTracksByGenreStreamMessage;
-
+    await readNdjsonStream<LikedTracksByGenreStreamMessage>(response.body, (message) => {
         if (message.type === 'progress') {
             onProgress?.({
                 scannedTrackCount: message.scannedTrackCount,
@@ -216,7 +211,22 @@ export async function getLikedTracksByGenre(
                 truncated: message.truncated,
             };
         }
-    };
+    });
+
+    if (!completedResult) {
+        throw new SpotifyUtilsApiError(500, 'The scan ended before results were returned.');
+    }
+
+    return completedResult;
+}
+
+async function readNdjsonStream<TMessage>(
+    body: ReadableStream<Uint8Array>,
+    onMessage: (message: TMessage) => void
+): Promise<void> {
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
 
     while (true) {
         const {done, value} = await reader.read();
@@ -227,7 +237,7 @@ export async function getLikedTracksByGenre(
         lines
             .map((line) => line.trim())
             .filter(Boolean)
-            .forEach(processMessage);
+            .forEach((line) => onMessage(JSON.parse(line) as TMessage));
 
         if (done) {
             break;
@@ -235,14 +245,211 @@ export async function getLikedTracksByGenre(
     }
 
     if (buffer.trim()) {
-        processMessage(buffer.trim());
+        onMessage(JSON.parse(buffer.trim()) as TMessage);
+    }
+}
+
+const SPOTIFY_ID_PATTERN = /^[A-Za-z0-9]{22}$/;
+const EMBEDDED_PLAYLIST_ID_PATTERN = /playlist[/:]([A-Za-z0-9]{22})(?![A-Za-z0-9])/i;
+
+/** Accepts an open.spotify.com playlist URL, a spotify:playlist: URI, or a bare 22-character id. */
+export function parsePlaylistId(input: string): string | null {
+    const trimmed = input.trim();
+    if (SPOTIFY_ID_PATTERN.test(trimmed)) {
+        return trimmed;
     }
 
-    if (!completedResult) {
-        throw new SpotifyUtilsApiError(500, 'The scan ended before results were returned.');
+    return EMBEDDED_PLAYLIST_ID_PATTERN.exec(trimmed)?.[1] ?? null;
+}
+
+export interface SpotifyPlaylistSummary {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+    ownerName: string | null;
+    ownedByMe: boolean;
+    collaborative: boolean;
+    trackCount: number;
+    url: string;
+}
+
+export interface PlaylistContributor {
+    /** Empty string groups songs Spotify returns without an adder. */
+    id: string;
+    displayName: string;
+    isCurrentUser: boolean;
+    trackCount: number;
+}
+
+export interface PlaylistContributorsPreview {
+    playlist: SpotifyPlaylistSummary;
+    contributors: PlaylistContributor[];
+    trackCount: number;
+    skippedItemCount: number;
+}
+
+export type PlaylistCopyPhase = 'reading-source' | 'reading-target' | 'adding';
+
+export interface PlaylistCopyProgress {
+    phase: PlaylistCopyPhase;
+    processed: number;
+    total: number;
+    selectedTrackCount: number;
+    addedCount: number;
+    skippedDuplicateCount: number;
+    targetPlaylist: SpotifyPlaylistSummary | null;
+}
+
+export interface PlaylistCopyResult {
+    selectedTrackCount: number;
+    addedCount: number;
+    skippedDuplicateCount: number;
+    targetPlaylist: SpotifyPlaylistSummary | null;
+    createdTarget: boolean;
+    failureMessage: string | null;
+}
+
+export type PlaylistCopyTarget =
+    | { kind: 'existing'; playlistId: string }
+    | { kind: 'new'; name: string };
+
+export interface PlaylistCopyRequest {
+    sourcePlaylistId: string;
+    contributorIds: string[];
+    target: PlaylistCopyTarget;
+}
+
+interface PlaylistCopyStreamMessage {
+    type: 'progress' | 'complete' | 'error';
+    phase?: PlaylistCopyPhase;
+    processed?: number;
+    total?: number;
+    selectedTrackCount?: number;
+    addedCount?: number;
+    skippedDuplicateCount?: number;
+    targetPlaylist?: SpotifyPlaylistSummary | null;
+    createdTarget?: boolean;
+    failureMessage?: string | null;
+    status?: number;
+    message?: string;
+}
+
+export async function fetchMyEditablePlaylists(signal?: AbortSignal): Promise<SpotifyPlaylistSummary[]> {
+    const response = await fetch(`${API_URL}/spotify/playlists/mine`, {
+        method: 'GET',
+        headers: authorizedHeaders(),
+        signal,
+    });
+
+    if (!response.ok) {
+        throw createPlaylistApiError(response.status, await response.text());
     }
 
-    return completedResult;
+    return response.json();
+}
+
+export async function previewPlaylistContributors(
+    playlistId: string,
+    signal?: AbortSignal
+): Promise<PlaylistContributorsPreview> {
+    const params = new URLSearchParams({playlistId});
+    const response = await fetch(`${API_URL}/spotify/playlists/preview?${params.toString()}`, {
+        method: 'GET',
+        headers: authorizedHeaders(),
+        signal,
+    });
+
+    if (!response.ok) {
+        throw createPlaylistApiError(response.status, await response.text());
+    }
+
+    return response.json();
+}
+
+export async function streamPlaylistCopy(
+    request: PlaylistCopyRequest,
+    onProgress: (progress: PlaylistCopyProgress) => void,
+    signal?: AbortSignal
+): Promise<PlaylistCopyResult> {
+    const response = await fetch(`${API_URL}/spotify/playlists/copy/stream`, {
+        method: 'POST',
+        headers: authorizedHeaders(),
+        signal,
+        body: JSON.stringify({
+            sourcePlaylistId: request.sourcePlaylistId,
+            contributorIds: request.contributorIds,
+            targetPlaylistId: request.target.kind === 'existing' ? request.target.playlistId : null,
+            newPlaylistName: request.target.kind === 'new' ? request.target.name : null,
+        }),
+    });
+
+    if (!response.ok) {
+        throw createPlaylistApiError(response.status, await response.text());
+    }
+
+    if (!response.body) {
+        throw new SpotifyUtilsApiError(500, 'The copy did not return a readable progress stream.');
+    }
+
+    let result: PlaylistCopyResult | null = null;
+
+    await readNdjsonStream<PlaylistCopyStreamMessage>(response.body, (message) => {
+        if (message.type === 'error') {
+            throw createPlaylistApiError(message.status ?? 500, message.message ?? '');
+        }
+
+        const counts = {
+            selectedTrackCount: message.selectedTrackCount ?? 0,
+            addedCount: message.addedCount ?? 0,
+            skippedDuplicateCount: message.skippedDuplicateCount ?? 0,
+        };
+
+        if (message.type === 'progress' && message.phase) {
+            onProgress({
+                ...counts,
+                phase: message.phase,
+                processed: message.processed ?? 0,
+                total: message.total ?? 0,
+                targetPlaylist: message.targetPlaylist ?? null,
+            });
+            return;
+        }
+
+        if (message.type === 'complete') {
+            result = {
+                ...counts,
+                targetPlaylist: message.targetPlaylist ?? null,
+                createdTarget: message.createdTarget ?? false,
+                failureMessage: message.failureMessage ?? null,
+            };
+        }
+    });
+
+    if (!result) {
+        throw new SpotifyUtilsApiError(500, 'The copy ended before Spotify confirmed the result.');
+    }
+
+    return result;
+}
+
+function createPlaylistApiError(status: number, bodyText: string): SpotifyUtilsApiError {
+    const fallbackByStatus: Record<number, string> = {
+        400: 'Spotify rejected that request.',
+        403: 'Spotify needs extra permissions for playlists. Reconnect Spotify to grant them.',
+        410: SPOTIFY_REAUTH_NOTIFICATION,
+        422: 'Link your Spotify account first.',
+        429: 'Spotify is rate limiting requests. Wait a minute, then try again.',
+    };
+
+    if (status === 404 && !bodyText.trim()) {
+        return new SpotifyUtilsApiError(
+            404,
+            'The playlist endpoints are missing. Restart the backend so it picks up the new API.'
+        );
+    }
+
+    const message = bodyText.trim() || fallbackByStatus[status] || `Something went wrong (${status}).`;
+    return new SpotifyUtilsApiError(status, message);
 }
 
 function throwSpotifyUtilsApiError(status: number, bodyText: string): never {

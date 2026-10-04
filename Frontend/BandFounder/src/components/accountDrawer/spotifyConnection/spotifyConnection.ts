@@ -6,7 +6,20 @@ import {fetchSpotifyAppClientId, requestSpotifyAccountLinkFromCode} from "../../
 const SpotifyConnectionPageUrl = "http://127.0.0.1:3000/spotifyConnection/callback/";
 const SpotifyAuthorizeUrl = "https://accounts.spotify.com/authorize";
 
-/** Includes user-library-read for liked-songs tools. Existing users must reconnect to grant it. */
+const SpotifyScopes = [
+    'user-top-read',
+    'user-follow-read',
+    'user-library-read',
+    'playlist-read-private',
+    'playlist-read-collaborative',
+    'playlist-modify-private',
+    'playlist-modify-public',
+].join(' ');
+
+/**
+ * The library and playlist scopes power the /spotify-utils tools. Accounts linked before a scope
+ * was added must reconnect once to grant it.
+ */
 export async function redirectToSpotifyAuthorizationPage() {
     try {
         const spotifyClientId = await fetchSpotifyAppClientId();
@@ -16,7 +29,7 @@ export async function redirectToSpotifyAuthorizationPage() {
         url += "&response_type=code";
         url += "&redirect_uri=" + encodeURIComponent(SpotifyConnectionPageUrl);
         url += "&show_dialog=true";
-        url += "&scope=user-top-read user-follow-read user-library-read";
+        url += "&scope=" + encodeURIComponent(SpotifyScopes);
         window.location.href = url; // Show Spotify's authorization screen
     } catch (error) {
         console.error('Error fetching Spotify app client ID:', error);
