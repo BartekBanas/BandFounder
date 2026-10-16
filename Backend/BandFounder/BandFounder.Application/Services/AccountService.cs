@@ -438,6 +438,7 @@ public class AccountService : IAccountService
         await _accountRepository.DeleteOneAsync(accountId);
 
         await _accountRepository.SaveChangesAsync();
+        _musicProfileProvider.Invalidate(accountId.Value);
     }
     
     public async Task RemoveMusicianRole(string role, Guid? accountId = null)

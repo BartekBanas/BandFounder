@@ -24,6 +24,8 @@ public sealed class MusicProfileProvider(
     IMusicProfileVersionRegistry versions) : IMusicProfileProvider
 {
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(10);
+    private static readonly IReadOnlySet<string> EmptyArtistIds = new HashSet<string>();
+    private static readonly IReadOnlyDictionary<string, int> EmptyGenreWeights = new Dictionary<string, int>();
 
     public async Task<IReadOnlyDictionary<Guid, MusicProfile>> GetProfilesAsync(
         IReadOnlyCollection<Guid> accountIds)
@@ -59,20 +61,23 @@ public sealed class MusicProfileProvider(
                 .SelectMany(account => account.Artists.Select(artist =>
                     new MusicProfileArtistRow(account.Id, artist.Id))));
 
-        var genreRows = await accountRepository.QueryAsync(accounts =>
-            accounts
-                .Where(account => missingAccountIds.Contains(account.Id))
-                .SelectMany(account => account.Artists.SelectMany(artist => artist.Genres)
-                    .Select(genre => new { AccountId = account.Id, GenreName = genre.Name }))
-                .GroupBy(row => new { row.AccountId, row.GenreName })
-                .Select(group => new MusicProfileGenreWeightRow(
-                    group.Key.AccountId,
-                    group.Key.GenreName,
-                    group.Count())));
-
         var artistIdsByAccount = artistRows
             .GroupBy(row => row.AccountId)
             .ToDictionary(group => group.Key, group => (IReadOnlySet<string>)group.Select(row => row.ArtistId).ToHashSet());
+
+        var accountsWithArtists = artistIdsByAccount.Keys.ToArray();
+        var genreRows = accountsWithArtists.Length == 0
+            ? []
+            : await accountRepository.QueryAsync(accounts =>
+                accounts
+                    .Where(account => accountsWithArtists.Contains(account.Id))
+                    .SelectMany(account => account.Artists.SelectMany(artist => artist.Genres)
+                        .Select(genre => new { AccountId = account.Id, GenreName = genre.Name }))
+                    .GroupBy(row => new { row.AccountId, row.GenreName })
+                    .Select(group => new MusicProfileGenreWeightRow(
+                        group.Key.AccountId,
+                        group.Key.GenreName,
+                        group.Count())));
 
         var genreWeightsByAccount = genreRows
             .GroupBy(row => row.AccountId)
@@ -83,8 +88,8 @@ public sealed class MusicProfileProvider(
         foreach (var accountId in missingAccountIds)
         {
             var profile = new MusicProfile(
-                artistIdsByAccount.GetValueOrDefault(accountId, new HashSet<string>()),
-                genreWeightsByAccount.GetValueOrDefault(accountId, new Dictionary<string, int>()));
+                artistIdsByAccount.GetValueOrDefault(accountId, EmptyArtistIds),
+                genreWeightsByAccount.GetValueOrDefault(accountId, EmptyGenreWeights));
 
             // Skip caching if Invalidate ran while we were loading; still return the snapshot for this request.
             versions.TryRunIfCurrent(
