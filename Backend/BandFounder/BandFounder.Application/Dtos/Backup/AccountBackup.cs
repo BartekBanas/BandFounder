@@ -13,5 +13,7 @@ public class AccountBackup
     public ProfilePictureBackup? ProfilePicture { get; set; }
     public List<string> MusicianRoles { get; set; }
     public List<string> Artists { get; set; }
+    public List<AccountArtistBackup>? ArtistLinks { get; set; }
+    public List<LinkedPlaylistBackup>? LinkedPlaylists { get; set; }
     public List<ListingCreateDto>? Listings { get; set; }
 }

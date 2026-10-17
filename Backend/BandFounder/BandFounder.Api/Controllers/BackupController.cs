@@ -44,8 +44,9 @@ public class BackupController : Controller
         {
             var propertiesToBackup = new List<string>
             {
-                nameof(Account.Artists), "Artists.Genres", nameof(Account.Chatrooms), 
-                nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens),
+                nameof(Account.Artists), "Artists.Genres", nameof(Account.ArtistLinks),
+                "ArtistLinks.Sources", "ArtistLinks.Artist", nameof(Account.LinkedPlaylists),
+                nameof(Account.Chatrooms), nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens),
                 nameof(Account.NotificationPreferences)
             };
             
@@ -149,9 +150,12 @@ public class BackupController : Controller
                 }
             };
             
-            // Restoring account's artists
-            var artists = await _artistRepository.GetOrCreateAsync(accountBackup.Artists);
-            account.Artists.AddRange(artists);
+            var artists = (await _artistRepository.GetOrCreateAsync(
+                AccountBackupRestore.ArtistNamesToRestore(accountBackup))).ToList();
+            AccountBackupRestore.ApplyMusicProfile(
+                account,
+                accountBackup,
+                artists.ToDictionary(artist => artist.Name));
             
             // Restoring account's musician roles
             foreach (var musicianRole in accountBackup.MusicianRoles)

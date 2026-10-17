@@ -11,6 +11,8 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Message> Messages { get; set; }
     public DbSet<ChatroomReadState> ChatroomReadStates { get; set; }
     public DbSet<Artist> Artists { get; set; }
+    public DbSet<AccountArtist> AccountArtists { get; set; }
+    public DbSet<LinkedPlaylist> LinkedPlaylists { get; set; }
     public DbSet<Genre> Genres { get; set; }
     
     public DbSet<Listing> Listings { get; set; }
@@ -33,7 +35,60 @@ public class BandFounderDbContext(DbContextOptions options) : DbContext(options)
         // Configuring many-to-many relationship between Account and Artist
         modelBuilder.Entity<Account>()
             .HasMany(account => account.Artists)
-            .WithMany(artist => artist.Accounts);
+            .WithMany(artist => artist.Accounts)
+            .UsingEntity<AccountArtist>(
+                join => join
+                    .HasOne(link => link.Artist)
+                    .WithMany(artist => artist.AccountLinks)
+                    .HasForeignKey(link => link.ArtistId),
+                join => join
+                    .HasOne(link => link.Account)
+                    .WithMany(account => account.ArtistLinks)
+                    .HasForeignKey(link => link.AccountId),
+                join =>
+                {
+                    join.ToTable("AccountArtist");
+                    join.HasKey(link => new { link.AccountId, link.ArtistId });
+                    join.Property(link => link.AccountId).HasColumnName("AccountsId");
+                    join.Property(link => link.ArtistId).HasColumnName("ArtistsId");
+                });
+
+        modelBuilder.Entity<Account>()
+            .HasMany(account => account.LinkedPlaylists)
+            .WithOne(playlist => playlist.Account)
+            .HasForeignKey(playlist => playlist.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<LinkedPlaylist>()
+            .HasKey(playlist => new { playlist.AccountId, playlist.SpotifyId });
+
+        modelBuilder.Entity<AccountArtistSource>(entity =>
+        {
+            entity.ToTable("AccountArtistSource", table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_AccountArtistSource_LinkedPlaylistId",
+                    "(\"Kind\" <> 'LinkedPlaylist' AND \"LinkedPlaylistId\" IS NULL) OR (\"Kind\" = 'LinkedPlaylist' AND \"LinkedPlaylistId\" IS NOT NULL)");
+            });
+
+            entity.HasOne(source => source.AccountArtist)
+                .WithMany(link => link.Sources)
+                .HasForeignKey(source => new { source.AccountId, source.ArtistId })
+                .HasPrincipalKey(link => new { link.AccountId, link.ArtistId })
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(source => source.AccountId).HasColumnName("AccountsId");
+            entity.Property(source => source.ArtistId).HasColumnName("ArtistsId");
+            entity.Property(source => source.Kind).HasColumnType("text");
+
+            entity.HasIndex(source => new { source.AccountId, source.ArtistId, source.Kind })
+                .IsUnique()
+                .HasFilter("\"LinkedPlaylistId\" IS NULL");
+
+            entity.HasIndex(source => new { source.AccountId, source.ArtistId, source.LinkedPlaylistId })
+                .IsUnique()
+                .HasFilter("\"LinkedPlaylistId\" IS NOT NULL");
+        });
         
         modelBuilder.Entity<Artist>()
             .HasMany(artist => artist.Genres)

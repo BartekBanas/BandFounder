@@ -86,6 +86,10 @@ public class SpotifyConnectionServiceTests
 
         // Assert
         Assert.That(savedArtists, Has.Count.EqualTo(2));
+        Assert.That(account.ArtistLinks, Has.Count.EqualTo(2));
+        Assert.That(
+            account.ArtistLinks.SelectMany(link => link.Sources).Select(source => source.ToSource()).Distinct(),
+            Is.EquivalentTo(new[] { ArtistSource.SpotifySignIn() }));
         await _artistRepository.Received(2).CreateAsync(Arg.Any<Artist>()); // Ensure two artists are created
         await _genreRepository.Received(2).CreateAsync(Arg.Any<Genre>()); // Ensure two genres are created
         await _accountRepository.Received(1).SaveChangesAsync(); // Ensure changes are saved
@@ -118,9 +122,10 @@ public class SpotifyConnectionServiceTests
 
         var account = new Account
         {
-            Id = userId, Artists = [existingArtist], Email = "test@mail", Name = "test", DateCreated = DateTime.Now,
+            Id = userId, Email = "test@mail", Name = "test", DateCreated = DateTime.Now,
             PasswordHash = "pass"
         };
+        account.HoldArtist(existingArtist, ArtistSource.SpotifySignIn());
 
         // Mock dependencies
         _accountRepository.GetOneRequiredAsync(
