@@ -172,7 +172,13 @@ public class SpotifyConnectionService(
     {
         var userArtists = await RetrieveSpotifyUsersArtistsAsync(userId);
         var account = await accountRepository.GetOneRequiredAsync(key: userId,
-            keyPropertyName: nameof(Account.Id), includeProperties: nameof(Account.Artists));
+            keyPropertyName: nameof(Account.Id),
+            includeProperties:
+            [
+                nameof(Account.Artists),
+                nameof(Account.ArtistLinks),
+                "ArtistLinks.Sources"
+            ]);
 
         var savedArtists = new List<SpotifyArtistDto>();
 
@@ -181,9 +187,8 @@ public class SpotifyConnectionService(
             var artistEntity = await artistRepository.GetOrCreateAsync(genreRepository,
                 artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
 
-            if (account.Artists.All(artist => artist.Id != artistEntity.Id))
+            if (account.HoldArtist(artistEntity, ArtistSource.SpotifySignIn()))
             {
-                account.Artists.Add(artistEntity);
                 savedArtists.Add(artistDto);
             }
         }

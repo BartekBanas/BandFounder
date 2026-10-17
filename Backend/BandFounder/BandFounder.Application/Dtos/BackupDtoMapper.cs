@@ -27,7 +27,22 @@ public static class BackupDtoMapper
                 ExpirationDate = account.SpotifyTokens.ExpirationDate
             } : null,
             MusicianRoles = account.MusicianRoles.Select(role => role.Name).ToList(),
-            Artists = account.Artists.Select(artist => artist.Name).ToList()
+            Artists = account.HeldArtists().Select(artist => artist.Name).ToList(),
+            ArtistLinks = account.ArtistLinks.Select(link => new AccountArtistBackup
+            {
+                Name = link.Artist.Name,
+                Sources = link.Sources.Select(source => new ArtistSourceBackup
+                {
+                    Kind = source.Kind,
+                    LinkedPlaylistId = source.LinkedPlaylistId
+                }).ToList()
+            }).ToList(),
+            LinkedPlaylists = account.LinkedPlaylists.Select(playlist => new LinkedPlaylistBackup
+            {
+                SpotifyId = playlist.SpotifyId,
+                Name = playlist.Name,
+                LinkedAt = playlist.LinkedAt
+            }).ToList()
         };
     }
     

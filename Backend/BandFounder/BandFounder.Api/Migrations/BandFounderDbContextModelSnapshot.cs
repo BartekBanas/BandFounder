@@ -22,21 +22,6 @@ namespace BandFounder.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AccountArtist", b =>
-                {
-                    b.Property<Guid>("AccountsId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ArtistsId")
-                        .HasColumnType("text");
-
-                    b.HasKey("AccountsId", "ArtistsId");
-
-                    b.HasIndex("ArtistsId");
-
-                    b.ToTable("AccountArtist");
-                });
-
             modelBuilder.Entity("AccountChatroom", b =>
                 {
                     b.Property<Guid>("ChatroomsId")
@@ -110,6 +95,61 @@ namespace BandFounder.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Account");
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.AccountArtist", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("AccountsId");
+
+                    b.Property<string>("ArtistId")
+                        .HasColumnType("text")
+                        .HasColumnName("ArtistsId");
+
+                    b.HasKey("AccountId", "ArtistId");
+
+                    b.HasIndex("ArtistId");
+
+                    b.ToTable("AccountArtist", (string)null);
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.AccountArtistSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("AccountsId");
+
+                    b.Property<string>("ArtistId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ArtistsId");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LinkedPlaylistId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "ArtistId", "Kind")
+                        .IsUnique()
+                        .HasFilter("\"LinkedPlaylistId\" IS NULL");
+
+                    b.HasIndex("AccountId", "ArtistId", "LinkedPlaylistId")
+                        .IsUnique()
+                        .HasFilter("\"LinkedPlaylistId\" IS NOT NULL");
+
+                    b.ToTable("AccountArtistSource", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AccountArtistSource_LinkedPlaylistId", "(\"Kind\" <> 'LinkedPlaylist' AND \"LinkedPlaylistId\" IS NULL) OR (\"Kind\" = 'LinkedPlaylist' AND \"LinkedPlaylistId\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("BandFounder.Domain.Entities.AccountNotificationPreferences", b =>
@@ -373,6 +413,26 @@ namespace BandFounder.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BandFounder.Domain.Entities.LinkedPlaylist", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SpotifyId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("LinkedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("AccountId", "SpotifyId");
+
+                    b.ToTable("LinkedPlaylist");
+                });
+
             modelBuilder.Entity("BandFounder.Domain.Entities.Listing", b =>
                 {
                     b.Property<Guid>("Id")
@@ -621,21 +681,6 @@ namespace BandFounder.Api.Migrations
                     b.ToTable("SpotifyTokens");
                 });
 
-            modelBuilder.Entity("AccountArtist", b =>
-                {
-                    b.HasOne("BandFounder.Domain.Entities.Account", null)
-                        .WithMany()
-                        .HasForeignKey("AccountsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BandFounder.Domain.Entities.Artist", null)
-                        .WithMany()
-                        .HasForeignKey("ArtistsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("AccountChatroom", b =>
                 {
                     b.HasOne("BandFounder.Domain.Entities.Chatroom", null)
@@ -679,6 +724,36 @@ namespace BandFounder.Api.Migrations
                         .HasForeignKey("GenresName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.AccountArtist", b =>
+                {
+                    b.HasOne("BandFounder.Domain.Entities.Account", "Account")
+                        .WithMany("ArtistLinks")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BandFounder.Domain.Entities.Artist", "Artist")
+                        .WithMany("AccountLinks")
+                        .HasForeignKey("ArtistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Artist");
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.AccountArtistSource", b =>
+                {
+                    b.HasOne("BandFounder.Domain.Entities.AccountArtist", "AccountArtist")
+                        .WithMany("Sources")
+                        .HasForeignKey("AccountId", "ArtistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccountArtist");
                 });
 
             modelBuilder.Entity("BandFounder.Domain.Entities.AccountNotificationPreferences", b =>
@@ -737,6 +812,17 @@ namespace BandFounder.Api.Migrations
                     b.Navigation("Chatroom");
 
                     b.Navigation("RecipientAccount");
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.LinkedPlaylist", b =>
+                {
+                    b.HasOne("BandFounder.Domain.Entities.Account", "Account")
+                        .WithMany("LinkedPlaylists")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("BandFounder.Domain.Entities.Listing", b =>
@@ -833,7 +919,11 @@ namespace BandFounder.Api.Migrations
 
             modelBuilder.Entity("BandFounder.Domain.Entities.Account", b =>
                 {
+                    b.Navigation("ArtistLinks");
+
                     b.Navigation("AssignedMusicianSlots");
+
+                    b.Navigation("LinkedPlaylists");
 
                     b.Navigation("Listings");
 
@@ -843,6 +933,16 @@ namespace BandFounder.Api.Migrations
                     b.Navigation("ProfilePicture");
 
                     b.Navigation("SpotifyTokens");
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.AccountArtist", b =>
+                {
+                    b.Navigation("Sources");
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.Artist", b =>
+                {
+                    b.Navigation("AccountLinks");
                 });
 
             modelBuilder.Entity("BandFounder.Domain.Entities.Chatroom", b =>

@@ -16,4 +16,6 @@ public class Artist : Entity
     
     // Many-to-Many relationship with Account
     public virtual List<Account> Accounts { get; set; } = [];
+
+    public virtual List<AccountArtist> AccountLinks { get; set; } = [];
 }

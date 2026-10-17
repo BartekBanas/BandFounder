@@ -30,6 +30,13 @@ public class Account : Entity
     
     // Many-to-Many relationship with Artist
     public virtual List<Artist> Artists { get; set; } = [];
+
+    public virtual List<AccountArtist> ArtistLinks { get; set; } = [];
+
+    public IEnumerable<Artist> HeldArtists() => ArtistLinks.Select(link => link.Artist);
+
+    // One-to-Many relationship with LinkedPlaylist
+    public virtual List<LinkedPlaylist> LinkedPlaylists { get; set; } = [];
     
     // One-to-Many relationship with Listing
     public virtual List<Listing> Listings { get; set; } = [];
@@ -44,4 +51,31 @@ public class Account : Entity
     public virtual List<Chatroom> Chatrooms { get; set; } = [];
     
     public virtual ProfilePicture? ProfilePicture { get; set; }
+
+    public bool HoldArtist(Artist artist, ArtistSource source)
+    {
+        var link = ArtistLinks.FirstOrDefault(existing => existing.ArtistId == artist.Id);
+        if (link is not null)
+        {
+            link.AddSource(source);
+            return false;
+        }
+
+        link = new AccountArtist
+        {
+            AccountId = Id,
+            ArtistId = artist.Id,
+            Artist = artist,
+            Account = this
+        };
+        ArtistLinks.Add(link);
+
+        if (!Artists.Any(held => held.Id == artist.Id))
+        {
+            Artists.Add(artist);
+        }
+
+        link.AddSource(source);
+        return true;
+    }
 }

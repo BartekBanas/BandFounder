@@ -121,6 +121,7 @@ public class AccountService : IAccountService
             includeProperties:
             [
                 nameof(Account.Artists), "Artists.Genres",
+                nameof(Account.ArtistLinks), "ArtistLinks.Artist", "ArtistLinks.Sources",
                 nameof(Account.Chatrooms), nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens)
             ]);
     }
@@ -479,7 +480,7 @@ public class AccountService : IAccountService
             throw new ForbiddenException("You cannot add artists to this account");
         }
 
-        if (account.Artists.Select(artist => artist.Name).Contains(artistName))
+        if (account.HeldArtists().Any(artist => artist.Name == artistName))
         {
             throw new BadRequestException($"Artist {artistName} is already linked to this account");
         }
@@ -494,7 +495,7 @@ public class AccountService : IAccountService
             throw new BadRequestException(exception.Message);
         }
         
-        account.Artists.Add(artist);
+        account.HoldArtist(artist, ArtistSource.Manual());
 
         await _accountRepository.SaveChangesAsync();
     }
