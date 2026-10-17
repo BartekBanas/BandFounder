@@ -13,6 +13,7 @@ using BandFounder.Application.Services.Jwt;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using BandFounder.Infrastructure;
+using BandFounder.Infrastructure.Spotify;
 using BandFounder.Infrastructure.Spotify.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -175,6 +176,25 @@ services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
 services.AddScoped<ISpotifyClient, SpotifyClient>();
 services.AddScoped<ISpotifyAppCredentialsService, SpotifyAppCredentialsService>();
+services.AddSingleton<SpotifyClientCredentialsTokenCache>();
+services.AddScoped<ISpotifyClientCredentialsAccessTokenProvider, SpotifyClientCredentialsAccessTokenProvider>();
+services.AddScoped<ISpotifyPlaylistReadTokenProvider, SpotifyPlaylistReadTokenProvider>();
+services.AddScoped<ISpotifyPlaylistReadService, SpotifyPlaylistReadService>();
+services.AddHttpClient<ISpotifyShortLinkResolver, SpotifyShortLinkResolver>()
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        AllowAutoRedirect = false
+    });
+services.AddOptions<SpotifyPlaylistReadOptions>()
+    .Bind(configuration.GetSection(SpotifyPlaylistReadOptions.SectionName))
+    .Validate(
+        options => options.TokenSource != SpotifyPlaylistReadTokenSource.AppOwnerSignIn
+                   || options.AppOwnerAccountId != Guid.Empty,
+        "SpotifyPlaylistRead:AppOwnerAccountId is required when TokenSource is AppOwnerSignIn.")
+    .Validate(
+        options => SpotifyPlaylistReadOptions.IsValidMarket(options.Market),
+        SpotifyPlaylistReadOptions.InvalidMarketMessage)
+    .ValidateOnStart();
 services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 services.AddScoped<IContentService, ContentService>();
