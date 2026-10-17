@@ -1,4 +1,5 @@
 ﻿using BandFounder.Application.Dtos.Accounts;
+using BandFounder.Application.Dtos.Spotify;
 using BandFounder.Application.Services;
 using BandFounder.Infrastructure.Spotify;
 using BandFounder.Infrastructure.Spotify.Dto;
@@ -12,13 +13,16 @@ namespace BandFounder.Api.Controllers;
 public class SpotifyBrokerController : ControllerBase
 {
     private readonly ISpotifyConnectionService _spotifyConnectionService;
+    private readonly ISpotifyPlaylistReadService _spotifyPlaylistReadService;
     private readonly IAuthenticationService _authenticationService;
 
     public SpotifyBrokerController(
         ISpotifyConnectionService spotifyConnectionService,
+        ISpotifyPlaylistReadService spotifyPlaylistReadService,
         IAuthenticationService authenticationService)
     {
         _spotifyConnectionService = spotifyConnectionService;
+        _spotifyPlaylistReadService = spotifyPlaylistReadService;
         _authenticationService = authenticationService;
     }
 
@@ -132,5 +136,18 @@ public class SpotifyBrokerController : ControllerBase
         var artists = artistDtoList.Select(artist => artist.Name).ToList();
 
         return Ok(artists);
+    }
+
+    [Authorize]
+    [HttpPost("spotify/playlists/read")]
+    public async Task<IActionResult> ReadPublicPlaylist([FromBody] ReadSpotifyPlaylistRequest request)
+    {
+        var result = await _spotifyPlaylistReadService.ReadAsync(request.Input);
+        return result switch
+        {
+            SpotifyPlaylistReadResult.Success success => Ok(success.Playlist),
+            SpotifyPlaylistReadResult.NotReadable => NotFound(SpotifyPlaylistReadErrors.NotReadable),
+            SpotifyPlaylistReadResult.InvalidInput => BadRequest(SpotifyPlaylistReadErrors.InvalidInput),
+        };
     }
 }
