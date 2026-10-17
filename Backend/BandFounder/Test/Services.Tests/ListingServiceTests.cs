@@ -189,6 +189,91 @@ public class ListingServiceTests
         Assert.That(result.Listings, Has.Count.EqualTo(1));
         Assert.That(result.Listings.First().Listing.Id, Is.EqualTo(midScoreListing.Id));
         Assert.That(result.Listings.First().SimilarityScore, Is.EqualTo(5));
+        Assert.That(result.TotalCount, Is.EqualTo(3));
+        Assert.That(result.HasMore, Is.True);
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_OmittedPaging_ReturnsDefaultPageWithTotalCount()
+    {
+        var userId = Guid.NewGuid();
+        var listings = Enumerable.Range(0, 101)
+            .Select(_ => CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid()))
+            .ToList();
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(100));
+        Assert.That(result.TotalCount, Is.EqualTo(101));
+        Assert.That(result.HasMore, Is.True);
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_LastPage_HasMoreIsFalse()
+    {
+        var userId = Guid.NewGuid();
+        var listings = Enumerable.Range(0, 3)
+            .Select(_ => CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid()))
+            .ToList();
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true,
+            PageNumber = 2,
+            PageSize = 2
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(1));
+        Assert.That(result.TotalCount, Is.EqualTo(3));
+        Assert.That(result.HasMore, Is.False);
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_PageSizeAboveMax_IsClamped()
+    {
+        var userId = Guid.NewGuid();
+        var listings = Enumerable.Range(0, 101)
+            .Select(_ => CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid()))
+            .ToList();
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true,
+            PageNumber = 1,
+            PageSize = int.MaxValue
+        });
+
+        Assert.That(result.Listings, Has.Count.EqualTo(100));
+        Assert.That(result.TotalCount, Is.EqualTo(101));
+        Assert.That(result.HasMore, Is.True);
+    }
+
+    [Test]
+    public async Task GetListingsFeedAsync_OverflowingSkip_ReturnsEmptyPage()
+    {
+        var userId = Guid.NewGuid();
+        var listings = new List<Listing>
+        {
+            CreateListing("Guitarist", SlotStatus.Available, Guid.NewGuid())
+        };
+        var service = CreateService(userId, ["Guitarist"], listings);
+
+        var result = await service.GetListingsFeedAsync(new FeedFilterOptions
+        {
+            MatchRole = true,
+            PageNumber = int.MaxValue,
+            PageSize = 100
+        });
+
+        Assert.That(result.Listings, Is.Empty);
+        Assert.That(result.TotalCount, Is.EqualTo(1));
+        Assert.That(result.HasMore, Is.False);
     }
 
     [Test]
@@ -496,14 +581,21 @@ public class ListingServiceTests
         };
 
         authenticationServiceMock.GetUserId().Returns(userId);
-        accountServiceMock.GetDetailedAccount(userId).Returns(userAccount);
+        accountServiceMock
+            .GetDetailedAccount(userId, Arg.Any<string[]>())
+            .Returns(userAccount);
         SetupListingRepositoryWithFilter(listingRepositoryMock, listings);
 
-        musicTasteServiceMock.CompareMusicTasteAsync(Arg.Any<Guid>(), Arg.Any<Guid>())
+        musicTasteServiceMock.CompareMusicTasteManyAsync(
+                Arg.Any<Guid>(),
+                Arg.Any<IReadOnlyCollection<Guid>>())
             .Returns(callInfo =>
             {
-                var ownerId = callInfo.ArgAt<Guid>(1);
-                return similarityScores?.GetValueOrDefault(ownerId, 1) ?? 1;
+                var ownerIds = callInfo.ArgAt<IReadOnlyCollection<Guid>>(1);
+                return Task.FromResult<IReadOnlyDictionary<Guid, int>>(
+                    ownerIds.ToDictionary(
+                        ownerId => ownerId,
+                        ownerId => similarityScores?.GetValueOrDefault(ownerId, 1) ?? 1));
             });
 
         return new ListingService(
@@ -523,6 +615,24 @@ public class ListingServiceTests
         IRepository<Listing> listingRepositoryMock,
         List<Listing> listings)
     {
+        listingRepositoryMock
+            .QueryAsync<FeedCandidate>(
+                Arg.Any<Func<IQueryable<Listing>, IQueryable<FeedCandidate>>>())
+            .Returns(callInfo =>
+            {
+                var query = callInfo.ArgAt<Func<IQueryable<Listing>, IQueryable<FeedCandidate>>>(0);
+                return Task.FromResult(query(listings.AsQueryable()).ToList());
+            });
+
+        listingRepositoryMock
+            .QueryAsync<Listing>(
+                Arg.Any<Func<IQueryable<Listing>, IQueryable<Listing>>>())
+            .Returns(callInfo =>
+            {
+                var query = callInfo.ArgAt<Func<IQueryable<Listing>, IQueryable<Listing>>>(0);
+                return Task.FromResult(query(listings.AsQueryable()).ToList());
+            });
+
         listingRepositoryMock
             .GetAsync(
                 Arg.Any<Expression<Func<Listing, bool>>>(),
@@ -557,6 +667,7 @@ public class ListingServiceTests
     {
         return new Listing
         {
+            Id = Guid.NewGuid(),
             Name = "Test listing",
             OwnerId = ownerId,
             Owner = new Account

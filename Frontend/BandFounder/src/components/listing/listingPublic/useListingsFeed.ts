@@ -89,7 +89,7 @@ export function useListingsFeed() {
                     return;
                 }
                 setListings((prevListings) => [...prevListings, ...listingsFeed.listings]);
-                setHasMore(listingsFeed.listings.length > 0);
+                setHasMore(listingsFeed.hasMore);
             } catch (error) {
                 if (currentRequestId === requestId.current) {
                     console.error('Error getting listings:', error);

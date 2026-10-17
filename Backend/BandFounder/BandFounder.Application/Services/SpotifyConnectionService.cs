@@ -31,7 +31,9 @@ public class SpotifyConnectionService(
     IRepository<Artist> artistRepository,
     IRepository<Account> accountRepository,
     IRepository<Genre> genreRepository,
-    ISpotifyAppCredentialsService spotifyAppCredentialsService)
+    ISpotifyAppCredentialsService spotifyAppCredentialsService,
+    IMusicProfileProvider musicProfileProvider,
+    IUnitOfWork unitOfWork)
     : ISpotifyConnectionService
 {
     public async Task LinkAccountToSpotify(SpotifyConnectionDto dto, Guid userId)
@@ -171,24 +173,41 @@ public class SpotifyConnectionService(
     public async Task<List<SpotifyArtistDto>> SaveRelevantArtists(Guid userId)
     {
         var userArtists = await RetrieveSpotifyUsersArtistsAsync(userId);
-        var account = await accountRepository.GetOneRequiredAsync(key: userId,
-            keyPropertyName: nameof(Account.Id), includeProperties: nameof(Account.Artists));
-
         var savedArtists = new List<SpotifyArtistDto>();
+        var enrichedArtistIds = new HashSet<string>();
 
-        foreach (var artistDto in userArtists)
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
         {
-            var artistEntity = await artistRepository.GetOrCreateAsync(genreRepository,
-                artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
+            var account = await accountRepository.GetOneRequiredAsync(key: userId,
+                keyPropertyName: nameof(Account.Id), includeProperties: nameof(Account.Artists));
 
-            if (account.Artists.All(artist => artist.Id != artistEntity.Id))
+            foreach (var artistDto in userArtists)
             {
-                account.Artists.Add(artistEntity);
-                savedArtists.Add(artistDto);
+                var upsertResult = await artistRepository.GetOrCreateWithEnrichmentAsync(genreRepository,
+                    artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
+                var artistEntity = upsertResult.Artist;
+
+                if (upsertResult.GenresAdded)
+                {
+                    enrichedArtistIds.Add(artistEntity.Id);
+                }
+
+                if (account.Artists.All(artist => artist.Id != artistEntity.Id))
+                {
+                    account.Artists.Add(artistEntity);
+                    savedArtists.Add(artistDto);
+                }
             }
+
+            await accountRepository.SaveChangesAsync();
+        });
+
+        musicProfileProvider.Invalidate(userId);
+        if (enrichedArtistIds.Count > 0)
+        {
+            await musicProfileProvider.InvalidateForArtistsAsync(enrichedArtistIds);
         }
 
-        await accountRepository.SaveChangesAsync();
         return savedArtists;
     }
 

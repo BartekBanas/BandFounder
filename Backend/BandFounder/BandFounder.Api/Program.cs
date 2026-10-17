@@ -175,6 +175,8 @@ services.AddScoped<IChatroomService, ChatroomService>();
 services.AddScoped<ISpotifyConnectionService, SpotifyConnectionService>();
 services.AddScoped<ISpotifyClient, SpotifyClient>();
 services.AddScoped<ISpotifyAppCredentialsService, SpotifyAppCredentialsService>();
+services.AddSingleton<IMusicProfileVersionRegistry, MusicProfileVersionRegistry>();
+services.AddScoped<IMusicProfileProvider, MusicProfileProvider>();
 services.AddScoped<IMusicTasteService, MusicTasteService>();
 services.AddScoped<IListingService, ListingService>();
 services.AddScoped<IContentService, ContentService>();
