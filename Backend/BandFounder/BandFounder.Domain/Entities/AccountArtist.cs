@@ -22,7 +22,6 @@ public class AccountArtist : Entity
 
         Sources.Add(new AccountArtistSource
         {
-            Id = Guid.NewGuid(),
             AccountId = AccountId,
             ArtistId = ArtistId,
             Kind = source.Kind,

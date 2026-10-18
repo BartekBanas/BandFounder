@@ -5,6 +5,8 @@ namespace BandFounder.Domain.Entities;
 [Table("LinkedPlaylist")]
 public class LinkedPlaylist : Entity
 {
+    public const int MaxPerAccount = 10;
+
     public Guid AccountId { get; set; }
     public virtual Account Account { get; set; } = null!;
 

@@ -14,15 +14,18 @@ public class SpotifyBrokerController : ControllerBase
 {
     private readonly ISpotifyConnectionService _spotifyConnectionService;
     private readonly ISpotifyPlaylistReadService _spotifyPlaylistReadService;
+    private readonly ISpotifyPlaylistLinkService _spotifyPlaylistLinkService;
     private readonly IAuthenticationService _authenticationService;
 
     public SpotifyBrokerController(
         ISpotifyConnectionService spotifyConnectionService,
         ISpotifyPlaylistReadService spotifyPlaylistReadService,
+        ISpotifyPlaylistLinkService spotifyPlaylistLinkService,
         IAuthenticationService authenticationService)
     {
         _spotifyConnectionService = spotifyConnectionService;
         _spotifyPlaylistReadService = spotifyPlaylistReadService;
+        _spotifyPlaylistLinkService = spotifyPlaylistLinkService;
         _authenticationService = authenticationService;
     }
 
@@ -148,6 +151,28 @@ public class SpotifyBrokerController : ControllerBase
             SpotifyPlaylistReadResult.Success success => Ok(success.Playlist),
             SpotifyPlaylistReadResult.NotReadable => NotFound(SpotifyPlaylistReadErrors.NotReadable),
             SpotifyPlaylistReadResult.InvalidInput => BadRequest(SpotifyPlaylistReadErrors.InvalidInput),
+        };
+    }
+
+    [Authorize]
+    [HttpPost("spotify/playlists/link")]
+    public async Task<IActionResult> LinkPublicPlaylist([FromBody] ReadSpotifyPlaylistRequest request)
+    {
+        var userId = _authenticationService.GetUserId();
+        var result = await _spotifyPlaylistLinkService.LinkAsync(userId, request.Input);
+        return result switch
+        {
+            SpotifyPlaylistLinkResult.Linked linked => Ok(new LinkedSpotifyPlaylistResponse
+            {
+                Message = linked.Message,
+                PlaylistName = linked.PlaylistName,
+                NewArtistCount = linked.NewArtistCount,
+                TruncatedAtTrackCap = linked.TruncatedAtTrackCap
+            }),
+            SpotifyPlaylistLinkResult.NotReadable => NotFound(SpotifyPlaylistReadErrors.NotReadable),
+            SpotifyPlaylistLinkResult.InvalidInput => BadRequest(SpotifyPlaylistReadErrors.InvalidInput),
+            SpotifyPlaylistLinkResult.Duplicate => Conflict(SpotifyPlaylistLinkErrors.Duplicate),
+            SpotifyPlaylistLinkResult.CapReached => Conflict(SpotifyPlaylistLinkErrors.CapReached),
         };
     }
 }

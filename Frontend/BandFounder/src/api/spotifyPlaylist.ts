@@ -21,6 +21,13 @@ export interface SpotifyPlaylistRead {
     truncatedAtTrackCap: boolean;
 }
 
+export interface LinkedSpotifyPlaylist {
+    message: string;
+    playlistName: string;
+    newArtistCount: number;
+    truncatedAtTrackCap: boolean;
+}
+
 export class SpotifyPlaylistNotReadableError extends Error {
     readonly code = "PlaylistNotReadable";
 
@@ -71,6 +78,24 @@ export function parsePlaylistInput(raw: string): ParsedSpotifyPlaylistInput | nu
 
 export async function readPublicPlaylist(input: string): Promise<SpotifyPlaylistRead> {
     const response = await fetch(`${API_URL}/spotify/playlists/read`, {
+        method: "POST",
+        headers: authorizedHeaders(),
+        body: JSON.stringify({input}),
+    });
+
+    if (response.status === 404) {
+        throw new SpotifyPlaylistNotReadableError();
+    }
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+
+    return response.json();
+}
+
+export async function linkPublicPlaylist(input: string): Promise<LinkedSpotifyPlaylist> {
+    const response = await fetch(`${API_URL}/spotify/playlists/link`, {
         method: "POST",
         headers: authorizedHeaders(),
         body: JSON.stringify({input}),

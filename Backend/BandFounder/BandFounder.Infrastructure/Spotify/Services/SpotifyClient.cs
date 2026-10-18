@@ -14,6 +14,7 @@ public interface ISpotifyClient
     Task<List<SpotifyArtistDto>> GetTopArtistsAsync(string accessToken, int limit, string timeRange = SpotifyTimeRange.Default);
     Task<List<SpotifyTrackDto>> GetTopTracksAsync(string accessToken, int limit, string timeRange = SpotifyTimeRange.Default);
     Task<List<SpotifyArtistDto>> GetFollowedArtistsAsync(string accessToken);
+    Task<List<SpotifyArtistDto>> GetArtistsByIdsAsync(string accessToken, IReadOnlyList<string> artistIds);
     Task<SpotifyPlaylistRead?> GetPlaylistAsync(string accessToken, SpotifyPlaylistId playlistId, string market);
 }
 
@@ -23,7 +24,9 @@ public class SpotifyClient : ISpotifyClient
     private const string SpotifyTopArtistsUrl = "https://api.spotify.com/v1/me/top/artists";
     private const string SpotifyTopTracksUrl = "https://api.spotify.com/v1/me/top/tracks";
     private const string SpotifyFollowedArtistsUrl = "https://api.spotify.com/v1/me/following?type=artist";
+    private const string SpotifyArtistsUrl = "https://api.spotify.com/v1/artists";
     private const string SpotifyPlaylistsUrl = "https://api.spotify.com/v1/playlists";
+    public const int MaxArtistIdsPerRequest = 50;
 
     private readonly HttpClient _httpClient;
 
@@ -175,6 +178,47 @@ public class SpotifyClient : ISpotifyClient
         } while (!string.IsNullOrEmpty(url) && requestCount < maxRequests);
 
         return followedArtists;
+    }
+
+    public async Task<List<SpotifyArtistDto>> GetArtistsByIdsAsync(
+        string accessToken,
+        IReadOnlyList<string> artistIds)
+    {
+        var ids = artistIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var artists = new List<SpotifyArtistDto>();
+        foreach (var batch in ids.Chunk(MaxArtistIdsPerRequest))
+        {
+            var url = $"{SpotifyArtistsUrl}?ids={string.Join(",", batch)}";
+            using var response = await SpotifyRateLimitedHttp.SendAsync(_httpClient, () =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", $"Bearer {accessToken}");
+                return request;
+            });
+
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var responseDto = JsonSerializer.Deserialize<SeveralArtistsResponse>(responseBody)
+                              ?? throw new InvalidOperationException();
+
+            foreach (var artist in responseDto.Artists)
+            {
+                if (artist is { Id.Length: > 0 })
+                {
+                    artists.Add(artist);
+                }
+            }
+        }
+
+        return artists;
     }
 
     public async Task<SpotifyTokensResponse> RequestClientCredentialsTokenAsync(SpotifyAppCredentials spotifyAppCredentials)

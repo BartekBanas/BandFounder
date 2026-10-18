@@ -1,5 +1,6 @@
 import {afterEach, describe, expect, it, vi} from "vitest";
 import {
+    linkPublicPlaylist,
     parsePlaylistId,
     parsePlaylistInput,
     readPublicPlaylist,
@@ -96,3 +97,38 @@ describe("readPublicPlaylist", () => {
         await expect(readPublicPlaylist(PLAYLIST_ID)).rejects.toBeInstanceOf(SpotifyPlaylistNotReadableError);
     });
 });
+
+describe("linkPublicPlaylist", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        document.cookie = "auth_token=; Max-Age=0";
+    });
+
+    it("posts the raw input to the playlist link API", async () => {
+        document.cookie = "auth_token=test-token";
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+            new Response(JSON.stringify({
+                message: "Linked Road trip: 2 new artists added",
+                playlistName: "Road trip",
+                newArtistCount: 2,
+                truncatedAtTrackCap: false,
+            }), {status: 200})
+        );
+
+        const result = await linkPublicPlaylist("https://spotify.link/abc123");
+
+        expect(result.message).toBe("Linked Road trip: 2 new artists added");
+        expect(result.newArtistCount).toBe(2);
+        const request = fetchMock.mock.calls[0];
+        expect(String(request[0])).toContain("/spotify/playlists/link");
+        expect(request[1]?.body).toBe(JSON.stringify({input: "https://spotify.link/abc123"}));
+    });
+
+    it("maps a 404 to SpotifyPlaylistNotReadableError", async () => {
+        document.cookie = "auth_token=test-token";
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("Can't read this playlist. Make sure it's public.", {status: 404}));
+
+        await expect(linkPublicPlaylist(PLAYLIST_ID)).rejects.toBeInstanceOf(SpotifyPlaylistNotReadableError);
+    });
+});
+
