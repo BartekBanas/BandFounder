@@ -180,6 +180,7 @@ services.AddSingleton<SpotifyClientCredentialsTokenCache>();
 services.AddScoped<ISpotifyClientCredentialsAccessTokenProvider, SpotifyClientCredentialsAccessTokenProvider>();
 services.AddScoped<ISpotifyPlaylistReadTokenProvider, SpotifyPlaylistReadTokenProvider>();
 services.AddScoped<ISpotifyPlaylistReadService, SpotifyPlaylistReadService>();
+services.AddScoped<ISpotifyPlaylistLinkService, SpotifyPlaylistLinkService>();
 services.AddHttpClient<ISpotifyShortLinkResolver, SpotifyShortLinkResolver>()
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
     {

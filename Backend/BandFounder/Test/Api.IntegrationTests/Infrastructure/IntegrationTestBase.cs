@@ -29,6 +29,7 @@ public abstract class IntegrationTestBase
     protected HttpClient Client { get; private set; } = null!;
     protected RecordingEmailSender EmailSender => _factory.EmailSender;
     protected ControllableMessageEmailNotificationGate NotificationGate => _factory.NotificationGate;
+    protected LinkedPlaylistPersistFault LinkedPlaylistPersistFault => _factory.LinkedPlaylistPersistFault;
     protected IServiceProvider Services => _factory.Services;
 
     [OneTimeSetUp]
@@ -67,6 +68,7 @@ public abstract class IntegrationTestBase
         Client.DefaultRequestHeaders.Authorization = null;
         EmailSender.Clear();
         NotificationGate.Clear();
+        LinkedPlaylistPersistFault.Clear();
     }
 
     [OneTimeTearDown]

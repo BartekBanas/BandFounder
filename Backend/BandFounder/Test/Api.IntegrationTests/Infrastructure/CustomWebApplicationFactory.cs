@@ -2,6 +2,7 @@ using AspNetCoreRateLimit;
 using BandFounder.Application.Services;
 using BandFounder.Application.Services.Email;
 using BandFounder.Infrastructure;
+using BandFounder.Infrastructure.Spotify.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -16,6 +17,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     private readonly string _connectionString;
     public RecordingEmailSender EmailSender { get; } = new();
     public ControllableMessageEmailNotificationGate NotificationGate { get; } = new();
+    public LinkedPlaylistPersistFault LinkedPlaylistPersistFault { get; } = new();
 
     public CustomWebApplicationFactory(string connectionString)
     {
@@ -45,13 +47,24 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll(typeof(BandFounderDbContext));
             services.RemoveAll(typeof(IEmailSender));
             services.RemoveAll(typeof(IMessageEmailNotificationGate));
+            services.RemoveAll(typeof(ISpotifyPlaylistReadService));
+            services.RemoveAll(typeof(ISpotifyClient));
+            services.RemoveAll(typeof(ISpotifyPlaylistReadTokenProvider));
 
-            services.AddDbContext<BandFounderDbContext>(options =>
+            services.AddSingleton(LinkedPlaylistPersistFault);
+            services.AddSingleton<LinkedPlaylistPersistFaultInterceptor>();
+            services.AddDbContext<BandFounderDbContext>((provider, options) =>
+            {
                 options.UseNpgsql(_connectionString,
-                    npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api")));
+                    npgsqlOptions => npgsqlOptions.MigrationsAssembly("BandFounder.Api"));
+                options.AddInterceptors(provider.GetRequiredService<LinkedPlaylistPersistFaultInterceptor>());
+            });
 
             services.AddSingleton<IEmailSender>(EmailSender);
             services.AddSingleton<IMessageEmailNotificationGate>(NotificationGate);
+            services.AddSingleton<ISpotifyPlaylistReadService, StubSpotifyPlaylistReadService>();
+            services.AddSingleton<ISpotifyClient, StubSpotifyClient>();
+            services.AddSingleton<ISpotifyPlaylistReadTokenProvider, StubSpotifyPlaylistReadTokenProvider>();
 
             services.Configure<IpRateLimitOptions>(options =>
             {
