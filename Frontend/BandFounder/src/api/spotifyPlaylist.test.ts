@@ -4,6 +4,7 @@ import {
     parsePlaylistId,
     parsePlaylistInput,
     readPublicPlaylist,
+    unlinkPublicPlaylist,
     SpotifyPlaylistNotReadableError,
 } from "./spotifyPlaylist";
 
@@ -129,6 +130,33 @@ describe("linkPublicPlaylist", () => {
         vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("Can't read this playlist. Make sure it's public.", {status: 404}));
 
         await expect(linkPublicPlaylist(PLAYLIST_ID)).rejects.toBeInstanceOf(SpotifyPlaylistNotReadableError);
+    });
+});
+
+describe("unlinkPublicPlaylist", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        document.cookie = "auth_token=; Max-Age=0";
+    });
+
+    it("deletes the linked playlist by Spotify id", async () => {
+        document.cookie = "auth_token=test-token";
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+            new Response(null, {status: 204})
+        );
+
+        await unlinkPublicPlaylist(PLAYLIST_ID);
+
+        const request = fetchMock.mock.calls[0];
+        expect(String(request[0])).toContain(`/spotify/playlists/${PLAYLIST_ID}`);
+        expect(request[1]?.method).toBe("DELETE");
+    });
+
+    it("throws when the playlist is not linked", async () => {
+        document.cookie = "auth_token=test-token";
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("Not Found", {status: 404}));
+
+        await expect(unlinkPublicPlaylist(PLAYLIST_ID)).rejects.toThrow();
     });
 });
 

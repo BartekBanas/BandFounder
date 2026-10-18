@@ -112,6 +112,17 @@ export async function linkPublicPlaylist(input: string): Promise<LinkedSpotifyPl
     return response.json();
 }
 
+export async function unlinkPublicPlaylist(spotifyId: string): Promise<void> {
+    const response = await fetch(`${API_URL}/spotify/playlists/${encodeURIComponent(spotifyId)}`, {
+        method: "DELETE",
+        headers: authorizedHeaders(),
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+}
+
 function trySpotifyShortLink(raw: string): string | null {
     const candidate = raw.includes("://") ? raw : `https://${raw}`;
     const url = tryParseUrl(candidate);

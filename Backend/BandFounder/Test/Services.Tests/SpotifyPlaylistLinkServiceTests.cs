@@ -307,6 +307,45 @@ public class SpotifyPlaylistLinkServiceTests
     }
 
     [Test]
+    public async Task UnlinkAsync_DropsArtistsHeldOnlyByThatPlaylist()
+    {
+        var exclusive = new Artist { Id = "artist-exclusive", Name = "Exclusive" };
+        var shared = new Artist { Id = "artist-shared", Name = "Shared" };
+        _account.HoldArtist(exclusive, ArtistSource.FromLinkedPlaylist(PlaylistId));
+        _account.HoldArtist(shared, ArtistSource.FromLinkedPlaylist(PlaylistId));
+        _account.HoldArtist(shared, ArtistSource.Manual());
+        _account.LinkedPlaylists.Add(new LinkedPlaylist
+        {
+            AccountId = _account.Id,
+            SpotifyId = PlaylistId,
+            Name = "Road trip"
+        });
+
+        var unlinked = await _service.UnlinkAsync(_accountId, PlaylistId);
+
+        Assert.That(unlinked, Is.True);
+        Assert.That(_account.LinkedPlaylists, Is.Empty);
+        Assert.That(_account.ArtistLinks, Has.Count.EqualTo(1));
+        Assert.That(_account.ArtistLinks[0].ArtistId, Is.EqualTo("artist-shared"));
+        Assert.That(_account.ArtistLinks[0].Sources.Select(source => source.ToSource()),
+            Is.EquivalentTo(new[] { ArtistSource.Manual() }));
+        await _accountRepository.Received(1).SaveChangesAsync();
+        await _spotifyClient.DidNotReceive()
+            .GetArtistsByIdsAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>());
+    }
+
+    [Test]
+    public async Task UnlinkAsync_ReturnsFalseWithoutWritingWhenPlaylistIsUnknown()
+    {
+        var unlinked = await _service.UnlinkAsync(_accountId, PlaylistId);
+
+        Assert.That(unlinked, Is.False);
+        await _accountRepository.DidNotReceive().SaveChangesAsync();
+        await _spotifyClient.DidNotReceive()
+            .GetArtistsByIdsAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>());
+    }
+
+    [Test]
     public async Task LinkAsync_ReturnsNotReadableWithoutWriting()
     {
         _playlistReadService.ReadAsync(PlaylistInput).Returns(new SpotifyPlaylistReadResult.NotReadable());

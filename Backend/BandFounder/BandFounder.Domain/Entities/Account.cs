@@ -78,4 +78,45 @@ public class Account : Entity
         link.AddSource(source);
         return true;
     }
+
+    public bool UnlinkPlaylist(string spotifyId)
+    {
+        var playlist = LinkedPlaylists.FirstOrDefault(linked => linked.SpotifyId == spotifyId);
+        if (playlist is null)
+        {
+            return false;
+        }
+
+        LinkedPlaylists.Remove(playlist);
+        DropArtistSource(ArtistSource.FromLinkedPlaylist(spotifyId));
+        return true;
+    }
+
+    public void ClearMusicProfile()
+    {
+        ArtistLinks.Clear();
+        Artists.Clear();
+        LinkedPlaylists.Clear();
+    }
+
+    private void DropArtistSource(ArtistSource source)
+    {
+        foreach (var link in ArtistLinks.ToList())
+        {
+            if (!link.DropSource(source))
+            {
+                DropArtistLink(link);
+            }
+        }
+    }
+
+    private void DropArtistLink(AccountArtist link)
+    {
+        ArtistLinks.Remove(link);
+        var artist = Artists.FirstOrDefault(held => held.Id == link.ArtistId);
+        if (artist is not null)
+        {
+            Artists.Remove(artist);
+        }
+    }
 }

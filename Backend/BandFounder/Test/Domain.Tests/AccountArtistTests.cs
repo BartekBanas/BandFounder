@@ -115,6 +115,81 @@ public class AccountArtistTests
     }
 
     [Test]
+    public void UnlinkPlaylist_DropsArtistsHeldOnlyByThatPlaylist()
+    {
+        var account = CreateAccount();
+        var exclusive = CreateArtist("exclusive");
+        var shared = CreateArtist("shared");
+        account.HoldArtist(exclusive, ArtistSource.FromLinkedPlaylist("playlist-1"));
+        account.HoldArtist(shared, ArtistSource.FromLinkedPlaylist("playlist-1"));
+        account.HoldArtist(shared, ArtistSource.Manual());
+        account.LinkedPlaylists.Add(Playlist(account, "playlist-1"));
+        account.LinkedPlaylists.Add(Playlist(account, "playlist-2"));
+
+        var unlinked = account.UnlinkPlaylist("playlist-1");
+
+        Assert.That(unlinked, Is.True);
+        Assert.That(account.LinkedPlaylists.Select(playlist => playlist.SpotifyId), Is.EqualTo(new[] { "playlist-2" }));
+        Assert.That(account.ArtistLinks, Has.Count.EqualTo(1));
+        Assert.That(account.ArtistLinks[0].ArtistId, Is.EqualTo("shared"));
+        Assert.That(account.ArtistLinks[0].Sources.Select(source => source.ToSource()),
+            Is.EquivalentTo(new[] { ArtistSource.Manual() }));
+        Assert.That(account.Artists.Select(artist => artist.Id), Is.EquivalentTo(new[] { "shared" }));
+    }
+
+    [Test]
+    public void UnlinkPlaylist_KeepsAPlaylistSourceFromAnotherPlaylist()
+    {
+        var account = CreateAccount();
+        var artist = CreateArtist("radiohead");
+        account.HoldArtist(artist, ArtistSource.FromLinkedPlaylist("playlist-1"));
+        account.HoldArtist(artist, ArtistSource.FromLinkedPlaylist("playlist-2"));
+        account.LinkedPlaylists.Add(Playlist(account, "playlist-1"));
+        account.LinkedPlaylists.Add(Playlist(account, "playlist-2"));
+
+        account.UnlinkPlaylist("playlist-1");
+
+        Assert.That(account.ArtistLinks, Has.Count.EqualTo(1));
+        Assert.That(account.ArtistLinks[0].Sources.Select(source => source.ToSource()),
+            Is.EquivalentTo(new[] { ArtistSource.FromLinkedPlaylist("playlist-2") }));
+        Assert.That(account.Artists, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void UnlinkPlaylist_ReturnsFalseWhenThePlaylistIsNotLinked()
+    {
+        var account = CreateAccount();
+        var artist = CreateArtist("radiohead");
+        account.HoldArtist(artist, ArtistSource.FromLinkedPlaylist("playlist-1"));
+        account.LinkedPlaylists.Add(Playlist(account, "playlist-1"));
+
+        var unlinked = account.UnlinkPlaylist("missing");
+
+        Assert.That(unlinked, Is.False);
+        Assert.That(account.LinkedPlaylists, Has.Count.EqualTo(1));
+        Assert.That(account.ArtistLinks, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void ClearMusicProfile_RemovesLinksSourcesPlaylistsAndSkipNav()
+    {
+        var account = CreateAccount();
+        var exclusive = CreateArtist("exclusive");
+        var shared = CreateArtist("shared");
+        account.HoldArtist(exclusive, ArtistSource.FromLinkedPlaylist("playlist-1"));
+        account.HoldArtist(shared, ArtistSource.Manual());
+        account.HoldArtist(shared, ArtistSource.SpotifySignIn());
+        account.LinkedPlaylists.Add(Playlist(account, "playlist-1"));
+        account.LinkedPlaylists.Add(Playlist(account, "playlist-2"));
+
+        account.ClearMusicProfile();
+
+        Assert.That(account.ArtistLinks, Is.Empty);
+        Assert.That(account.Artists, Is.Empty);
+        Assert.That(account.LinkedPlaylists, Is.Empty);
+    }
+
+    [Test]
     public void From_RejectsUnknownKind()
     {
         Assert.Throws<SwitchExpressionException>(() => ArtistSource.From((ArtistSourceKind)42, null));
@@ -137,6 +212,17 @@ public class AccountArtistTests
         {
             Id = id,
             Name = "Radiohead"
+        };
+    }
+
+    private static LinkedPlaylist Playlist(Account account, string spotifyId)
+    {
+        return new LinkedPlaylist
+        {
+            AccountId = account.Id,
+            Account = account,
+            SpotifyId = spotifyId,
+            Name = spotifyId
         };
     }
 }
