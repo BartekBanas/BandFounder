@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using BandFounder.Application.Services;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
@@ -34,6 +35,18 @@ public class SpotifyConnectionServiceTests
         _artistRepository = Substitute.For<IRepository<Artist>>();
         _accountRepository = Substitute.For<IRepository<Account>>();
         _genreRepository = Substitute.For<IRepository<Genre>>();
+        _artistRepository.GetAsync(
+                Arg.Any<Expression<Func<Artist, bool>>>(),
+                Arg.Any<Func<IQueryable<Artist>, IOrderedQueryable<Artist>>>(),
+                Arg.Any<string[]>())
+            .Returns(Array.Empty<Artist>());
+        _genreRepository.GetAsync(
+                Arg.Any<Expression<Func<Genre, bool>>>(),
+                Arg.Any<Func<IQueryable<Genre>, IOrderedQueryable<Genre>>>(),
+                Arg.Any<string[]>())
+            .Returns(Array.Empty<Genre>());
+        _artistRepository.CreateAsync(Arg.Any<Artist>()).Returns(call => call.Arg<Artist>());
+        _genreRepository.CreateAsync(Arg.Any<Genre>()).Returns(call => call.Arg<Genre>());
 
         _spotifyConnectionService = new SpotifyConnectionService(
             _spotifyClient,
@@ -68,8 +81,6 @@ public class SpotifyConnectionServiceTests
         // Mock dependencies
         _accountRepository.GetOneRequiredAsync(
             Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
-        _artistRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Artist>(null!)); // Artist doesn't exist
-        _genreRepository.GetOneAsync(Arg.Any<object>())!.Returns(Task.FromResult<Genre>(null!)); // Genre doesn't exist
         _spotifyTokensRepository.GetOneAsync(userId)!.Returns(Task.FromResult(new SpotifyTokens
         {
             AccountId = userId,
@@ -130,8 +141,15 @@ public class SpotifyConnectionServiceTests
         // Mock dependencies
         _accountRepository.GetOneRequiredAsync(
             Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(account);
-        _artistRepository.GetOneAsync("artist1")!.Returns(Task.FromResult(existingArtist)); // Artist already exists
-        _artistRepository.GetOneAsync("artist2")!.Returns(Task.FromResult<Artist>(null!)); // Second artist does not exist
+        _artistRepository.GetAsync(
+                Arg.Any<Expression<Func<Artist, bool>>>(),
+                Arg.Any<Func<IQueryable<Artist>, IOrderedQueryable<Artist>>>(),
+                Arg.Any<string[]>())
+            .Returns(call =>
+            {
+                var filter = call.Arg<Expression<Func<Artist, bool>>>().Compile();
+                return filter(existingArtist) ? new[] { existingArtist } : Array.Empty<Artist>();
+            });
         _spotifyTokensRepository.GetOneAsync(userId)!.Returns(Task.FromResult(new SpotifyTokens
         {
             AccountId = userId,
@@ -147,8 +165,8 @@ public class SpotifyConnectionServiceTests
         var savedArtists = await _spotifyConnectionService.SaveRelevantArtists(userId);
 
         // Assert
-        Assert.That(savedArtists, Has.Count.EqualTo(1)); // Both artists should be returned
-        await _artistRepository.Received(2).CreateAsync(Arg.Any<Artist>()); // Only one new artist should be created
+        Assert.That(savedArtists, Has.Count.EqualTo(1)); // Only the newly held artist is returned
+        await _artistRepository.Received(1).CreateAsync(Arg.Any<Artist>()); // Only the missing artist should be created
         await _accountRepository.Received(1).SaveChangesAsync(); // Ensure changes are saved
     }
 

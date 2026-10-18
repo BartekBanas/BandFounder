@@ -97,11 +97,18 @@ public class BackupController : Controller
 
     private async Task RestoreArtists(IEnumerable<ArtistBackup> artists)
     {
-        foreach (var artistDto in artists)
-        {
-            await _artistRepository.GetOrCreateAsync(
-                _genreRepository, artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
-        }
+        await _artistRepository.GetOrCreateManyAsync(
+            _genreRepository,
+            artists
+                .Select(artist => new ArtistData(artist.Id, artist.Name)
+                {
+                    Genres = artist.Genres ?? [],
+                    Popularity = artist.Popularity
+                })
+                .ToList());
+
+        // Accounts are restored next and look artists up by name, so these must be saved first.
+        await _artistRepository.SaveChangesAsync();
     }
 
     private async Task RestoreAccounts(IEnumerable<AccountBackup> accounts)

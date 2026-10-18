@@ -18,4 +18,15 @@ public class Artist : Entity
     public virtual List<Account> Accounts { get; set; } = [];
 
     public virtual List<AccountArtist> AccountLinks { get; set; } = [];
+
+    /// <summary>Takes the latest name and fills in popularity if it was never set.</summary>
+    public void Enrich(string name, int popularity)
+    {
+        Name = name;
+
+        if (Popularity == 0 && popularity > 0)
+        {
+            Popularity = popularity;
+        }
+    }
 }
