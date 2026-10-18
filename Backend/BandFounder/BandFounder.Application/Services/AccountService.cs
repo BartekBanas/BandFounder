@@ -122,6 +122,7 @@ public class AccountService : IAccountService
             [
                 nameof(Account.Artists), "Artists.Genres",
                 nameof(Account.ArtistLinks), "ArtistLinks.Artist", "ArtistLinks.Sources",
+                nameof(Account.LinkedPlaylists),
                 nameof(Account.Chatrooms), nameof(Account.MusicianRoles), nameof(Account.SpotifyTokens)
             ]);
     }
@@ -466,9 +467,9 @@ public class AccountService : IAccountService
         {
             await _spotifyTokensRepository.DeleteOneAsync(account.SpotifyTokens.AccountId);
         }
-        
-        account.Artists.Clear();
-        
+
+        account.ClearMusicProfile();
+
         await _accountRepository.SaveChangesAsync();
     }
 

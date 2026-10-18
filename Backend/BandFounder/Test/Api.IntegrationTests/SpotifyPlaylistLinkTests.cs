@@ -68,6 +68,111 @@ public class SpotifyPlaylistLinkTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task Unlink_DropsExclusiveArtistsAndKeepsMultiSourceArtists()
+    {
+        var token = await RegisterAsync("unlinkkeep", "unlinkkeep@example.com");
+        AuthenticateAs(token);
+        var me = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
+        var accountId = Guid.Parse(me.Id);
+        var exclusivePlaylistId = StubSpotifyPlaylists.Id(0);
+        var sharedPlaylistId = StubSpotifyPlaylists.Id(1);
+
+        Assert.That((await Client.PostAsJsonAsync("/api/spotify/playlists/link", new
+        {
+            input = StubSpotifyPlaylists.Url(0)
+        })).IsSuccessStatusCode, Is.True);
+        Assert.That((await Client.PostAsJsonAsync("/api/spotify/playlists/link", new
+        {
+            input = StubSpotifyPlaylists.Url(1)
+        })).IsSuccessStatusCode, Is.True);
+
+        var sharedArtistId = StubSpotifyPlaylists.ArtistId(sharedPlaylistId);
+        using (var scope = Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var account = await dbContext.Accounts
+                .Include(item => item.Artists)
+                .Include(item => item.ArtistLinks)
+                .ThenInclude(link => link.Sources)
+                .SingleAsync(item => item.Id == accountId);
+            var shared = account.ArtistLinks.Single(link => link.ArtistId == sharedArtistId).Artist;
+            account.HoldArtist(shared, ArtistSource.Manual());
+            await dbContext.SaveChangesAsync();
+        }
+
+        var exclusiveResponse = await Client.DeleteAsync($"/api/spotify/playlists/{exclusivePlaylistId}");
+        var sharedResponse = await Client.DeleteAsync($"/api/spotify/playlists/{sharedPlaylistId}");
+
+        Assert.That(exclusiveResponse.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        Assert.That(sharedResponse.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+
+        using (var scope = Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var account = await dbContext.Accounts
+                .Include(item => item.Artists)
+                .Include(item => item.ArtistLinks)
+                .ThenInclude(link => link.Sources)
+                .Include(item => item.LinkedPlaylists)
+                .SingleAsync(item => item.Id == accountId);
+
+            Assert.That(account.LinkedPlaylists, Is.Empty);
+            Assert.That(account.ArtistLinks, Has.Count.EqualTo(1));
+            Assert.That(account.ArtistLinks[0].ArtistId, Is.EqualTo(sharedArtistId));
+            Assert.That(account.ArtistLinks[0].Sources.Select(source => source.ToSource()),
+                Is.EquivalentTo(new[] { ArtistSource.Manual() }));
+            Assert.That(account.Artists.Select(artist => artist.Id), Is.EquivalentTo(new[] { sharedArtistId }));
+        }
+    }
+
+    [Test]
+    public async Task Unlink_UnknownPlaylist_ReturnsNotFound()
+    {
+        var token = await RegisterAsync("unlink404", "unlink404@example.com");
+        AuthenticateAs(token);
+
+        var response = await Client.DeleteAsync($"/api/spotify/playlists/{StubSpotifyPlaylists.Id(0)}");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task ClearProfile_RemovesLinkedPlaylistsAndArtistSources()
+    {
+        var token = await RegisterAsync("clearplaylists", "clearplaylists@example.com");
+        AuthenticateAs(token);
+        var me = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
+        var accountId = Guid.Parse(me.Id);
+
+        Assert.That((await Client.PostAsJsonAsync("/api/spotify/playlists/link", new
+        {
+            input = StubSpotifyPlaylists.Url(0)
+        })).IsSuccessStatusCode, Is.True);
+        Assert.That((await Client.PostAsJsonAsync("/api/spotify/playlists/link", new
+        {
+            input = StubSpotifyPlaylists.Url(1)
+        })).IsSuccessStatusCode, Is.True);
+
+        var response = await Client.PostAsync("/api/accounts/clearProfile", null);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        var account = await dbContext.Accounts
+            .Include(item => item.Artists)
+            .Include(item => item.ArtistLinks)
+            .ThenInclude(link => link.Sources)
+            .Include(item => item.LinkedPlaylists)
+            .SingleAsync(item => item.Id == accountId);
+
+        Assert.That(account.LinkedPlaylists, Is.Empty);
+        Assert.That(account.ArtistLinks, Is.Empty);
+        Assert.That(account.Artists, Is.Empty);
+        Assert.That(await dbContext.AccountArtists.AnyAsync(link => link.AccountId == accountId), Is.False);
+    }
+
+    [Test]
     public async Task Link_WhenPersistFailsAfterCatalogWrites_RollsBackArtistAndGenre()
     {
         var token = await RegisterAsync("linkrollback", "linkrollback@example.com");

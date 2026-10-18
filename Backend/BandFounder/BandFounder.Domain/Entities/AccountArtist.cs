@@ -28,6 +28,19 @@ public class AccountArtist : Entity
             LinkedPlaylistId = source.LinkedPlaylistId
         });
     }
+
+    public bool DropSource(ArtistSource source)
+    {
+        var existing = Sources.FirstOrDefault(held =>
+            held.Kind == source.Kind && held.LinkedPlaylistId == source.LinkedPlaylistId);
+        if (existing is null)
+        {
+            return Sources.Count > 0;
+        }
+
+        Sources.Remove(existing);
+        return Sources.Count > 0;
+    }
 }
 
 public class AccountArtistSource : Entity

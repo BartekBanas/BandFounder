@@ -175,4 +175,13 @@ public class SpotifyBrokerController : ControllerBase
             SpotifyPlaylistLinkResult.CapReached => Conflict(SpotifyPlaylistLinkErrors.CapReached),
         };
     }
+
+    [Authorize]
+    [HttpDelete("spotify/playlists/{spotifyId}")]
+    public async Task<IActionResult> UnlinkPublicPlaylist([FromRoute] string spotifyId)
+    {
+        var userId = _authenticationService.GetUserId();
+        var unlinked = await _spotifyPlaylistLinkService.UnlinkAsync(userId, spotifyId);
+        return unlinked ? NoContent() : NotFound();
+    }
 }

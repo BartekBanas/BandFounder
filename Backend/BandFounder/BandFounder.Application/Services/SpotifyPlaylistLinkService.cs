@@ -48,6 +48,8 @@ public static class SpotifyPlaylistLinkErrors
 public interface ISpotifyPlaylistLinkService
 {
     Task<SpotifyPlaylistLinkResult> LinkAsync(Guid accountId, string input);
+
+    Task<bool> UnlinkAsync(Guid accountId, string spotifyId);
 }
 
 public class SpotifyPlaylistLinkService(
@@ -113,6 +115,18 @@ public class SpotifyPlaylistLinkService(
         });
 
         return result!;
+    }
+
+    public async Task<bool> UnlinkAsync(Guid accountId, string spotifyId)
+    {
+        var account = await LoadAccountAsync(accountId);
+        if (!account.UnlinkPlaylist(spotifyId))
+        {
+            return false;
+        }
+
+        await accountRepository.SaveChangesAsync();
+        return true;
     }
 
     private async Task<SpotifyPlaylistLinkResult> PersistLinkedPlaylistAsync(
