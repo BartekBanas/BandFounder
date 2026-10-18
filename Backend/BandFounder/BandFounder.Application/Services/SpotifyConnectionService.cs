@@ -180,13 +180,20 @@ public class SpotifyConnectionService(
                 "ArtistLinks.Sources"
             ]);
 
+        var artistEntities = await artistRepository.GetOrCreateManyAsync(
+            genreRepository,
+            userArtists
+                .Select(artist => new ArtistData(artist.Id, artist.Name)
+                {
+                    Genres = artist.Genres,
+                    Popularity = artist.Popularity
+                })
+                .ToList());
+
         var savedArtists = new List<SpotifyArtistDto>();
 
-        foreach (var artistDto in userArtists)
+        foreach (var (artistDto, artistEntity) in userArtists.Zip(artistEntities))
         {
-            var artistEntity = await artistRepository.GetOrCreateAsync(genreRepository,
-                artistDto.Name, artistDto.Genres, artistDto.Popularity, artistDto.Id);
-
             if (account.HoldArtist(artistEntity, ArtistSource.SpotifySignIn()))
             {
                 savedArtists.Add(artistDto);

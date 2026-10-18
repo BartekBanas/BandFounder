@@ -32,6 +32,38 @@ public static class RepositoriesExtensions
             return existingGenre;
         }
     }
+
+    /// <summary>
+    /// Loads every genre in one query and adds the missing ones. Does not save.
+    /// The result is keyed by normalized name.
+    /// </summary>
+    public static async Task<Dictionary<string, Genre>> GetOrCreateManyAsync(
+        this IRepository<Genre> repository, IEnumerable<string> genreNames)
+    {
+        var names = genreNames
+            .Select(name => string.IsNullOrWhiteSpace(name)
+                ? throw new ArgumentException("Genre name cannot be empty or whitespace.")
+                : NormalizeName(name))
+            .Distinct()
+            .ToList();
+
+        if (names.Count == 0)
+        {
+            return [];
+        }
+
+        var genres = (await repository.GetAsync(genre => names.Contains(genre.Name)))
+            .ToDictionary(genre => genre.Name);
+
+        foreach (var name in names.Where(name => !genres.ContainsKey(name)))
+        {
+            var genre = new Genre { Name = name };
+            await repository.CreateAsync(genre);
+            genres.Add(name, genre);
+        }
+
+        return genres;
+    }
     
     public static async Task<MusicianRole> GetOrCreateAsync(this IRepository<MusicianRole> repository, string roleName)
     {
@@ -57,132 +89,99 @@ public static class RepositoriesExtensions
             return existingRole;
         }
     }
-    
-    public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> artistRepository, IRepository<Genre> genreRepository,
-        string artistName, List<string>? genres = null, int popularity = 0, string? id = null)
+
+    /// <summary>
+    /// Matches each input to an existing artist (by Spotify id, then by name) or adds a new one,
+    /// using a single query for the whole batch. Returns artists in input order. Does not save.
+    /// Matching is against the catalog as loaded, so a rename done later by <see cref="Artist.Enrich"/>
+    /// does not affect which artist a later input in the same batch resolves to.
+    /// </summary>
+    public static async Task<List<Artist>> ResolveManyAsync(
+        this IRepository<Artist> artistRepository, IReadOnlyList<ArtistData> artistData)
     {
-        if (string.IsNullOrWhiteSpace(artistName))
+        if (artistData.Any(data => string.IsNullOrWhiteSpace(data.Name)))
         {
-            throw new ArgumentException("Artist name cannot be empty or whitespace");
+            throw new ArgumentException("Artist name cannot be empty or whitespace.");
         }
 
-        var spotifyId = NormalizeSpotifyArtistId(id);
-
-        if (spotifyId is not null)
+        if (artistData.Count == 0)
         {
-            var artistById = await artistRepository.GetOneAsync(artist => artist.Id == spotifyId,
-                includeProperties: nameof(Artist.Genres));
+            return [];
+        }
 
-            if (artistById is not null)
+        var spotifyIds = artistData.Select(data => data.SpotifyId).OfType<string>().Distinct().ToList();
+        var names = artistData.Select(data => data.Name).Distinct().ToList();
+        var known = (await artistRepository.GetAsync(
+                artist => spotifyIds.Contains(artist.Id) || names.Contains(artist.Name),
+                includeProperties: nameof(Artist.Genres)))
+            .ToList();
+        var byId = known.ToDictionary(artist => artist.Id);
+        var byName = known.GroupBy(artist => artist.Name).ToDictionary(group => group.Key, group => group.First());
+
+        var artists = new List<Artist>(artistData.Count);
+        foreach (var data in artistData)
+        {
+            var artist = (data.SpotifyId is { } id ? byId.GetValueOrDefault(id) : null)
+                         ?? byName.GetValueOrDefault(data.Name);
+
+            if (artist is null)
             {
-                await EnrichArtistAsync(artistById, genreRepository, artistName, genres, popularity);
-                return artistById;
+                artist = new Artist { Id = data.SpotifyId ?? Guid.NewGuid().ToString(), Name = data.Name };
+                await artistRepository.CreateAsync(artist);
+                byId.Add(artist.Id, artist);
+                byName.Add(artist.Name, artist);
             }
+
+            artists.Add(artist);
         }
 
-        var artistByName = await artistRepository.GetOneAsync(artist => artist.Name == artistName,
-            includeProperties: nameof(Artist.Genres));
-
-        if (artistByName is not null)
-        {
-            await EnrichArtistAsync(artistByName, genreRepository, artistName, genres, popularity);
-            return artistByName;
-        }
-
-        var newArtist = new Artist
-        {
-            Id = spotifyId ?? Guid.NewGuid().ToString(),
-            Name = artistName,
-            Popularity = popularity
-        };
-
-        foreach (var genreName in genres ?? [])
-        {
-            var genre = await genreRepository.GetOrCreateAsync(genreName);
-
-            newArtist.Genres.Add(genre);
-        }
-
-        await artistRepository.CreateAsync(newArtist);
-        await artistRepository.SaveChangesAsync();
-
-        return newArtist;
+        return artists;
     }
 
-    private static async Task EnrichArtistAsync(Artist artist, IRepository<Genre> genreRepository,
-        string artistName, List<string>? genres, int popularity)
+    /// <summary>
+    /// Resolves the artists, then fills in popularity and genres that are still missing. Existing values are kept.
+    /// Does not save. Returns artists in input order.
+    /// </summary>
+    public static async Task<List<Artist>> GetOrCreateManyAsync(
+        this IRepository<Artist> artistRepository,
+        IRepository<Genre> genreRepository,
+        IReadOnlyList<ArtistData> artistData)
     {
-        if (artist.Name != artistName)
+        var artists = await artistRepository.ResolveManyAsync(artistData);
+        var pairs = artists.Zip(artistData, (artist, data) => (Artist: artist, Data: data)).ToList();
+
+        // Decided before enriching, so the first input for an artist is the one that supplies its genres.
+        var needingGenres = pairs
+            .Where(pair => pair.Artist.Genres.Count == 0)
+            .DistinctBy(pair => pair.Artist)
+            .ToList();
+        var genres = await genreRepository.GetOrCreateManyAsync(needingGenres.SelectMany(pair => pair.Data.Genres));
+
+        foreach (var (artist, data) in pairs)
         {
-            artist.Name = artistName;
+            artist.Enrich(data.Name, data.Popularity);
         }
 
-        if (artist.Popularity == 0 && popularity > 0)
+        foreach (var (artist, data) in needingGenres)
         {
-            artist.Popularity = popularity;
+            artist.Genres.AddRange(data.Genres.Select(genre => genres[NormalizeName(genre)]).Distinct());
         }
 
-        if (artist.Genres.Count == 0 && genres is { Count: > 0 })
-        {
-            foreach (var genreName in genres)
-            {
-                var genre = await genreRepository.GetOrCreateAsync(genreName);
-
-                artist.Genres.Add(genre);
-            }
-        }
-    }
-
-    private static string? NormalizeSpotifyArtistId(string? id)
-    {
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            return null;
-        }
-
-        const string uriPrefix = "spotify:artist:";
-        return id.StartsWith(uriPrefix, StringComparison.OrdinalIgnoreCase)
-            ? id[uriPrefix.Length..]
-            : id;
+        return artists;
     }
 
     public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> artistRepository, string artistName)
     {
-        if (string.IsNullOrWhiteSpace(artistName))
-        {
-            throw new ArgumentException("Artist name cannot be empty or whitespace");
-        }
-        
-        var artistEntity = await artistRepository.GetOneAsync(artist => artist.Name == artistName,
-            includeProperties: nameof(Artist.Genres));
-
-        if (artistEntity is not null)
-        {
-            return artistEntity;
-        }
-
-        var newArtist = new Artist
-        {
-            Id = Guid.NewGuid().ToString(),
-            Name = artistName
-        };
-        
-        await artistRepository.CreateAsync(newArtist);
-        await artistRepository.SaveChangesAsync();
-        
-        return newArtist;
+        return (await artistRepository.GetOrCreateAsync(new[] { artistName })).Single();
     }
 
     public static async Task<IEnumerable<Artist>> GetOrCreateAsync(this IRepository<Artist> artistRepository,
         IEnumerable<string> artistNames)
     {
-        var artists = new List<Artist>();
-        
-        foreach (var artistName in artistNames)
-        {
-            artists.Add(await artistRepository.GetOrCreateAsync(artistName));
-        }
-        
+        var artists = await artistRepository.ResolveManyAsync(
+            artistNames.Select(name => new ArtistData(null, name)).ToList());
+        await artistRepository.SaveChangesAsync();
+
         return artists;
     }
 

@@ -26,6 +26,7 @@ public class SpotifyPlaylistLinkServiceTests
     private IRepository<Genre> _genreRepository;
     private IUnitOfWork _unitOfWork;
     private List<Artist> _artistCatalog;
+    private List<Genre> _genreCatalog;
     private SpotifyPlaylistLinkService _service;
     private Guid _accountId;
     private Account _account;
@@ -41,6 +42,7 @@ public class SpotifyPlaylistLinkServiceTests
         _genreRepository = Substitute.For<IRepository<Genre>>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _artistCatalog = [];
+        _genreCatalog = [];
         _accountId = Guid.NewGuid();
         _account = NewAccount(_accountId);
 
@@ -50,7 +52,21 @@ public class SpotifyPlaylistLinkServiceTests
         _accountRepository.GetOneRequiredAsync(
             Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string[]>()).Returns(_account);
         StubArtistCatalog();
-        _genreRepository.CreateAsync(Arg.Any<Genre>()).Returns(call => call.Arg<Genre>());
+        _genreRepository.GetAsync(
+                Arg.Any<Expression<Func<Genre, bool>>>(),
+                Arg.Any<Func<IQueryable<Genre>, IOrderedQueryable<Genre>>>(),
+                Arg.Any<string[]>())
+            .Returns(call =>
+            {
+                var predicate = call.Arg<Expression<Func<Genre, bool>>>().Compile();
+                return _genreCatalog.Where(predicate).ToList();
+            });
+        _genreRepository.CreateAsync(Arg.Any<Genre>()).Returns(call =>
+        {
+            var genre = call.Arg<Genre>();
+            _genreCatalog.Add(genre);
+            return genre;
+        });
         _unitOfWork.ExecuteSerializableTransactionAsync(Arg.Any<Func<Task>>())
             .Returns(call => call.Arg<Func<Task>>()());
 
@@ -430,17 +446,14 @@ public class SpotifyPlaylistLinkServiceTests
 
     private void StubArtistCatalog()
     {
-        _artistRepository.GetOneAsync(Arg.Any<Expression<Func<Artist, bool>>>(), Arg.Any<string[]>())
+        _artistRepository.GetAsync(
+                Arg.Any<Expression<Func<Artist, bool>>>(),
+                Arg.Any<Func<IQueryable<Artist>, IOrderedQueryable<Artist>>>(),
+                Arg.Any<string[]>())
             .Returns(call =>
             {
-                var filter = call.Arg<Expression<Func<Artist, bool>>>();
-                if (filter is null)
-                {
-                    return _artistCatalog.FirstOrDefault();
-                }
-
-                var predicate = filter.Compile();
-                return _artistCatalog.FirstOrDefault(predicate);
+                var predicate = call.Arg<Expression<Func<Artist, bool>>>().Compile();
+                return _artistCatalog.Where(predicate).ToList();
             });
         _artistRepository.CreateAsync(Arg.Any<Artist>()).Returns(call =>
         {

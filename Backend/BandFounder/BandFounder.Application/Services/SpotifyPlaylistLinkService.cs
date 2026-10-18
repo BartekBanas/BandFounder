@@ -142,18 +142,9 @@ public class SpotifyPlaylistLinkService(
             return reject;
         }
 
-        var artistEntities = new List<Artist>(uniqueArtists.Count);
-        foreach (var playlistArtist in uniqueArtists)
-        {
-            spotifyArtists.TryGetValue(playlistArtist.Id, out var spotifyArtist);
-            var name = string.IsNullOrWhiteSpace(spotifyArtist?.Name) ? playlistArtist.Name : spotifyArtist.Name;
-            artistEntities.Add(await artistRepository.GetOrCreateAsync(
-                genreRepository,
-                name,
-                spotifyArtist?.Genres,
-                spotifyArtist?.Popularity ?? 0,
-                playlistArtist.Id));
-        }
+        var artistEntities = await artistRepository.GetOrCreateManyAsync(
+            genreRepository,
+            uniqueArtists.Select(artist => ToArtistData(artist, spotifyArtists.GetValueOrDefault(artist.Id))).ToList());
 
         account.LinkedPlaylists.Add(new LinkedPlaylist
         {
@@ -177,6 +168,14 @@ public class SpotifyPlaylistLinkService(
         await accountRepository.SaveChangesAsync();
         return new SpotifyPlaylistLinkResult.Linked(playlist.Name, newArtistCount, playlist.TruncatedAtTrackCap);
     }
+
+    /// <summary>Prefers the full Spotify profile. Falls back to the name listed on the playlist.</summary>
+    private static ArtistData ToArtistData(SpotifyPlaylistArtist playlistArtist, SpotifyArtistDto? spotifyArtist) =>
+        new(playlistArtist.Id, string.IsNullOrWhiteSpace(spotifyArtist?.Name) ? playlistArtist.Name : spotifyArtist.Name)
+        {
+            Genres = spotifyArtist?.Genres ?? [],
+            Popularity = spotifyArtist?.Popularity ?? 0
+        };
 
     private Task<Account> LoadAccountAsync(Guid accountId) =>
         accountRepository.GetOneRequiredAsync(
