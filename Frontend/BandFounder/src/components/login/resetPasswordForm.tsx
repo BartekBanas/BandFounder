@@ -53,7 +53,7 @@ function getStrengthColor(metCount: number): string {
     }
 
     if (metCount === 3) {
-        return designTokens.accentBlue;
+        return designTokens.accent;
     }
 
     return designTokens.successMain;
@@ -242,8 +242,8 @@ export function ResetPasswordForm() {
                                             height: 56,
                                             fontSize: '1.35rem',
                                             fontWeight: 600,
-                                            backgroundColor: designTokens.accentBlue,
-                                            color: designTokens.textOnDark,
+                                            backgroundColor: designTokens.accent,
+                                            color: designTokens.accentText,
                                         }}
                                     >
                                         {info.username.charAt(0).toUpperCase()}

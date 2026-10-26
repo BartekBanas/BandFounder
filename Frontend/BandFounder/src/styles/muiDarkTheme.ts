@@ -16,7 +16,7 @@ export const muiDarkTheme = createTheme({
     palette: {
         mode: 'dark',
         primary: {
-            main: designTokens.accentBlue,
+            main: designTokens.accent,
         },
         secondary: {
             main: designTokens.cardSurfaceElevated,
@@ -35,7 +35,7 @@ export const muiDarkTheme = createTheme({
             contrastText: designTokens.textOnDark,
         },
         info: {
-            main: designTokens.accentBlue,
+            main: designTokens.accent,
         },
         error: {
             main: designTokens.errorMain,
@@ -103,7 +103,7 @@ export const muiDarkTheme = createTheme({
                         boxShadow: 'none',
                     },
                     '&.Mui-focusVisible': {
-                        outline: `2px solid ${designTokens.accentBlue}`,
+                        outline: `2px solid ${designTokens.accent}`,
                         outlineOffset: '2px',
                     },
                 },
@@ -117,16 +117,16 @@ export const muiDarkTheme = createTheme({
                     },
                     '&.Mui-focusVisible': {
                         border: 'none',
-                        boxShadow: `${insetRing(designTokens.accentBlue)}, 0 0 0 3px ${designTokens.accentBlueGlow}`,
+                        boxShadow: `${insetRing(designTokens.accent)}, 0 0 0 3px ${designTokens.accentGlow}`,
                     },
                 },
                 outlinedPrimary: {
                     border: 'none',
-                    boxShadow: insetRing(alpha(designTokens.accentBlue, 0.5)),
+                    boxShadow: insetRing(alpha(designTokens.accent, 0.5)),
                     '&:hover': {
                         border: 'none',
                         backgroundColor: designTokens.ctaSurfaceAccent,
-                        boxShadow: insetRing(designTokens.accentBlue),
+                        boxShadow: insetRing(designTokens.accent),
                     },
                 },
             },
