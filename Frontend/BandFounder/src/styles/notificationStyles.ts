@@ -4,7 +4,7 @@ const notificationStyles = (theme: MantineTheme) => ({
     root: {
         backgroundColor: theme.colors.dark[6],
         borderColor: theme.colors.dark[7],
-        fontFamily: `'Roboto', sans-serif`,
+        fontFamily: `'Geist', sans-serif`,
         '&::before': {backgroundColor: theme.colors.yellow},
     },
     title: {color: theme.colors.gray[2]},

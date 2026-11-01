@@ -43,7 +43,7 @@ export const muiDarkTheme = createTheme({
         },
     },
     typography: {
-        fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+        fontFamily: '"Geist", "Helvetica", "Arial", sans-serif',
         button: {
             textTransform: 'none',
         },
