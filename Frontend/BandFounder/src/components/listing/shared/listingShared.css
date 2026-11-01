@@ -139,7 +139,7 @@
     margin: 0;
     font-size: 0.9rem;
     line-height: 1.6;
-    color: var(--text-secondary);
+    color: var(--text-body);
     overflow-wrap: break-word;
     word-break: break-word;
     white-space: pre-wrap;

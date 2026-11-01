@@ -226,7 +226,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                             topArtists.map((artist) => (
                                 <span
                                     key={artist.id}
-                                    className="profile-taste-tag profile-taste-tag--artist profile-artist-tag"
+                                    className="profile-taste-tag profile-artist-tag"
                                     onMouseEnter={(e) => showArtistPopover(artist, e.currentTarget)}
                                     onMouseLeave={hideArtistPopover}
                                 >
@@ -244,7 +244,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                     <div className="profile-taste-card__tags">
                         {genres && genres.length > 0 ? (
                             genres.map((genre, index) => (
-                                <span key={index} className="profile-taste-tag profile-taste-tag--genre">
+                                <span key={index} className="profile-taste-tag">
                                     {genre}
                                 </span>
                             ))
@@ -291,7 +291,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                         <div className="profile-taste-card__tags">
                             {roles.length > 0 ? (
                                 roles.map((role) => (
-                                    <span key={role} className="profile-taste-tag profile-taste-tag--genre">
+                                    <span key={role} className="profile-taste-tag">
                                         {role}
                                     </span>
                                 ))
