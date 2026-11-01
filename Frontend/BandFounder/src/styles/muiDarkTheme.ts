@@ -1,4 +1,5 @@
 import {alpha, createTheme} from "@mui/material";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import {designTokens} from "./designTokens";
 
 export {designTokens} from "./designTokens";
@@ -11,6 +12,52 @@ const subpixelLayer = {
 };
 
 const insetRing = (color: string) => `inset 0 0 0 1px ${color}`;
+
+// Shared by every dropdown popup (Select menus and Autocomplete listboxes).
+const dropdownPaper = {
+    marginTop: 6,
+    padding: 6,
+    backgroundColor: designTokens.cardSurfaceElevated,
+    backgroundImage: 'none',
+    borderRadius: 14,
+    boxShadow: `${insetRing(designTokens.borderSubtle)}, 0 20px 40px rgba(0, 0, 0, 0.5)`,
+    scrollbarWidth: 'thin' as const,
+    scrollbarColor: `${designTokens.scrollbarThumb} transparent`,
+};
+
+// `selected` is the selector that marks the chosen item. MenuItem uses a class, Autocomplete uses aria.
+const dropdownItem = (selected: string) => ({
+    position: 'relative' as const,
+    minHeight: 36,
+    paddingInline: '14px',
+    borderRadius: 10,
+    fontSize: '0.9rem',
+    color: designTokens.textBody,
+    transition: 'background-color 0.12s ease, color 0.12s ease',
+    '&:hover, &.Mui-focused, &.Mui-focusVisible': {
+        backgroundColor: designTokens.surfaceOverlaySubtle,
+        color: designTokens.textPrimary,
+    },
+    [selected]: {
+        color: designTokens.textOnDark,
+        fontWeight: 600,
+        backgroundColor: designTokens.ctaSurfaceAccent,
+    },
+    [`${selected}:hover, ${selected}.Mui-focused`]: {
+        backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    },
+    [`${selected}::before`]: {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        width: 3,
+        height: 16,
+        borderRadius: 2,
+        backgroundColor: designTokens.accent,
+        transform: 'translateY(-50%)',
+    },
+});
 
 export const muiDarkTheme = createTheme({
     palette: {
@@ -134,6 +181,40 @@ export const muiDarkTheme = createTheme({
         MuiIconButton: {
             styleOverrides: {
                 root: subpixelLayer,
+            },
+        },
+        MuiSelect: {
+            defaultProps: {
+                IconComponent: KeyboardArrowDownRoundedIcon,
+            },
+            styleOverrides: {
+                icon: {
+                    right: 12,
+                    color: designTokens.textMuted,
+                },
+            },
+        },
+        MuiMenu: {
+            styleOverrides: {
+                paper: dropdownPaper,
+                list: {
+                    paddingBlock: 0,
+                },
+            },
+        },
+        MuiMenuItem: {
+            styleOverrides: {
+                root: dropdownItem('&.Mui-selected'),
+            },
+        },
+        MuiAutocomplete: {
+            styleOverrides: {
+                paper: dropdownPaper,
+                listbox: {
+                    padding: 0,
+                    maxHeight: '40vh',
+                },
+                option: dropdownItem('&[aria-selected="true"]'),
             },
         },
     },

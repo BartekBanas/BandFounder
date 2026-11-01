@@ -99,7 +99,6 @@
 }
 
 .listing-editor-modal__input,
-.listing-editor-modal__select,
 .listing-editor-modal__textarea {
     width: 100%;
     padding: 10px 12px;
@@ -114,22 +113,61 @@
     color-scheme: dark;
 }
 
-.listing-editor-modal__select {
-    appearance: none;
-    padding-right: 36px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238b95a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    cursor: pointer;
+/* MUI Select (renders a div with role="combobox"), styled to match the inputs above. */
+.listing-editor-modal__select.MuiInputBase-root {
+    width: 100%;
+    border-radius: 10px;
+    background-color: var(--background-default);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: box-shadow 0.2s ease;
 }
 
-.listing-editor-modal__select option {
-    background-color: var(--card-surface);
+.listing-editor-modal__select .MuiSelect-select {
+    padding: 10px 36px 10px 12px;
+    line-height: normal;
+    min-height: 0;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+.listing-editor-modal__select .MuiSelect-icon {
+    right: 12px;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.listing-editor-modal__select .MuiOutlinedInput-notchedOutline {
+    border-color: var(--border-subtle);
+    border-width: 1px;
+    transition: border-color 0.2s ease;
+}
+
+.listing-editor-modal__select:hover .MuiOutlinedInput-notchedOutline,
+.listing-editor-modal__select:has(.MuiSelect-select[aria-expanded="true"]) .MuiOutlinedInput-notchedOutline {
+    border-color: var(--border-strong);
+}
+
+.listing-editor-modal__select:hover .MuiSelect-icon {
     color: var(--text-primary);
 }
 
+.listing-editor-modal__select:has(.MuiSelect-select[aria-expanded="true"]) .MuiSelect-icon {
+    color: var(--accent);
+}
+
+.listing-editor-modal__select.Mui-focused {
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.listing-editor-modal__select.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: var(--accent);
+    border-width: 1px;
+}
+
 .listing-editor-modal__input:focus,
-.listing-editor-modal__select:focus,
 .listing-editor-modal__textarea:focus {
     outline: none;
     border-color: var(--accent);
@@ -253,9 +291,12 @@
     outline-offset: 2px;
 }
 
-.listing-editor-modal__role-card .listing-editor-modal__select {
-    padding: 8px 10px;
+.listing-editor-modal__role-card .listing-editor-modal__select.MuiInputBase-root {
     font-size: 0.85rem;
+}
+
+.listing-editor-modal__role-card .listing-editor-modal__select .MuiSelect-select {
+    padding: 8px 36px 8px 10px;
 }
 
 .listing-editor-modal__footer {

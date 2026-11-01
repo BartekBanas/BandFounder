@@ -3,6 +3,7 @@ import {Autocomplete, TextField, MenuItem} from "@mui/material";
 import {ListingType} from "../../../types/Listing";
 import {getGenres, getMusicianRoles} from "../../../api/metadata";
 import {ANY_ROLE_OPTION} from './roleFilter';
+import {useTriggerMatchedMenu} from '../../common/useTriggerMatchedMenu';
 import './style.css';
 
 const MAX_GENRE_FILTER_LENGTH = 50;
@@ -25,6 +26,7 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
     const [tempListingType, setTempListingType] = useState<ListingType | undefined>(filters.listingType);
     const [tempGenreFilter, setTempGenreFilter] = useState<string | undefined>(filters.genreFilter);
     const [tempAvailableRole, setTempAvailableRole] = useState<string | undefined>(filters.availableRole);
+    const listingTypeMenu = useTriggerMatchedMenu();
 
     useEffect(() => {
         setTempFromLatest(filters.fromLatest);
@@ -97,6 +99,7 @@ const ListingsFilters: React.FC<ListingsFiltersProps> = ({filters, onApply, onRe
                     fullWidth
                     size="small"
                     id="listingType"
+                    SelectProps={listingTypeMenu}
                 >
                     <MenuItem value="">All</MenuItem>
                     <MenuItem value="CollaborativeSong">Song</MenuItem>
