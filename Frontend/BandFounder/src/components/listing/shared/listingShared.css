@@ -143,7 +143,7 @@
     overflow-wrap: break-word;
     word-break: break-word;
     white-space: pre-wrap;
-    max-height: 150px;
+    max-height: 200px;
     overflow-y: auto;
 }
 
