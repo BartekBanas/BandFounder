@@ -1,9 +1,9 @@
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {getMyAccount, updateMyAccount} from '../../api/account';
 import {getTopArtists} from '../../api/spotify';
 import {getUsersGenres} from '../../api/metadata';
-import {UtilityDrawer} from './UtilityDrawer';
+import {openAccountMenu, UtilityDrawer} from './UtilityDrawer';
 
 vi.mock('../../api/account', () => ({
     getMyAccount: vi.fn(),
@@ -154,5 +154,13 @@ describe('UtilityDrawer notifications', () => {
         fireEvent.click(toggle);
 
         await waitFor(() => expect(toggle).toBeChecked());
+    });
+
+    it('opens when another part of the app calls openAccountMenu', async () => {
+        render(<UtilityDrawer/>);
+
+        act(() => openAccountMenu());
+
+        expect(await screen.findByRole('button', {name: 'Close account menu'})).toBeInTheDocument();
     });
 });

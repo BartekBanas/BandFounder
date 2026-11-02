@@ -30,7 +30,8 @@ import {
 } from "../../api/account";
 import {getMusicianRoles} from "../../api/metadata";
 import {getTopArtists, TopArtist} from "../../api/spotify";
-import ProfilePicture from "./ProfilePicture";
+import ProfileHeader from "./ProfileHeader";
+import {openAccountMenu} from "../accountDrawer/UtilityDrawer";
 import {createDirectChatroom, openDirectChatroomWithFallback} from "../../api/chatroom";
 
 interface ProfileShowProps {
@@ -195,31 +196,19 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
 
     return (
         <div className="profileMain">
-            <div className="profileLeftPart">
-                {account && <ProfilePicture isMyProfile={isMyProfile} accountId={account.id} size={200}/>}
-
-                <div style={{display: "flex", alignItems: "center"}}>
-                    <Typography variant="body1">Username:</Typography>
-                    <Typography variant="body1" sx={{marginLeft: 1}}>
-                        {account?.name}
-                    </Typography>
-                </div>
-
-                {!isMyProfile && (
-                    <div style={{display: "flex", alignItems: "center"}}>
-                        <Typography
-                            color="info"
-                            onClick={handleMessage}
-                            sx={{cursor: "pointer", textDecoration: "underline"}}
-                        >
-                            Message
-                        </Typography>
-                    </div>
-                )}
-            </div>
+            {account && (
+                <ProfileHeader
+                    account={account}
+                    isMyProfile={isMyProfile}
+                    genres={genres ?? []}
+                    topArtists={topArtists ?? []}
+                    onMessage={handleMessage}
+                    onEditProfile={openAccountMenu}
+                />
+            )}
 
             <div className="profileTasteGrid">
-                <section className="profile-taste-card custom-scrollbar">
+                <section className="profile-card profile-taste-card custom-scrollbar">
                     <h3 className="profile-taste-card__title">Top Artists</h3>
                     <div className="profile-taste-card__tags">
                         {topArtists && topArtists.length > 0 ? (
@@ -239,7 +228,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                     </div>
                 </section>
 
-                <section className="profile-taste-card custom-scrollbar">
+                <section className="profile-card profile-taste-card custom-scrollbar">
                     <h3 className="profile-taste-card__title">Top Genres</h3>
                     <div className="profile-taste-card__tags">
                         {genres && genres.length > 0 ? (
@@ -254,7 +243,7 @@ const ProfileShow: React.FC<ProfileShowProps> = ({username, isMyProfile}) => {
                     </div>
                 </section>
 
-                <section className="profile-taste-card profile-taste-card--roles custom-scrollbar">
+                <section className="profile-card profile-taste-card profile-taste-card--roles custom-scrollbar">
                     <h3 className="profile-taste-card__title">Music Roles</h3>
                     {isMyProfile ? (
                         <>
