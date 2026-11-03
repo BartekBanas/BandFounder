@@ -11,7 +11,10 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(
+            accountService,
+            Substitute.For<IAuthenticationService>(),
+            Substitute.For<IMusicProfileProvider>());
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -97,7 +100,10 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
+        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(
+            accountService,
+            Substitute.For<IAuthenticationService>(),
+            Substitute.For<IMusicProfileProvider>());
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -161,7 +167,10 @@ public class MusicTasteServiceTests
     public void GetWagedGenres_ShouldReturnGenresWithCorrectWeights()
     {
         // Arrange
-        var musicTasteService = new MusicTasteService(Substitute.For<IAccountService>(), Substitute.For<IAuthenticationService>());
+        var musicTasteService = new MusicTasteService(
+            Substitute.For<IAccountService>(),
+            Substitute.For<IAuthenticationService>(),
+            Substitute.For<IMusicProfileProvider>());
 
         var user = new Account
         {
@@ -228,7 +237,11 @@ public class MusicTasteServiceTests
     {
         // Arrange
         var accountService = Substitute.For<IAccountService>();
-        var musicTasteService = Substitute.ForPartsOf<MusicTasteService>(accountService, Substitute.For<IAuthenticationService>());
+        var musicProfileProvider = Substitute.For<IMusicProfileProvider>();
+        var musicTasteService = new MusicTasteService(
+            accountService,
+            Substitute.For<IAuthenticationService>(),
+            musicProfileProvider);
 
         var requesterId = Guid.NewGuid();
         var targetUserId = Guid.NewGuid();
@@ -292,6 +305,16 @@ public class MusicTasteServiceTests
 
         accountService.GetDetailedAccount(requesterId).Returns(user1);
         accountService.GetDetailedAccount(targetUserId).Returns(user2);
+        musicProfileProvider.GetProfilesAsync(Arg.Any<IReadOnlyCollection<Guid>>())
+            .Returns(new Dictionary<Guid, MusicProfile>
+            {
+                [requesterId] = new(
+                    new HashSet<string> { "Artist1" },
+                    new Dictionary<string, int> { ["Rock"] = 1, ["Jazz"] = 1 }),
+                [targetUserId] = new(
+                    new HashSet<string> { "Artist1" },
+                    new Dictionary<string, int> { ["Rock"] = 1, ["Classical"] = 1 })
+            });
 
         // Act
         var result = await musicTasteService.CompareMusicTasteAsync(requesterId, targetUserId);
@@ -299,5 +322,40 @@ public class MusicTasteServiceTests
         // Assert
         var expectedScore = 4; // 1 common genre ("Rock") + 1 common artist ("Artist1") * 3
         Assert.That(result, Is.EqualTo(expectedScore));
+    }
+
+    [Test]
+    public async Task CompareMusicTasteManyAsync_ShouldScoreEachDistinctTarget()
+    {
+        var requesterId = Guid.NewGuid();
+        var matchingTargetId = Guid.NewGuid();
+        var differentTargetId = Guid.NewGuid();
+        var musicProfileProvider = Substitute.For<IMusicProfileProvider>();
+        var service = new MusicTasteService(
+            Substitute.For<IAccountService>(),
+            Substitute.For<IAuthenticationService>(),
+            musicProfileProvider);
+
+        musicProfileProvider.GetProfilesAsync(Arg.Any<IReadOnlyCollection<Guid>>())
+            .Returns(new Dictionary<Guid, MusicProfile>
+            {
+                [requesterId] = new(
+                    new HashSet<string> { "artist-1" },
+                    new Dictionary<string, int> { ["Rock"] = 2 }),
+                [matchingTargetId] = new(
+                    new HashSet<string> { "artist-1" },
+                    new Dictionary<string, int> { ["Rock"] = 1 }),
+                [differentTargetId] = new(
+                    new HashSet<string> { "artist-2" },
+                    new Dictionary<string, int> { ["Jazz"] = 3 })
+            });
+
+        var scores = await service.CompareMusicTasteManyAsync(
+            requesterId,
+            [matchingTargetId, differentTargetId, matchingTargetId]);
+
+        Assert.That(scores, Has.Count.EqualTo(2));
+        Assert.That(scores[matchingTargetId], Is.EqualTo(4));
+        Assert.That(scores[differentTargetId], Is.Zero);
     }
 }

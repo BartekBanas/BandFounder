@@ -4,6 +4,8 @@ namespace BandFounder.Domain.Repositories;
 
 public static class RepositoriesExtensions
 {
+    public sealed record ArtistUpsertResult(Artist Artist, bool GenresAdded);
+
     public static async Task<Genre> GetOrCreateAsync(this IRepository<Genre> repository, string genreName)
     {
         // Validate input: check if it's null, empty or contains only white spaces
@@ -61,6 +63,18 @@ public static class RepositoriesExtensions
     public static async Task<Artist> GetOrCreateAsync(this IRepository<Artist> artistRepository, IRepository<Genre> genreRepository,
         string artistName, List<string>? genres = null, int popularity = 0, string? id = null)
     {
+        return (await artistRepository.GetOrCreateWithEnrichmentAsync(
+            genreRepository, artistName, genres, popularity, id)).Artist;
+    }
+
+    public static async Task<ArtistUpsertResult> GetOrCreateWithEnrichmentAsync(
+        this IRepository<Artist> artistRepository,
+        IRepository<Genre> genreRepository,
+        string artistName,
+        List<string>? genres = null,
+        int popularity = 0,
+        string? id = null)
+    {
         if (string.IsNullOrWhiteSpace(artistName))
         {
             throw new ArgumentException("Artist name cannot be empty or whitespace");
@@ -75,8 +89,9 @@ public static class RepositoriesExtensions
 
             if (artistById is not null)
             {
-                await EnrichArtistAsync(artistById, genreRepository, artistName, genres, popularity);
-                return artistById;
+                var genresAdded = await EnrichArtistAsync(
+                    artistById, genreRepository, artistName, genres, popularity);
+                return new ArtistUpsertResult(artistById, genresAdded);
             }
         }
 
@@ -85,8 +100,9 @@ public static class RepositoriesExtensions
 
         if (artistByName is not null)
         {
-            await EnrichArtistAsync(artistByName, genreRepository, artistName, genres, popularity);
-            return artistByName;
+            var genresAdded = await EnrichArtistAsync(
+                artistByName, genreRepository, artistName, genres, popularity);
+            return new ArtistUpsertResult(artistByName, genresAdded);
         }
 
         var newArtist = new Artist
@@ -106,10 +122,10 @@ public static class RepositoriesExtensions
         await artistRepository.CreateAsync(newArtist);
         await artistRepository.SaveChangesAsync();
 
-        return newArtist;
+        return new ArtistUpsertResult(newArtist, false);
     }
 
-    private static async Task EnrichArtistAsync(Artist artist, IRepository<Genre> genreRepository,
+    private static async Task<bool> EnrichArtistAsync(Artist artist, IRepository<Genre> genreRepository,
         string artistName, List<string>? genres, int popularity)
     {
         if (artist.Name != artistName)
@@ -130,7 +146,11 @@ public static class RepositoriesExtensions
 
                 artist.Genres.Add(genre);
             }
+
+            return true;
         }
+
+        return false;
     }
 
     private static string? NormalizeSpotifyArtistId(string? id)

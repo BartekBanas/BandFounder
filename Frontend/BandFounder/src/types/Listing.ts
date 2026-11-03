@@ -20,6 +20,8 @@ export interface ListingWithScore {
 
 export interface ListingsFeedDto {
     listings: ListingWithScore[];
+    totalCount: number;
+    hasMore: boolean;
 }
 
 export interface ListingFeedFilters {

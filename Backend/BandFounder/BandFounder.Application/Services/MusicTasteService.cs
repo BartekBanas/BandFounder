@@ -9,17 +9,25 @@ public interface IMusicTasteService
     Task<IEnumerable<string>> GetCommonGenres(Guid requesterId, Guid targetUserId);
     Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresAsync(Guid targetUserId, Guid? accountId = null);
     Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId);
+    Task<IReadOnlyDictionary<Guid, int>> CompareMusicTasteManyAsync(
+        Guid requesterId,
+        IReadOnlyCollection<Guid> targetUserIds);
 }
 
 public class MusicTasteService : IMusicTasteService
 {
     private readonly IAccountService _accountService;
     private readonly IAuthenticationService _authenticationService;
+    private readonly IMusicProfileProvider _musicProfileProvider;
 
-    public MusicTasteService(IAccountService accountService, IAuthenticationService authenticationService)
+    public MusicTasteService(
+        IAccountService accountService,
+        IAuthenticationService authenticationService,
+        IMusicProfileProvider musicProfileProvider)
     {
         _accountService = accountService;
         _authenticationService = authenticationService;
+        _musicProfileProvider = musicProfileProvider;
     }
 
     public async Task<ArtistsAndGenresDto> GetCommonArtistsAndGenresAsync(Guid targetUserId, Guid? accountId = null)
@@ -81,44 +89,22 @@ public class MusicTasteService : IMusicTasteService
 
     public async Task<int> CompareMusicTasteAsync(Guid requesterId, Guid targetUserId)
     {
-        var user1 = await _accountService.GetDetailedAccount(requesterId);
-        var user2 = await _accountService.GetDetailedAccount(targetUserId);
-
-        var genreSimilarityScore = CalculateGenreSimilarity(user1, user2);
-        var artistSimilarityScore = CalculateArtistSimilarity(user1, user2);
-
-        return genreSimilarityScore + artistSimilarityScore;
+        var scores = await CompareMusicTasteManyAsync(requesterId, [targetUserId]);
+        return scores[targetUserId];
     }
 
-    private int CalculateGenreSimilarity(Account user1, Account user2)
+    public async Task<IReadOnlyDictionary<Guid, int>> CompareMusicTasteManyAsync(
+        Guid requesterId,
+        IReadOnlyCollection<Guid> targetUserIds)
     {
-        var user1Genres = GetWagedGenres(user1);
-        var user2Genres = GetWagedGenres(user2);
+        var distinctTargetUserIds = targetUserIds.Distinct().ToArray();
+        var profiles = await _musicProfileProvider.GetProfilesAsync(
+            [requesterId, .. distinctTargetUserIds]);
+        var requesterProfile = profiles[requesterId];
 
-        var genreSimilarityScore = 0;
-
-        var allGenres = user1Genres.Keys.Union(user2Genres.Keys);
-
-        foreach (var genre in allGenres)
-        {
-            var user1Weight = user1Genres.GetValueOrDefault(genre, defaultValue: 0);
-            var user2Weight = user2Genres.GetValueOrDefault(genre, defaultValue: 0);
-
-            genreSimilarityScore += Math.Min(user1Weight, user2Weight);
-        }
-
-        return genreSimilarityScore;
+        return distinctTargetUserIds.ToDictionary(
+            targetUserId => targetUserId,
+            targetUserId => MusicSimilarity.Score(requesterProfile, profiles[targetUserId]));
     }
-
-    private int CalculateArtistSimilarity(Account user1, Account user2)
-    {
-        var user1ArtistIds = user1.Artists.Select(artist => artist.Id).ToHashSet();
-        var user2ArtistIds = user2.Artists.Select(artist => artist.Id).ToHashSet();
-
-        var commonArtists = user1ArtistIds.Intersect(user2ArtistIds).Count();
-
-        var artistSimilarityScore = commonArtists * 3;
-
-        return artistSimilarityScore;
-    }
+    
 }
