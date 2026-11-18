@@ -17,9 +17,6 @@ namespace BandFounder.Api.Migrations
                 type: "timestamp with time zone",
                 nullable: true);
 
-            migrationBuilder.Sql(
-                """UPDATE "Account" SET "EmailVerifiedAt" = "DateCreated" WHERE "EmailVerifiedAt" IS NULL;""");
-
             migrationBuilder.CreateTable(
                 name: "EmailVerificationTokens",
                 columns: table => new
