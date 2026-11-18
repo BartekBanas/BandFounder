@@ -42,7 +42,7 @@ public sealed class EmailVerificationTokenStore : IEmailVerificationStore
             // changes, and verification updates must serialize before token rotation.
             var account = await _dbContext.Accounts
                 .FromSqlInterpolated(
-                    $"""SELECT * FROM "Accounts" WHERE "Id" = {accountId} FOR UPDATE""")
+                    $"""SELECT * FROM "Account" WHERE "Id" = {accountId} FOR UPDATE""")
                 .SingleAsync();
 
             if (account.EmailVerifiedAt is not null)

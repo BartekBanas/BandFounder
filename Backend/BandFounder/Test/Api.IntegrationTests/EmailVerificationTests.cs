@@ -262,12 +262,19 @@ public class EmailVerificationTests : IntegrationTestBase
     [Test]
     public async Task UpdateAccount_WhenTokenInvalidationFails_RollsBackEmailAndVerificationReset()
     {
-        var jwt = await RegisterVerifiedAsync("atomicemail", "atomicemail@example.com");
+        var jwt = await RegisterAsync("atomicemail", "atomicemail@example.com");
         AuthenticateAs(jwt);
+        EmailSender.ClearSent();
 
         using (var scope = Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+
+            // Keep an active token so the constraint rejects the attempted invalidation.
+            var account = await db.Accounts.SingleAsync(a => a.Name == "atomicemail");
+            account.EmailVerifiedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
             await db.Database.ExecuteSqlRawAsync(
                 """
                 ALTER TABLE "EmailVerificationTokens"
