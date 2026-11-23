@@ -40,6 +40,7 @@
     flex-direction: column;
     gap: 20px;
     min-height: 0;
+    overscroll-behavior: contain;
 }
 
 .utility-drawer__profile {
@@ -171,11 +172,11 @@
 }
 
 .utility-drawer__notification-switch .MuiSwitch-switchBase.Mui-checked {
-    color: var(--accent-blue);
+    color: var(--background-default);
 }
 
 .utility-drawer__notification-switch .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
-    background-color: var(--accent-blue);
+    background-color: var(--accent);
 }
 
 .utility-drawer__delay-wrap {
@@ -247,11 +248,11 @@
 .utility-drawer__delay-pill.is-selected {
     background-color: var(--cta-surface-accent);
     color: var(--text-primary);
-    box-shadow: inset 0 0 0 1px var(--accent-blue-border);
+    box-shadow: inset 0 0 0 1px var(--accent-border);
 }
 
 .utility-drawer__delay-pill:focus-visible {
-    outline: 2px solid var(--accent-blue);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 

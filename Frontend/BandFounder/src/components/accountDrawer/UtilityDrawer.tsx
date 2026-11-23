@@ -18,6 +18,10 @@ import ProfilePicture from "../profile/ProfilePicture";
 import {EmailNotificationCard} from "./EmailNotificationCard";
 import {resolveEmailUnreadDelayMinutes} from "../../constants/emailNotifications";
 
+const OPEN_ACCOUNT_MENU_EVENT = "bandfounder:open-account-menu";
+
+export const openAccountMenu = () => window.dispatchEvent(new Event(OPEN_ACCOUNT_MENU_EVENT));
+
 interface UtilityDrawerProps {
 }
 
@@ -82,6 +86,11 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
             );
         }
     };
+
+    useEffect(() => {
+        window.addEventListener(OPEN_ACCOUNT_MENU_EVENT, open);
+        return () => window.removeEventListener(OPEN_ACCOUNT_MENU_EVENT, open);
+    }, [open]);
 
     useEffect(() => {
         const getUser = async () => {
