@@ -17,10 +17,7 @@ public interface IEmailVerificationService
     Task ConfirmAsync(ConfirmEmailVerificationDto dto);
     Task<EmailVerificationResendDto> ResendAsync(Guid accountId);
     Task<bool> ProcessDueAsync(CancellationToken cancellationToken = default);
-    Task ProcessDeliveryAsync(
-        Guid tokenId,
-        bool throwOnSendFailure = false,
-        CancellationToken cancellationToken = default);
+    Task TryDeliverImmediatelyAsync(Guid tokenId);
 }
 
 public sealed record EmailVerificationIssuance(Guid TokenId, DateTime ResendAvailableAt);
@@ -54,7 +51,7 @@ public sealed class EmailVerificationService : IEmailVerificationService
         Account account, DateTime utcNow, bool cancelExisting)
     {
         var token = CreateToken(account, utcNow);
-        await _store.IssueForAccountAsync(token, utcNow, cancelExisting);
+        await _store.IssueForAccountAsync(token, utcNow, cancelExisting, GetResendCooldown());
 
         return new EmailVerificationIssuance(
             token.Id,
@@ -107,7 +104,7 @@ public sealed class EmailVerificationService : IEmailVerificationService
                 issuance.ResendAvailableAt!.Value);
         }
 
-        await ProcessDeliveryAsync(issuance.Token!.Id);
+        await TryDeliverImmediatelyAsync(issuance.Token!.Id);
         return new EmailVerificationResendDto
         {
             ResendAvailableAt = issuance.ResendAvailableAt
@@ -116,6 +113,7 @@ public sealed class EmailVerificationService : IEmailVerificationService
 
     public async Task<bool> ProcessDueAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var utcNow = DateTime.UtcNow;
         await _store.RecoverStaleDeliveriesAsync(
             utcNow.AddMinutes(-_deliveryOptions.StaleClaimMinutes),
@@ -128,14 +126,26 @@ public sealed class EmailVerificationService : IEmailVerificationService
             return false;
         }
 
-        await ProcessDeliveryAsync(candidateId.Value, cancellationToken: cancellationToken);
+        await ProcessDeliveryAsync(candidateId.Value, cancellationToken);
         return true;
     }
 
-    public async Task ProcessDeliveryAsync(
-        Guid tokenId,
-        bool throwOnSendFailure = false,
-        CancellationToken cancellationToken = default)
+    public async Task TryDeliverImmediatelyAsync(Guid tokenId)
+    {
+        // Issuance is already committed. A slow or unavailable provider can be retried by the worker.
+        try
+        {
+            await ProcessDeliveryAsync(tokenId, sendTimeout: TimeSpan.FromSeconds(5));
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception,
+                "Immediate delivery did not complete for verification token {TokenId}", tokenId);
+        }
+    }
+
+    private async Task ProcessDeliveryAsync(
+        Guid tokenId, CancellationToken cancellationToken = default, TimeSpan? sendTimeout = null)
     {
         var claimedAt = DateTime.UtcNow;
         if (!await _store.TryClaimDeliveryAsync(tokenId, claimedAt))
@@ -143,7 +153,7 @@ public sealed class EmailVerificationService : IEmailVerificationService
             return;
         }
 
-        var token = await _store.GetDeliveryAsync(tokenId);
+        var token = await _store.GetClaimedDeliveryAsync(tokenId, claimedAt);
         if (token is null)
         {
             return;
@@ -181,7 +191,10 @@ public sealed class EmailVerificationService : IEmailVerificationService
 
         try
         {
-            await _emailSender.SendAsync(BuildEmail(token, rawToken), cancellationToken);
+            using var deadline = sendTimeout is TimeSpan timeout
+                ? new CancellationTokenSource(timeout)
+                : null;
+            await _emailSender.SendAsync(BuildEmail(token, rawToken), deadline?.Token ?? cancellationToken);
             await _store.TryMarkDeliverySentAsync(
                 token.Id, attemptCount, DateTime.UtcNow);
         }
@@ -204,11 +217,6 @@ public sealed class EmailVerificationService : IEmailVerificationService
                 "Failed to deliver email verification token {TokenId}; attempt {AttemptCount}",
                 token.Id,
                 attemptCount);
-
-            if (throwOnSendFailure)
-            {
-                throw;
-            }
         }
     }
 
@@ -222,7 +230,7 @@ public sealed class EmailVerificationService : IEmailVerificationService
             Id = tokenId,
             AccountId = account.Id,
             TokenHash = SecureTokenHelper.HashToken(rawToken),
-            IntendedEmail = NormalizeEmail(account.Email),
+            IntendedEmail = account.Email,
             CreatedAt = utcNow,
             ExpiresAt = utcNow.Add(GetTokenTtl()),
             DeliveryNotBeforeUtc = utcNow
@@ -281,6 +289,4 @@ public sealed class EmailVerificationService : IEmailVerificationService
     {
         return new BadRequestException("Invalid or expired email verification token");
     }
-
-    private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 }

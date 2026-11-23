@@ -63,8 +63,6 @@ public class MessageEmailNotificationWorkerTests
     {
         var provider = Substitute.For<IServiceProvider>();
         provider.GetService(typeof(IMessageEmailNotificationService)).Returns(service);
-        provider.GetService(typeof(IEmailVerificationService))
-            .Returns(Substitute.For<IEmailVerificationService>());
 
         var scope = Substitute.For<IServiceScope>();
         scope.ServiceProvider.Returns(provider);

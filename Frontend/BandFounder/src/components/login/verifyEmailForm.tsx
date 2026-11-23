@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from "react";
+import {useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {confirmEmailVerification, resendEmailVerification} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
@@ -8,40 +8,27 @@ import {useIsAuthenticated} from "../../hooks/authentication";
 
 export function VerifyEmailForm() {
     const [searchParams] = useSearchParams();
-    const token = useMemo(() => searchParams.get("token") ?? "", [searchParams]);
-    const [status, setStatus] = useState<"loading" | "success" | "error">(token ? "loading" : "error");
-    const [message, setMessage] = useState(
-        token ? "Verifying your email…" : "This verification link is missing a token.");
+    const token = searchParams.get("token") ?? "";
+    return <EmailVerificationForm key={token} token={token}/>;
+}
+
+function EmailVerificationForm({token}: {token: string}) {
+    const [status, setStatus] = useState<"ready" | "loading" | "success" | "error">("ready");
+    const [error, setError] = useState("");
     const [resending, setResending] = useState(false);
     const isAuthenticated = useIsAuthenticated();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!token) {
-            return;
+    const handleConfirm = async () => {
+        setStatus("loading");
+        try {
+            await confirmEmailVerification(token);
+            setStatus("success");
+        } catch (error: unknown) {
+            setError(error instanceof Error ? error.message : "This verification link is invalid or has expired.");
+            setStatus("error");
         }
-
-        let cancelled = false;
-
-        (async () => {
-            try {
-                await confirmEmailVerification(token);
-                if (!cancelled) {
-                    setStatus("success");
-                    setMessage("Your email is verified. You can close this page.");
-                }
-            } catch (error: any) {
-                if (!cancelled) {
-                    setStatus("error");
-                    setMessage(error?.message || "This verification link is invalid or has expired.");
-                }
-            }
-        })();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [token]);
+    };
 
     const handleResend = async () => {
         if (!isAuthenticated) {
@@ -51,10 +38,14 @@ export function VerifyEmailForm() {
 
         setResending(true);
         try {
-            await resendEmailVerification();
-            mantineSuccessNotification("Verification email sent");
-        } catch (error: any) {
-            mantineErrorNotification(error?.message || "Failed to resend verification email");
+            const result = await resendEmailVerification();
+            if (result.resendAvailableAt) {
+                mantineSuccessNotification("Verification email queued for delivery");
+            } else {
+                setStatus("success");
+            }
+        } catch (error: unknown) {
+            mantineErrorNotification(error instanceof Error ? error.message : "Failed to send verification email");
         } finally {
             setResending(false);
         }
@@ -91,25 +82,30 @@ export function VerifyEmailForm() {
                         <Stack alignItems="center" spacing={2} sx={{marginTop: 4}}>
                             <CircularProgress size={28}/>
                             <Typography variant="body2" color="text.secondary">
-                                {message}
+                                Verifying your email…
                             </Typography>
                         </Stack>
                     )}
 
                     {status === "success" && (
                         <Alert severity="success" sx={{marginTop: 3}}>
-                            {message}
+                            Your email is verified.
                         </Alert>
                     )}
 
                     {status === "error" && (
                         <Alert severity="error" sx={{marginTop: 3}}>
-                            {message}
+                            {error}
                         </Alert>
                     )}
 
                     <Stack spacing={1.5} sx={{marginTop: 3}}>
-                        {status !== "success" && (
+                        {token && status === "ready" && (
+                            <Button variant="contained" fullWidth onClick={handleConfirm}>
+                                Confirm email
+                            </Button>
+                        )}
+                        {(!token && status !== "success" || status === "error") && (
                             <Button
                                 variant="contained"
                                 color="primary"
@@ -117,7 +113,7 @@ export function VerifyEmailForm() {
                                 disabled={resending}
                                 onClick={handleResend}
                             >
-                                {isAuthenticated ? "Resend verification email" : "Log in to resend"}
+                                {isAuthenticated ? "Send verification email" : "Log in to request a link"}
                             </Button>
                         )}
                         <Button

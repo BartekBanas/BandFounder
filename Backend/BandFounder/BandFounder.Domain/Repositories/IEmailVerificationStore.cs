@@ -4,8 +4,9 @@ namespace BandFounder.Domain.Repositories;
 
 public interface IEmailVerificationStore
 {
+    Task<Account?> LockAccountAsync(Guid accountId);
     Task IssueForAccountAsync(
-        EmailVerificationToken token, DateTime utcNow, bool cancelExisting);
+        EmailVerificationToken token, DateTime utcNow, bool cancelExisting, TimeSpan resendCooldown);
 
     Task<EmailVerificationTokenIssuanceResult> IssueResendAsync(
         Guid accountId,
@@ -23,7 +24,7 @@ public interface IEmailVerificationStore
 
     Task<Guid?> GetNextDueDeliveryIdAsync(DateTime utcNow);
 
-    Task<EmailVerificationToken?> GetDeliveryAsync(Guid tokenId);
+    Task<EmailVerificationToken?> GetClaimedDeliveryAsync(Guid tokenId, DateTime claimedAt);
 
     Task<bool> TryClaimDeliveryAsync(Guid tokenId, DateTime utcNow);
 

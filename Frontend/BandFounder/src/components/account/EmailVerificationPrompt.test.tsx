@@ -54,10 +54,10 @@ describe('EmailVerificationPrompt', () => {
 
         render(<EmailVerificationPrompt/>);
 
-        expect(await screen.findByText(/We sent a verification email when you registered/))
+        expect(await screen.findByText(/Verify your address to receive email notifications/))
             .toBeInTheDocument();
         expect(screen.getByText(/You can resend it in/)).toBeInTheDocument();
-        expect(screen.queryByRole('button', {name: 'Resend email'})).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', {name: 'Send verification email'})).not.toBeInTheDocument();
     });
 
     it('offers resend when server timing allows and applies the returned cooldown', async () => {
@@ -70,13 +70,13 @@ describe('EmailVerificationPrompt', () => {
 
         render(<EmailVerificationPrompt/>);
 
-        fireEvent.click(await screen.findByRole('button', {name: 'Resend email'}));
+        fireEvent.click(await screen.findByRole('button', {name: 'Send verification email'}));
 
         await waitFor(() => {
             expect(resendEmailVerificationMock).toHaveBeenCalledOnce();
             expect(successNotificationMock)
                 .toHaveBeenCalledWith('Verification email queued for delivery');
-            expect(screen.queryByRole('button', {name: 'Resend email'})).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', {name: 'Send verification email'})).not.toBeInTheDocument();
         });
         expect(screen.getByText(/You can resend it in/)).toBeInTheDocument();
     });

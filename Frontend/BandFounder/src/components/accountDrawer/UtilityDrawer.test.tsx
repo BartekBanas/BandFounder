@@ -1,3 +1,4 @@
+import {MemoryRouter} from 'react-router-dom';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {getMyAccount, updateMyAccount} from '../../api/account';
@@ -64,13 +65,21 @@ describe('UtilityDrawer notifications', () => {
         vi.mocked(updateMyAccount).mockResolvedValue({...account, emailOnNewMessage: false});
     });
 
+    it('offers a verification link in account settings for an unverified address', async () => {
+        render(<MemoryRouter><UtilityDrawer/></MemoryRouter>);
+        fireEvent.click(screen.getByRole('button', {name: 'Open account menu'}));
+
+        expect(await screen.findByRole('link', {name: 'Verify email'}))
+            .toHaveAttribute('href', '/verify-email');
+    });
+
     it('loads the persisted preference and applies optimistic updates while saving', async () => {
         let resolveUpdate: ((value: typeof account) => void) | undefined;
         vi.mocked(updateMyAccount).mockReturnValue(new Promise((resolve) => {
             resolveUpdate = resolve;
         }));
 
-        render(<UtilityDrawer/>);
+        render(<MemoryRouter><UtilityDrawer/></MemoryRouter>);
         fireEvent.click(screen.getByRole('button', {name: 'Open account menu'}));
 
         const toggle = await screen.findByRole('checkbox', {name: 'Email me about unread messages'});
@@ -88,7 +97,7 @@ describe('UtilityDrawer notifications', () => {
     it('shows the persisted delay and saves a new delay immediately', async () => {
         vi.mocked(updateMyAccount).mockResolvedValue({...account, emailUnreadDelayMinutes: 60});
 
-        render(<UtilityDrawer/>);
+        render(<MemoryRouter><UtilityDrawer/></MemoryRouter>);
         fireEvent.click(screen.getByRole('button', {name: 'Open account menu'}));
 
         const dayOption = await screen.findByRole('radio', {name: '1 day'});
@@ -105,7 +114,7 @@ describe('UtilityDrawer notifications', () => {
     it('hides delay options when email notifications are turned off', async () => {
         vi.mocked(updateMyAccount).mockResolvedValue({...account, emailOnNewMessage: false});
 
-        render(<UtilityDrawer/>);
+        render(<MemoryRouter><UtilityDrawer/></MemoryRouter>);
         fireEvent.click(screen.getByRole('button', {name: 'Open account menu'}));
 
         const toggle = await screen.findByRole('checkbox', {name: 'Email me about unread messages'});
@@ -119,7 +128,7 @@ describe('UtilityDrawer notifications', () => {
     it('rolls back the delay when the update is rejected', async () => {
         vi.mocked(updateMyAccount).mockRejectedValueOnce(new Error('request failed'));
 
-        render(<UtilityDrawer/>);
+        render(<MemoryRouter><UtilityDrawer/></MemoryRouter>);
         fireEvent.click(screen.getByRole('button', {name: 'Open account menu'}));
 
         const hourOption = await screen.findByRole('radio', {name: '1 hour'});
@@ -134,7 +143,7 @@ describe('UtilityDrawer notifications', () => {
     it('rolls back the optimistic toggle when the update is rejected', async () => {
         vi.mocked(updateMyAccount).mockRejectedValueOnce(new Error('request failed'));
 
-        render(<UtilityDrawer/>);
+        render(<MemoryRouter><UtilityDrawer/></MemoryRouter>);
         fireEvent.click(screen.getByRole('button', {name: 'Open account menu'}));
 
         const toggle = await screen.findByRole('checkbox', {name: 'Email me about unread messages'});
