@@ -32,6 +32,14 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Test]
+    public async Task InvokeAsync_RedundantRequest_ReturnsNoContentStatus()
+    {
+        var (statusCode, _) = await Invoke(new RedundantRequestException("already done"));
+
+        Assert.That(statusCode, Is.EqualTo(StatusCodes.Status204NoContent));
+    }
+
+    [Test]
     public async Task InvokeAsync_SetsPlainTextContentType()
     {
         var context = new DefaultHttpContext { Response = { Body = new MemoryStream() } };
@@ -64,10 +72,6 @@ public class ErrorHandlingMiddlewareTests
         yield return Case(reauthorizationRequired, StatusCodes.Status410Gone, reauthorizationRequired.Message);
         var notLinked = new SpotifyAccountNotLinkedException();
         yield return Case(notLinked, StatusCodes.Status422UnprocessableEntity, notLinked.Message);
-        yield return Case(
-            new RedundantRequestException("already done"),
-            StatusCodes.Status204NoContent,
-            "already done");
         yield return Case(
             new InvalidOperationException("kaboom"),
             StatusCodes.Status500InternalServerError,
