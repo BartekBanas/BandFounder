@@ -40,9 +40,15 @@ public sealed class MessageEmailNotificationWorker(
                 // One scope (and DbContext) per attempt so eligibility re-reads cannot
                 // reuse Account / prefs / membership / read state tracked from earlier items.
                 using var scope = scopeFactory.CreateScope();
-                var notificationService = scope.ServiceProvider
+                var messageNotificationService = scope.ServiceProvider
                     .GetRequiredService<IMessageEmailNotificationService>();
-                processed = await notificationService.ProcessDueAsync(cancellationToken);
+                var emailVerificationService = scope.ServiceProvider
+                    .GetRequiredService<IEmailVerificationService>();
+                var processedVerification =
+                    await emailVerificationService.ProcessDueAsync(cancellationToken);
+                var processedMessage =
+                    await messageNotificationService.ProcessDueAsync(cancellationToken);
+                processed = processedVerification || processedMessage;
                 if (processed)
                 {
                     processedCount++;
@@ -51,7 +57,7 @@ public sealed class MessageEmailNotificationWorker(
             while (processed);
 
             logger.LogInformation(
-                "Processed {ProcessedCount} message email notifications in worker cycle",
+                "Processed {ProcessedCount} email delivery batches in worker cycle",
                 processedCount);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -59,7 +65,7 @@ public sealed class MessageEmailNotificationWorker(
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Message email notification worker cycle failed");
+            logger.LogError(exception, "Email delivery worker cycle failed");
         }
     }
 }

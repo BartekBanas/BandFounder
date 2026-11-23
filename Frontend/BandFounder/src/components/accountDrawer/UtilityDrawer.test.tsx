@@ -3,6 +3,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {getMyAccount, updateMyAccount} from '../../api/account';
 import {getTopArtists} from '../../api/spotify';
 import {getUsersGenres} from '../../api/metadata';
+import type {AccountSettings} from '../../types/Account';
 import {UtilityDrawer} from './UtilityDrawer';
 
 vi.mock('../../api/account', () => ({
@@ -44,12 +45,14 @@ vi.mock('../profile/ProfilePicture', () => ({
     default: () => <div data-testid="profile-picture"/>,
 }));
 
-const account = {
+const account: AccountSettings = {
     id: 'account-1',
     name: 'Test account',
     email: 'test@example.com',
     emailOnNewMessage: true,
     emailUnreadDelayMinutes: 1440,
+    emailVerified: false,
+    resendAvailableAt: null,
 };
 
 describe('UtilityDrawer notifications', () => {
@@ -97,22 +100,6 @@ describe('UtilityDrawer notifications', () => {
         await waitFor(() => {
             expect(screen.getByRole('radio', {name: '1 hour'})).toHaveAttribute('aria-checked', 'true');
         });
-    });
-
-    it('defaults the delay to 1 day when none is saved', async () => {
-        vi.mocked(getMyAccount).mockResolvedValue({
-            ...account,
-            emailUnreadDelayMinutes: undefined,
-        });
-
-        render(<UtilityDrawer/>);
-        fireEvent.click(screen.getByRole('button', {name: 'Open account menu'}));
-
-        const dayOption = await screen.findByRole('radio', {name: '1 day'});
-        await waitFor(() => expect(dayOption).not.toBeDisabled());
-        expect(dayOption).toHaveAttribute('aria-checked', 'true');
-        expect(screen.getByRole('radio', {name: '5 min'})).toHaveAttribute('aria-checked', 'false');
-        expect(screen.getByRole('radio', {name: '1 hour'})).toHaveAttribute('aria-checked', 'false');
     });
 
     it('hides delay options when email notifications are turned off', async () => {

@@ -7,4 +7,6 @@ public sealed class EmailOptions
     public string FromAddress { get; set; } = "noreply@bandfounder.com";
     public string FrontendBaseUrl { get; set; } = "http://127.0.0.1:3000";
     public int PasswordResetTokenTtlMinutes { get; set; } = 15;
+    public int EmailVerificationTokenTtlMinutes { get; set; } = 1440;
+    public int EmailVerificationResendCooldownSeconds { get; set; } = 60;
 }

@@ -176,6 +176,7 @@ public class BackupController : Controller
                     : null,
                 PasswordHash = _hashingService.HashPassword(accountBackup.Name),
                 DateCreated = DateTime.UtcNow,
+                EmailVerifiedAt = accountBackup.EmailVerifiedAt,
                 NotificationPreferences = new AccountNotificationPreferences
                 {
                     AccountId = id,

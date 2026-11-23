@@ -98,6 +98,7 @@ public class AccountServiceMusicProfileTests
             Substitute.For<IPasswordResetTokenStore>(),
             Substitute.For<IUnitOfWork>(),
             chatroomService,
+            Substitute.For<IEmailVerificationService>(),
             Substitute.For<IValidator<Account>>(),
             authenticationService,
             Substitute.For<IHashingService>(),

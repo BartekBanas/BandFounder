@@ -24,6 +24,8 @@ public class Account : Entity
     
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
+    public DateTime? EmailVerifiedAt { get; set; }
+
     public virtual AccountNotificationPreferences NotificationPreferences { get; set; } = new();
     
     public virtual SpotifyTokens? SpotifyTokens { get; set; }

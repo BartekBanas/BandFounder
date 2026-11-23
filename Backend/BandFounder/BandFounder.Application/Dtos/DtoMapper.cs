@@ -19,7 +19,8 @@ public static class DtoMapper
         };
     }
 
-    public static AccountSettingsDto ToSettingsDto(this Account account)
+    public static AccountSettingsDto ToSettingsDto(
+        this Account account, DateTime? resendAvailableAt = null)
     {
         return new AccountSettingsDto
         {
@@ -27,7 +28,9 @@ public static class DtoMapper
             Name = account.Name,
             Email = account.Email,
             EmailOnNewMessage = account.NotificationPreferences.EmailOnNewMessage,
-            EmailUnreadDelayMinutes = account.NotificationPreferences.EmailUnreadDelayMinutes
+            EmailUnreadDelayMinutes = account.NotificationPreferences.EmailUnreadDelayMinutes,
+            EmailVerified = account.EmailVerifiedAt is not null,
+            ResendAvailableAt = resendAvailableAt
         };
     }
 

@@ -10,7 +10,7 @@ import {
     mantineInformationNotification,
     mantineSuccessNotification
 } from "../components/common/mantineNotification";
-import {Account, PasswordResetInfo} from "../types/Account";
+import type {Account, AccountSettings, PasswordResetInfo} from "../types/Account";
 import {commonTaste} from "../types/CommonTaste";
 
 export async function registerAccount(name: string, email: string, password: string) {
@@ -100,6 +100,55 @@ export async function getPublicProfilePicture(accountId: string): Promise<string
     return URL.createObjectURL(await response.blob());
 }
 
+export async function confirmEmailVerification(token: string): Promise<void> {
+    const response = await fetch(`${API_URL}/accounts/email-verification/confirm`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({token}),
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text() || 'Failed to verify email');
+    }
+}
+
+export interface EmailVerificationResendResult {
+    resendAvailableAt: string | null;
+}
+
+export class EmailVerificationResendError extends Error {
+    constructor(message: string, public readonly resendAvailableAt: string | null) {
+        super(message);
+        this.name = 'EmailVerificationResendError';
+    }
+}
+
+export async function resendEmailVerification(): Promise<EmailVerificationResendResult> {
+    const response = await fetch(`${API_URL}/accounts/email-verification/resend`, {
+        method: 'POST',
+        headers: authorizedHeaders()
+    });
+
+    if (!response.ok) {
+        if (response.status === 429) {
+            const result = await response.json() as EmailVerificationResendResult;
+            const retryAfter = response.headers.get('Retry-After');
+            const resendAvailableAt = result.resendAvailableAt ??
+                (retryAfter ? new Date(Date.now() + Number(retryAfter) * 1000).toISOString() : null);
+            throw new EmailVerificationResendError(
+                'Please wait before requesting another verification email.',
+                resendAvailableAt
+            );
+        }
+
+        throw new Error(await response.text() || 'Failed to resend verification email');
+    }
+
+    return await response.json() as EmailVerificationResendResult;
+}
+
 export async function completePasswordReset(token: string, newPassword: string): Promise<void> {
     const response = await fetch(`${API_URL}/accounts/password-reset/complete`, {
         method: 'POST',
@@ -117,7 +166,7 @@ export async function completePasswordReset(token: string, newPassword: string):
     }
 }
 
-export async function getMyAccount(): Promise<Account> {
+export async function getMyAccount(): Promise<AccountSettings> {
     const response = await fetch(`${API_URL}/accounts/me`, {
         method: 'GET',
         headers: authorizedHeaders()
@@ -128,7 +177,7 @@ export async function getMyAccount(): Promise<Account> {
         throw new Error('Failed to fetch account details');
     }
 
-    const account: Account = await response.json();
+    const account: AccountSettings = await response.json();
     return account;
 }
 
@@ -180,7 +229,7 @@ export async function updateMyAccount(
     email: string | null,
     emailOnNewMessage?: boolean,
     emailUnreadDelayMinutes?: number
-): Promise<Account> {
+): Promise<AccountSettings> {
     const requestBody: {
         name?: string;
         password?: string;

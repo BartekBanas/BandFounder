@@ -2,8 +2,13 @@ export interface Account {
     id: string;
     name: string;
     email: string;
-    emailOnNewMessage?: boolean;
-    emailUnreadDelayMinutes?: number;
+}
+
+export interface AccountSettings extends Account {
+    emailOnNewMessage: boolean;
+    emailUnreadDelayMinutes: number;
+    emailVerified: boolean;
+    resendAvailableAt: string | null;
 }
 
 export interface PasswordResetInfo {
