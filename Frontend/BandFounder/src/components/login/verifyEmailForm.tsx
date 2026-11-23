@@ -1,7 +1,11 @@
 import {useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {confirmEmailVerification, resendEmailVerification} from "../../api/account";
-import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
+import {
+    mantineErrorNotification,
+    mantineInformationNotification,
+    mantineSuccessNotification,
+} from "../common/mantineNotification";
 import {Alert, Box, Button, CircularProgress, Stack, ThemeProvider, Typography} from "@mui/material";
 import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
 import {useIsAuthenticated} from "../../hooks/authentication";
@@ -12,21 +16,27 @@ export function VerifyEmailForm() {
     return <EmailVerificationForm key={token} token={token}/>;
 }
 
+type Confirmation =
+    | {status: "ready" | "loading" | "success"}
+    | {status: "error"; message: string};
+
 function EmailVerificationForm({token}: {token: string}) {
-    const [status, setStatus] = useState<"ready" | "loading" | "success" | "error">("ready");
-    const [error, setError] = useState("");
+    const [confirmation, setConfirmation] = useState<Confirmation>({status: "ready"});
+    const {status} = confirmation;
     const [resending, setResending] = useState(false);
     const isAuthenticated = useIsAuthenticated();
     const navigate = useNavigate();
 
     const handleConfirm = async () => {
-        setStatus("loading");
+        setConfirmation({status: "loading"});
         try {
             await confirmEmailVerification(token);
-            setStatus("success");
-        } catch (error: unknown) {
-            setError(error instanceof Error ? error.message : "This verification link is invalid or has expired.");
-            setStatus("error");
+            setConfirmation({status: "success"});
+        } catch (error) {
+            setConfirmation({
+                status: "error",
+                message: error instanceof Error ? error.message : "Email verification failed. Try again.",
+            });
         }
     };
 
@@ -42,7 +52,7 @@ function EmailVerificationForm({token}: {token: string}) {
             if (result.resendAvailableAt) {
                 mantineSuccessNotification("Verification email queued for delivery");
             } else {
-                setStatus("success");
+                mantineInformationNotification("Your signed-in account already has a verified email.");
             }
         } catch (error: unknown) {
             mantineErrorNotification(error instanceof Error ? error.message : "Failed to send verification email");
@@ -95,17 +105,17 @@ function EmailVerificationForm({token}: {token: string}) {
 
                     {status === "error" && (
                         <Alert severity="error" sx={{marginTop: 3}}>
-                            {error}
+                            {confirmation.message}
                         </Alert>
                     )}
 
                     <Stack spacing={1.5} sx={{marginTop: 3}}>
-                        {token && status === "ready" && (
+                        {token && (status === "ready" || status === "error") && (
                             <Button variant="contained" fullWidth onClick={handleConfirm}>
                                 Confirm email
                             </Button>
                         )}
-                        {(!token && status !== "success" || status === "error") && (
+                        {(!token || status === "error") && (
                             <Button
                                 variant="contained"
                                 color="primary"
