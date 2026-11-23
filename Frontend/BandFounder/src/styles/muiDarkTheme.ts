@@ -142,6 +142,12 @@ export const muiDarkTheme = createTheme({
                         outline: 'none',
                     },
                 },
+                text: {
+                    '&.Mui-focusVisible': {
+                        outline: `2px solid ${designTokens.accent}`,
+                        outlineOffset: '2px',
+                    },
+                },
                 contained: {
                     border: 'none',
                     backgroundClip: 'padding-box',

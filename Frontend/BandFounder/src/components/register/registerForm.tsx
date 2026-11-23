@@ -8,6 +8,7 @@ import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {authCardSx, authPageSx} from "../login/authStyles";
 import {AuthBrand} from "../login/AuthBrand";
+import {useSharedProfilePath} from "../login/useSharedProfilePath";
 
 export function LoginForm() {
     const [name, setName] = useState('');
@@ -15,6 +16,7 @@ export function LoginForm() {
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
+    const sharedProfilePath = useSharedProfilePath();
 
     async function handleSubmit(e: any) {
         e.preventDefault();
@@ -27,7 +29,7 @@ export function LoginForm() {
 
             mantineSuccessNotification('Account created successfully');
 
-            navigate('/home');
+            navigate(sharedProfilePath ?? '/home', {replace: Boolean(sharedProfilePath)});
         } catch (e: any) {
             if (e instanceof Error) {
                 if (e.message === "Failed to fetch") {
@@ -44,7 +46,7 @@ export function LoginForm() {
 
     async function handleLoginClick(e: any) {
         e.preventDefault();
-        navigate('/login');
+        navigate('/login', {state: {sharedProfilePath}});
     }
 
     return (

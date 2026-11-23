@@ -5,11 +5,13 @@ import {mantineErrorNotification, mantineSuccessNotification} from "../common/ma
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {authCardSx, authPageSx} from "./authStyles";
+import {useSharedProfilePath} from "./useSharedProfilePath";
 
 export function ForgotPasswordForm() {
     const [email, setEmail] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const navigate = useNavigate();
+    const sharedProfilePath = useSharedProfilePath();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,7 +56,7 @@ export function ForgotPasswordForm() {
                     )}
                     <Box sx={{display: 'flex', justifyContent: 'center', marginTop: '20px'}}>
                         <Button
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate(sharedProfilePath ?? '/')}
                             variant="text"
                             color="info"
                             size="small"

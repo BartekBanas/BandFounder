@@ -388,11 +388,18 @@ export async function getTopGenres(guid: string, genresToReturn: number = 10): P
 }
 
 const avatarCache = new Map<string, Promise<string | null>>();
+const avatarChanges = new EventTarget();
+
+export function subscribeToProfilePicture(accountId: string, onChange: () => void): () => void {
+    avatarChanges.addEventListener(accountId, onChange);
+    return () => avatarChanges.removeEventListener(accountId, onChange);
+}
 
 export function invalidateProfilePicture(accountId: string): void {
     // Drop the cache entry so the next fetch gets a fresh image.
     // Do not revoke the blob URL: other mounted avatars may still reference it.
     avatarCache.delete(accountId);
+    avatarChanges.dispatchEvent(new Event(accountId));
 }
 
 export async function uploadProfilePicture(file: File): Promise<void> {

@@ -8,6 +8,7 @@ import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {authCardSx, authPageSx} from "./authStyles";
 import {AuthBrand} from "./AuthBrand";
+import {useSharedProfilePath} from "./useSharedProfilePath";
 
 export async function performLogin(usernameOrEmail: string, password: string) {
     const authorizationToken = await login(usernameOrEmail, password);
@@ -24,6 +25,8 @@ export function LoginForm() {
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
+    const sharedProfilePath = useSharedProfilePath();
+    const authNavigation = {state: {sharedProfilePath}};
 
     useEffect(() => {
         if (window.location.pathname === '/login/expiredSession') {
@@ -35,7 +38,7 @@ export function LoginForm() {
         e.preventDefault();
         try {
             await performLogin(email, password);
-            navigate('/home');
+            navigate(sharedProfilePath ?? '/home', {replace: Boolean(sharedProfilePath)});
         } catch (error: any) {
             const status = error?.response?.status ?? error?.status;
             const message = error?.responseText ?? error?.message ?? '';
@@ -68,7 +71,7 @@ export function LoginForm() {
     };
 
     const handleRegisterClick = () => {
-        navigate('/register');
+        navigate('/register', authNavigation);
     };
 
     return (
@@ -106,7 +109,7 @@ export function LoginForm() {
 
                     <Box sx={{display: 'flex', justifyContent: 'flex-end', marginTop: 1}}>
                         <Button
-                            onClick={() => navigate('/forgot-password')}
+                            onClick={() => navigate('/forgot-password', authNavigation)}
                             variant="text"
                             color="info"
                             size="small"
