@@ -23,7 +23,18 @@ public class BackupEndpointDisabledTests : IntegrationTestBase
             });
         }
 
-        var response = await Client.SendAsync(request);
+        using var response = await Client.SendAsync(request);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [TestCase("GET", "/api/backup?profilePictures=invalid")]
+    [TestCase("POST", "/api/backup")]
+    public async Task BackupEndpoint_WhenDisabled_ReturnsNotFoundBeforeModelBinding(
+        string method, string url)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), url);
+        using var response = await Client.SendAsync(request);
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }

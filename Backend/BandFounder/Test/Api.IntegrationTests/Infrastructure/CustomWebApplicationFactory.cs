@@ -42,9 +42,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("MessageEmailNotifications:MaxAttempts", "2");
         builder.UseSetting("MessageEmailNotifications:MaxSnippetLength", "160");
         builder.UseSetting("MessageEmailNotifications:StaleClaimMinutes", "15");
-        builder.UseSetting(
-            "Backup:TrustedMaintenanceEnabled",
-            _trustedBackupMaintenanceEnabled.ToString());
+        if (_trustedBackupMaintenanceEnabled)
+        {
+            builder.UseSetting("Backup:TrustedMaintenanceEnabled", "true");
+        }
 
         builder.ConfigureTestServices(services =>
         {

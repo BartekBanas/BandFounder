@@ -1,17 +1,17 @@
+using BandFounder.Api.Filters;
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Listings;
 using BandFounder.Application.Services;
-using BandFounder.Api.Options;
 using BandFounder.Domain.Entities;
 using BandFounder.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace BandFounder.Api.Controllers;
 
 [ApiController]
 [Route("api/backup")]
+[TypeFilter(typeof(TrustedBackupMaintenanceFilter))]
 public class BackupController : Controller
 {
     private readonly IAccountService _accountService;
@@ -23,13 +23,11 @@ public class BackupController : Controller
     private readonly IHashingService _hashingService;
     private readonly IMusicProfileProvider _musicProfileProvider;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly BackupOptions _backupOptions;
 
     public BackupController(IAccountService accountService, IRepository<Artist> artistRepository, 
         IRepository<Genre> genreRepository, IRepository<Account> accountRepository, IHashingService hashingService, 
         IRepository<MusicianRole> musicianRoleRepository, IListingService listingService,
-        IMusicProfileProvider musicProfileProvider, IUnitOfWork unitOfWork,
-        IOptions<BackupOptions> backupOptions)
+        IMusicProfileProvider musicProfileProvider, IUnitOfWork unitOfWork)
     {
         _accountService = accountService;
         _artistRepository = artistRepository;
@@ -40,17 +38,11 @@ public class BackupController : Controller
         _listingService = listingService;
         _musicProfileProvider = musicProfileProvider;
         _unitOfWork = unitOfWork;
-        _backupOptions = backupOptions.Value;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetBackup([FromQuery] bool? profilePictures = false)
     {
-        if (!_backupOptions.TrustedMaintenanceEnabled)
-        {
-            return NotFound();
-        }
-
         var artists = (await _artistRepository.GetAsync()).ToBackupDto();
         
         List<AccountBackup> accountsBackup = [];
@@ -101,11 +93,6 @@ public class BackupController : Controller
     [HttpPost]
     public async Task<IActionResult> RestoreBackup([FromBody] BackupDto backupDto)
     {
-        if (!_backupOptions.TrustedMaintenanceEnabled)
-        {
-            return NotFound();
-        }
-
         IReadOnlyCollection<string> enrichedArtistIds = [];
 
         await _unitOfWork.ExecuteInTransactionAsync(async () =>
