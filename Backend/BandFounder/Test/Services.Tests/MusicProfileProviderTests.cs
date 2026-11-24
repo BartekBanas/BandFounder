@@ -198,4 +198,27 @@ public class MusicProfileProviderTests
         await invalidationTask;
         Assert.That(versions.GetVersion(accountId), Is.EqualTo(1));
     }
+
+    [Test]
+    public async Task GetProfilesAsync_ShouldSkipGenreQueryWhenNoMissingAccountHasArtists()
+    {
+        var accountId = Guid.NewGuid();
+        var accountRepository = Substitute.For<IRepository<Account>>();
+        accountRepository
+            .QueryAsync<MusicProfileArtistRow>(
+                Arg.Any<Func<IQueryable<Account>, IQueryable<MusicProfileArtistRow>>>())
+            .Returns([]);
+
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var provider = new MusicProfileProvider(
+            accountRepository, cache, new MusicProfileVersionRegistry());
+
+        var profiles = await provider.GetProfilesAsync([accountId]);
+
+        Assert.That(profiles[accountId].ArtistIds, Is.Empty);
+        Assert.That(profiles[accountId].GenreWeights, Is.Empty);
+        await accountRepository.DidNotReceive()
+            .QueryAsync<MusicProfileGenreWeightRow>(
+                Arg.Any<Func<IQueryable<Account>, IQueryable<MusicProfileGenreWeightRow>>>());
+    }
 }

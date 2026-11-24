@@ -16,8 +16,11 @@ public interface IMusicProfileVersionRegistry
 /// </summary>
 public sealed class MusicProfileVersionRegistry : IMusicProfileVersionRegistry
 {
+    private const int StripeCount = 64;
+    private const int StripeMask = StripeCount - 1;
+
     private readonly ConcurrentDictionary<Guid, long> _versions = new();
-    private readonly ConcurrentDictionary<Guid, object> _locks = new();
+    private readonly object[] _locks = Enumerable.Range(0, StripeCount).Select(static _ => new object()).ToArray();
 
     public long GetVersion(Guid accountId)
     {
@@ -27,13 +30,7 @@ public sealed class MusicProfileVersionRegistry : IMusicProfileVersionRegistry
         }
     }
 
-    public void Bump(Guid accountId)
-    {
-        lock (GetLock(accountId))
-        {
-            _versions.AddOrUpdate(accountId, 1, static (_, version) => version + 1);
-        }
-    }
+    public void Bump(Guid accountId) => BumpAndRun(accountId, static () => { });
 
     public void BumpAndRun(Guid accountId, Action action)
     {
@@ -58,5 +55,5 @@ public sealed class MusicProfileVersionRegistry : IMusicProfileVersionRegistry
         }
     }
 
-    private object GetLock(Guid accountId) => _locks.GetOrAdd(accountId, static _ => new object());
+    private object GetLock(Guid accountId) => _locks[accountId.GetHashCode() & StripeMask];
 }

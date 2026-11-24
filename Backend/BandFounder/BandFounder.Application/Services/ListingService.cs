@@ -149,17 +149,13 @@ public class ListingService : IListingService
             return new ListingsFeedDto();
         }
 
-        var scoresByOwnerId = await _musicTasteService.CompareMusicTasteManyAsync(
-            userId,
-            candidates.Select(candidate => candidate.OwnerId).Distinct().ToArray());
-
         // Omitting paging returns the first page with a bounded default size.
         const int defaultPageSize = 100;
         const int maxPageSize = 100;
         var pageSize = Math.Clamp(filterOptions.PageSize ?? defaultPageSize, 1, maxPageSize);
         var pageNumber = Math.Max(filterOptions.PageNumber ?? 1, 1);
         var skip = (long)(pageNumber - 1) * pageSize;
-        if (skip > int.MaxValue)
+        if (skip >= candidates.Count)
         {
             return new ListingsFeedDto
             {
@@ -167,6 +163,10 @@ public class ListingService : IListingService
                 HasMore = false
             };
         }
+
+        var scoresByOwnerId = await _musicTasteService.CompareMusicTasteManyAsync(
+            userId,
+            candidates.Select(candidate => candidate.OwnerId).Distinct().ToArray());
 
         var orderedCandidates = candidates
             .OrderByDescending(candidate => scoresByOwnerId[candidate.OwnerId]);

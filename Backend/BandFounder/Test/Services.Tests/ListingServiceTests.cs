@@ -20,6 +20,7 @@ public class ListingServiceTests
     private readonly IRepository<MusicianRole> _musicianRoleRepositoryMock = Substitute.For<IRepository<MusicianRole>>();
     private readonly IRepository<MusicianSlot> _musicianSlotRepositoryMock = Substitute.For<IRepository<MusicianSlot>>();
     private readonly IValidator<Listing> _validator = Substitute.For<IValidator<Listing>>();
+    private IMusicTasteService _musicTasteServiceMock = Substitute.For<IMusicTasteService>();
 
     [Test]
     public async Task GetListingsFeedAsync_WithRoleFilter_FiltersListingsCorrectly()
@@ -254,8 +255,10 @@ public class ListingServiceTests
         Assert.That(result.HasMore, Is.True);
     }
 
-    [Test]
-    public async Task GetListingsFeedAsync_OverflowingSkip_ReturnsEmptyPage()
+    [TestCase(2, 1)]
+    [TestCase(int.MaxValue, 100)]
+    public async Task GetListingsFeedAsync_OutOfRangePage_ReturnsEmptyPageWithoutScoring(
+        int pageNumber, int pageSize)
     {
         var userId = Guid.NewGuid();
         var listings = new List<Listing>
@@ -267,13 +270,15 @@ public class ListingServiceTests
         var result = await service.GetListingsFeedAsync(new FeedFilterOptions
         {
             MatchRole = true,
-            PageNumber = int.MaxValue,
-            PageSize = 100
+            PageNumber = pageNumber,
+            PageSize = pageSize
         });
 
         Assert.That(result.Listings, Is.Empty);
         Assert.That(result.TotalCount, Is.EqualTo(1));
         Assert.That(result.HasMore, Is.False);
+        await _musicTasteServiceMock.DidNotReceive()
+            .CompareMusicTasteManyAsync(Arg.Any<Guid>(), Arg.Any<IReadOnlyCollection<Guid>>());
     }
 
     [Test]
@@ -567,7 +572,7 @@ public class ListingServiceTests
     {
         var accountServiceMock = Substitute.For<IAccountService>();
         var authenticationServiceMock = Substitute.For<IAuthenticationService>();
-        var musicTasteServiceMock = Substitute.For<IMusicTasteService>();
+        _musicTasteServiceMock = Substitute.For<IMusicTasteService>();
         var listingRepositoryMock = Substitute.For<IRepository<Listing>>();
 
         var userAccount = new Account
@@ -586,7 +591,7 @@ public class ListingServiceTests
             .Returns(userAccount);
         SetupListingRepositoryWithFilter(listingRepositoryMock, listings);
 
-        musicTasteServiceMock.CompareMusicTasteManyAsync(
+        _musicTasteServiceMock.CompareMusicTasteManyAsync(
                 Arg.Any<Guid>(),
                 Arg.Any<IReadOnlyCollection<Guid>>())
             .Returns(callInfo =>
@@ -602,7 +607,7 @@ public class ListingServiceTests
             accountServiceMock,
             authenticationServiceMock,
             _authorizationServiceMock,
-            musicTasteServiceMock,
+            _musicTasteServiceMock,
             _chatroomServiceMock,
             _validator,
             _genreRepositoryMock,
