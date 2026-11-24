@@ -1,3 +1,4 @@
+using BandFounder.Api.Filters;
 using BandFounder.Application.Dtos;
 using BandFounder.Application.Dtos.Backup;
 using BandFounder.Application.Dtos.Listings;
@@ -10,6 +11,7 @@ namespace BandFounder.Api.Controllers;
 
 [ApiController]
 [Route("api/backup")]
+[TypeFilter(typeof(TrustedBackupMaintenanceFilter))]
 public class BackupController : Controller
 {
     private readonly IAccountService _accountService;

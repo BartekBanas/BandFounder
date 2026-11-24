@@ -14,12 +14,16 @@ namespace Api.IntegrationTests.Infrastructure;
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString;
+    private readonly bool _trustedBackupMaintenanceEnabled;
     public RecordingEmailSender EmailSender { get; } = new();
     public ControllableMessageEmailNotificationGate NotificationGate { get; } = new();
 
-    public CustomWebApplicationFactory(string connectionString)
+    public CustomWebApplicationFactory(
+        string connectionString,
+        bool trustedBackupMaintenanceEnabled = false)
     {
         _connectionString = connectionString;
+        _trustedBackupMaintenanceEnabled = trustedBackupMaintenanceEnabled;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -38,6 +42,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("MessageEmailNotifications:MaxAttempts", "2");
         builder.UseSetting("MessageEmailNotifications:MaxSnippetLength", "160");
         builder.UseSetting("MessageEmailNotifications:StaleClaimMinutes", "15");
+        if (_trustedBackupMaintenanceEnabled)
+        {
+            builder.UseSetting("Backup:TrustedMaintenanceEnabled", "true");
+        }
 
         builder.ConfigureTestServices(services =>
         {
