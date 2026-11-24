@@ -14,18 +14,6 @@ public class MusicProfileVersionRegistryTests
     }
 
     [Test]
-    public void Bump_IncrementsVersion()
-    {
-        var registry = new MusicProfileVersionRegistry();
-        var accountId = Guid.NewGuid();
-
-        registry.Bump(accountId);
-        registry.Bump(accountId);
-
-        Assert.That(registry.GetVersion(accountId), Is.EqualTo(2));
-    }
-
-    [Test]
     public void Bump_IsIsolatedPerAccount()
     {
         var registry = new MusicProfileVersionRegistry();

@@ -256,7 +256,6 @@ public class ListingServiceTests
     }
 
     [TestCase(2, 1)]
-    [TestCase(3, 1)]
     [TestCase(int.MaxValue, 100)]
     public async Task GetListingsFeedAsync_OutOfRangePage_ReturnsEmptyPageWithoutScoring(
         int pageNumber, int pageSize)

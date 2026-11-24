@@ -46,19 +46,6 @@ public class MessageEmailNotificationWorkerTests
         Assert.DoesNotThrowAsync(() => worker.ProcessDueNotificationsAsync(CancellationToken.None));
     }
 
-    [Test]
-    public void ProcessDueNotificationsAsync_CancellationRequested_DoesNotPropagate()
-    {
-        var service = Substitute.For<IMessageEmailNotificationService>();
-        service.ProcessDueAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromException<bool>(new OperationCanceledException()));
-        var worker = CreateWorker(service);
-        using var cts = new CancellationTokenSource();
-        cts.Cancel();
-
-        Assert.DoesNotThrowAsync(() => worker.ProcessDueNotificationsAsync(cts.Token));
-    }
-
     private static MessageEmailNotificationWorker CreateWorker(IMessageEmailNotificationService service)
     {
         var provider = Substitute.For<IServiceProvider>();

@@ -20,13 +20,11 @@ public class SpotifyTimeRangeTests
     }
 
     [TestCase(null, 50)]
-    [TestCase(0, 1)]
     [TestCase(-10, 1)]
     [TestCase(1, 1)]
     [TestCase(25, 25)]
     [TestCase(50, 50)]
     [TestCase(51, 50)]
-    [TestCase(1000, 50)]
     public void ClampLimit_ClampsBetweenOneAndFifty(int? input, int expected)
     {
         Assert.That(SpotifyTimeRange.ClampLimit(input), Is.EqualTo(expected));

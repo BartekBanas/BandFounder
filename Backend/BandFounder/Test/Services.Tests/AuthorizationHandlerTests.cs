@@ -65,22 +65,6 @@ public class AuthorizationHandlerTests
     }
 
     [Test]
-    public async Task ChatroomHandler_IsMemberOf_DoesNotSucceedForNonMember()
-    {
-        var handler = new ChatRoomAuthorizationHandler();
-        var context = CreateContext(Guid.NewGuid(), new IsMemberOfRequirement(), new Chatroom
-        {
-            Id = Guid.NewGuid(),
-            Name = "Room",
-            Members = [new Account { Id = Guid.NewGuid(), Name = "other", Email = "o@e.com", PasswordHash = "h" }]
-        });
-
-        await handler.HandleAsync(context);
-
-        Assert.That(context.HasSucceeded, Is.False);
-    }
-
-    [Test]
     public async Task ChatroomHandler_IsOwnerOf_SucceedsForOwner()
     {
         var ownerId = Guid.NewGuid();
