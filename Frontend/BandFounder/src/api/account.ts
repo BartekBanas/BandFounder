@@ -133,10 +133,14 @@ export async function resendEmailVerification(): Promise<EmailVerificationResend
 
     if (!response.ok) {
         if (response.status === 429) {
-            const result = await response.json() as EmailVerificationResendResult;
+            const result = await response.json().catch(() => null) as EmailVerificationResendResult | null;
             const retryAfter = response.headers.get('Retry-After');
-            const resendAvailableAt = result.resendAvailableAt ??
-                (retryAfter ? new Date(Date.now() + Number(retryAfter) * 1000).toISOString() : null);
+            const retryAfterSeconds = retryAfter === null ? NaN : Number(retryAfter);
+            const retryAt = Number.isFinite(retryAfterSeconds)
+                ? Date.now() + retryAfterSeconds * 1000
+                : Date.parse(retryAfter ?? '');
+            const resendAvailableAt = result?.resendAvailableAt ??
+                (Number.isFinite(retryAt) ? new Date(retryAt).toISOString() : null);
             throw new EmailVerificationResendError(
                 'Please wait before requesting another verification email.',
                 resendAvailableAt

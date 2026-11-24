@@ -201,6 +201,7 @@ services.AddScoped<IContentService, ContentService>();
 if (!builder.Environment.IsEnvironment("Testing"))
 {
     services.AddHostedService<MessageEmailNotificationWorker>();
+    services.AddHostedService<EmailVerificationWorker>();
 }
 
 services.AddSingleton<WebSocketConnectionManager>();

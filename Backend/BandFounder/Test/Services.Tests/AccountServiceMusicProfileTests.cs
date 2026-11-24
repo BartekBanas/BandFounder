@@ -96,6 +96,7 @@ public class AccountServiceMusicProfileTests
             Substitute.For<IRepository<SpotifyTokens>>(),
             Substitute.For<IRepository<PasswordResetToken>>(),
             Substitute.For<IPasswordResetTokenStore>(),
+            Substitute.For<IEmailVerificationStore>(),
             Substitute.For<IUnitOfWork>(),
             chatroomService,
             Substitute.For<IEmailVerificationService>(),

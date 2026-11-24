@@ -105,6 +105,7 @@ public class EmailVerificationTests : IntegrationTestBase
             var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
             var verificationToken = await db.EmailVerificationTokens.SingleAsync();
             verificationToken.CreatedAt = DateTime.UtcNow.AddMinutes(-2);
+            verificationToken.DeliveryLastAttemptAt = verificationToken.CreatedAt;
             await db.SaveChangesAsync();
         }
 
@@ -132,6 +133,7 @@ public class EmailVerificationTests : IntegrationTestBase
 
             var initialToken = await db.EmailVerificationTokens.SingleAsync();
             initialToken.CreatedAt = DateTime.UtcNow.AddMinutes(-2);
+            initialToken.DeliveryLastAttemptAt = initialToken.CreatedAt;
             await db.SaveChangesAsync();
         }
 
@@ -187,6 +189,7 @@ public class EmailVerificationTests : IntegrationTestBase
             var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
             var initialToken = await db.EmailVerificationTokens.SingleAsync();
             initialToken.CreatedAt = DateTime.UtcNow.AddMinutes(-2);
+            initialToken.DeliveryLastAttemptAt = initialToken.CreatedAt;
             await db.SaveChangesAsync();
         }
 
@@ -210,7 +213,7 @@ public class EmailVerificationTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task UpdateAccount_EmailChange_ClearsVerificationAndSendsNewLink()
+    public async Task UpdateAccount_RapidEmailChanges_OnlyLatestAddressGetsDeferredDelivery()
     {
         var jwt = await RegisterVerifiedAsync("changeemail", "changeemail@example.com");
         AuthenticateAs(jwt);
@@ -225,8 +228,23 @@ public class EmailVerificationTests : IntegrationTestBase
         Assert.That(updated.Email, Is.EqualTo("changeemail.updated@example.com"));
         Assert.That(updated.EmailVerified, Is.False);
         Assert.That(updated.ResendAvailableAt, Is.GreaterThan(DateTime.UtcNow));
-        Assert.That(EmailSender.Sent, Has.Count.EqualTo(1));
-        Assert.That(EmailSender.Sent[0].To, Is.EqualTo("changeemail.updated@example.com"));
+        var nextUpdate = await Client.PatchAsJsonAsync("/api/accounts/me", new
+        {
+            email = "changeemail.latest@example.com"
+        });
+        Assert.That(nextUpdate.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(EmailSender.Sent, Is.Empty);
+
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            var pending = await db.EmailVerificationTokens.SingleAsync(token => token.ConsumedAt == null);
+            Assert.That(pending.IntendedEmail, Is.EqualTo("changeemail.latest@example.com"));
+            Assert.That(pending.DeliveryNotBeforeUtc, Is.GreaterThan(DateTime.UtcNow));
+        }
+
+        await DeliverQueuedVerificationAsync();
+        Assert.That(EmailSender.Sent.Single().To, Is.EqualTo("changeemail.latest@example.com"));
     }
 
     [Test]
@@ -253,10 +271,70 @@ public class EmailVerificationTests : IntegrationTestBase
             Assert.That(settings.EmailVerified, Is.False);
         });
 
+        await DeliverQueuedVerificationAsync();
         var newToken = ExtractTokenFromEmail(EmailSender.Sent.Last().TextBody);
         var newTokenResponse = await Client.PostAsJsonAsync(
             "/api/accounts/email-verification/confirm", new {token = newToken});
         Assert.That(newTokenResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task ResendEmailVerification_PreservesMixedCaseStoredAddress()
+    {
+        var jwt = await RegisterAsync("legacyverify", "legacy@example.com");
+        const string storedEmail = "Legacy@Example.com";
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+            (await db.Accounts.SingleAsync()).Email = storedEmail;
+            db.EmailVerificationTokens.Remove(await db.EmailVerificationTokens.SingleAsync());
+            await db.SaveChangesAsync();
+        }
+
+        EmailSender.ClearSent();
+        AuthenticateAs(jwt);
+        var resend = await Client.PostAsync("/api/accounts/email-verification/resend", null);
+        Assert.That(resend.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var email = EmailSender.Sent.Single();
+        Assert.That(email.To, Is.EqualTo(storedEmail));
+
+        var response = await Client.PostAsJsonAsync(
+            "/api/accounts/email-verification/confirm", new {token = ExtractTokenFromEmail(email.TextBody)});
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That((await ReadJsonAsync<AccountSettingsDto>(
+            await Client.GetAsync("/api/accounts/me"))).EmailVerified, Is.True);
+    }
+
+    [Test]
+    public async Task ConfirmEmailVerification_WaitsForConcurrentAddressChangeBeforeValidating()
+    {
+        await RegisterAsync("verifyrace", "verifyrace@example.com");
+        var tokenHash = SecureTokenHelper.HashToken(ExtractTokenFromEmail(EmailSender.Sent.Single().TextBody));
+        using var updateScope = Services.CreateScope();
+        var updateDb = updateScope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        await using var update = await updateDb.Database.BeginTransactionAsync();
+        var account = await updateDb.Accounts.SingleAsync();
+        account.Email = "verifyrace.updated@example.com";
+        await updateDb.SaveChangesAsync();
+
+        using var confirmScope = Services.CreateScope();
+        var confirmDb = confirmScope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        await confirmDb.Database.OpenConnectionAsync();
+        var confirmPid = ((Npgsql.NpgsqlConnection)confirmDb.Database.GetDbConnection()).ProcessID;
+        var store = confirmScope.ServiceProvider.GetRequiredService<IEmailVerificationStore>();
+        var confirmation = store.ConfirmAsync(tokenHash, DateTime.UtcNow);
+
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (await updateDb.Database.SqlQuery<bool>(
+                   $"SELECT cardinality(pg_blocking_pids({confirmPid})) = 0 AS \"Value\"")
+               .SingleAsync(timeout.Token))
+        {
+            await Task.Delay(10, timeout.Token);
+        }
+
+        await update.CommitAsync();
+        Assert.That(await confirmation, Is.EqualTo(EmailVerificationConfirmationStatus.Invalid));
+        Assert.That((await updateDb.Accounts.AsNoTracking().SingleAsync()).EmailVerifiedAt, Is.Null);
     }
 
     [Test]
@@ -358,6 +436,26 @@ public class EmailVerificationTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task Register_WhenImmediateSendTimesOut_SchedulesNormalRetry()
+    {
+        EmailSender.AllowSend = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await RegisterAsync("sendtimeout", "sendtimeout@example.com");
+
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        var queued = await db.EmailVerificationTokens.SingleAsync();
+        Assert.Multiple(() =>
+        {
+            Assert.That(queued.DeliveryStatus, Is.EqualTo(EmailNotificationStatus.Pending));
+            Assert.That(queued.DeliveryAttemptCount, Is.EqualTo(1));
+            Assert.That(queued.DeliveryNotBeforeUtc, Is.EqualTo(queued.DeliveryLastAttemptAt!.Value.AddMinutes(5))
+                .Within(TimeSpan.FromSeconds(15)));
+        });
+    }
+
+    [Test]
     public async Task Register_WhenProviderOutcomeIsAmbiguous_DeliveredLinkRemainsValid()
     {
         EmailSender.ThrowOnSend = true;
@@ -429,6 +527,17 @@ public class EmailVerificationTests : IntegrationTestBase
                 verificationToken.DeliveryStatus,
                 Is.EqualTo(EmailNotificationStatus.Cancelled));
         });
+    }
+
+    private async Task DeliverQueuedVerificationAsync()
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        var pending = await db.EmailVerificationTokens.SingleAsync(token => token.ConsumedAt == null);
+        pending.DeliveryNotBeforeUtc = DateTime.UtcNow.AddSeconds(-1);
+        await db.SaveChangesAsync();
+        var service = scope.ServiceProvider.GetRequiredService<IEmailVerificationService>();
+        Assert.That(await service.ProcessDueAsync(), Is.True);
     }
 
     private static string ExtractTokenFromEmail(string textBody)

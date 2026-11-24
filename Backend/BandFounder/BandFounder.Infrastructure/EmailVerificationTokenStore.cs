@@ -1,4 +1,5 @@
 using BandFounder.Domain.Entities;
+using BandFounder.Domain.Exceptions;
 using BandFounder.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +14,20 @@ public sealed class EmailVerificationTokenStore : IEmailVerificationStore
         _dbContext = dbContext;
     }
 
+    // Verification, resend and email changes take this lock before touching token rows.
+    public Task<Account?> LockAccountAsync(Guid accountId) =>
+        _dbContext.Accounts
+            .FromSqlInterpolated(
+                $"""SELECT * FROM "Account" WHERE "Id" = {accountId} FOR UPDATE""")
+            .SingleOrDefaultAsync();
+
     public async Task IssueForAccountAsync(
-        EmailVerificationToken token, DateTime utcNow, bool cancelExisting)
+        EmailVerificationToken token, DateTime utcNow, bool cancelExisting, TimeSpan resendCooldown)
     {
         if (cancelExisting)
         {
             await CancelAllForAccountAsync(token.AccountId, utcNow);
+            await RespectDeliveryCooldownAsync(token, resendCooldown);
         }
 
         await _dbContext.EmailVerificationTokens.AddAsync(token);
@@ -38,12 +47,8 @@ public sealed class EmailVerificationTokenStore : IEmailVerificationStore
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            // The account row is the per-account issuance lock. Concurrent resends, email
-            // changes, and verification updates must serialize before token rotation.
-            var account = await _dbContext.Accounts
-                .FromSqlInterpolated(
-                    $"""SELECT * FROM "Account" WHERE "Id" = {accountId} FOR UPDATE""")
-                .SingleAsync();
+            var account = await LockAccountAsync(accountId)
+                ?? throw new ItemNotFoundException("Account not found.");
 
             if (account.EmailVerifiedAt is not null)
             {
@@ -72,11 +77,12 @@ public sealed class EmailVerificationTokenStore : IEmailVerificationStore
                 Id = tokenId,
                 AccountId = accountId,
                 TokenHash = tokenHash,
-                IntendedEmail = account.Email.Trim().ToLowerInvariant(),
+                IntendedEmail = account.Email,
                 CreatedAt = utcNow,
                 ExpiresAt = utcNow.Add(tokenTtl),
                 DeliveryNotBeforeUtc = utcNow
             };
+            await RespectDeliveryCooldownAsync(token, resendCooldown);
             _dbContext.EmailVerificationTokens.Add(token);
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -95,18 +101,27 @@ public sealed class EmailVerificationTokenStore : IEmailVerificationStore
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-            var token = await _dbContext.EmailVerificationTokens
-                .Include(candidate => candidate.Account)
+            var accountId = await _dbContext.EmailVerificationTokens
+                .Where(token => token.TokenHash == tokenHash)
+                .Select(token => (Guid?)token.AccountId)
+                .SingleOrDefaultAsync();
+            var account = accountId is Guid id ? await LockAccountAsync(id) : null;
+            if (account is null)
+            {
+                return EmailVerificationConfirmationStatus.Invalid;
+            }
+
+            var token = await _dbContext.EmailVerificationTokens.AsNoTracking()
                 .SingleOrDefaultAsync(candidate => candidate.TokenHash == tokenHash);
 
             if (token is null ||
-                !string.Equals(token.Account.Email, token.IntendedEmail, StringComparison.Ordinal))
+                !string.Equals(account.Email, token.IntendedEmail, StringComparison.Ordinal))
             {
                 await transaction.CommitAsync();
                 return EmailVerificationConfirmationStatus.Invalid;
             }
 
-            if (token.Account.EmailVerifiedAt is not null)
+            if (account.EmailVerifiedAt is not null)
             {
                 await transaction.CommitAsync();
                 return EmailVerificationConfirmationStatus.AlreadyVerified;
@@ -118,12 +133,25 @@ public sealed class EmailVerificationTokenStore : IEmailVerificationStore
                 return EmailVerificationConfirmationStatus.Invalid;
             }
 
-            token.Account.EmailVerifiedAt = utcNow;
+            account.EmailVerifiedAt = utcNow;
             await CancelAllForAccountAsync(token.AccountId, utcNow);
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
             return EmailVerificationConfirmationStatus.Confirmed;
         });
+    }
+
+    private async Task RespectDeliveryCooldownAsync(EmailVerificationToken token, TimeSpan cooldown)
+    {
+        var lastAttempt = await _dbContext.EmailVerificationTokens
+            .Where(previous => previous.AccountId == token.AccountId)
+            .MaxAsync(previous => previous.DeliveryLastAttemptAt);
+        var earliestDelivery = lastAttempt?.Add(cooldown);
+        if (earliestDelivery is DateTime availableAt && availableAt > token.DeliveryNotBeforeUtc)
+        {
+            token.ExpiresAt += availableAt - token.DeliveryNotBeforeUtc;
+            token.DeliveryNotBeforeUtc = availableAt;
+        }
     }
 
     public async Task CancelAllForAccountAsync(Guid accountId, DateTime utcNow)
@@ -170,12 +198,14 @@ public sealed class EmailVerificationTokenStore : IEmailVerificationStore
             .FirstOrDefaultAsync();
     }
 
-    public Task<EmailVerificationToken?> GetDeliveryAsync(Guid tokenId)
+    public Task<EmailVerificationToken?> GetClaimedDeliveryAsync(Guid tokenId, DateTime claimedAt)
     {
         return _dbContext.EmailVerificationTokens
             .AsNoTracking()
             .Include(token => token.Account)
-            .SingleOrDefaultAsync(token => token.Id == tokenId);
+            .SingleOrDefaultAsync(token => token.Id == tokenId &&
+                token.DeliveryStatus == EmailNotificationStatus.Processing &&
+                token.DeliveryLastAttemptAt == claimedAt);
     }
 
     public async Task<bool> TryClaimDeliveryAsync(Guid tokenId, DateTime utcNow)

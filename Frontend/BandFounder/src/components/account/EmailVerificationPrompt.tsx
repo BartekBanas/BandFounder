@@ -95,12 +95,16 @@ export function EmailVerificationPrompt() {
             }
             setResendAvailableAt(result.resendAvailableAt);
             setNow(Date.now());
-            mantineSuccessNotification("Verification email queued for delivery");
+            if (result.resendAvailableAt) {
+                mantineSuccessNotification("Verification email queued for delivery");
+            } else {
+                await refreshAccount();
+            }
         } catch (error: unknown) {
             if (verificationIdentityRef.current !== verificationIdentity) {
                 return;
             }
-            if (error instanceof EmailVerificationResendError) {
+            if (error instanceof EmailVerificationResendError && error.resendAvailableAt) {
                 setResendAvailableAt(error.resendAvailableAt);
                 setNow(Date.now());
             } else {
@@ -141,9 +145,8 @@ export function EmailVerificationPrompt() {
                     Verify your email
                 </Typography>
                 <Typography variant="body2" align="center" sx={{color: "text.secondary", mt: 1.5}}>
-                    We sent a verification email when you registered. Confirm your address so you
-                    can receive message notifications. If delivery is delayed, it will retry
-                    automatically.
+                    Verify your address to receive email notifications for unread messages.
+                    If you need a link, request one here.
                 </Typography>
                 {!canResend && (
                     <Typography variant="body2" align="center" sx={{mt: 2}}>
@@ -156,7 +159,7 @@ export function EmailVerificationPrompt() {
                     </Button>
                     {canResend && (
                         <Button variant="contained" onClick={handleResend} disabled={sending}>
-                            Resend email
+                            Send verification email
                         </Button>
                     )}
                 </Stack>

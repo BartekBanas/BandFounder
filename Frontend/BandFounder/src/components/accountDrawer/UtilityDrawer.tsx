@@ -1,6 +1,7 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
 import {useDisclosure} from "@mantine/hooks";
 import {Button, Drawer, IconButton, Typography} from "@mui/material";
+import {Link} from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import {DeleteAccountButton} from "./DeleteAccountButton";
@@ -198,6 +199,11 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                             onEnabledChange={handleEmailNotificationChange}
                             onDelayChange={handleEmailDelayChange}
                         />
+                        {user?.emailVerified === false && (
+                            <Button component={Link} to="/verify-email">
+                                Verify email
+                            </Button>
+                        )}
                     </section>
 
                     <section className="utility-drawer__section">

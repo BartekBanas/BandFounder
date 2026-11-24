@@ -81,7 +81,6 @@ public class AccountController : Controller
     }
 
     [HttpPost("email-verification/confirm")]
-    [EnableRateLimiting("IpRateLimiting")]
     public async Task<IActionResult> ConfirmEmailVerification([FromBody] ConfirmEmailVerificationDto dto)
     {
         await _emailVerificationService.ConfirmAsync(dto);
@@ -94,7 +93,6 @@ public class AccountController : Controller
 
     [Authorize]
     [HttpPost("email-verification/resend")]
-    [EnableRateLimiting("IpRateLimiting")]
     public async Task<IActionResult> ResendEmailVerification()
     {
         var result = await _emailVerificationService.ResendAsync(
