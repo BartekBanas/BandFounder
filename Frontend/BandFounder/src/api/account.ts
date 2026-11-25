@@ -358,7 +358,7 @@ export async function getUser(guid: string): Promise<Account> {
 }
 
 export async function getAccountByUsername(username: string): Promise<Account> {
-    const response = await fetch(`${API_URL}/accounts?username=${username}`, {
+    const response = await fetch(`${API_URL}/accounts?username=${encodeURIComponent(username)}`, {
         method: 'GET',
         headers: authorizedHeaders()
     });

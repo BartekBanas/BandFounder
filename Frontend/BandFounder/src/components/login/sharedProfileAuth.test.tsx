@@ -61,19 +61,24 @@ describe('authentication from a shared profile', () => {
         });
     });
 
-    it('returns to the shared profile after logging in', async () => {
-        renderAuth({pathname: '/profile/bob'});
+    it.each([
+        '/profile/bob',
+        '/profile/Bob%20Smith',
+        '/profile/Za%C5%BC%C3%B3%C5%82%C4%87',
+    ])('returns to %s after logging in', async (pathname) => {
+        renderAuth({pathname});
         const path = screen.getByTestId('current-path');
         const originalKey = path.getAttribute('data-location-key');
 
         logIn();
 
         await waitFor(() => expect(path).not.toHaveAttribute('data-location-key', originalKey));
-        expect(path).toHaveTextContent('/profile/bob');
+        expect(path.textContent).toBe(pathname);
     });
 
     it('carries the shared profile through account creation', async () => {
-        renderAuth({pathname: '/profile/bob'});
+        const pathname = '/profile/Bob%20Smith';
+        renderAuth({pathname});
         fireEvent.click(screen.getByRole('button', {name: 'Create an account'}));
 
         fireEvent.change(screen.getByLabelText(/username/i), {target: {value: 'alice'}});
@@ -81,12 +86,17 @@ describe('authentication from a shared profile', () => {
         fireEvent.change(screen.getByLabelText(/password/i), {target: {value: 'password'}});
         fireEvent.click(screen.getByRole('button', {name: 'Create account'}));
 
-        await waitFor(() => expect(screen.getByTestId('current-path')).toHaveTextContent('/profile/bob'));
+        await waitFor(() => expect(screen.getByTestId('current-path').textContent).toBe(pathname));
         expect(registerAccount).toHaveBeenCalledOnce();
     });
 
-    it('uses home when the proposed destination is outside the profile route', async () => {
-        renderAuth({pathname: '/login', state: {sharedProfilePath: '//example.com/profile/bob'}});
+    it.each([
+        '//example.com/profile/bob',
+        '/profile/bob/extra',
+        '/profile/%2e%2e',
+        '/profile/invalid%2',
+    ])('uses home when the proposed destination is %s', async (sharedProfilePath) => {
+        renderAuth({pathname: '/login', state: {sharedProfilePath}});
 
         logIn();
 
