@@ -1,6 +1,7 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
 import {useDisclosure} from "@mantine/hooks";
 import {Button, Drawer, IconButton, Typography} from "@mui/material";
+import {Link} from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import {DeleteAccountButton} from "./DeleteAccountButton";
@@ -10,7 +11,7 @@ import {AddArtistModal} from "./AddArtistModal";
 import {getUserId, removeAuthToken, removeUserId} from "../../hooks/authentication";
 import './UtilityDrawer.css';
 import '../../styles/customScrollbar.css';
-import {Account} from "../../types/Account";
+import type {AccountSettings} from "../../types/Account";
 import {getTopArtists, TopArtist} from "../../api/spotify";
 import {getUsersGenres} from "../../api/metadata";
 import {getMyAccount, updateMyAccount} from "../../api/account";
@@ -23,7 +24,7 @@ interface UtilityDrawerProps {
 
 export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
     const [opened, {open, close}] = useDisclosure(false);
-    const [user, setUser] = useState<Account>();
+    const [user, setUser] = useState<AccountSettings>();
     const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
     const [topGenres, setTopGenres] = useState<string[]>([]);
     const emailNotificationRequestId = useRef(0);
@@ -189,6 +190,11 @@ export const UtilityDrawer: FC<UtilityDrawerProps> = () => {
                             onEnabledChange={handleEmailNotificationChange}
                             onDelayChange={handleEmailDelayChange}
                         />
+                        {user?.emailVerified === false && (
+                            <Button component={Link} to="/verify-email">
+                                Verify email
+                            </Button>
+                        )}
                     </section>
 
                     <section className="utility-drawer__section">

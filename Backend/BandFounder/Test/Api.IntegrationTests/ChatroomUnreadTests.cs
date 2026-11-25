@@ -15,7 +15,7 @@ public class ChatroomUnreadTests : IntegrationTestBase
     [Test]
     public async Task UnreadSummary_ExcludesOwnMessages_AndClearsAfterMarkRead()
     {
-        var ownerToken = await RegisterAsync("unreadowner", "unreadowner@example.com");
+        var ownerToken = await RegisterVerifiedAsync("unreadowner", "unreadowner@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -25,7 +25,7 @@ public class ChatroomUnreadTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var memberToken = await RegisterAsync("unreadmember", "unreadmember@example.com");
+        var memberToken = await RegisterVerifiedAsync("unreadmember", "unreadmember@example.com");
         AuthenticateAs(memberToken);
         var member = await ReadJsonAsync<AccountDto>(await Client.GetAsync("/api/accounts/me"));
 
@@ -73,7 +73,7 @@ public class ChatroomUnreadTests : IntegrationTestBase
     [Test]
     public async Task MarkRead_AsNonMember_ReturnsForbidden()
     {
-        var ownerToken = await RegisterAsync("markowner", "markowner@example.com");
+        var ownerToken = await RegisterVerifiedAsync("markowner", "markowner@example.com");
         AuthenticateAs(ownerToken);
 
         var createResponse = await Client.PostAsJsonAsync("/api/chatrooms", new
@@ -83,7 +83,7 @@ public class ChatroomUnreadTests : IntegrationTestBase
         });
         var chatroom = await ReadJsonAsync<ChatroomDto>(createResponse);
 
-        var outsiderToken = await RegisterAsync("markoutsider", "markoutsider@example.com");
+        var outsiderToken = await RegisterVerifiedAsync("markoutsider", "markoutsider@example.com");
         AuthenticateAs(outsiderToken);
 
         var markReadResponse = await Client.PutAsync($"/api/chatrooms/{chatroom.Id}/read", null);

@@ -95,6 +95,9 @@ namespace BandFounder.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("EmailVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -251,6 +254,64 @@ namespace BandFounder.Api.Migrations
                     b.HasIndex("Status", "NotBeforeUtc");
 
                     b.ToTable("EmailNotificationOutbox");
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.EmailVerificationToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeliveryAttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeliveryLastAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryLastError")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DeliveryNotBeforeUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeliveryProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IntendedEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("DeliveryStatus", "DeliveryNotBeforeUtc");
+
+                    b.ToTable("EmailVerificationTokens");
                 });
 
             modelBuilder.Entity("BandFounder.Domain.Entities.Genre", b =>
@@ -737,6 +798,17 @@ namespace BandFounder.Api.Migrations
                     b.Navigation("Chatroom");
 
                     b.Navigation("RecipientAccount");
+                });
+
+            modelBuilder.Entity("BandFounder.Domain.Entities.EmailVerificationToken", b =>
+                {
+                    b.HasOne("BandFounder.Domain.Entities.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("BandFounder.Domain.Entities.Listing", b =>

@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using Api.IntegrationTests.Infrastructure;
 using BandFounder.Application.Dtos.Backup;
+using BandFounder.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.IntegrationTests;
 
@@ -46,29 +49,60 @@ public class BackupEndpointTrustedMaintenanceTests : IntegrationTestBase
     protected override bool TrustedBackupMaintenanceEnabled => true;
 
     [Test]
-    public async Task BackupEndpoints_WhenTrustedMaintenanceIsEnabled_RoundTripAccount()
+    public async Task RestoreBackup_WithVerificationTimestamp_PreservesTrustedValue()
     {
-        var restore = await Client.PostAsJsonAsync("/api/backup", new
+        var verifiedAt = new DateTime(2026, 8, 23, 20, 15, 0, DateTimeKind.Utc);
+
+        var restoreResponse = await RestoreAccountAsync("verified", "verified@example.com", verifiedAt);
+
+        Assert.That(restoreResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        var account = await dbContext.Accounts.SingleAsync(
+            candidate => candidate.Email == "verified@example.com");
+        Assert.That(account.EmailVerifiedAt, Is.EqualTo(verifiedAt));
+
+        var backupResponse = await Client.GetAsync("/api/backup");
+        Assert.That(backupResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var backup = await ReadJsonAsync<BackupDto>(backupResponse);
+        Assert.That(backup.Accounts.Single().EmailVerifiedAt, Is.EqualTo(verifiedAt));
+    }
+
+    [Test]
+    public async Task RestoreBackup_WithoutVerificationTimestamp_RestoresUnverified()
+    {
+        var restoreResponse = await RestoreAccountAsync(
+            "unverified",
+            "unverified@example.com",
+            emailVerifiedAt: null);
+
+        Assert.That(restoreResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BandFounderDbContext>();
+        var account = await dbContext.Accounts.SingleAsync(
+            candidate => candidate.Email == "unverified@example.com");
+        Assert.That(account.EmailVerifiedAt, Is.Null);
+    }
+
+    private Task<HttpResponseMessage> RestoreAccountAsync(
+        string name,
+        string email,
+        DateTime? emailVerifiedAt)
+    {
+        return Client.PostAsJsonAsync("/api/backup", new
         {
             accounts = new[]
             {
                 new
                 {
-                    name = "trusted",
-                    email = "trusted@example.com",
+                    name,
+                    email,
+                    emailVerifiedAt,
                     musicianRoles = Array.Empty<string>(),
                     artists = Array.Empty<string>()
                 }
             },
             artists = Array.Empty<object>()
         });
-
-        Assert.That(restore.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
-        var export = await Client.GetAsync("/api/backup");
-
-        Assert.That(export.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        var backup = await ReadJsonAsync<BackupDto>(export);
-        Assert.That(backup.Accounts.Single().Email, Is.EqualTo("trusted@example.com"));
     }
 }

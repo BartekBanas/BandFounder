@@ -6,6 +6,7 @@ import {LoginPage} from "./LoginPage";
 import {RegisterPage} from "./RegisterPage";
 import {ForgotPasswordPage} from "./ForgotPasswordPage";
 import {ResetPasswordPage} from "./ResetPasswordPage";
+import {VerifyEmailPage} from "./VerifyEmailPage";
 import {ProfilePage} from "./ProfilePage";
 import {Main} from "./layout/Main";
 import {useIsAuthenticated} from "../hooks/authentication";
@@ -34,6 +35,10 @@ const publicRoutes = [
                 element: <ResetPasswordPage/>
             },
             {
+                path: '/verify-email',
+                element: <VerifyEmailPage/>
+            },
+            {
                 path: '*',
                 element: <LoginPage/>
             }
@@ -41,7 +46,12 @@ const publicRoutes = [
     }
 ];
 
-const privateRoutes = [{
+const privateRoutes = [
+{
+    path: '/verify-email',
+    element: <VerifyEmailPage/>
+},
+{
     path: '/',
     element: <Main/>,
     children: [

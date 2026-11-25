@@ -5,6 +5,7 @@ import {Header} from "./Header";
 import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {ThemeProvider} from "@mui/material";
 import {UnreadMessagesProvider} from "../../hooks/useUnreadMessages";
+import {EmailVerificationPrompt} from "../../components/account/EmailVerificationPrompt";
 import '../../styles/theme.css';
 import '../../styles/customScrollbar.css'
 
@@ -17,6 +18,7 @@ export const Main: FC = ({}) => {
                     <Content>
                         <Outlet/>
                     </Content>
+                    <EmailVerificationPrompt/>
                 </div>
             </UnreadMessagesProvider>
         </ThemeProvider>

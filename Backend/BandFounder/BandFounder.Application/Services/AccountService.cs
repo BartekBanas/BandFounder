@@ -44,8 +44,10 @@ public class AccountService : IAccountService
     private readonly IRepository<SpotifyTokens> _spotifyTokensRepository;
     private readonly IRepository<PasswordResetToken> _passwordResetTokenRepository;
     private readonly IPasswordResetTokenStore _passwordResetTokenStore;
+    private readonly IEmailVerificationStore _emailVerificationStore;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IChatroomService _chatroomService;
+    private readonly IEmailVerificationService _emailVerificationService;
 
     private readonly IValidator<Account> _validator;
     private readonly IAuthenticationService _authenticationService;
@@ -63,8 +65,10 @@ public class AccountService : IAccountService
         IRepository<SpotifyTokens> spotifyTokensRepository,
         IRepository<PasswordResetToken> passwordResetTokenRepository,
         IPasswordResetTokenStore passwordResetTokenStore,
+        IEmailVerificationStore emailVerificationStore,
         IUnitOfWork unitOfWork,
         IChatroomService chatroomService,
+        IEmailVerificationService emailVerificationService,
         IValidator<Account> validator,
         IAuthenticationService authenticationService,
         IHashingService hashingService,
@@ -80,8 +84,10 @@ public class AccountService : IAccountService
         _spotifyTokensRepository = spotifyTokensRepository;
         _passwordResetTokenRepository = passwordResetTokenRepository;
         _passwordResetTokenStore = passwordResetTokenStore;
+        _emailVerificationStore = emailVerificationStore;
         _unitOfWork = unitOfWork;
         _chatroomService = chatroomService;
+        _emailVerificationService = emailVerificationService;
         _validator = validator;
         _authenticationService = authenticationService;
         _hashingService = hashingService;
@@ -106,8 +112,14 @@ public class AccountService : IAccountService
         var account = await _accountRepository.GetOneRequiredAsync(
             key: accountId,
             includeProperties: nameof(Account.NotificationPreferences));
+        DateTime? resendAvailableAt = null;
+        if (account.EmailVerifiedAt is null)
+        {
+            resendAvailableAt =
+                await _emailVerificationService.GetResendAvailableAtAsync(account.Id);
+        }
 
-        return account.ToSettingsDto();
+        return account.ToSettingsDto(resendAvailableAt);
     }
 
     public async Task<Account> GetDetailedAccount(Guid? accountId = null, params string[] includeProperties)
@@ -187,9 +199,15 @@ public class AccountService : IAccountService
             throw new ValidationException(validationResult.Errors);
         }
 
-        await _accountRepository.CreateAsync(newAccount);
-        
-        await _accountRepository.SaveChangesAsync();
+        EmailVerificationIssuance? verification = null;
+        await _unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await _accountRepository.CreateAsync(newAccount);
+            verification = await _emailVerificationService.IssueForAccountAsync(
+                newAccount, DateTime.UtcNow, cancelExisting: false);
+        });
+
+        await _emailVerificationService.TryDeliverImmediatelyAsync(verification!.TokenId);
         var claims = _authenticationService.GenerateClaimsIdentity(newAccount);
 
         var token = _jwtService.GenerateSymmetricJwtToken(claims);
@@ -227,8 +245,8 @@ public class AccountService : IAccountService
             return;
         }
 
-        var rawToken = PasswordResetTokenHelper.GenerateRawToken();
-        var tokenHash = PasswordResetTokenHelper.HashToken(rawToken);
+        var rawToken = SecureTokenHelper.GenerateRawToken();
+        var tokenHash = SecureTokenHelper.HashToken(rawToken);
         var ttlMinutes = _emailOptions.PasswordResetTokenTtlMinutes > 0
             ? _emailOptions.PasswordResetTokenTtlMinutes
             : 15;
@@ -282,7 +300,7 @@ public class AccountService : IAccountService
             throw new BadRequestException("Invalid or expired password reset token");
         }
 
-        var tokenHash = PasswordResetTokenHelper.HashToken(token.Trim());
+        var tokenHash = SecureTokenHelper.HashToken(token.Trim());
         var owner = await _passwordResetTokenStore.GetOwnerAsync(tokenHash, DateTime.UtcNow);
 
         if (owner is null)
@@ -311,7 +329,7 @@ public class AccountService : IAccountService
             throw new BadRequestException("Invalid password reset request");
         }
 
-        var tokenHash = PasswordResetTokenHelper.HashToken(dto.Token.Trim());
+        var tokenHash = SecureTokenHelper.HashToken(dto.Token.Trim());
         var utcNow = DateTime.UtcNow;
 
         await _unitOfWork.ExecuteInTransactionAsync(async () =>
@@ -337,10 +355,6 @@ public class AccountService : IAccountService
     {
         accountId ??= _authenticationService.GetUserId();
         
-        var originalAccount = await _accountRepository.GetOneRequiredAsync(
-            key: accountId,
-            includeProperties: nameof(Account.NotificationPreferences));
-
         string? passwordHash = null;
         
         if (updateDto.Password != null)
@@ -360,8 +374,6 @@ public class AccountService : IAccountService
         var testAccount = new Account
         {
             Id = new Guid(),
-            DateCreated = originalAccount.DateCreated,
-
             Name = updateDto.Name ?? "testAccountName",
             Email = normalizedUpdateEmail ?? "testAccountEmail@email.com",
             PasswordHash = passwordHash ?? "testAccountPassword"
@@ -373,22 +385,63 @@ public class AccountService : IAccountService
             throw new ValidationException(validationResult.Errors);
         }
         
-        originalAccount.Name = updateDto.Name ?? originalAccount.Name;
-        originalAccount.Email = normalizedUpdateEmail ?? originalAccount.Email;
-        originalAccount.PasswordHash = passwordHash ?? originalAccount.PasswordHash;
-        if (passwordHash is not null)
+        Account? updatedAccount = null;
+        EmailVerificationIssuance? verification = null;
+
+        async Task ApplyUpdateAsync()
         {
-            originalAccount.PasswordVersion++;
+            if (normalizedUpdateEmail is not null)
+            {
+                await _emailVerificationStore.LockAccountAsync(accountId.Value);
+            }
+
+            var account = await _accountRepository.GetOneRequiredAsync(
+                key: accountId, includeProperties: nameof(Account.NotificationPreferences));
+            var emailChanged = normalizedUpdateEmail is not null &&
+                               !string.Equals(account.Email, normalizedUpdateEmail, StringComparison.Ordinal);
+
+            account.Name = updateDto.Name ?? account.Name;
+            account.Email = normalizedUpdateEmail ?? account.Email;
+            account.PasswordHash = passwordHash ?? account.PasswordHash;
+            if (passwordHash is not null)
+            {
+                account.PasswordVersion++;
+            }
+
+            account.NotificationPreferences.EmailOnNewMessage =
+                updateDto.EmailOnNewMessage ?? account.NotificationPreferences.EmailOnNewMessage;
+            account.NotificationPreferences.EmailUnreadDelayMinutes =
+                updateDto.EmailUnreadDelayMinutes ?? account.NotificationPreferences.EmailUnreadDelayMinutes;
+
+            if (emailChanged)
+            {
+                account.EmailVerifiedAt = null;
+                verification = await _emailVerificationService.IssueForAccountAsync(
+                    account, DateTime.UtcNow, cancelExisting: true);
+            }
+            else
+            {
+                await _accountRepository.SaveChangesAsync();
+            }
+
+            updatedAccount = account;
         }
 
-        originalAccount.NotificationPreferences.EmailOnNewMessage =
-            updateDto.EmailOnNewMessage ?? originalAccount.NotificationPreferences.EmailOnNewMessage;
-        originalAccount.NotificationPreferences.EmailUnreadDelayMinutes =
-            updateDto.EmailUnreadDelayMinutes ?? originalAccount.NotificationPreferences.EmailUnreadDelayMinutes;
+        if (normalizedUpdateEmail is null)
+        {
+            await ApplyUpdateAsync();
+        }
+        else
+        {
+            await _unitOfWork.ExecuteInTransactionAsync(ApplyUpdateAsync);
+        }
 
-        await _accountRepository.SaveChangesAsync();
+        if (verification is not null)
+        {
+            await _emailVerificationService.TryDeliverImmediatelyAsync(verification.TokenId);
+        }
 
-        return originalAccount.ToSettingsDto();
+        return updatedAccount!.ToSettingsDto(verification?.ResendAvailableAt);
     }
 
     public async Task AddMusicianRole(string role, Guid? accountId = null)

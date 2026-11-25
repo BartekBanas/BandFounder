@@ -82,6 +82,7 @@ public class MessageService : IMessageService
 
         foreach (var recipient in chatRoom.Members.Where(member =>
                      member.Id != senderId &&
+                     member.EmailVerifiedAt is not null &&
                      member.NotificationPreferences.EmailOnNewMessage))
         {
             await _outboxRepository.AcquireQueueLockAsync(recipient.Id, chatRoom.Id);
