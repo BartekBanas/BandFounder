@@ -28,6 +28,7 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import CakeOutlinedIcon from "@mui/icons-material/CakeOutlined";
 import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
 import {PasswordResetInfo} from "../../types/Account";
+import {authCardSx, authPageSx} from "./authStyles";
 
 interface PasswordRule {
     label: string;
@@ -53,7 +54,7 @@ function getStrengthColor(metCount: number): string {
     }
 
     if (metCount === 3) {
-        return designTokens.accentBlue;
+        return designTokens.accent;
     }
 
     return designTokens.successMain;
@@ -182,33 +183,16 @@ export function ResetPasswordForm() {
 
     return (
         <ThemeProvider theme={muiDarkTheme}>
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '24px',
-                    background: `linear-gradient(135deg, ${designTokens.authGradientStart}, ${designTokens.authGradientEnd})`,
-                }}
-            >
+            <Box sx={authPageSx}>
                 <Box
                     component="form"
                     onSubmit={handleSubmit}
-                    sx={{
-                        width: '100%',
-                        maxWidth: '480px',
-                        padding: {xs: '28px', sm: '40px'},
-                        borderRadius: '16px',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.7)',
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    }}
+                    sx={{...authCardSx, maxWidth: '480px'}}
                 >
-                    <Typography variant="h4" align="center" fontWeight={600}>
-                        Reset password
+                    <Typography variant="h5" fontWeight={600}>
+                        Reset your password
                     </Typography>
-                    <Typography variant="body2" align="center" color="text.secondary" sx={{marginTop: 0.5}}>
+                    <Typography variant="body2" color="text.secondary" sx={{marginTop: 0.5}}>
                         Choose a new password for the account below.
                     </Typography>
 
@@ -242,8 +226,8 @@ export function ResetPasswordForm() {
                                             height: 56,
                                             fontSize: '1.35rem',
                                             fontWeight: 600,
-                                            backgroundColor: designTokens.accentBlue,
-                                            color: designTokens.textOnDark,
+                                            backgroundColor: designTokens.accent,
+                                            color: designTokens.accentText,
                                         }}
                                     >
                                         {info.username.charAt(0).toUpperCase()}

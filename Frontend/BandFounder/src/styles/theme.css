@@ -1,3 +1,7 @@
+:root {
+    color-scheme: dark;
+}
+
 body {
     background-color: var(--background-default);
     color: var(--text-primary);
@@ -10,6 +14,7 @@ button {
     -webkit-appearance: none;
     font-family: inherit;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 button:focus {
@@ -17,7 +22,7 @@ button:focus {
 }
 
 button:focus-visible {
-    outline: 2px solid var(--accent-blue);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
@@ -39,4 +44,21 @@ button:focus-visible {
 .MuiBackdrop-root.MuiBackdrop-invisible {
     background-color: transparent !important;
     backdrop-filter: none;
+}
+
+@media (pointer: fine) {
+    html {
+        overscroll-behavior: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

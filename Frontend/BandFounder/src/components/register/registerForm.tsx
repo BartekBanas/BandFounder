@@ -5,7 +5,10 @@ import {getMyAccount, registerAccount} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
-import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
+import {authCardSx, authPageSx} from "../login/authStyles";
+import {AuthBrand} from "../login/AuthBrand";
+import {useSharedProfilePath} from "../login/useSharedProfilePath";
 
 export function LoginForm() {
     const [name, setName] = useState('');
@@ -13,6 +16,7 @@ export function LoginForm() {
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
+    const sharedProfilePath = useSharedProfilePath();
 
     async function handleSubmit(e: any) {
         e.preventDefault();
@@ -25,7 +29,7 @@ export function LoginForm() {
 
             mantineSuccessNotification('Account created successfully');
 
-            navigate('/home');
+            navigate(sharedProfilePath ?? '/home', {replace: Boolean(sharedProfilePath)});
         } catch (e: any) {
             if (e instanceof Error) {
                 if (e.message === "Failed to fetch") {
@@ -42,35 +46,17 @@ export function LoginForm() {
 
     async function handleLoginClick(e: any) {
         e.preventDefault();
-        navigate('/login');
+        navigate('/login', {state: {sharedProfilePath}});
     }
 
     return (
         <ThemeProvider theme={muiDarkTheme}>
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${designTokens.authGradientStart}, ${designTokens.authGradientEnd})`,
-                }}
-            >
-                <Box
-                    component="form"
-                    onSubmit={handleSubmit}
-                    sx={{
-                        width: '100%',
-                        maxWidth: '450px',
-                        padding: '40px',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.7)',
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    }}
-                >
-                    <Typography variant="h4" align="center" gutterBottom>
-                        Register
+            <Box sx={authPageSx}>
+                <AuthBrand/>
+
+                <Box component="form" onSubmit={handleSubmit} sx={authCardSx}>
+                    <Typography variant="h5" fontWeight={600} sx={{marginBottom: '16px'}}>
+                        Create an account
                     </Typography>
 
                     <TextField
@@ -100,24 +86,28 @@ export function LoginForm() {
                         margin="normal"
                     />
 
-                    <Box sx={{display: 'flex', justifyContent: 'space-between', marginTop: '24px'}}>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            fullWidth
-                            sx={{marginRight: '8px', padding: '10px 0'}}
-                        >
-                            Register
-                        </Button>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{marginTop: '24px', padding: '10px 0'}}
+                    >
+                        Create account
+                    </Button>
+
+                    <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', marginTop: '20px'}}>
+                        <Typography variant="body2" color="text.secondary">
+                            Already have an account?
+                        </Typography>
                         <Button
                             onClick={handleLoginClick}
-                            variant="outlined"
+                            variant="text"
                             color="info"
-                            fullWidth
-                            sx={{padding: '10px 0'}}
+                            size="small"
+                            sx={{textTransform: 'none', minWidth: 0}}
                         >
-                            Login
+                            Log in
                         </Button>
                     </Box>
                 </Box>

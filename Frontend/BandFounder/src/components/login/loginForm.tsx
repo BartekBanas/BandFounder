@@ -5,7 +5,10 @@ import {getMyAccount, login} from "../../api/account";
 import {setAuthToken, setUserId} from "../../hooks/authentication";
 import {mantineErrorNotification, mantineInformationNotification} from "../common/mantineNotification";
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
-import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
+import {authCardSx, authPageSx} from "./authStyles";
+import {AuthBrand} from "./AuthBrand";
+import {useSharedProfilePath} from "./useSharedProfilePath";
 
 export async function performLogin(usernameOrEmail: string, password: string) {
     const authorizationToken = await login(usernameOrEmail, password);
@@ -22,6 +25,8 @@ export function LoginForm() {
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
+    const sharedProfilePath = useSharedProfilePath();
+    const authNavigation = {state: {sharedProfilePath}};
 
     useEffect(() => {
         if (window.location.pathname === '/login/expiredSession') {
@@ -33,7 +38,7 @@ export function LoginForm() {
         e.preventDefault();
         try {
             await performLogin(email, password);
-            navigate('/home');
+            navigate(sharedProfilePath ?? '/home', {replace: Boolean(sharedProfilePath)});
         } catch (error: any) {
             const status = error?.response?.status ?? error?.status;
             const message = error?.responseText ?? error?.message ?? '';
@@ -60,47 +65,31 @@ export function LoginForm() {
             }
 
             // Unexpected error
-            mantineErrorNotification("Login failed");
+            mantineErrorNotification("Login failed. Check your connection and try again.");
             console.error(error);
         }
     };
 
     const handleRegisterClick = () => {
-        navigate('/register');
+        navigate('/register', authNavigation);
     };
 
     return (
         <ThemeProvider theme={muiDarkTheme}>
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${designTokens.authGradientStart}, ${designTokens.authGradientEnd})`,
-                }}
-            >
-                <Box
-                    component="form"
-                    onSubmit={handleSubmit}
-                    sx={{
-                        width: '100%',
-                        maxWidth: '450px',
-                        padding: '40px',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.7)',
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    }}
-                >
-                    <Typography variant="h4" align="center" gutterBottom>
-                        Login
+            <Box sx={authPageSx}>
+                <AuthBrand/>
+
+                <Box component="form" onSubmit={handleSubmit} sx={authCardSx}>
+                    <Typography variant="h5" fontWeight={600} sx={{marginBottom: '16px'}}>
+                        Log in
                     </Typography>
 
                     <TextField
                         fullWidth
                         label="Email or username"
-                        type="username"
+                        name="username"
+                        type="text"
+                        autoComplete="username"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -109,7 +98,9 @@ export function LoginForm() {
                     <TextField
                         fullWidth
                         label="Password"
+                        name="password"
                         type="password"
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -118,7 +109,7 @@ export function LoginForm() {
 
                     <Box sx={{display: 'flex', justifyContent: 'flex-end', marginTop: 1}}>
                         <Button
-                            onClick={() => navigate('/forgot-password')}
+                            onClick={() => navigate('/forgot-password', authNavigation)}
                             variant="text"
                             color="info"
                             size="small"
@@ -128,24 +119,28 @@ export function LoginForm() {
                         </Button>
                     </Box>
 
-                    <Box sx={{display: 'flex', justifyContent: 'space-between', marginTop: '24px'}}>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            fullWidth
-                            sx={{marginRight: '8px', padding: '10px 0'}}
-                        >
-                            Login
-                        </Button>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{marginTop: '24px', padding: '10px 0'}}
+                    >
+                        Log in
+                    </Button>
+
+                    <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', marginTop: '20px'}}>
+                        <Typography variant="body2" color="text.secondary">
+                            New here?
+                        </Typography>
                         <Button
                             onClick={handleRegisterClick}
-                            variant="outlined"
+                            variant="text"
                             color="info"
-                            fullWidth
-                            sx={{padding: '10px 0'}}
+                            size="small"
+                            sx={{textTransform: 'none', minWidth: 0}}
                         >
-                            Register
+                            Create an account
                         </Button>
                     </Box>
                 </Box>

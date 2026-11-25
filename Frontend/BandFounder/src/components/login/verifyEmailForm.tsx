@@ -7,8 +7,9 @@ import {
     mantineSuccessNotification,
 } from "../common/mantineNotification";
 import {Alert, Box, Button, CircularProgress, Stack, ThemeProvider, Typography} from "@mui/material";
-import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
 import {useIsAuthenticated} from "../../hooks/authentication";
+import {authCardSx, authPageSx} from "./authStyles";
 
 export function VerifyEmailForm() {
     const [searchParams] = useSearchParams();
@@ -63,27 +64,8 @@ function EmailVerificationForm({token}: {token: string}) {
 
     return (
         <ThemeProvider theme={muiDarkTheme}>
-            <Box
-                sx={{
-                    minHeight: "100vh",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "24px",
-                    background: `linear-gradient(135deg, ${designTokens.authGradientStart}, ${designTokens.authGradientEnd})`,
-                }}
-            >
-                <Box
-                    sx={{
-                        width: "100%",
-                        maxWidth: "480px",
-                        padding: {xs: "28px", sm: "40px"},
-                        borderRadius: "16px",
-                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.7)",
-                        backgroundColor: "background.paper",
-                        color: "text.primary",
-                    }}
-                >
+            <Box sx={authPageSx}>
+                <Box sx={authCardSx}>
                     <Typography variant="h4" align="center" fontWeight={600}>
                         Verify email
                     </Typography>

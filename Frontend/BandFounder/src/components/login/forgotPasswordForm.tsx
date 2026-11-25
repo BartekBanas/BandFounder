@@ -3,12 +3,15 @@ import {useNavigate} from "react-router-dom";
 import {requestPasswordReset} from "../../api/account";
 import {mantineErrorNotification, mantineSuccessNotification} from "../common/mantineNotification";
 import {Box, Button, TextField, ThemeProvider, Typography} from "@mui/material";
-import {designTokens, muiDarkTheme} from "../../styles/muiDarkTheme";
+import {muiDarkTheme} from "../../styles/muiDarkTheme";
+import {authCardSx, authPageSx} from "./authStyles";
+import {useSharedProfilePath} from "./useSharedProfilePath";
 
 export function ForgotPasswordForm() {
     const [email, setEmail] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const navigate = useNavigate();
+    const sharedProfilePath = useSharedProfilePath();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,30 +27,10 @@ export function ForgotPasswordForm() {
 
     return (
         <ThemeProvider theme={muiDarkTheme}>
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${designTokens.authGradientStart}, ${designTokens.authGradientEnd})`,
-                }}
-            >
-                <Box
-                    component="form"
-                    onSubmit={handleSubmit}
-                    sx={{
-                        width: '100%',
-                        maxWidth: '450px',
-                        padding: '40px',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.7)',
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    }}
-                >
-                    <Typography variant="h4" align="center" gutterBottom>
-                        Forgot password
+            <Box sx={authPageSx}>
+                <Box component="form" onSubmit={handleSubmit} sx={authCardSx}>
+                    <Typography variant="h5" fontWeight={600} sx={{marginBottom: '16px'}}>
+                        Reset your password
                     </Typography>
 
                     {submitted ? (
@@ -66,19 +49,20 @@ export function ForgotPasswordForm() {
                         />
                     )}
 
-                    <Box sx={{display: 'flex', justifyContent: 'space-between', marginTop: '24px', gap: 1}}>
-                        {!submitted && (
-                            <Button type="submit" variant="contained" color="primary" fullWidth>
-                                Send reset link
-                            </Button>
-                        )}
+                    {!submitted && (
+                        <Button type="submit" variant="contained" color="primary" fullWidth sx={{marginTop: '24px', padding: '10px 0'}}>
+                            Send reset link
+                        </Button>
+                    )}
+                    <Box sx={{display: 'flex', justifyContent: 'center', marginTop: '20px'}}>
                         <Button
-                            onClick={() => navigate('/')}
-                            variant="outlined"
+                            onClick={() => navigate(sharedProfilePath ?? '/')}
+                            variant="text"
                             color="info"
-                            fullWidth
+                            size="small"
+                            sx={{textTransform: 'none', minWidth: 0}}
                         >
-                            Back to login
+                            Back to log in
                         </Button>
                     </Box>
                 </Box>

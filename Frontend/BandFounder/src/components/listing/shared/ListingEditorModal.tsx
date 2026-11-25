@@ -1,8 +1,9 @@
 import React from 'react';
-import {Dialog, ThemeProvider} from '@mui/material';
+import {Dialog, MenuItem, Select, ThemeProvider} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import {designTokens, muiDarkTheme} from '../../../styles/muiDarkTheme';
+import {useTriggerMatchedMenu} from '../../common/useTriggerMatchedMenu';
 import './listingModal.css';
 
 export interface EditorMusicianSlot {
@@ -34,6 +35,24 @@ export interface ListingEditorModalProps {
     roles: string[];
 }
 
+const SlotStatusSelect: React.FC<{value: string; onChange: (status: string) => void}> = ({value, onChange}) => {
+    const menu = useTriggerMatchedMenu();
+
+    return (
+        <Select
+            className="listing-editor-modal__select"
+            size="small"
+            value={value}
+            inputProps={{'aria-label': 'Slot status'}}
+            onChange={(e) => onChange(e.target.value)}
+            {...menu}
+        >
+            <MenuItem value="Available">Available</MenuItem>
+            <MenuItem value="Filled">Filled</MenuItem>
+        </Select>
+    );
+};
+
 const ListingEditorModal: React.FC<ListingEditorModalProps> = ({
     open,
     title,
@@ -56,6 +75,7 @@ const ListingEditorModal: React.FC<ListingEditorModalProps> = ({
     genres,
     roles,
 }) => {
+    const typeMenu = useTriggerMatchedMenu();
     const getSlotKey = (slot: EditorMusicianSlot, index: number) => slot.id ?? `slot-${index}`;
 
     return (
@@ -105,16 +125,19 @@ const ListingEditorModal: React.FC<ListingEditorModalProps> = ({
                     </div>
 
                     <div className="listing-editor-modal__field">
-                        <label className="listing-editor-modal__label" htmlFor="listing-type">Type</label>
-                        <select
+                        <label className="listing-editor-modal__label" id="listing-type-label">Type</label>
+                        <Select
                             id="listing-type"
+                            labelId="listing-type-label"
                             className="listing-editor-modal__select"
+                            size="small"
                             value={listingType}
                             onChange={(e) => onListingTypeChange(e.target.value)}
+                            {...typeMenu}
                         >
-                            <option value="CollaborativeSong">Song</option>
-                            <option value="Band">Band</option>
-                        </select>
+                            <MenuItem value="CollaborativeSong">Song</MenuItem>
+                            <MenuItem value="Band">Band</MenuItem>
+                        </Select>
                     </div>
 
                     <div className="listing-editor-modal__field">
@@ -197,14 +220,10 @@ const ListingEditorModal: React.FC<ListingEditorModalProps> = ({
                                                 <option key={role} value={role}/>
                                             ))}
                                         </datalist>
-                                        <select
-                                            className="listing-editor-modal__select"
+                                        <SlotStatusSelect
                                             value={slot.status}
-                                            onChange={(e) => slot.id && onEditSlotStatus(slot.id, e.target.value)}
-                                        >
-                                            <option value="Available">Available</option>
-                                            <option value="Filled">Filled</option>
-                                        </select>
+                                            onChange={(status) => slot.id && onEditSlotStatus(slot.id, status)}
+                                        />
                                     </div>
                                 );
                             })}
